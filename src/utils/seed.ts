@@ -8,8 +8,15 @@ import { useUserStore } from '@/store/userStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 
 export function initSeedData() {
-  // Check store state instead of localStorage so Supabase-backed stores are handled correctly
-  if (useDanhMucStore.getState().donVis.length > 0) return
+  const dm = useDanhMucStore.getState()
+  // Only skip seed when ALL categories are present — prevents partial data
+  if (
+    dm.donVis.length > 0 &&
+    dm.chucDanhs.length > 0 &&
+    dm.mucLuongCosos.length > 0 &&
+    dm.loaiPhuCaps.length > 0 &&
+    dm.bacLuongs.length > 0
+  ) return
 
   const { setDonVis, setChucDanhs, setBacLuongs, setMucLuongCosos, setLoaiPhuCaps, setViTriViecLams } =
     useDanhMucStore.getState()

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig({
-  base: '/QL_Nhansu/',
+  base: '/QLVC-GIAVIEN/',
   plugins: [react()],
   resolve: {
     alias: {

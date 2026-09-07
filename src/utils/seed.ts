@@ -30,6 +30,14 @@ export function initSeedData() {
   ensureRequiredPhuCaps()
 
   const dm = useDanhMucStore.getState()
+
+  // Force re-seed if chức danh uses old IDs (pre-TT31/2026 format)
+  const hasOldChucDanh = dm.chucDanhs.some((cd) => ['cd1', 'cd2', 'cd3', 'cd4', 'cd5'].includes(cd.id))
+  if (hasOldChucDanh) {
+    dm.setChucDanhs([])
+    dm.setBacLuongs([])
+  }
+
   // Only skip seed when ALL categories are present — prevents partial data
   if (
     dm.donVis.length > 0 &&
@@ -56,36 +64,82 @@ export function initSeedData() {
   ]
   setDonVis(donVis)
 
-  // --- Chức danh ---
+  // --- Chức danh nghề nghiệp (TT 31/2026/TT-BGDĐT) ---
   const chucDanhs = [
-    { id: 'cd1', ma: 'GVMN', ten: 'Giáo viên Mầm non', nhom: 'GIAO_VIEN' as const, bangLuong: 'A1', active: true },
-    { id: 'cd2', ma: 'GVTH', ten: 'Giáo viên Tiểu học', nhom: 'GIAO_VIEN' as const, bangLuong: 'A1', active: true },
-    { id: 'cd3', ma: 'GVTHCS', ten: 'Giáo viên THCS', nhom: 'GIAO_VIEN' as const, bangLuong: 'A1', active: true },
-    { id: 'cd4', ma: 'HT', ten: 'Hiệu trưởng', nhom: 'QUAN_LY' as const, bangLuong: 'A1', active: true },
-    { id: 'cd5', ma: 'PHT', ten: 'Phó Hiệu trưởng', nhom: 'QUAN_LY' as const, bangLuong: 'A1', active: true },
-    { id: 'cd6', ma: 'KT', ten: 'Kế toán', nhom: 'NHAN_VIEN' as const, bangLuong: 'A0', active: true },
-    { id: 'cd7', ma: 'VT', ten: 'Văn thư', nhom: 'NHAN_VIEN' as const, bangLuong: 'B', active: true },
-    { id: 'cd8', ma: 'YT', ten: 'Y tế học đường', nhom: 'NHAN_VIEN' as const, bangLuong: 'B', active: true },
+    // Mầm non
+    { id: 'cd_mn1', ma: 'V.07.02.24', ten: 'Giáo viên mầm non hạng I', nhom: 'GIAO_VIEN' as const, bangLuong: 'A2.2', active: true },
+    { id: 'cd_mn2', ma: 'V.07.02.25', ten: 'Giáo viên mầm non hạng II', nhom: 'GIAO_VIEN' as const, bangLuong: 'A1', active: true },
+    { id: 'cd_mn3', ma: 'V.07.02.26', ten: 'Giáo viên mầm non hạng III', nhom: 'GIAO_VIEN' as const, bangLuong: 'A0', active: true },
+    // Tiểu học
+    { id: 'cd_th1', ma: 'V.07.03.27', ten: 'Giáo viên tiểu học hạng I', nhom: 'GIAO_VIEN' as const, bangLuong: 'A2.1', active: true },
+    { id: 'cd_th2', ma: 'V.07.03.28', ten: 'Giáo viên tiểu học hạng II', nhom: 'GIAO_VIEN' as const, bangLuong: 'A2.2', active: true },
+    { id: 'cd_th3', ma: 'V.07.03.29', ten: 'Giáo viên tiểu học hạng III', nhom: 'GIAO_VIEN' as const, bangLuong: 'A1', active: true },
+    // THCS
+    { id: 'cd_cs1', ma: 'V.07.04.30', ten: 'Giáo viên THCS hạng I', nhom: 'GIAO_VIEN' as const, bangLuong: 'A2.1', active: true },
+    { id: 'cd_cs2', ma: 'V.07.04.31', ten: 'Giáo viên THCS hạng II', nhom: 'GIAO_VIEN' as const, bangLuong: 'A2.2', active: true },
+    { id: 'cd_cs3', ma: 'V.07.04.32', ten: 'Giáo viên THCS hạng III', nhom: 'GIAO_VIEN' as const, bangLuong: 'A1', active: true },
+    // Nhân viên hỗ trợ
+    { id: 'cd_kt', ma: 'KT', ten: 'Kế toán', nhom: 'NHAN_VIEN' as const, bangLuong: 'A0', active: true },
+    { id: 'cd_vt', ma: 'VT', ten: 'Văn thư', nhom: 'NHAN_VIEN' as const, bangLuong: 'B', active: true },
+    { id: 'cd_yt', ma: 'YT', ten: 'Y tế học đường', nhom: 'NHAN_VIEN' as const, bangLuong: 'B', active: true },
   ]
   setChucDanhs(chucDanhs)
 
-  // --- Bậc lương ---
+  // --- Bậc lương (NĐ 204/2004/NĐ-CP, Bảng 3) ---
   const bacLuongs: BacLuong[] = []
-  const gvBacs = [
+
+  // A2.1: GV TH hạng I, GV THCS hạng I
+  const a21Bacs = [
+    { bac: 1, heSo: 4.40 }, { bac: 2, heSo: 4.74 }, { bac: 3, heSo: 5.08 },
+    { bac: 4, heSo: 5.42 }, { bac: 5, heSo: 5.76 }, { bac: 6, heSo: 6.10 },
+    { bac: 7, heSo: 6.44 }, { bac: 8, heSo: 6.78 },
+  ]
+  ;['cd_th1', 'cd_cs1'].forEach((cdId) => {
+    a21Bacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
+  })
+
+  // A2.2: GV MN hạng I, GV TH hạng II, GV THCS hạng II
+  const a22Bacs = [
+    { bac: 1, heSo: 4.00 }, { bac: 2, heSo: 4.34 }, { bac: 3, heSo: 4.68 },
+    { bac: 4, heSo: 5.02 }, { bac: 5, heSo: 5.36 }, { bac: 6, heSo: 5.70 },
+    { bac: 7, heSo: 6.04 }, { bac: 8, heSo: 6.38 },
+  ]
+  ;['cd_mn1', 'cd_th2', 'cd_cs2'].forEach((cdId) => {
+    a22Bacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
+  })
+
+  // A1: GV MN hạng II, GV TH hạng III, GV THCS hạng III
+  const a1Bacs = [
     { bac: 1, heSo: 2.34 }, { bac: 2, heSo: 2.67 }, { bac: 3, heSo: 3.00 },
     { bac: 4, heSo: 3.33 }, { bac: 5, heSo: 3.66 }, { bac: 6, heSo: 3.99 },
     { bac: 7, heSo: 4.32 }, { bac: 8, heSo: 4.65 }, { bac: 9, heSo: 4.98 },
   ]
-  ;['cd1', 'cd2', 'cd3', 'cd4', 'cd5'].forEach((cdId) => {
-    gvBacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
+  ;['cd_mn2', 'cd_th3', 'cd_cs3'].forEach((cdId) => {
+    a1Bacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
   })
-  const nvBacs = [
+
+  // A0: GV MN hạng III, Kế toán
+  const a0Bacs = [
     { bac: 1, heSo: 2.10 }, { bac: 2, heSo: 2.41 }, { bac: 3, heSo: 2.72 },
     { bac: 4, heSo: 3.03 }, { bac: 5, heSo: 3.34 }, { bac: 6, heSo: 3.65 },
+    { bac: 7, heSo: 3.96 }, { bac: 8, heSo: 4.27 }, { bac: 9, heSo: 4.58 },
+    { bac: 10, heSo: 4.89 },
   ]
-  ;['cd6', 'cd7', 'cd8'].forEach((cdId) => {
-    nvBacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 2 as const }))
+  ;['cd_mn3', 'cd_kt'].forEach((cdId) => {
+    a0Bacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
   })
+
+  // B: Văn thư, Y tế
+  const bBacs = [
+    { bac: 1, heSo: 1.86 }, { bac: 2, heSo: 2.06 }, { bac: 3, heSo: 2.26 },
+    { bac: 4, heSo: 2.46 }, { bac: 5, heSo: 2.66 }, { bac: 6, heSo: 2.86 },
+    { bac: 7, heSo: 3.06 }, { bac: 8, heSo: 3.26 }, { bac: 9, heSo: 3.46 },
+    { bac: 10, heSo: 3.66 }, { bac: 11, heSo: 3.86 }, { bac: 12, heSo: 4.06 },
+  ]
+  ;['cd_vt', 'cd_yt'].forEach((cdId) => {
+    bBacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 2 as const }))
+  })
+
   setBacLuongs(bacLuongs)
 
   // --- Mức lương cơ sở ---
@@ -117,16 +171,21 @@ export function initSeedData() {
   ])
 
   // --- Vị trí việc làm ---
-  const viTriData: Array<{ ten: string; loai: 'QUAN_LY' | 'CHUYEN_MON' | 'HO_TRO'; soLuongBienChe: number; soLuongHopDong: number; chucDanhIds: string[] }> = [
-    { ten: 'Hiệu trưởng', loai: 'QUAN_LY', soLuongBienChe: 1, soLuongHopDong: 0, chucDanhIds: ['cd4'] },
-    { ten: 'Phó Hiệu trưởng', loai: 'QUAN_LY', soLuongBienChe: 2, soLuongHopDong: 0, chucDanhIds: ['cd5'] },
-    { ten: 'Giáo viên đứng lớp', loai: 'CHUYEN_MON', soLuongBienChe: 15, soLuongHopDong: 3, chucDanhIds: ['cd1', 'cd2', 'cd3'] },
-    { ten: 'Kế toán', loai: 'HO_TRO', soLuongBienChe: 1, soLuongHopDong: 0, chucDanhIds: ['cd6'] },
-    { ten: 'Văn thư - Thư viện', loai: 'HO_TRO', soLuongBienChe: 1, soLuongHopDong: 1, chucDanhIds: ['cd7'] },
+  const gvCdByLoaiDv: Record<string, string[]> = {
+    MAM_NON: ['cd_mn1', 'cd_mn2', 'cd_mn3'],
+    TIEU_HOC: ['cd_th1', 'cd_th2', 'cd_th3'],
+    THCS: ['cd_cs1', 'cd_cs2', 'cd_cs3'],
+  }
+  const viTriDataFn = (loaiDv: string) => [
+    { ten: 'Hiệu trưởng', loai: 'QUAN_LY' as const, soLuongBienChe: 1, soLuongHopDong: 0, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Phó Hiệu trưởng', loai: 'QUAN_LY' as const, soLuongBienChe: 2, soLuongHopDong: 0, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Giáo viên đứng lớp', loai: 'CHUYEN_MON' as const, soLuongBienChe: 15, soLuongHopDong: 3, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Kế toán', loai: 'HO_TRO' as const, soLuongBienChe: 1, soLuongHopDong: 0, chucDanhIds: ['cd_kt'] },
+    { ten: 'Văn thư - Thư viện', loai: 'HO_TRO' as const, soLuongBienChe: 1, soLuongHopDong: 1, chucDanhIds: ['cd_vt'] },
   ]
   const viTriViecLams: any[] = []
   donVis.forEach((dv) => {
-    viTriData.forEach((vt) => {
+    viTriDataFn(dv.loai).forEach((vt) => {
       viTriViecLams.push({ id: nanoid(), ma: `${vt.ten.substring(0, 3).toUpperCase()}-${dv.ma}`, ten: vt.ten, loai: vt.loai, donViId: dv.id, soLuongBienChe: vt.soLuongBienChe, soLuongHopDong: vt.soLuongHopDong, chucDanhIds: vt.chucDanhIds, active: true })
     })
   })
@@ -141,7 +200,8 @@ export function initSeedData() {
   const loaiLDs = ['VIEN_CHUC', 'VIEN_CHUC', 'VIEN_CHUC', 'VIEN_CHUC', 'VIEN_CHUC', 'VIEN_CHUC', 'HOP_DONG_235', 'HOP_DONG_235', 'TAP_SU', 'HOP_DONG_TRUONG'] as const
   const gioiTinhs: Array<'NAM' | 'NU'> = ['NU', 'NAM', 'NU', 'NAM', 'NU', 'NAM', 'NU', 'NAM', 'NU', 'NAM']
   const birthYears = [1975, 1980, 1982, 1978, 1985, 1990, 1988, 1992, 1995, 1970]
-  const chucDanhMap: Record<string, string> = { dv1: 'cd1', dv2: 'cd2', dv3: 'cd2', dv4: 'cd3', dv5: 'cd3' }
+  // Default hạng: MN hạng II (A1), TH hạng III (A1), THCS hạng III (A1)
+  const chucDanhMap: Record<string, string> = { dv1: 'cd_mn2', dv2: 'cd_th3', dv3: 'cd_th3', dv4: 'cd_cs3', dv5: 'cd_cs3' }
 
   const allVCs: any[] = []
   const allHeSos: any[] = []
@@ -153,9 +213,11 @@ export function initSeedData() {
       const hslId = nanoid()
       const gioiTinh = i % 2 === 0 ? 'NU' : ('NAM' as 'NAM' | 'NU')
       const byear = birthYears[i]
-      const chucDanhId = i >= 8 ? 'cd6' : i === 9 ? 'cd7' : chucDanhMap[dv.id]
-      const bac = Math.min(1 + Math.floor(i * 0.8) + di, 9)
-      const heSoArr = gvBacs
+      const chucDanhId = i === 8 ? 'cd_kt' : i === 9 ? 'cd_vt' : chucDanhMap[dv.id]
+      const isNv = i >= 8
+      const maxBac = isNv ? (i === 9 ? 12 : 10) : 9
+      const bac = Math.min(1 + Math.floor(i * 0.8) + di, maxBac)
+      const heSoArr = isNv ? (i === 9 ? bBacs : a0Bacs) : a1Bacs
       const heSo = heSoArr[Math.min(bac - 1, heSoArr.length - 1)].heSo
 
       // Some employees: upcoming review
@@ -237,7 +299,7 @@ export function initSeedData() {
       donViId: 'dv2', loai: 'NANG_BAC', buocHienTai: 2, trangThai: 'CHO_XET_DUYET',
       chiTiet: [{
         vienChucId: vc1.id, chucDanhCuId: hsl1.chucDanhId, bacCu: hsl1.bac, heSoCu: hsl1.heSo,
-        chucDanhMoiId: hsl1.chucDanhId, bacMoi: hsl1.bac + 1, heSoMoi: gvBacs[hsl1.bac] ? gvBacs[hsl1.bac].heSo : hsl1.heSo + 0.33,
+        chucDanhMoiId: hsl1.chucDanhId, bacMoi: hsl1.bac + 1, heSoMoi: a1Bacs[hsl1.bac] ? a1Bacs[hsl1.bac].heSo : hsl1.heSo + 0.33,
         ngayHieuLuc: '2026-07-01', lyDo: 'Đủ thời gian 3 năm',
       }],
       nguoiDeXuatId: 'u4', ngayDeXuat: '2026-08-01', createdAt: d('2026-08-01'), updatedAt: d('2026-08-01'),
@@ -271,8 +333,30 @@ function d(s: string) {
   return new Date(s).toISOString()
 }
 
-const gvBacs = [
+const a21Bacs = [
+  { bac: 1, heSo: 4.40 }, { bac: 2, heSo: 4.74 }, { bac: 3, heSo: 5.08 },
+  { bac: 4, heSo: 5.42 }, { bac: 5, heSo: 5.76 }, { bac: 6, heSo: 6.10 },
+  { bac: 7, heSo: 6.44 }, { bac: 8, heSo: 6.78 },
+]
+const a22Bacs = [
+  { bac: 1, heSo: 4.00 }, { bac: 2, heSo: 4.34 }, { bac: 3, heSo: 4.68 },
+  { bac: 4, heSo: 5.02 }, { bac: 5, heSo: 5.36 }, { bac: 6, heSo: 5.70 },
+  { bac: 7, heSo: 6.04 }, { bac: 8, heSo: 6.38 },
+]
+const a1Bacs = [
   { bac: 1, heSo: 2.34 }, { bac: 2, heSo: 2.67 }, { bac: 3, heSo: 3.00 },
   { bac: 4, heSo: 3.33 }, { bac: 5, heSo: 3.66 }, { bac: 6, heSo: 3.99 },
   { bac: 7, heSo: 4.32 }, { bac: 8, heSo: 4.65 }, { bac: 9, heSo: 4.98 },
+]
+const a0Bacs = [
+  { bac: 1, heSo: 2.10 }, { bac: 2, heSo: 2.41 }, { bac: 3, heSo: 2.72 },
+  { bac: 4, heSo: 3.03 }, { bac: 5, heSo: 3.34 }, { bac: 6, heSo: 3.65 },
+  { bac: 7, heSo: 3.96 }, { bac: 8, heSo: 4.27 }, { bac: 9, heSo: 4.58 },
+  { bac: 10, heSo: 4.89 },
+]
+const bBacs = [
+  { bac: 1, heSo: 1.86 }, { bac: 2, heSo: 2.06 }, { bac: 3, heSo: 2.26 },
+  { bac: 4, heSo: 2.46 }, { bac: 5, heSo: 2.66 }, { bac: 6, heSo: 2.86 },
+  { bac: 7, heSo: 3.06 }, { bac: 8, heSo: 3.26 }, { bac: 9, heSo: 3.46 },
+  { bac: 10, heSo: 3.66 }, { bac: 11, heSo: 3.86 }, { bac: 12, heSo: 4.06 },
 ]

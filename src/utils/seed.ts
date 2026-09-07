@@ -7,7 +7,28 @@ import { useLuongStore } from '@/store/luongStore'
 import { useUserStore } from '@/store/userStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 
+const REQUIRED_PHU_CAPS = [
+  { ma: 'PCCV_HT_H1', ten: 'PC Chức vụ HT (Hạng I)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 70, moTa: 'Hiệu trưởng trường hạng I - hệ số 0.7', active: true },
+  { ma: 'PCCV_HT_H2', ten: 'PC Chức vụ HT (Hạng II)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 50, moTa: 'Hiệu trưởng trường hạng II - hệ số 0.5', active: true },
+  { ma: 'PCCV_HT_H3', ten: 'PC Chức vụ HT (Hạng III)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 35, moTa: 'Hiệu trưởng trường hạng III - hệ số 0.35', active: true },
+  { ma: 'PCCV_PHT_H1', ten: 'PC Chức vụ PHT (Hạng I)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 55, moTa: 'Phó HT trường hạng I - hệ số 0.55', active: true },
+  { ma: 'PCCV_PHT_H2', ten: 'PC Chức vụ PHT (Hạng II)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 40, moTa: 'Phó HT trường hạng II - hệ số 0.4', active: true },
+  { ma: 'PCCV_PHT_H3', ten: 'PC Chức vụ PHT (Hạng III)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 25, moTa: 'Phó HT trường hạng III - hệ số 0.25', active: true },
+  { ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: '5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026', active: true },
+  { ma: 'PC_TRACH_NHIEM', ten: 'PC Trách nhiệm', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 15, moTa: 'Tổ trưởng, tổ phó chuyên môn', active: true },
+]
+
+function ensureRequiredPhuCaps() {
+  const { loaiPhuCaps, addLoaiPhuCap } = useDanhMucStore.getState()
+  const existing = new Set(loaiPhuCaps.map((p) => p.ma))
+  for (const pc of REQUIRED_PHU_CAPS) {
+    if (!existing.has(pc.ma)) addLoaiPhuCap(pc)
+  }
+}
+
 export function initSeedData() {
+  ensureRequiredPhuCaps()
+
   const dm = useDanhMucStore.getState()
   // Only skip seed when ALL categories are present — prevents partial data
   if (
@@ -77,11 +98,22 @@ export function initSeedData() {
 
   // --- Loại phụ cấp ---
   setLoaiPhuCaps([
-    { id: 'pc1', ma: 'PCUD_35', ten: 'PC Ưu đãi nghề (35%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 35, moTa: 'Giáo viên MN, TH - NĐ 182/2026', active: true },
-    { id: 'pc2', ma: 'PCUD_30', ten: 'PC Ưu đãi nghề (30%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 30, moTa: 'Giáo viên THCS - NĐ 182/2026', active: true },
-    { id: 'pc3', ma: 'PCUD_20', ten: 'PC Ưu đãi nghề (20%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 20, moTa: 'Nhân viên hỗ trợ - NĐ 182/2026', active: true },
-    { id: 'pc4', ma: 'PCCV_HT', ten: 'PC Chức vụ Hiệu trưởng', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 25, moTa: 'PC chức vụ lãnh đạo', active: true },
-    { id: 'pc5', ma: 'PCCV_PHT', ten: 'PC Chức vụ Phó Hiệu trưởng', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 15, moTa: 'PC chức vụ lãnh đạo', active: true },
+    // PC Ưu đãi nghề
+    { id: 'pc1', ma: 'PCUD_35', ten: 'PC Ưu đãi nghề (35%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 35, moTa: 'GV MN, TH - NĐ 182/2026', active: true },
+    { id: 'pc2', ma: 'PCUD_30', ten: 'PC Ưu đãi nghề (30%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 30, moTa: 'GV THCS - NĐ 182/2026', active: true },
+    { id: 'pc3', ma: 'PCUD_20', ten: 'PC Ưu đãi nghề (20%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 20, moTa: 'NV hỗ trợ - NĐ 182/2026', active: true },
+    // PC Chức vụ Hiệu trưởng theo hạng trường
+    { id: 'pc4', ma: 'PCCV_HT_H1', ten: 'PC Chức vụ HT (Hạng I)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 70, moTa: 'Hiệu trưởng trường hạng I - hệ số 0.7', active: true },
+    { id: 'pc4b', ma: 'PCCV_HT_H2', ten: 'PC Chức vụ HT (Hạng II)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 50, moTa: 'Hiệu trưởng trường hạng II - hệ số 0.5', active: true },
+    { id: 'pc4c', ma: 'PCCV_HT_H3', ten: 'PC Chức vụ HT (Hạng III)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 35, moTa: 'Hiệu trưởng trường hạng III - hệ số 0.35', active: true },
+    // PC Chức vụ Phó Hiệu trưởng theo hạng trường
+    { id: 'pc5', ma: 'PCCV_PHT_H1', ten: 'PC Chức vụ PHT (Hạng I)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 55, moTa: 'Phó HT trường hạng I - hệ số 0.55', active: true },
+    { id: 'pc5b', ma: 'PCCV_PHT_H2', ten: 'PC Chức vụ PHT (Hạng II)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 40, moTa: 'Phó HT trường hạng II - hệ số 0.4', active: true },
+    { id: 'pc5c', ma: 'PCCV_PHT_H3', ten: 'PC Chức vụ PHT (Hạng III)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 25, moTa: 'Phó HT trường hạng III - hệ số 0.25', active: true },
+    // PC Thâm niên nghề
+    { id: 'pc6', ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: '5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026', active: true },
+    // PC Trách nhiệm
+    { id: 'pc7', ma: 'PC_TRACH_NHIEM', ten: 'PC Trách nhiệm', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 15, moTa: 'Tổ trưởng, tổ phó chuyên môn', active: true },
   ])
 
   // --- Vị trí việc làm ---

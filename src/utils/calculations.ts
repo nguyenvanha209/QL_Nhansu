@@ -44,24 +44,30 @@ export function calcThuNhapThamChieu(
 
   let phuCapCN = 0
   let tongPhuCap = 0
+  let explicitThamNien = 0
 
   phuCaps.forEach((pc) => {
     const loai = loaiPhuCaps.find((l) => l.id === pc.loaiPhuCapId)
     if (!loai) return
+    const rate = pc.giaTri > 0 ? pc.giaTri : loai.giaTri
     let amount = 0
     if (loai.loaiCongThuc === 'PHAN_TRAM_LUONG_CHINH') {
-      amount = Math.round(luongChinh * loai.giaTri / 100)
+      amount = Math.round(luongChinh * rate / 100)
       phuCapCN += amount
     } else if (loai.loaiCongThuc === 'PHAN_TRAM_LUONG_CO_SO') {
-      amount = Math.round(mucLuongCoso * loai.giaTri / 100)
+      amount = Math.round(mucLuongCoso * rate / 100)
     } else {
-      amount = loai.giaTri
+      amount = rate
     }
     tongPhuCap += amount
+    if (loai.ma === 'PC_THAM_NIEN') explicitThamNien = amount
   })
 
-  const phuCapThamNien = calcPhuCapThamNien(ngayVaoNganh, luongChinh)
-  tongPhuCap += phuCapThamNien
+  const phuCapThamNien = explicitThamNien > 0
+    ? explicitThamNien
+    : calcPhuCapThamNien(ngayVaoNganh, luongChinh)
+
+  if (explicitThamNien === 0) tongPhuCap += phuCapThamNien
 
   return {
     mucLuongCoso,

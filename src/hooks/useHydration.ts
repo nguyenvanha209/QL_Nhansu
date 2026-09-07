@@ -23,18 +23,21 @@ export function useHydration() {
   useEffect(() => {
     if (hydrated) return
 
+    // Safety net: if stores don't finish in 4s, proceed anyway
+    const timeout = setTimeout(() => setHydrated(true), 4000)
+
     let done = 0
-    const total = stores.length
-    const check = () => { if (++done >= total) setHydrated(true) }
+    const check = () => { if (++done >= stores.length) setHydrated(true) }
 
     const unsubs = stores.map((store) => {
       if (store.persist.hasHydrated()) { check(); return () => {} }
-      const unsub = store.persist.onFinishHydration(check)
-      store.persist.rehydrate()
-      return unsub
+      return store.persist.onFinishHydration(check)
     })
 
-    return () => unsubs.forEach((u) => u())
+    return () => {
+      clearTimeout(timeout)
+      unsubs.forEach((u) => u())
+    }
   }, [hydrated])
 
   return hydrated

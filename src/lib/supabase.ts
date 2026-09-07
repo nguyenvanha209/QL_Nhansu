@@ -5,38 +5,40 @@ import type { StateStorage } from 'zustand/middleware'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-export const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : null
+export const supabase =
+  supabaseUrl && supabaseKey && supabaseUrl.startsWith('https://')
+    ? createClient(supabaseUrl, supabaseKey)
+    : null
 
-// Async storage adapter — syncs to Supabase when configured, falls back to localStorage
-const supabaseStateStorage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    if (!supabase) return localStorage.getItem(name)
-    const { data, error } = await supabase
-      .from('app_state')
-      .select('value')
-      .eq('key', name)
-      .maybeSingle()
-    if (error || !data) return null
-    return JSON.stringify(data.value)
+export const isSupabaseEnabled = !!supabase
+
+// localStorage-first: reads from localStorage immediately (no async wait),
+// then syncs to Supabase in the background when configured.
+const hybridStorage: StateStorage = {
+  getItem: (name: string): string | null => {
+    // Always read from localStorage — instant, no network wait
+    return localStorage.getItem(name)
   },
 
-  setItem: async (name: string, value: string): Promise<void> => {
-    if (!supabase) { localStorage.setItem(name, value); return }
-    await supabase.from('app_state').upsert(
-      { key: name, value: JSON.parse(value), updated_at: new Date().toISOString() },
-      { onConflict: 'key' }
-    )
+  setItem: (name: string, value: string): void => {
+    localStorage.setItem(name, value)
+    // Fire-and-forget sync to Supabase
+    if (supabase) {
+      supabase.from('app_state').upsert(
+        { key: name, value: JSON.parse(value), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      ).then(({ error }) => {
+        if (error) console.warn('[Supabase sync error]', error.message)
+      })
+    }
   },
 
-  removeItem: async (name: string): Promise<void> => {
-    if (!supabase) { localStorage.removeItem(name); return }
-    await supabase.from('app_state').delete().eq('key', name)
+  removeItem: (name: string): void => {
+    localStorage.removeItem(name)
+    if (supabase) {
+      supabase.from('app_state').delete().eq('key', name)
+    }
   },
 }
 
-// Use this as the storage option in every Zustand persist config
-export const persistStorage = () => createJSONStorage(() => supabaseStateStorage)
-
-export const isSupabaseEnabled = !!supabase
+export const persistStorage = () => createJSONStorage(() => hybridStorage)

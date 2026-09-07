@@ -6,25 +6,36 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 
-// Returns true once all Zustand persist stores have loaded from storage
+const stores = [
+  useAuthStore,
+  useUserStore,
+  useDanhMucStore,
+  useVienChucStore,
+  useLuongStore,
+  useDeXuatStore,
+] as const
+
 export function useHydration() {
-  const [hydrated, setHydrated] = useState(false)
+  const [hydrated, setHydrated] = useState(() =>
+    stores.every((s) => s.persist.hasHydrated())
+  )
 
   useEffect(() => {
-    const stores = [
-      useAuthStore,
-      useUserStore,
-      useDanhMucStore,
-      useVienChucStore,
-      useLuongStore,
-      useDeXuatStore,
-    ]
+    if (hydrated) return
 
-    // Trigger rehydration on all stores then check completion
-    Promise.all(stores.map((s) => s.persist.rehydrate())).then(() => {
-      setHydrated(true)
+    let done = 0
+    const total = stores.length
+    const check = () => { if (++done >= total) setHydrated(true) }
+
+    const unsubs = stores.map((store) => {
+      if (store.persist.hasHydrated()) { check(); return () => {} }
+      const unsub = store.persist.onFinishHydration(check)
+      store.persist.rehydrate()
+      return unsub
     })
-  }, [])
+
+    return () => unsubs.forEach((u) => u())
+  }, [hydrated])
 
   return hydrated
 }

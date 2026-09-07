@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import type { VienChuc } from '@/types/vienChuc'
 import { logAction } from '@/utils/auditLogger'
+import { persistStorage } from '@/lib/supabase'
 
 interface VienChucState {
   vienChucs: VienChuc[]
@@ -60,6 +61,6 @@ export const useVienChucStore = create<VienChucState>()(
 
       countByDonVi: (donViId) => get().vienChucs.filter((v) => v.active && v.donViId === donViId).length,
     }),
-    { name: 'ql-vien-chuc' }
+    { name: 'ql-vien-chuc', storage: persistStorage() }
   )
 )

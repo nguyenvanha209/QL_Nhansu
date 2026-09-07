@@ -7,10 +7,9 @@ import { useLuongStore } from '@/store/luongStore'
 import { useUserStore } from '@/store/userStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 
-const SEED_KEY = 'ql-initialized-v3'
-
 export function initSeedData() {
-  if (localStorage.getItem(SEED_KEY)) return
+  // Check store state instead of localStorage so Supabase-backed stores are handled correctly
+  if (useDanhMucStore.getState().donVis.length > 0) return
 
   const { setDonVis, setChucDanhs, setBacLuongs, setMucLuongCosos, setLoaiPhuCaps, setViTriViecLams } =
     useDanhMucStore.getState()
@@ -227,7 +226,6 @@ export function initSeedData() {
     },
   ])
 
-  localStorage.setItem(SEED_KEY, '1')
 }
 
 function d(s: string) {

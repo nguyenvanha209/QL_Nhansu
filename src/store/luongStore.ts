@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import type { HeSoLuong, PhuCapVienChuc, LichSuBienDong, NhatKyThaoTac } from '@/types/luong'
+import { persistStorage } from '@/lib/supabase'
 
 interface LuongState {
   heSoLuongs: HeSoLuong[]
@@ -84,6 +85,6 @@ export const useLuongStore = create<LuongState>()(
         set((s) => ({ nhatKyThaoTacs: [item, ...s.nhatKyThaoTacs].slice(0, 5000) }))
       },
     }),
-    { name: 'ql-luong' }
+    { name: 'ql-luong', storage: persistStorage() }
   )
 )

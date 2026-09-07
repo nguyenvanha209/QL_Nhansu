@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types/auth'
+import { persistStorage } from '@/lib/supabase'
 
 interface AuthState {
   currentUser: User | null
@@ -15,6 +16,6 @@ export const useAuthStore = create<AuthState>()(
       login: (user) => set({ currentUser: user }),
       logout: () => set({ currentUser: null }),
     }),
-    { name: 'ql-auth' }
+    { name: 'ql-auth', storage: persistStorage() }
   )
 )

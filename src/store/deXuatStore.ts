@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import type { DeXuatLuong, TrangThaiDeXuat, ChiTietDeXuat } from '@/types/deXuat'
 import type { LyDoNangLuong } from '@/types/luong'
+import { persistStorage } from '@/lib/supabase'
 import { useLuongStore } from './luongStore'
 import { useVienChucStore } from './vienChucStore'
 
@@ -147,6 +148,6 @@ export const useDeXuatStore = create<DeXuatState>()(
         }
       },
     }),
-    { name: 'ql-de-xuat' }
+    { name: 'ql-de-xuat', storage: persistStorage() }
   )
 )

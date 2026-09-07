@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types/auth'
 import { nanoid } from 'nanoid'
+import { persistStorage } from '@/lib/supabase'
 import { logAction } from '@/utils/auditLogger'
 
 interface UserState {
@@ -30,6 +31,6 @@ export const useUserStore = create<UserState>()(
       softDelete: (id) => get().updateUser(id, { active: false }),
       findByUsername: (username) => get().users.find((u) => u.username === username && u.active),
     }),
-    { name: 'ql-users' }
+    { name: 'ql-users', storage: persistStorage() }
   )
 )

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
+import { persistStorage } from '@/lib/supabase'
 import type {
   ChucDanhNgheNghiep,
   ViTriViecLam,
@@ -129,6 +130,6 @@ export const useDanhMucStore = create<DanhMucState>()(
           .bacLuongs.filter((b) => b.chucDanhId === chucDanhId)
           .sort((a, b) => a.bac - b.bac),
     }),
-    { name: 'ql-danh-muc' }
+    { name: 'ql-danh-muc', storage: persistStorage() }
   )
 )

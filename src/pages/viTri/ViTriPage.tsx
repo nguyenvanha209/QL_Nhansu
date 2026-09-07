@@ -20,7 +20,19 @@ export default function ViTriPage() {
   const data = useMemo(() => {
     const list = scopeDonViId ? viTris.filter((v) => v.donViId === scopeDonViId) : viTris
     return list.map((vt) => {
-      const thucTe = vienChucs.filter((vc) => vc.donViId === vt.donViId && vt.chucDanhIds.includes(vc.chucDanhId)).length
+      const vcInDv = vienChucs.filter((vc) => vc.donViId === vt.donViId)
+      let thucTe: number
+      if (vt.ten === 'Hiệu trưởng') {
+        thucTe = vcInDv.filter((vc) => vc.chucVu === 'HIEU_TRUONG').length
+      } else if (vt.ten === 'Phó Hiệu trưởng') {
+        thucTe = vcInDv.filter((vc) => vc.chucVu === 'PHO_HIEU_TRUONG').length
+      } else if (vt.loai === 'CHUYEN_MON') {
+        thucTe = vcInDv.filter((vc) =>
+          vt.chucDanhIds.includes(vc.chucDanhId) && vc.chucVu !== 'HIEU_TRUONG' && vc.chucVu !== 'PHO_HIEU_TRUONG'
+        ).length
+      } else {
+        thucTe = vcInDv.filter((vc) => vt.chucDanhIds.includes(vc.chucDanhId)).length
+      }
       const tongChiTieu = vt.soLuongBienChe + vt.soLuongHopDong
       const overQuota = thucTe > tongChiTieu
       return { ...vt, thucTe, tongChiTieu, overQuota }

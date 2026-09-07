@@ -8,6 +8,8 @@ export type LoaiLaoDong =
   | 'THINH_GIANG'
   | 'KHAC'
 
+export type ChucVu = 'HIEU_TRUONG' | 'PHO_HIEU_TRUONG' | 'TO_TRUONG_CM' | 'TO_PHO_CM'
+
 export interface VienChuc {
   id: string
   ma: string
@@ -22,6 +24,7 @@ export interface VienChuc {
   donViId: string
   loaiLaoDong: LoaiLaoDong
   chucDanhId: string
+  chucVu?: ChucVu
   viTriViecLamId?: string
   ngayVaoNganh: string
   ngayVaoDonVi: string
@@ -44,6 +47,13 @@ export const LOAI_LAO_DONG_LABELS: Record<LoaiLaoDong, string> = {
   HOP_DONG_TRUONG: 'Hợp đồng trường tự ký',
   THINH_GIANG: 'Hợp đồng thỉnh giảng',
   KHAC: 'Loại khác',
+}
+
+export const CHUC_VU_LABELS: Record<ChucVu, string> = {
+  HIEU_TRUONG: 'Hiệu trưởng',
+  PHO_HIEU_TRUONG: 'Phó Hiệu trưởng',
+  TO_TRUONG_CM: 'Tổ trưởng chuyên môn',
+  TO_PHO_CM: 'Tổ phó chuyên môn',
 }
 
 export const IS_BIEN_CHE: Record<LoaiLaoDong, boolean> = {

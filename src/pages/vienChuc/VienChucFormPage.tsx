@@ -10,7 +10,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, CHUC_VU_LABELS } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
 
@@ -250,6 +250,15 @@ export default function VienChucFormPage() {
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="loaiLaoDong" label="Loại hình lao động" rules={[{ required: true }]}>
               <Select options={Object.entries(LOAI_LAO_DONG_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item name="chucVu" label="Chức vụ">
+              <Select
+                options={Object.entries(CHUC_VU_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+                placeholder="Không (giáo viên/nhân viên)"
+                allowClear
+              />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>

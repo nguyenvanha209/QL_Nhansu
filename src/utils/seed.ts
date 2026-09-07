@@ -38,13 +38,24 @@ export function initSeedData() {
     dm.setBacLuongs([])
   }
 
+  // Force re-seed viên chức if missing chucVu field (added for vị trí việc làm counting)
+  const vcState = useVienChucStore.getState()
+  const needsChucVuMigration = vcState.vienChucs.length > 0 && !vcState.vienChucs.some((vc) => vc.chucVu)
+  if (needsChucVuMigration) {
+    vcState.setVienChucs([])
+    useLuongStore.getState().setHeSoLuongs([])
+    useLuongStore.getState().setPhuCapVienChucs([])
+    useDeXuatStore.getState().setDeXuats([])
+  }
+
   // Only skip seed when ALL categories are present — prevents partial data
   if (
     dm.donVis.length > 0 &&
     dm.chucDanhs.length > 0 &&
     dm.mucLuongCosos.length > 0 &&
     dm.loaiPhuCaps.length > 0 &&
-    dm.bacLuongs.length > 0
+    dm.bacLuongs.length > 0 &&
+    useVienChucStore.getState().vienChucs.length > 0
   ) return
 
   const { setDonVis, setChucDanhs, setBacLuongs, setMucLuongCosos, setLoaiPhuCaps, setViTriViecLams } =
@@ -228,7 +239,8 @@ export function initSeedData() {
       const ngaySinh = `${byear}-${String((i % 12) + 1).padStart(2, '0')}-15`
       const ngayVaoNganh = `${byear + 22}-09-01`
 
-      const vc = {
+      const chucVu = i === 0 ? 'HIEU_TRUONG' : i === 1 ? 'PHO_HIEU_TRUONG' : i === 4 ? 'TO_TRUONG_CM' : undefined
+      const vc: any = {
         id: vcId,
         ma: `VC${String(di * 10 + i + 1).padStart(5, '0')}`,
         ho: ho + ` ${String.fromCharCode(65 + di)}`,
@@ -245,6 +257,7 @@ export function initSeedData() {
         createdAt: d('2024-01-01'),
         updatedAt: d('2024-01-01'),
       }
+      if (chucVu) vc.chucVu = chucVu
       allVCs.push(vc)
 
       allHeSos.push({

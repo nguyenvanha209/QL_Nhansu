@@ -28,7 +28,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export default function AppRouter() {
   return (
-    <BrowserRouter basename="/QLVC-GIAVIEN">
+    <BrowserRouter basename="/QL_Nhansu">
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<RequireAuth><AppLayout /></RequireAuth>}>

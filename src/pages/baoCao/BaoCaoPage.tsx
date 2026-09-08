@@ -10,7 +10,7 @@ import { exportToExcel } from '@/utils/exportExcel'
 import { exportToPdf } from '@/utils/exportPdf'
 import { formatDate } from '@/utils/helpers'
 import { getLuongChinh, formatVND } from '@/utils/calculations'
-import { LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, isDangCongTac } from '@/types/vienChuc'
 
 const { Title } = Typography
 
@@ -18,7 +18,7 @@ export default function BaoCaoPage() {
   const { scopeDonViId } = useAuth()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)

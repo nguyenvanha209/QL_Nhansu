@@ -4,6 +4,7 @@ import { WarningOutlined } from '@ant-design/icons'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
+import { isDangCongTac } from '@/types/vienChuc'
 
 const { Title } = Typography
 
@@ -15,7 +16,7 @@ export default function ViTriPage() {
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const viTris = useMemo(() => allViTris.filter((v) => v.active), [allViTris])
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active), [allVienChucs])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v)), [allVienChucs])
 
   const data = useMemo(() => {
     const list = scopeDonViId ? viTris.filter((v) => v.donViId === scopeDonViId) : viTris

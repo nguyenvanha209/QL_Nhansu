@@ -5,7 +5,16 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
+import type { TrangThaiCongTac } from '@/types/vienChuc'
+
+const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
+  DANG_LAM_VIEC: 'green',
+  CHUYEN_DEN: 'blue',
+  CHUYEN_DI: 'orange',
+  NGHI_HUU: 'purple',
+  THOI_VIEC: 'default',
+}
 import { LY_DO_LABELS } from '@/types/luong'
 import { formatDate } from '@/utils/helpers'
 import { formatVND, getLuongChinh } from '@/utils/calculations'
@@ -59,7 +68,10 @@ export default function VienChucDetailPage() {
         )}
       </Space>
 
-      <Card title={<><Tag color="blue">{vc.ma}</Tag> {vc.ho} {vc.ten}</>}>
+      <Card title={<>
+        <Tag color="blue">{vc.ma}</Tag> {vc.ho} {vc.ten}{' '}
+        <Tag color={TRANG_THAI_COLORS[vc.trangThai ?? 'DANG_LAM_VIEC']}>{TRANG_THAI_CONG_TAC_LABELS[vc.trangThai ?? 'DANG_LAM_VIEC']}</Tag>
+      </>}>
         <Tabs items={[
           {
             key: '1', label: 'Hồ sơ',
@@ -71,10 +83,15 @@ export default function VienChucDetailPage() {
                 <Descriptions.Item label="CCCD">{vc.cccd ?? '—'}</Descriptions.Item>
                 <Descriptions.Item label="Điện thoại">{vc.dienThoai ?? '—'}</Descriptions.Item>
                 <Descriptions.Item label="Đơn vị">{donVi?.ten ?? vc.donViId}</Descriptions.Item>
-                <Descriptions.Item label="Chức danh">{chucDanh?.ten ?? vc.chucDanhId}</Descriptions.Item>
+                <Descriptions.Item label="Ngạch/hạng">{chucDanh?.ten ?? vc.chucDanhId}</Descriptions.Item>
                 <Descriptions.Item label="Loại hình">{LOAI_LAO_DONG_LABELS[vc.loaiLaoDong]}</Descriptions.Item>
+                <Descriptions.Item label="VTVL">{vc.vtvl ? VTVL_LABELS[vc.vtvl] : '—'}</Descriptions.Item>
+                <Descriptions.Item label="Đảng viên">{vc.laDangVien ? 'Có' : 'Không'}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào ngành">{formatDate(vc.ngayVaoNganh)}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào đơn vị">{formatDate(vc.ngayVaoDonVi)}</Descriptions.Item>
+                <Descriptions.Item label="Trình độ chuyên môn nghiệp vụ">{vc.trinhDoChuyenMon ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Nhiệm vụ chính">{vc.nhiemVuChinh ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Trình độ khác">{vc.trinhDoKhac ?? '—'}</Descriptions.Item>
                 {activeHeSo && <>
                   <Descriptions.Item label="Bậc lương hiện tại">Bậc {activeHeSo.bac} — Hệ số {activeHeSo.heSo}</Descriptions.Item>
                   <Descriptions.Item label="Lương chính tham chiếu">{formatVND(getLuongChinh(activeHeSo.heSo))}</Descriptions.Item>

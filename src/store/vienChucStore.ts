@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import type { VienChuc } from '@/types/vienChuc'
+import { isDangCongTac } from '@/types/vienChuc'
 import { logAction } from '@/utils/auditLogger'
 import { persistStorage } from '@/lib/supabase'
 
@@ -53,13 +54,13 @@ export const useVienChucStore = create<VienChucState>()(
       },
 
       getAll: (donViId) => {
-        const list = get().vienChucs.filter((v) => v.active)
+        const list = get().vienChucs.filter((v) => v.active && isDangCongTac(v))
         return donViId ? list.filter((v) => v.donViId === donViId) : list
       },
 
       getById: (id) => get().vienChucs.find((v) => v.id === id),
 
-      countByDonVi: (donViId) => get().vienChucs.filter((v) => v.active && v.donViId === donViId).length,
+      countByDonVi: (donViId) => get().vienChucs.filter((v) => v.active && isDangCongTac(v) && v.donViId === donViId).length,
     }),
     { name: 'ql-vien-chuc', storage: persistStorage() }
   )

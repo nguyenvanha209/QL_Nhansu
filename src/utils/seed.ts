@@ -6,7 +6,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useUserStore } from '@/store/userStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { getHangTruong, getPhuCapChucVuPercent } from '@/utils/hangTruong'
-import type { ChucVu } from '@/types/vienChuc'
+import type { ChucVu, VTVL } from '@/types/vienChuc'
 
 const REQUIRED_PHU_CAPS = [
   { ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường', active: true },
@@ -249,6 +249,7 @@ export function initSeedData() {
       const ngayVaoNganh = `${byear + 22}-09-01`
 
       const chucVu = i === 0 ? 'HIEU_TRUONG' : i === 1 ? 'PHO_HIEU_TRUONG' : i === 4 ? 'TO_TRUONG_CM' : undefined
+      const vtvl: VTVL = isNv ? 'NHAN_VIEN' : (chucVu === 'HIEU_TRUONG' || chucVu === 'PHO_HIEU_TRUONG') ? 'CBQL' : 'GIAO_VIEN'
       const vc: any = {
         id: vcId,
         ma: `VC${String(di * 10 + i + 1).padStart(5, '0')}`,
@@ -259,6 +260,8 @@ export function initSeedData() {
         donViId: dv.id,
         loaiLaoDong: loaiLDs[i],
         chucDanhId,
+        vtvl,
+        trangThai: 'DANG_LAM_VIEC',
         ngayVaoNganh,
         ngayVaoDonVi: ngayVaoNganh,
         heSoLuongHienTaiId: hslId,

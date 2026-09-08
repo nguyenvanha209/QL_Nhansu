@@ -14,7 +14,16 @@ export function matchSearch(text: string, query: string): boolean {
 
 export function formatDate(iso?: string): string {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString('vi-VN')
+  const d = new Date(iso)
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  return `${dd}/${mm}/${d.getFullYear()}`
+}
+
+export function splitHoTen(fullName: string): { ho: string; ten: string } {
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length <= 1) return { ho: '', ten: parts[0] ?? '' }
+  return { ho: parts.slice(0, -1).join(' '), ten: parts[parts.length - 1] }
 }
 
 export function formatDatetime(iso?: string): string {

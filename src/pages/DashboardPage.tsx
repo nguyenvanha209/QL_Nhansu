@@ -11,6 +11,7 @@ import { getDaysUntilRetirement, filterRetirementInYears } from '@/utils/retirem
 import { getReviewUrgencyColor, formatVND } from '@/utils/calculations'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS } from '@/types/deXuat'
+import { isDangCongTac } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
 const PIE_COLORS = ['#1677ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16']
@@ -18,7 +19,7 @@ const PIE_COLORS = ['#1677ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c
 export default function DashboardPage() {
   const { scopeDonViId } = useAuth()
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
   const allDeXuats = useDeXuatStore((s) => s.deXuats)

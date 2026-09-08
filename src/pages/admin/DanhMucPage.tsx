@@ -5,8 +5,8 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
 import { LOAI_DON_VI_LABELS } from '@/types/donVi'
 import { getHangTruong, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
-import { CHUC_VU_LABELS } from '@/types/vienChuc'
-import type { ChucVu } from '@/types/vienChuc'
+import { CHUC_VU_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
+import type { ChucVu, VTVL, TrangThaiCongTac } from '@/types/vienChuc'
 
 export default function DanhMucPage() {
   return (
@@ -17,6 +17,8 @@ export default function DanhMucPage() {
         { key: '3', label: 'Loại phụ cấp', children: <PhuCapTab /> },
         { key: '4', label: 'Mức lương cơ sở', children: <LuongCoSoTab /> },
         { key: '5', label: 'Chức vụ', children: <ChucVuTab /> },
+        { key: '6', label: 'VTVL', children: <VtvlTab /> },
+        { key: '7', label: 'Trạng thái', children: <TrangThaiTab /> },
       ]} />
     </Card>
   )
@@ -244,6 +246,69 @@ function ChucVuTab() {
           Vị trí việc làm khối quản lý trường học được quy định theo TT 19/2023/TT-BGDĐT (danh mục vị trí việc làm lĩnh vực giáo dục mầm non)
           và TT 20/2023/TT-BGDĐT (danh mục vị trí việc làm lĩnh vực giáo dục phổ thông). Hệ số phụ cấp chức vụ theo hạng trường (TT 33/2005/TT-BGDĐT)
           được hệ thống tự động tính khi khai báo chức vụ trong hồ sơ viên chức.
+        </Descriptions.Item>
+      </Descriptions>
+      <Table dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />
+    </>
+  )
+}
+
+const VTVL_INFO: Record<VTVL, string> = {
+  CBQL: 'Hiệu trưởng, Phó Hiệu trưởng — trực tiếp quản lý, điều hành nhà trường',
+  GIAO_VIEN: 'Trực tiếp giảng dạy, kể cả trường hợp kiêm nhiệm tổ trưởng/tổ phó chuyên môn',
+  NHAN_VIEN: 'Kế toán, văn thư, thư viện, y tế học đường và các vị trí hỗ trợ, phục vụ khác',
+}
+
+function VtvlTab() {
+  const data = (Object.keys(VTVL_LABELS) as VTVL[]).map((v) => ({
+    key: v,
+    vtvl: VTVL_LABELS[v],
+    moTa: VTVL_INFO[v],
+  }))
+
+  const cols = [
+    { title: 'VTVL', dataIndex: 'vtvl', key: 'vtvl', width: 200 },
+    { title: 'Mô tả', dataIndex: 'moTa', key: 'moTa' },
+  ]
+
+  return (
+    <>
+      <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
+        <Descriptions.Item label="Căn cứ">
+          Phân loại vị trí việc làm (VTVL) của viên chức theo 3 nhóm: Cán bộ quản lý (CBQL), Giáo viên, Nhân viên — được chọn thủ công khi khai báo hồ sơ viên chức.
+        </Descriptions.Item>
+      </Descriptions>
+      <Table dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />
+    </>
+  )
+}
+
+const TRANG_THAI_INFO: Record<TrangThaiCongTac, string> = {
+  DANG_LAM_VIEC: 'Đang công tác bình thường tại đơn vị',
+  CHUYEN_DEN: 'Mới chuyển đến đơn vị từ nơi khác, vẫn tính là đang công tác',
+  CHUYEN_DI: 'Đã chuyển công tác sang đơn vị/địa phương khác',
+  NGHI_HUU: 'Đã nghỉ hưu theo chế độ',
+  THOI_VIEC: 'Đã thôi việc, chấm dứt hợp đồng lao động/làm việc',
+}
+
+function TrangThaiTab() {
+  const data = (Object.keys(TRANG_THAI_CONG_TAC_LABELS) as TrangThaiCongTac[]).map((t) => ({
+    key: t,
+    trangThai: TRANG_THAI_CONG_TAC_LABELS[t],
+    moTa: TRANG_THAI_INFO[t],
+  }))
+
+  const cols = [
+    { title: 'Trạng thái', dataIndex: 'trangThai', key: 'trangThai', width: 180 },
+    { title: 'Ý nghĩa', dataIndex: 'moTa', key: 'moTa' },
+  ]
+
+  return (
+    <>
+      <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
+        <Descriptions.Item label="Căn cứ">
+          Trạng thái công tác phản ánh vòng đời làm việc của viên chức. Chỉ người có trạng thái "Đang làm việc" hoặc "Chuyển đến" được tính vào số liệu
+          Tổng quan, chỉ tiêu Vị trí việc làm, Báo cáo, Dự báo nghỉ hưu và danh sách chọn ở Đề xuất lương.
         </Descriptions.Item>
       </Descriptions>
       <Table dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />

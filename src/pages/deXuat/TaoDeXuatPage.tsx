@@ -9,6 +9,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import type { ChiTietDeXuat } from '@/types/deXuat'
+import { isDangCongTac } from '@/types/vienChuc'
 
 const { Title } = Typography
 
@@ -22,7 +23,7 @@ export default function TaoDeXuatPage() {
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active), [allVienChucs])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v)), [allVienChucs])
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
   const [chiTiet, setChiTiet] = useState<ChiTietDeXuat[]>([])

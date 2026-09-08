@@ -10,10 +10,11 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, CHUC_VU_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, CHUC_VU_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
 import type { ChucVu } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, getPhuCapChucVuPercent, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import type { LoaiDonVi } from '@/types/donVi'
+import { splitHoTen } from '@/utils/helpers'
 
 const { Title, Text } = Typography
 
@@ -100,6 +101,7 @@ export default function VienChucFormPage() {
     if (!vc) return
     form.setFieldsValue({
       ...vc,
+      hoTenFull: `${vc.ho} ${vc.ten}`.trim(),
       ngaySinh: dayjs(vc.ngaySinh),
       ngayVaoNganh: dayjs(vc.ngayVaoNganh),
       ngayVaoDonVi: dayjs(vc.ngayVaoDonVi),
@@ -121,8 +123,12 @@ export default function VienChucFormPage() {
   }, [vc])
 
   const onFinish = (values: any) => {
+    const { hoTenFull, ...restValues } = values
+    const { ho, ten } = splitHoTen(hoTenFull)
     const formatted = {
-      ...values,
+      ...restValues,
+      ho,
+      ten,
       ngaySinh: values.ngaySinh?.format('YYYY-MM-DD'),
       ngayVaoNganh: values.ngayVaoNganh?.format('YYYY-MM-DD'),
       ngayVaoDonVi: values.ngayVaoDonVi?.format('YYYY-MM-DD'),
@@ -228,19 +234,14 @@ export default function VienChucFormPage() {
         form={form}
         layout="vertical"
         onFinish={onFinish}
-        initialValues={{ gioiTinh: 'NU', loaiLaoDong: 'VIEN_CHUC', phuCaps: [] }}
+        initialValues={{ gioiTinh: 'NU', loaiLaoDong: 'VIEN_CHUC', phuCaps: [], trangThai: 'DANG_LAM_VIEC', laDangVien: false }}
       >
         {/* ── Thông tin cá nhân ── */}
         <Divider titlePlacement="left">Thông tin cá nhân</Divider>
         <Row gutter={16}>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="ho" label="Họ và tên đệm" rules={[{ required: true }]}>
-              <Input placeholder="VD: Nguyễn Thị" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Form.Item name="ten" label="Tên" rules={[{ required: true }]}>
-              <Input placeholder="VD: Hoa" />
+            <Form.Item name="hoTenFull" label="Họ và tên" rules={[{ required: true, message: 'Nhập họ và tên' }]}>
+              <Input placeholder="VD: Nguyễn Thị Hoa" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
@@ -263,6 +264,11 @@ export default function VienChucFormPage() {
               <Input placeholder="0xxxxxxxxx" />
             </Form.Item>
           </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item name="laDangVien" label="Đảng viên">
+              <Select options={[{ value: true, label: 'Có' }, { value: false, label: 'Không' }]} />
+            </Form.Item>
+          </Col>
         </Row>
 
         {/* ── Thông tin công tác ── */}
@@ -274,7 +280,7 @@ export default function VienChucFormPage() {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="chucDanhId" label="Mã chức danh nghề nghiệp" rules={[{ required: true }]}>
+            <Form.Item name="chucDanhId" label="Ngạch/hạng" rules={[{ required: true }]}>
               <Select
                 options={chucDanhOptions}
                 placeholder="Chọn chức danh"
@@ -296,6 +302,19 @@ export default function VienChucFormPage() {
                 placeholder="Không (giáo viên/nhân viên)"
                 allowClear
               />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item name="vtvl" label="VTVL (Vị trí việc làm)" rules={[{ required: true, message: 'Chọn VTVL' }]}>
+              <Select
+                options={Object.entries(VTVL_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+                placeholder="Chọn VTVL"
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item name="trangThai" label="Trạng thái công tác" rules={[{ required: true }]}>
+              <Select options={Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
             </Form.Item>
           </Col>
           {pccvInfo && (
@@ -321,6 +340,26 @@ export default function VienChucFormPage() {
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="ngayVaoBienChe" label="Ngày vào biên chế">
               <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        {/* ── Trình độ & Nhiệm vụ ── */}
+        <Divider titlePlacement="left">Trình độ & Nhiệm vụ</Divider>
+        <Row gutter={16}>
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item name="trinhDoChuyenMon" label="Trình độ chuyên môn nghiệp vụ">
+              <Input placeholder="VD: Đại học Sư phạm Tiểu học" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item name="nhiemVuChinh" label="Nhiệm vụ chính">
+              <Input placeholder="VD: Giảng dạy lớp 5A" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item name="trinhDoKhac" label="Trình độ khác">
+              <Input placeholder="VD: Tin học, ngoại ngữ, LLCT..." />
             </Form.Item>
           </Col>
         </Row>

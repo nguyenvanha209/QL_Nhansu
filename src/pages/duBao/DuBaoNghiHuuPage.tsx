@@ -6,6 +6,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { calcRetirementDate, getDaysUntilRetirement } from '@/utils/retirement'
 import { formatDate } from '@/utils/helpers'
+import { isDangCongTac } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
 
@@ -15,7 +16,7 @@ export default function DuBaoNghiHuuPage() {
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
 
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)

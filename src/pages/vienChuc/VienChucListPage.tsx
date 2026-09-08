@@ -6,7 +6,16 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { matchSearch, formatDate } from '@/utils/helpers'
-import { LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
+import type { TrangThaiCongTac } from '@/types/vienChuc'
+
+const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
+  DANG_LAM_VIEC: 'green',
+  CHUYEN_DEN: 'blue',
+  CHUYEN_DI: 'orange',
+  NGHI_HUU: 'purple',
+  THOI_VIEC: 'default',
+}
 
 const { Title } = Typography
 
@@ -23,14 +32,16 @@ export default function VienChucListPage() {
   const [search, setSearch] = useState('')
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const [filterLoai, setFilterLoai] = useState<string | undefined>()
+  const [filterTrangThai, setFilterTrangThai] = useState<string | undefined>()
 
   const data = useMemo(() => {
     let list = allVienChucs.filter((v) => v.active && (!scopeDonViId || v.donViId === scopeDonViId))
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
     if (filterLoai) list = list.filter((v) => v.loaiLaoDong === filterLoai)
+    if (filterTrangThai) list = list.filter((v) => (v.trangThai ?? 'DANG_LAM_VIEC') === filterTrangThai)
     if (search) list = list.filter((v) => matchSearch(`${v.ho} ${v.ten} ${v.ma}`, search))
     return list
-  }, [allVienChucs, scopeDonViId, filterDonVi, filterLoai, search])
+  }, [allVienChucs, scopeDonViId, filterDonVi, filterLoai, filterTrangThai, search])
 
   const canWrite = hasPermission('vienChuc', 'write')
 
@@ -57,6 +68,17 @@ export default function VienChucListPage() {
     {
       title: 'Loại hình', dataIndex: 'loaiLaoDong', key: 'll',
       render: (v: string) => <Tag color={v === 'VIEN_CHUC' ? 'blue' : v === 'TAP_SU' ? 'cyan' : 'default'}>{LOAI_LAO_DONG_LABELS[v as keyof typeof LOAI_LAO_DONG_LABELS] ?? v}</Tag>,
+    },
+    {
+      title: 'VTVL', dataIndex: 'vtvl', key: 'vtvl', width: 130,
+      render: (v?: string) => v ? <Tag color={v === 'CBQL' ? 'gold' : v === 'GIAO_VIEN' ? 'blue' : 'default'}>{VTVL_LABELS[v as keyof typeof VTVL_LABELS]}</Tag> : '—',
+    },
+    {
+      title: 'Trạng thái', dataIndex: 'trangThai', key: 'trangThai', width: 130,
+      render: (v?: TrangThaiCongTac) => {
+        const key = v ?? 'DANG_LAM_VIEC'
+        return <Tag color={TRANG_THAI_COLORS[key]}>{TRANG_THAI_CONG_TAC_LABELS[key]}</Tag>
+      },
     },
     {
       title: 'Thao tác', key: 'action', width: 120,
@@ -118,6 +140,14 @@ export default function VienChucListPage() {
           allowClear
           options={Object.entries(LOAI_LAO_DONG_LABELS).map(([k, v]) => ({ value: k, label: v }))}
         />
+        <Select
+          placeholder="Trạng thái"
+          style={{ width: 160 }}
+          value={filterTrangThai}
+          onChange={setFilterTrangThai}
+          allowClear
+          options={Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+        />
       </Space>
 
       <Table
@@ -125,7 +155,7 @@ export default function VienChucListPage() {
         columns={columns}
         rowKey="id"
         size="small"
-        scroll={{ x: 900 }}
+        scroll={{ x: 1100 }}
         pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (t) => `Tổng ${t} bản ghi` }}
       />
     </Card>

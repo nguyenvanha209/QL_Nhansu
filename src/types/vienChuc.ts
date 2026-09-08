@@ -10,6 +10,10 @@ export type LoaiLaoDong =
 
 export type ChucVu = 'HIEU_TRUONG' | 'PHO_HIEU_TRUONG' | 'TO_TRUONG_CM' | 'TO_PHO_CM'
 
+export type VTVL = 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN'
+
+export type TrangThaiCongTac = 'DANG_LAM_VIEC' | 'CHUYEN_DEN' | 'CHUYEN_DI' | 'NGHI_HUU' | 'THOI_VIEC'
+
 export interface VienChuc {
   id: string
   ma: string
@@ -26,6 +30,12 @@ export interface VienChuc {
   chucDanhId: string
   chucVu?: ChucVu
   viTriViecLamId?: string
+  vtvl?: VTVL
+  trangThai?: TrangThaiCongTac
+  trinhDoChuyenMon?: string
+  nhiemVuChinh?: string
+  trinhDoKhac?: string
+  laDangVien?: boolean
   ngayVaoNganh: string
   ngayVaoDonVi: string
   ngayHetTapSu?: string
@@ -65,4 +75,22 @@ export const IS_BIEN_CHE: Record<LoaiLaoDong, boolean> = {
   HOP_DONG_TRUONG: false,
   THINH_GIANG: false,
   KHAC: false,
+}
+
+export const VTVL_LABELS: Record<VTVL, string> = {
+  CBQL: 'Cán bộ quản lý',
+  GIAO_VIEN: 'Giáo viên',
+  NHAN_VIEN: 'Nhân viên',
+}
+
+export const TRANG_THAI_CONG_TAC_LABELS: Record<TrangThaiCongTac, string> = {
+  DANG_LAM_VIEC: 'Đang làm việc',
+  CHUYEN_DEN: 'Chuyển đến',
+  CHUYEN_DI: 'Chuyển đi',
+  NGHI_HUU: 'Nghỉ hưu',
+  THOI_VIEC: 'Thôi việc',
+}
+
+export function isDangCongTac(vc: Pick<VienChuc, 'trangThai'>): boolean {
+  return !vc.trangThai || vc.trangThai === 'DANG_LAM_VIEC' || vc.trangThai === 'CHUYEN_DEN'
 }

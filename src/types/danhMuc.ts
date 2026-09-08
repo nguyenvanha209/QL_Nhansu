@@ -19,9 +19,6 @@ export interface ViTriViecLam {
   ten: string
   loai: LoaiViTri
   donViId: string
-  soLuongBienCheNganSach: number
-  soLuongBienCheSuNghiep: number
-  soLuongHopDong: number
   chucDanhIds: string[]
   active: boolean
 }
@@ -48,6 +45,26 @@ export interface LoaiPhuCap {
   ten: string
   loaiCongThuc: CongThucPhuCap
   giaTri: number
+  moTa?: string
+  active: boolean
+}
+
+// Danh mục VTVL (vị trí việc làm) — admin tùy biến thêm/sửa/xóa
+export interface VtvlDanhMuc {
+  id: string
+  ma: string
+  ten: string
+  moTa?: string
+  active: boolean
+}
+
+// Danh mục Chức vụ — admin tùy biến thêm/sửa/xóa
+export interface ChucVuDanhMuc {
+  id: string
+  ma: string
+  ten: string
+  apDung?: string
+  canCu?: string
   moTa?: string
   active: boolean
 }

@@ -28,6 +28,7 @@ export default function VienChucListPage() {
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
+  const vtvls = useDanhMucStore((s) => s.vtvls)
 
   const [search, setSearch] = useState('')
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
@@ -71,7 +72,7 @@ export default function VienChucListPage() {
     },
     {
       title: 'VTVL', dataIndex: 'vtvl', key: 'vtvl', width: 130,
-      render: (v?: string) => v ? <Tag color={v === 'CBQL' ? 'gold' : v === 'GIAO_VIEN' ? 'blue' : 'default'}>{VTVL_LABELS[v as keyof typeof VTVL_LABELS]}</Tag> : '—',
+      render: (v?: string) => v ? <Tag color={v === 'CBQL' ? 'gold' : v === 'GIAO_VIEN' ? 'blue' : 'default'}>{vtvls.find((x) => x.ma === v)?.ten ?? VTVL_LABELS[v as keyof typeof VTVL_LABELS] ?? v}</Tag> : '—',
     },
     {
       title: 'Trạng thái', dataIndex: 'trangThai', key: 'trangThai', width: 130,

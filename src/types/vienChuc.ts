@@ -8,9 +8,11 @@ export type LoaiLaoDong =
   | 'THINH_GIANG'
   | 'KHAC'
 
-export type ChucVu = 'HIEU_TRUONG' | 'PHO_HIEU_TRUONG' | 'TO_TRUONG_CM' | 'TO_PHO_CM'
+// 4 mã chuẩn dùng để tính phụ cấp chức vụ (TT 33/2005); admin có thể thêm mã khác trong danh mục
+export type ChucVu = 'HIEU_TRUONG' | 'PHO_HIEU_TRUONG' | 'TO_TRUONG_CM' | 'TO_PHO_CM' | (string & {})
 
-export type VTVL = 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN'
+// 3 nhóm chuẩn; admin có thể thêm nhóm khác trong danh mục
+export type VTVL = 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN' | (string & {})
 
 export type TrangThaiCongTac = 'DANG_LAM_VIEC' | 'CHUYEN_DEN' | 'CHUYEN_DI' | 'NGHI_HUU' | 'THOI_VIEC'
 

@@ -10,6 +10,9 @@ export interface DonVi {
   soLop?: number
   diaChi?: string
   hieuTruong?: string
+  chiTieuBienCheNganSach?: number
+  chiTieuBienCheSuNghiep?: number
+  chiTieuHopDong?: number
   active: boolean
   createdAt: string
 }

@@ -35,6 +35,7 @@ export default function VienChucDetailPage() {
   const activePhuCaps = allPhuCaps.filter((p) => p.vienChucId === id && p.isActive)
   const lichSu = allLichSu.filter((l) => l.vienChucId === id).sort((a, b) => b.ngayThayDoi.localeCompare(a.ngayThayDoi))
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
+  const vtvls = useDanhMucStore((s) => s.vtvls)
 
   if (!vc) return <Result status="404" title="Không tìm thấy viên chức" extra={<Button onClick={() => navigate('/vien-chuc')}>Quay lại</Button>} />
   if (scopeDonViId && vc.donViId !== scopeDonViId) return <Result status="403" title="Không có quyền xem" />
@@ -97,7 +98,7 @@ export default function VienChucDetailPage() {
                 {IS_BIEN_CHE[vc.loaiLaoDong] && (
                   <Descriptions.Item label="Nguồn kinh phí">{vc.nguonKinhPhi ? NGUON_KINH_PHI_LABELS[vc.nguonKinhPhi] : '—'}</Descriptions.Item>
                 )}
-                <Descriptions.Item label="VTVL">{vc.vtvl ? VTVL_LABELS[vc.vtvl] : '—'}</Descriptions.Item>
+                <Descriptions.Item label="VTVL">{vc.vtvl ? (vtvls.find((x) => x.ma === vc.vtvl)?.ten ?? VTVL_LABELS[vc.vtvl] ?? vc.vtvl) : '—'}</Descriptions.Item>
                 <Descriptions.Item label="Đảng viên">{vc.laDangVien ? 'Có' : 'Không'}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào ngành">{formatDate(vc.ngayVaoNganh)}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào đơn vị">{formatDate(vc.ngayVaoDonVi)}</Descriptions.Item>

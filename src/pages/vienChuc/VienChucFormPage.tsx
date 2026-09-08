@@ -10,7 +10,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, CHUC_VU_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS } from '@/types/vienChuc'
 import type { ChucVu, LoaiLaoDong } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import type { LoaiDonVi } from '@/types/donVi'
@@ -40,7 +40,7 @@ export default function VienChucFormPage() {
   const [form] = Form.useForm()
   const { currentUser, scopeDonViId, isCBTruong } = useAuth()
   const { getById, addVienChuc, updateVienChuc } = useVienChucStore()
-  const { donVis, chucDanhs, bacLuongs, loaiPhuCaps, getBacLuongsForChucDanh } = useDanhMucStore.getState()
+  const { donVis, chucDanhs, bacLuongs, loaiPhuCaps, vtvls, chucVus, getBacLuongsForChucDanh } = useDanhMucStore.getState()
   const luongState = useLuongStore.getState()
 
   const vc = isEdit ? getById(id) : undefined
@@ -56,6 +56,9 @@ export default function VienChucFormPage() {
   const phuCapOptions = loaiPhuCaps
     .filter((pc) => pc.active)
     .map((pc) => ({ value: pc.id, label: `${pc.ma} — ${pc.ten}` }))
+
+  const vtvlOptions = vtvls.filter((v) => v.active).map((v) => ({ value: v.ma, label: v.ten }))
+  const chucVuOptions = chucVus.filter((c) => c.active).map((c) => ({ value: c.ma, label: c.ten }))
 
   const watchChucDanhId = Form.useWatch('chucDanhId', form)
   const bacLuongOptions = useMemo(() => {
@@ -286,19 +289,12 @@ export default function VienChucFormPage() {
           )}
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="vtvl" label="VTVL (Vị trí việc làm)" rules={[{ required: true, message: 'Chọn VTVL' }]}>
-              <Select
-                options={Object.entries(VTVL_LABELS).map(([k, v]) => ({ value: k, label: v }))}
-                placeholder="Chọn VTVL"
-              />
+              <Select options={vtvlOptions} placeholder="Chọn VTVL" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="chucVu" label="Chức vụ">
-              <Select
-                options={Object.entries(CHUC_VU_LABELS).map(([k, v]) => ({ value: k, label: v }))}
-                placeholder="Không (giáo viên/nhân viên)"
-                allowClear
-              />
+              <Select options={chucVuOptions} placeholder="Không (giáo viên/nhân viên)" allowClear />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>

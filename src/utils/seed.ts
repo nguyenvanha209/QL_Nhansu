@@ -24,6 +24,32 @@ function ensureRequiredPhuCaps() {
   }
 }
 
+const DEFAULT_VTVLS = [
+  { ma: 'CBQL', ten: 'Cán bộ quản lý', moTa: 'Hiệu trưởng, Phó Hiệu trưởng — trực tiếp quản lý, điều hành nhà trường', active: true },
+  { ma: 'GIAO_VIEN', ten: 'Giáo viên', moTa: 'Trực tiếp giảng dạy, kể cả trường hợp kiêm nhiệm tổ trưởng/tổ phó chuyên môn', active: true },
+  { ma: 'NHAN_VIEN', ten: 'Nhân viên', moTa: 'Kế toán, văn thư, thư viện, y tế học đường và các vị trí hỗ trợ, phục vụ khác', active: true },
+]
+
+const DEFAULT_CHUC_VUS = [
+  { ma: 'HIEU_TRUONG', ten: 'Hiệu trưởng', apDung: 'Mầm non, Tiểu học, THCS', canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)', moTa: 'Quản lý, điều hành toàn bộ hoạt động nhà trường', active: true },
+  { ma: 'PHO_HIEU_TRUONG', ten: 'Phó Hiệu trưởng', apDung: 'Mầm non, Tiểu học, THCS', canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)', moTa: 'Số lượng theo hạng trường và quy mô lớp/học sinh', active: true },
+  { ma: 'TO_TRUONG_CM', ten: 'Tổ trưởng chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Phụ trách 1 tổ chuyên môn theo cơ cấu tổ chức nhà trường', active: true },
+  { ma: 'TO_PHO_CM', ten: 'Tổ phó chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Hỗ trợ tổ trưởng chuyên môn', active: true },
+]
+
+// Danh mục VTVL / Chức vụ chuyển từ hằng số cứng sang dữ liệu admin tùy biến được
+function ensureVtvlVaChucVu() {
+  const { vtvls, addVtvl, chucVus, addChucVu } = useDanhMucStore.getState()
+  const vtvlMas = new Set(vtvls.map((v) => v.ma))
+  for (const v of DEFAULT_VTVLS) {
+    if (!vtvlMas.has(v.ma)) addVtvl(v)
+  }
+  const chucVuMas = new Set(chucVus.map((c) => c.ma))
+  for (const c of DEFAULT_CHUC_VUS) {
+    if (!chucVuMas.has(c.ma)) addChucVu(c)
+  }
+}
+
 // PC Chức vụ đổi từ "% lương cơ sở" sang "hệ số cộng thẳng" (TT 33/2005 vốn là hệ số, không phải %)
 function migratePhuCapChucVuFormula() {
   const { loaiPhuCaps, updateLoaiPhuCap } = useDanhMucStore.getState()
@@ -45,25 +71,29 @@ function migratePhuCapChucVuFormula() {
   }
 }
 
-// Chỉ tiêu biên chế tách "Hưởng lương ngân sách" / "Nguồn thu sự nghiệp" thay vì 1 số duy nhất
-function migrateViTriBienCheSplit() {
+// Chỉ tiêu biên chế/hợp đồng chuyển từ cấp vị trí việc làm sang cấp trường
+// (giao tổng số cho cả trường, không giao chi tiết từng vị trí)
+function migrateChiTieuToDonVi() {
   const dm = useDanhMucStore.getState()
-  const needsFix = dm.viTriViecLams.some((v: any) => v.soLuongBienCheNganSach === undefined)
-  if (needsFix) {
-    dm.setViTriViecLams(
-      dm.viTriViecLams.map((v: any) =>
-        v.soLuongBienCheNganSach === undefined
-          ? { ...v, soLuongBienCheNganSach: v.soLuongBienChe ?? 0, soLuongBienCheSuNghiep: 0 }
-          : v
-      )
-    )
-  }
+  const needsMigration = dm.donVis.some((d) => d.chiTieuBienCheNganSach === undefined)
+  if (!needsMigration) return
+  dm.setDonVis(
+    dm.donVis.map((d) => {
+      if (d.chiTieuBienCheNganSach !== undefined) return d
+      const vts = dm.viTriViecLams.filter((v: any) => v.donViId === d.id)
+      const chiTieuBienCheNganSach = vts.reduce((s, v: any) => s + (v.soLuongBienCheNganSach ?? v.soLuongBienChe ?? 0), 0)
+      const chiTieuBienCheSuNghiep = vts.reduce((s, v: any) => s + (v.soLuongBienCheSuNghiep ?? 0), 0)
+      const chiTieuHopDong = vts.reduce((s, v: any) => s + (v.soLuongHopDong ?? 0), 0)
+      return { ...d, chiTieuBienCheNganSach, chiTieuBienCheSuNghiep, chiTieuHopDong }
+    })
+  )
 }
 
 export function initSeedData() {
   ensureRequiredPhuCaps()
+  ensureVtvlVaChucVu()
   migratePhuCapChucVuFormula()
-  migrateViTriBienCheSplit()
+  migrateChiTieuToDonVi()
 
   const dm = useDanhMucStore.getState()
 
@@ -125,11 +155,11 @@ export function initSeedData() {
 
   // --- Đơn vị ---
   const donVis = [
-    { id: 'dv1', ma: 'MN01', ten: 'Trường MN Gia Viên', loai: 'MAM_NON' as const, soLop: 8, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
-    { id: 'dv2', ma: 'TH01', ten: 'Trường TH Gia Viên 1', loai: 'TIEU_HOC' as const, soLop: 22, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
-    { id: 'dv3', ma: 'TH02', ten: 'Trường TH Gia Viên 2', loai: 'TIEU_HOC' as const, soLop: 15, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
-    { id: 'dv4', ma: 'CS01', ten: 'Trường THCS Gia Viên', loai: 'THCS' as const, soLop: 24, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
-    { id: 'dv5', ma: 'CS02', ten: 'Trường THCS Phạm Hồng Thái', loai: 'THCS' as const, soLop: 12, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
+    { id: 'dv1', ma: 'MN01', ten: 'Trường MN Gia Viên', loai: 'MAM_NON' as const, soLop: 8, diaChi: 'Phường Gia Viên', chiTieuBienCheNganSach: 18, chiTieuBienCheSuNghiep: 2, chiTieuHopDong: 4, active: true, createdAt: d('2020-01-01') },
+    { id: 'dv2', ma: 'TH01', ten: 'Trường TH Gia Viên 1', loai: 'TIEU_HOC' as const, soLop: 22, diaChi: 'Phường Gia Viên', chiTieuBienCheNganSach: 18, chiTieuBienCheSuNghiep: 2, chiTieuHopDong: 4, active: true, createdAt: d('2020-01-01') },
+    { id: 'dv3', ma: 'TH02', ten: 'Trường TH Gia Viên 2', loai: 'TIEU_HOC' as const, soLop: 15, diaChi: 'Phường Gia Viên', chiTieuBienCheNganSach: 18, chiTieuBienCheSuNghiep: 2, chiTieuHopDong: 4, active: true, createdAt: d('2020-01-01') },
+    { id: 'dv4', ma: 'CS01', ten: 'Trường THCS Gia Viên', loai: 'THCS' as const, soLop: 24, diaChi: 'Phường Gia Viên', chiTieuBienCheNganSach: 18, chiTieuBienCheSuNghiep: 2, chiTieuHopDong: 4, active: true, createdAt: d('2020-01-01') },
+    { id: 'dv5', ma: 'CS02', ten: 'Trường THCS Phạm Hồng Thái', loai: 'THCS' as const, soLop: 12, diaChi: 'Phường Gia Viên', chiTieuBienCheNganSach: 18, chiTieuBienCheSuNghiep: 2, chiTieuHopDong: 4, active: true, createdAt: d('2020-01-01') },
   ]
   setDonVis(donVis)
 
@@ -242,16 +272,16 @@ export function initSeedData() {
     THCS: ['cd_cs1', 'cd_cs2', 'cd_cs3'],
   }
   const viTriDataFn = (loaiDv: string) => [
-    { ten: 'Hiệu trưởng', loai: 'QUAN_LY' as const, soLuongBienCheNganSach: 1, soLuongBienCheSuNghiep: 0, soLuongHopDong: 0, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
-    { ten: 'Phó Hiệu trưởng', loai: 'QUAN_LY' as const, soLuongBienCheNganSach: 2, soLuongBienCheSuNghiep: 0, soLuongHopDong: 0, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
-    { ten: 'Giáo viên đứng lớp', loai: 'CHUYEN_MON' as const, soLuongBienCheNganSach: 13, soLuongBienCheSuNghiep: 2, soLuongHopDong: 3, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
-    { ten: 'Kế toán', loai: 'HO_TRO' as const, soLuongBienCheNganSach: 1, soLuongBienCheSuNghiep: 0, soLuongHopDong: 0, chucDanhIds: ['cd_kt'] },
-    { ten: 'Văn thư - Thư viện', loai: 'HO_TRO' as const, soLuongBienCheNganSach: 1, soLuongBienCheSuNghiep: 0, soLuongHopDong: 1, chucDanhIds: ['cd_vt'] },
+    { ten: 'Hiệu trưởng', loai: 'QUAN_LY' as const, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Phó Hiệu trưởng', loai: 'QUAN_LY' as const, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Giáo viên đứng lớp', loai: 'CHUYEN_MON' as const, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Kế toán', loai: 'HO_TRO' as const, chucDanhIds: ['cd_kt'] },
+    { ten: 'Văn thư - Thư viện', loai: 'HO_TRO' as const, chucDanhIds: ['cd_vt'] },
   ]
   const viTriViecLams: any[] = []
   donVis.forEach((dv) => {
     viTriDataFn(dv.loai).forEach((vt, vi) => {
-      viTriViecLams.push({ id: `vt_${dv.id}_${vi}`, ma: `${vt.ten.substring(0, 3).toUpperCase()}-${dv.ma}`, ten: vt.ten, loai: vt.loai, donViId: dv.id, soLuongBienCheNganSach: vt.soLuongBienCheNganSach, soLuongBienCheSuNghiep: vt.soLuongBienCheSuNghiep, soLuongHopDong: vt.soLuongHopDong, chucDanhIds: vt.chucDanhIds, active: true })
+      viTriViecLams.push({ id: `vt_${dv.id}_${vi}`, ma: `${vt.ten.substring(0, 3).toUpperCase()}-${dv.ma}`, ten: vt.ten, loai: vt.loai, donViId: dv.id, chucDanhIds: vt.chucDanhIds, active: true })
     })
   })
   setViTriViecLams(viTriViecLams)

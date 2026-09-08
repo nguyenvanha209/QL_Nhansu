@@ -1,26 +1,54 @@
 import { useState } from 'react'
-import { Card, Tabs, Table, Button, Modal, Form, Input, InputNumber, Select, Space, Popconfirm, Tag, Descriptions, App } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Card, Tabs, Table, Button, Modal, Form, Input, InputNumber, Select, Space, Popconfirm, Tag, Descriptions, Typography, Grid, App } from 'antd'
+import {
+  PlusOutlined, EditOutlined, DeleteOutlined, BankOutlined, IdcardOutlined,
+  DollarOutlined, ProfileOutlined, ApartmentOutlined, SolutionOutlined, FlagOutlined,
+} from '@ant-design/icons'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
 import { LOAI_DON_VI_LABELS } from '@/types/donVi'
 import { getHangTruong, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
-import { CHUC_VU_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
-import type { ChucVu, VTVL, TrangThaiCongTac } from '@/types/vienChuc'
+import { TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
+import type { TrangThaiCongTac } from '@/types/vienChuc'
+
+const { Title, Text } = Typography
+
+function TabLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{icon}{text}</span>
+}
 
 export default function DanhMucPage() {
+  const screens = Grid.useBreakpoint()
+  const isWide = !!screens.lg
+
   return (
-    <Card>
-      <Tabs items={[
-        { key: '1', label: 'Đơn vị trường', children: <DonViTab /> },
-        { key: '2', label: 'Chức danh NN', children: <ChucDanhTab /> },
-        { key: '3', label: 'Loại phụ cấp', children: <PhuCapTab /> },
-        { key: '4', label: 'Mức lương cơ sở', children: <LuongCoSoTab /> },
-        { key: '5', label: 'Chức vụ', children: <ChucVuTab /> },
-        { key: '6', label: 'VTVL', children: <VtvlTab /> },
-        { key: '7', label: 'Trạng thái', children: <TrangThaiTab /> },
-      ]} />
+    <Card styles={{ body: { padding: isWide ? 0 : 16 } }}>
+      <Tabs
+        tabPosition={isWide ? 'left' : 'top'}
+        size="middle"
+        style={{ minHeight: 520 }}
+        tabBarStyle={isWide ? { width: 220, paddingTop: 12 } : undefined}
+        items={[
+          { key: '1', label: <TabLabel icon={<BankOutlined />} text="Đơn vị trường" />, children: <TabPane title="Đơn vị trường" desc="Danh sách trường học trực thuộc, số lớp và hạng trường (dùng để tính phụ cấp chức vụ)."><DonViTab /></TabPane> },
+          { key: '2', label: <TabLabel icon={<IdcardOutlined />} text="Chức danh NN" />, children: <TabPane title="Chức danh nghề nghiệp" desc="Mã ngạch/hạng chức danh nghề nghiệp theo quy định, dùng khi xếp lương viên chức."><ChucDanhTab /></TabPane> },
+          { key: '3', label: <TabLabel icon={<ProfileOutlined />} text="Loại phụ cấp" />, children: <TabPane title="Loại phụ cấp" desc="Các loại phụ cấp và công thức tính (% lương chính, % lương cơ sở, tiền mặt, hệ số)."><PhuCapTab /></TabPane> },
+          { key: '4', label: <TabLabel icon={<DollarOutlined />} text="Mức lương cơ sở" />, children: <TabPane title="Mức lương cơ sở" desc="Mức lương cơ sở theo từng thời kỳ, lưu để tra cứu và tham chiếu văn bản."><LuongCoSoTab /></TabPane> },
+          { key: '5', label: <TabLabel icon={<SolutionOutlined />} text="Chức vụ" />, children: <TabPane title="Chức vụ" desc="Chức vụ lãnh đạo, quản lý trong nhà trường. Admin có thể thêm/sửa/xóa để tùy biến."><ChucVuTab /></TabPane> },
+          { key: '6', label: <TabLabel icon={<ApartmentOutlined />} text="VTVL" />, children: <TabPane title="Vị trí việc làm (VTVL)" desc="Phân loại vị trí việc làm của viên chức. Admin có thể thêm/sửa/xóa để tùy biến."><VtvlTab /></TabPane> },
+          { key: '7', label: <TabLabel icon={<FlagOutlined />} text="Trạng thái" />, children: <TabPane title="Trạng thái công tác" desc="Vòng đời công tác của viên chức, ảnh hưởng tới số liệu tổng hợp toàn hệ thống."><TrangThaiTab /></TabPane> },
+        ]}
+      />
     </Card>
+  )
+}
+
+function TabPane({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: '4px 16px 16px' }}>
+      <Title level={5} style={{ marginTop: 0, marginBottom: 4 }}>{title}</Title>
+      <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 16 }}>{desc}</Text>
+      {children}
+    </div>
   )
 }
 
@@ -205,83 +233,110 @@ function LuongCoSoTab() {
   )
 }
 
-const CHUC_VU_INFO: Record<ChucVu, { apDung: string; canCu: string; ghiChu: string }> = {
-  HIEU_TRUONG: {
-    apDung: 'Mầm non, Tiểu học, THCS',
-    canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)',
-    ghiChu: 'Quản lý, điều hành toàn bộ hoạt động nhà trường',
-  },
-  PHO_HIEU_TRUONG: {
-    apDung: 'Mầm non, Tiểu học, THCS',
-    canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)',
-    ghiChu: 'Số lượng theo hạng trường và quy mô lớp/học sinh',
-  },
-  TO_TRUONG_CM: {
-    apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)',
-    canCu: 'TT 20/2023/TT-BGDĐT',
-    ghiChu: 'Phụ trách 1 tổ chuyên môn theo cơ cấu tổ chức nhà trường',
-  },
-  TO_PHO_CM: {
-    apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)',
-    canCu: 'TT 20/2023/TT-BGDĐT',
-    ghiChu: 'Hỗ trợ tổ trưởng chuyên môn',
-  },
-}
-
 function ChucVuTab() {
-  const data = (Object.keys(CHUC_VU_LABELS) as ChucVu[]).map((cv) => ({
-    key: cv,
-    chucVu: CHUC_VU_LABELS[cv],
-    ...CHUC_VU_INFO[cv],
-  }))
+  const { message } = App.useApp()
+  const { chucVus, addChucVu, updateChucVu } = useDanhMucStore()
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<any>(null)
+  const [form] = Form.useForm()
+
+  const onSave = (values: any) => {
+    if (editing) { updateChucVu(editing.id, values); message.success('Đã cập nhật') }
+    else { addChucVu({ ...values, active: true }); message.success('Đã thêm') }
+    setOpen(false); setEditing(null); form.resetFields()
+  }
 
   const cols = [
-    { title: 'Chức vụ', dataIndex: 'chucVu', key: 'chucVu', width: 180 },
-    { title: 'Áp dụng cho', dataIndex: 'apDung', key: 'apDung', width: 220 },
-    { title: 'Căn cứ pháp lý', dataIndex: 'canCu', key: 'canCu' },
-    { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'ghiChu' },
+    { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 150 },
+    { title: 'Chức vụ', dataIndex: 'ten', key: 'ten', width: 170 },
+    { title: 'Áp dụng cho', dataIndex: 'apDung', key: 'apDung', width: 200, render: (v: string) => v ?? '—' },
+    { title: 'Căn cứ pháp lý', dataIndex: 'canCu', key: 'canCu', ellipsis: true, render: (v: string) => v ?? '—' },
+    { title: 'Ghi chú', dataIndex: 'moTa', key: 'moTa', ellipsis: true, render: (v: string) => v ?? '—' },
+    {
+      title: '', key: 'act', width: 80,
+      render: (_: any, r: any) => (
+        <Space size="small">
+          <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} />
+          <Popconfirm title="Xóa chức vụ này?" onConfirm={() => { updateChucVu(r.id, { active: false }); message.success('Đã xóa') }}>
+            <Button size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
   ]
 
   return (
     <>
       <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
         <Descriptions.Item label="Căn cứ">
-          Vị trí việc làm khối quản lý trường học được quy định theo TT 19/2023/TT-BGDĐT (danh mục vị trí việc làm lĩnh vực giáo dục mầm non)
-          và TT 20/2023/TT-BGDĐT (danh mục vị trí việc làm lĩnh vực giáo dục phổ thông). Hệ số phụ cấp chức vụ theo hạng trường (TT 33/2005/TT-BGDĐT)
-          được hệ thống tự động tính khi khai báo chức vụ trong hồ sơ viên chức.
+          Chức vụ quản lý trường học theo TT 19/2023/TT-BGDĐT (mầm non) và TT 20/2023/TT-BGDĐT (phổ thông). Hệ số phụ cấp chức vụ theo hạng trường
+          (TT 33/2005/TT-BGDĐT) chỉ tự động tính cho 4 mã chuẩn: HIEU_TRUONG, PHO_HIEU_TRUONG, TO_TRUONG_CM, TO_PHO_CM.
         </Descriptions.Item>
       </Descriptions>
-      <Table dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />
+      <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức vụ</Button>
+      <Table dataSource={chucVus.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} scroll={{ x: 800 }} />
+      <Modal open={open} title={editing ? 'Sửa chức vụ' : 'Thêm chức vụ'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
+        <Form form={form} layout="vertical" onFinish={onSave}>
+          <Form.Item name="ma" label="Mã" rules={[{ required: true }]} tooltip="Dùng 4 mã chuẩn để hệ thống tự tính phụ cấp chức vụ: HIEU_TRUONG, PHO_HIEU_TRUONG, TO_TRUONG_CM, TO_PHO_CM">
+            <Input placeholder="VD: TO_TRUONG_VP" />
+          </Form.Item>
+          <Form.Item name="ten" label="Tên chức vụ" rules={[{ required: true }]}><Input placeholder="VD: Tổ trưởng văn phòng" /></Form.Item>
+          <Form.Item name="apDung" label="Áp dụng cho"><Input placeholder="VD: Tiểu học, THCS" /></Form.Item>
+          <Form.Item name="canCu" label="Căn cứ pháp lý"><Input placeholder="VD: TT 20/2023/TT-BGDĐT" /></Form.Item>
+          <Form.Item name="moTa" label="Ghi chú"><Input.TextArea rows={2} /></Form.Item>
+        </Form>
+      </Modal>
     </>
   )
 }
 
-const VTVL_INFO: Record<VTVL, string> = {
-  CBQL: 'Hiệu trưởng, Phó Hiệu trưởng — trực tiếp quản lý, điều hành nhà trường',
-  GIAO_VIEN: 'Trực tiếp giảng dạy, kể cả trường hợp kiêm nhiệm tổ trưởng/tổ phó chuyên môn',
-  NHAN_VIEN: 'Kế toán, văn thư, thư viện, y tế học đường và các vị trí hỗ trợ, phục vụ khác',
-}
-
 function VtvlTab() {
-  const data = (Object.keys(VTVL_LABELS) as VTVL[]).map((v) => ({
-    key: v,
-    vtvl: VTVL_LABELS[v],
-    moTa: VTVL_INFO[v],
-  }))
+  const { message } = App.useApp()
+  const { vtvls, addVtvl, updateVtvl } = useDanhMucStore()
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<any>(null)
+  const [form] = Form.useForm()
+
+  const onSave = (values: any) => {
+    if (editing) { updateVtvl(editing.id, values); message.success('Đã cập nhật') }
+    else { addVtvl({ ...values, active: true }); message.success('Đã thêm') }
+    setOpen(false); setEditing(null); form.resetFields()
+  }
 
   const cols = [
-    { title: 'VTVL', dataIndex: 'vtvl', key: 'vtvl', width: 200 },
-    { title: 'Mô tả', dataIndex: 'moTa', key: 'moTa' },
+    { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 150 },
+    { title: 'VTVL', dataIndex: 'ten', key: 'ten', width: 200 },
+    { title: 'Mô tả', dataIndex: 'moTa', key: 'moTa', render: (v: string) => v ?? '—' },
+    {
+      title: '', key: 'act', width: 80,
+      render: (_: any, r: any) => (
+        <Space size="small">
+          <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} />
+          <Popconfirm title="Xóa VTVL này?" onConfirm={() => { updateVtvl(r.id, { active: false }); message.success('Đã xóa') }}>
+            <Button size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
   ]
 
   return (
     <>
       <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
         <Descriptions.Item label="Căn cứ">
-          Phân loại vị trí việc làm (VTVL) của viên chức theo 3 nhóm: Cán bộ quản lý (CBQL), Giáo viên, Nhân viên — được chọn thủ công khi khai báo hồ sơ viên chức.
+          Phân loại vị trí việc làm (VTVL) của viên chức, được chọn thủ công khi khai báo hồ sơ. Mã CBQL / GIAO_VIEN / NHAN_VIEN là 3 nhóm chuẩn,
+          admin có thể bổ sung thêm nhóm khác nếu cần.
         </Descriptions.Item>
       </Descriptions>
-      <Table dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />
+      <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm VTVL</Button>
+      <Table dataSource={vtvls.filter((v) => v.active)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Modal open={open} title={editing ? 'Sửa VTVL' : 'Thêm VTVL'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
+        <Form form={form} layout="vertical" onFinish={onSave}>
+          <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input placeholder="VD: NHAN_VIEN_YT" /></Form.Item>
+          <Form.Item name="ten" label="Tên VTVL" rules={[{ required: true }]}><Input placeholder="VD: Nhân viên y tế" /></Form.Item>
+          <Form.Item name="moTa" label="Mô tả"><Input.TextArea rows={2} /></Form.Item>
+        </Form>
+      </Modal>
     </>
   )
 }

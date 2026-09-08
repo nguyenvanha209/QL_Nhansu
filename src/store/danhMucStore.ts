@@ -8,6 +8,8 @@ import type {
   BacLuong,
   MucLuongCoso,
   LoaiPhuCap,
+  VtvlDanhMuc,
+  ChucVuDanhMuc,
 } from '@/types/danhMuc'
 import type { DonVi } from '@/types/donVi'
 
@@ -18,6 +20,8 @@ interface DanhMucState {
   bacLuongs: BacLuong[]
   mucLuongCosos: MucLuongCoso[]
   loaiPhuCaps: LoaiPhuCap[]
+  vtvls: VtvlDanhMuc[]
+  chucVus: ChucVuDanhMuc[]
 
   setDonVis: (v: DonVi[]) => void
   addDonVi: (d: Omit<DonVi, 'id' | 'createdAt'>) => DonVi
@@ -43,6 +47,14 @@ interface DanhMucState {
   addLoaiPhuCap: (d: Omit<LoaiPhuCap, 'id'>) => LoaiPhuCap
   updateLoaiPhuCap: (id: string, patch: Partial<LoaiPhuCap>) => void
 
+  setVtvls: (v: VtvlDanhMuc[]) => void
+  addVtvl: (d: Omit<VtvlDanhMuc, 'id'>) => VtvlDanhMuc
+  updateVtvl: (id: string, patch: Partial<VtvlDanhMuc>) => void
+
+  setChucVus: (v: ChucVuDanhMuc[]) => void
+  addChucVu: (d: Omit<ChucVuDanhMuc, 'id'>) => ChucVuDanhMuc
+  updateChucVu: (id: string, patch: Partial<ChucVuDanhMuc>) => void
+
   getActiveMucLuongCoso: (date?: string) => MucLuongCoso | undefined
   getBacLuongsForChucDanh: (chucDanhId: string) => BacLuong[]
 }
@@ -58,6 +70,8 @@ export const useDanhMucStore = create<DanhMucState>()(
       bacLuongs: [],
       mucLuongCosos: [],
       loaiPhuCaps: [],
+      vtvls: [],
+      chucVus: [],
 
       setDonVis: (v) => set({ donVis: v }),
       addDonVi: (d) => {
@@ -118,6 +132,24 @@ export const useDanhMucStore = create<DanhMucState>()(
         set((s) => ({
           loaiPhuCaps: s.loaiPhuCaps.map((i) => (i.id === id ? { ...i, ...patch } : i)),
         })),
+
+      setVtvls: (v) => set({ vtvls: v }),
+      addVtvl: (d) => {
+        const item: VtvlDanhMuc = { ...d, id: nanoid() }
+        set((s) => ({ vtvls: [...s.vtvls, item] }))
+        return item
+      },
+      updateVtvl: (id, patch) =>
+        set((s) => ({ vtvls: s.vtvls.map((i) => (i.id === id ? { ...i, ...patch } : i)) })),
+
+      setChucVus: (v) => set({ chucVus: v }),
+      addChucVu: (d) => {
+        const item: ChucVuDanhMuc = { ...d, id: nanoid() }
+        set((s) => ({ chucVus: [...s.chucVus, item] }))
+        return item
+      },
+      updateChucVu: (id, patch) =>
+        set((s) => ({ chucVus: s.chucVus.map((i) => (i.id === id ? { ...i, ...patch } : i)) })),
 
       getActiveMucLuongCoso: (date = new Date().toISOString().slice(0, 10)) => {
         return get()

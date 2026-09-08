@@ -189,7 +189,7 @@ export default function TaoDeXuatPage() {
 
         <Divider plain>Danh sách viên chức trong đề xuất</Divider>
         <Space style={{ marginBottom: 12 }}>
-          <Select showSearch style={{ width: 260 }} placeholder="Chọn viên chức để thêm..." options={vcOptions} onSelect={addVC} filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())} value={undefined} />
+          <Select showSearch style={{ width: 260 }} placeholder="Chọn viên chức để thêm..." options={vcOptions} onSelect={(v: string | undefined) => addVC(v)} filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())} value={undefined} />
           <span>{chiTiet.length} viên chức đã thêm</span>
         </Space>
 

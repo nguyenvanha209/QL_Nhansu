@@ -24,7 +24,7 @@ export default function DanhMucPage() {
   return (
     <Card styles={{ body: { padding: isWide ? 0 : 16 } }}>
       <Tabs
-        tabPlacement={isWide ? 'left' : 'top'}
+        tabPlacement={isWide ? 'start' : 'top'}
         size="middle"
         style={{ minHeight: 520 }}
         tabBarStyle={isWide ? { width: 190, paddingTop: 12 } : undefined}

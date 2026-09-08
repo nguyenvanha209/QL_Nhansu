@@ -19,15 +19,15 @@ function TabLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 export default function DanhMucPage() {
   const screens = Grid.useBreakpoint()
-  const isWide = !!screens.lg
+  const isWide = !!screens.md
 
   return (
     <Card styles={{ body: { padding: isWide ? 0 : 16 } }}>
       <Tabs
-        tabPosition={isWide ? 'left' : 'top'}
+        tabPlacement={isWide ? 'left' : 'top'}
         size="middle"
         style={{ minHeight: 520 }}
-        tabBarStyle={isWide ? { width: 220, paddingTop: 12 } : undefined}
+        tabBarStyle={isWide ? { width: 190, paddingTop: 12 } : undefined}
         items={[
           { key: '1', label: <TabLabel icon={<BankOutlined />} text="Đơn vị trường" />, children: <TabPane title="Đơn vị trường" desc="Danh sách trường học trực thuộc, số lớp và hạng trường (dùng để tính phụ cấp chức vụ)."><DonViTab /></TabPane> },
           { key: '2', label: <TabLabel icon={<IdcardOutlined />} text="Chức danh NN" />, children: <TabPane title="Chức danh nghề nghiệp" desc="Mã ngạch/hạng chức danh nghề nghiệp theo quy định, dùng khi xếp lương viên chức."><ChucDanhTab /></TabPane> },

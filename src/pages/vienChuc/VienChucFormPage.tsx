@@ -12,7 +12,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import { LOAI_LAO_DONG_LABELS, CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { ChucVu } from '@/types/vienChuc'
-import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
+import { getHangTruong, getPhuCapChucVuHeSo, getPhuCapChucVuPercent, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import type { LoaiDonVi } from '@/types/donVi'
 
 const { Title, Text } = Typography
@@ -23,7 +23,12 @@ function PhuCapGiaTriInput({ value, onChange, fieldName }: { value?: number; onC
   const loaiPhuCaps = useDanhMucStore.getState().loaiPhuCaps
   const selected = loaiPhuCaps.find((p) => p.id === loaiPhuCapId)
   const suffix = selected?.loaiCongThuc === 'TIEN_MAT' ? 'đ' : '%'
-  return <InputNumber value={value} onChange={onChange} style={{ width: '100%' }} placeholder="Giá trị" addonAfter={suffix} min={0} />
+  return (
+    <Space.Compact style={{ width: '100%' }}>
+      <InputNumber value={value} onChange={onChange} style={{ width: '100%' }} placeholder="Giá trị" min={0} />
+      <Button disabled style={{ pointerEvents: 'none' }}>{suffix}</Button>
+    </Space.Compact>
+  )
 }
 
 export default function VienChucFormPage() {
@@ -68,8 +73,25 @@ export default function VienChucFormPage() {
     if (!dv || !dv.soLop || dv.loai === 'OTHER') return null
     const hang = getHangTruong(dv.loai as LoaiDonVi, dv.soLop)
     const heSo = getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, hang, watchChucVu as ChucVu)
-    return { hang, heSo, loai: dv.loai }
+    const percent = getPhuCapChucVuPercent(dv.loai as LoaiDonVi, hang, watchChucVu as ChucVu)
+    return { hang, heSo, percent, loai: dv.loai }
   }, [watchDonViId, watchChucVu, donVis])
+
+  useEffect(() => {
+    if (!pccvInfo || pccvInfo.percent <= 0) return
+    const pcChucVu = loaiPhuCaps.find((p) => p.ma === 'PC_CHUC_VU')
+    if (!pcChucVu) return
+    const current: any[] = form.getFieldValue('phuCaps') || []
+    const idx = current.findIndex((pc) => pc?.loaiPhuCapId === pcChucVu.id)
+    if (idx >= 0) {
+      if (current[idx].giaTri === pccvInfo.percent) return
+      const updated = [...current]
+      updated[idx] = { ...updated[idx], giaTri: pccvInfo.percent }
+      form.setFieldValue('phuCaps', updated)
+    } else {
+      form.setFieldValue('phuCaps', [...current, { loaiPhuCapId: pcChucVu.id, giaTri: pccvInfo.percent }])
+    }
+  }, [pccvInfo, loaiPhuCaps])
 
   const watchBacLuongId = Form.useWatch('bacLuongId', form)
   const selectedBac = useMemo(() => bacLuongs.find((b) => b.id === watchBacLuongId), [watchBacLuongId])
@@ -282,7 +304,7 @@ export default function VienChucFormPage() {
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
-                title={`PC Chức vụ: hệ số ${pccvInfo.heSo.toFixed(2)} × lương cơ sở (${HANG_TRUONG_LABELS[pccvInfo.hang]} — TT 33/2005)`}
+                title={`Đã tự động thêm PC Chức vụ (${pccvInfo.percent}% lương cơ sở, hệ số ${pccvInfo.heSo.toFixed(2)} — ${HANG_TRUONG_LABELS[pccvInfo.hang]}, TT 33/2005) vào danh sách phụ cấp bên dưới`}
               />
             </Col>
           )}

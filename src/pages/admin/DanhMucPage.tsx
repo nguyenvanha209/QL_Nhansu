@@ -4,8 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
 import { LOAI_DON_VI_LABELS } from '@/types/donVi'
-import type { LoaiDonVi } from '@/types/donVi'
-import { getHangTruong, HANG_TRUONG_LABELS, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
+import { getHangTruong, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import { CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { ChucVu } from '@/types/vienChuc'
 
@@ -17,6 +16,7 @@ export default function DanhMucPage() {
         { key: '2', label: 'Chức danh NN', children: <ChucDanhTab /> },
         { key: '3', label: 'Loại phụ cấp', children: <PhuCapTab /> },
         { key: '4', label: 'Mức lương cơ sở', children: <LuongCoSoTab /> },
+        { key: '5', label: 'Chức vụ', children: <ChucVuTab /> },
       ]} />
     </Card>
   )
@@ -57,40 +57,10 @@ function DonViTab() {
     )},
   ]
 
-  const pccvData = donVis.filter((d) => d.active && d.soLop && d.loai !== 'OTHER').map((d) => {
-    const hang = getHangTruong(d.loai as LoaiDonVi, d.soLop!)
-    const rates = (['HIEU_TRUONG', 'PHO_HIEU_TRUONG', 'TO_TRUONG_CM', 'TO_PHO_CM'] as ChucVu[]).map(
-      (cv) => ({ cv, heSo: getPhuCapChucVuHeSo(d.loai as LoaiDonVi, hang, cv) })
-    )
-    return { ...d, hang, rates }
-  })
-
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm đơn vị</Button>
       <Table dataSource={donVis} columns={cols} rowKey="id" size="small" pagination={false} />
-
-      {pccvData.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <h4 style={{ marginBottom: 12 }}>Hệ số phụ cấp chức vụ theo hạng trường (TT 33/2005)</h4>
-          <Table
-            dataSource={pccvData}
-            rowKey="id"
-            size="small"
-            pagination={false}
-            columns={[
-              { title: 'Trường', dataIndex: 'ten', key: 'ten', ellipsis: true },
-              { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 80, render: (v: string) => LOAI_DON_VI_LABELS[v as keyof typeof LOAI_DON_VI_LABELS] },
-              { title: 'Số lớp', dataIndex: 'soLop', key: 'sl', width: 70, align: 'center' as const },
-              { title: 'Hạng', key: 'h', width: 70, align: 'center' as const, render: (_: any, r: any) => HANG_TRUONG_LABELS[r.hang as 1|2|3] },
-              { title: 'Hiệu trưởng', key: 'ht', width: 95, align: 'center' as const, render: (_: any, r: any) => r.rates[0].heSo.toFixed(2) },
-              { title: 'Phó HT', key: 'pht', width: 80, align: 'center' as const, render: (_: any, r: any) => r.rates[1].heSo.toFixed(2) },
-              { title: 'Tổ trưởng', key: 'tt', width: 85, align: 'center' as const, render: (_: any, r: any) => r.rates[2].heSo.toFixed(2) },
-              { title: 'Tổ phó', key: 'tp', width: 70, align: 'center' as const, render: (_: any, r: any) => r.rates[3].heSo.toFixed(2) },
-            ]}
-          />
-        </div>
-      )}
 
       <Modal open={open} title={editing ? 'Sửa đơn vị' : 'Thêm đơn vị'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
@@ -226,6 +196,57 @@ function LuongCoSoTab() {
           <Form.Item name="quyetDinhSo" label="Quyết định số"><Input /></Form.Item>
         </Form>
       </Modal>
+    </>
+  )
+}
+
+const CHUC_VU_INFO: Record<ChucVu, { apDung: string; canCu: string; ghiChu: string }> = {
+  HIEU_TRUONG: {
+    apDung: 'Mầm non, Tiểu học, THCS',
+    canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)',
+    ghiChu: 'Quản lý, điều hành toàn bộ hoạt động nhà trường',
+  },
+  PHO_HIEU_TRUONG: {
+    apDung: 'Mầm non, Tiểu học, THCS',
+    canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)',
+    ghiChu: 'Số lượng theo hạng trường và quy mô lớp/học sinh',
+  },
+  TO_TRUONG_CM: {
+    apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)',
+    canCu: 'TT 20/2023/TT-BGDĐT',
+    ghiChu: 'Phụ trách 1 tổ chuyên môn theo cơ cấu tổ chức nhà trường',
+  },
+  TO_PHO_CM: {
+    apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)',
+    canCu: 'TT 20/2023/TT-BGDĐT',
+    ghiChu: 'Hỗ trợ tổ trưởng chuyên môn',
+  },
+}
+
+function ChucVuTab() {
+  const data = (Object.keys(CHUC_VU_LABELS) as ChucVu[]).map((cv) => ({
+    key: cv,
+    chucVu: CHUC_VU_LABELS[cv],
+    ...CHUC_VU_INFO[cv],
+  }))
+
+  const cols = [
+    { title: 'Chức vụ', dataIndex: 'chucVu', key: 'chucVu', width: 180 },
+    { title: 'Áp dụng cho', dataIndex: 'apDung', key: 'apDung', width: 220 },
+    { title: 'Căn cứ pháp lý', dataIndex: 'canCu', key: 'canCu' },
+    { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'ghiChu' },
+  ]
+
+  return (
+    <>
+      <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
+        <Descriptions.Item label="Căn cứ">
+          Vị trí việc làm khối quản lý trường học được quy định theo TT 19/2023/TT-BGDĐT (danh mục vị trí việc làm lĩnh vực giáo dục mầm non)
+          và TT 20/2023/TT-BGDĐT (danh mục vị trí việc làm lĩnh vực giáo dục phổ thông). Hệ số phụ cấp chức vụ theo hạng trường (TT 33/2005/TT-BGDĐT)
+          được hệ thống tự động tính khi khai báo chức vụ trong hồ sơ viên chức.
+        </Descriptions.Item>
+      </Descriptions>
+      <Table dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />
     </>
   )
 }

@@ -54,7 +54,7 @@ export interface NhatKyThaoTac {
 }
 
 export const LY_DO_LABELS: Record<LyDoNangLuong, string> = {
-  TUYEN_DUNG: 'Tuyển dụng',
+  TUYEN_DUNG: 'Khai báo lần đầu / Tuyển dụng',
   NANG_BAC: 'Nâng bậc thường xuyên',
   NANG_TRUOC_HAN: 'Nâng bậc trước hạn',
   DIEU_CHINH: 'Điều chỉnh',

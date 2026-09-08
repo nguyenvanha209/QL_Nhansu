@@ -10,8 +10,8 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, CHUC_VU_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
-import type { ChucVu } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, CHUC_VU_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS } from '@/types/vienChuc'
+import type { ChucVu, LoaiLaoDong } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen } from '@/utils/helpers'
@@ -38,7 +38,7 @@ export default function VienChucFormPage() {
   const isEdit = !!id
   const navigate = useNavigate()
   const [form] = Form.useForm()
-  const { currentUser, scopeDonViId } = useAuth()
+  const { currentUser, scopeDonViId, isCBTruong } = useAuth()
   const { getById, addVienChuc, updateVienChuc } = useVienChucStore()
   const { donVis, chucDanhs, bacLuongs, loaiPhuCaps, getBacLuongsForChucDanh } = useDanhMucStore.getState()
   const luongState = useLuongStore.getState()
@@ -95,6 +95,7 @@ export default function VienChucFormPage() {
 
   const watchBacLuongId = Form.useWatch('bacLuongId', form)
   const selectedBac = useMemo(() => bacLuongs.find((b) => b.id === watchBacLuongId), [watchBacLuongId])
+  const watchLoaiLaoDong = Form.useWatch('loaiLaoDong', form) as LoaiLaoDong | undefined
 
   useEffect(() => {
     if (!vc) return
@@ -111,6 +112,7 @@ export default function VienChucFormPage() {
     if (heSo) {
       const bac = bacLuongs.find((b) => b.chucDanhId === heSo.chucDanhId && b.bac === heSo.bac)
       if (bac) form.setFieldValue('bacLuongId', bac.id)
+      form.setFieldValue('mocHuongLuong', dayjs(heSo.ngayHieuLuc))
     }
     const activePCs = luongState.getActivePhuCaps(id!)
     if (activePCs.length > 0) {
@@ -122,7 +124,7 @@ export default function VienChucFormPage() {
   }, [vc])
 
   const onFinish = (values: any) => {
-    const { hoTenFull, ...restValues } = values
+    const { hoTenFull, mocHuongLuong, ...restValues } = values
     const { ho, ten } = splitHoTen(hoTenFull)
     const formatted = {
       ...restValues,
@@ -134,7 +136,9 @@ export default function VienChucFormPage() {
       ngayHetTapSu: values.ngayHetTapSu?.format('YYYY-MM-DD'),
       ngayVaoBienChe: values.ngayVaoBienChe?.format('YYYY-MM-DD'),
     }
+    if (formatted.loaiLaoDong !== 'VIEN_CHUC') formatted.nguonKinhPhi = undefined
     const { bacLuongId, phuCaps, ...vcData } = formatted
+    const mocHuongLuongStr: string | undefined = mocHuongLuong?.format('YYYY-MM-DD')
 
     if (isEdit && vc) {
       updateVienChuc(id!, vcData, currentUser?.id, currentUser?.fullName)
@@ -146,7 +150,7 @@ export default function VienChucFormPage() {
         (!currentHeSo || currentHeSo.bac !== selectedBacLuong.bac || currentHeSo.chucDanhId !== values.chucDanhId)
       ) {
         if (currentHeSo) luongState.deactivateHeSoLuong(currentHeSo.id)
-        const ngayHieuLuc = dayjs().format('YYYY-MM-DD')
+        const ngayHieuLuc = mocHuongLuongStr || dayjs().format('YYYY-MM-DD')
         const ngayTiepTheo = dayjs(ngayHieuLuc).add(selectedBacLuong.thoiGianNangLuong, 'year').format('YYYY-MM-DD')
         const newHeSo = luongState.addHeSoLuong({
           vienChucId: id!,
@@ -185,7 +189,7 @@ export default function VienChucFormPage() {
       const newVc = addVienChuc({ ...vcData, active: true }, currentUser?.id, currentUser?.fullName)
 
       if (selectedBacLuong) {
-        const ngayHieuLuc = vcData.ngayVaoNganh || dayjs().format('YYYY-MM-DD')
+        const ngayHieuLuc = mocHuongLuongStr || vcData.ngayVaoNganh || dayjs().format('YYYY-MM-DD')
         const ngayTiepTheo = dayjs(ngayHieuLuc).add(selectedBacLuong.thoiGianNangLuong, 'year').format('YYYY-MM-DD')
         const newHeSo = luongState.addHeSoLuong({
           vienChucId: newVc.id,
@@ -233,7 +237,7 @@ export default function VienChucFormPage() {
         form={form}
         layout="vertical"
         onFinish={onFinish}
-        initialValues={{ gioiTinh: 'NU', loaiLaoDong: 'VIEN_CHUC', phuCaps: [], trangThai: 'DANG_LAM_VIEC', laDangVien: false }}
+        initialValues={{ gioiTinh: 'NU', loaiLaoDong: 'VIEN_CHUC', phuCaps: [], trangThai: 'DANG_LAM_VIEC', laDangVien: false, mocHuongLuong: dayjs(), donViId: scopeDonViId ?? undefined }}
       >
         {/* ── Thông tin cá nhân ── */}
         <Divider titlePlacement="left">Thông tin cá nhân</Divider>
@@ -273,25 +277,19 @@ export default function VienChucFormPage() {
         {/* ── Thông tin công tác ── */}
         <Divider titlePlacement="left">Thông tin công tác</Divider>
         <Row gutter={16}>
+          {!isCBTruong && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item name="donViId" label="Đơn vị công tác" rules={[{ required: true }]}>
+                <Select options={donViOptions} placeholder="Chọn đơn vị" showSearch optionFilterProp="label" />
+              </Form.Item>
+            </Col>
+          )}
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="donViId" label="Đơn vị công tác" rules={[{ required: true }]}>
-              <Select options={donViOptions} placeholder="Chọn đơn vị" showSearch optionFilterProp="label" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Form.Item name="chucDanhId" label="Ngạch/hạng" rules={[{ required: true }]}>
+            <Form.Item name="vtvl" label="VTVL (Vị trí việc làm)" rules={[{ required: true, message: 'Chọn VTVL' }]}>
               <Select
-                options={chucDanhOptions}
-                placeholder="Chọn chức danh"
-                showSearch
-                optionFilterProp="label"
-                onChange={() => form.setFieldValue('bacLuongId', undefined)}
+                options={Object.entries(VTVL_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+                placeholder="Chọn VTVL"
               />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Form.Item name="loaiLaoDong" label="Loại hình lao động" rules={[{ required: true }]}>
-              <Select options={Object.entries(LOAI_LAO_DONG_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
@@ -304,18 +302,35 @@ export default function VienChucFormPage() {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="vtvl" label="VTVL (Vị trí việc làm)" rules={[{ required: true, message: 'Chọn VTVL' }]}>
+            <Form.Item name="chucDanhId" label="Mã ngạch/Hạng" rules={[{ required: true }]}>
               <Select
-                options={Object.entries(VTVL_LABELS).map(([k, v]) => ({ value: k, label: v }))}
-                placeholder="Chọn VTVL"
+                options={chucDanhOptions}
+                placeholder="Chọn chức danh"
+                showSearch
+                optionFilterProp="label"
+                onChange={() => form.setFieldValue('bacLuongId', undefined)}
               />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="trangThai" label="Trạng thái công tác" rules={[{ required: true }]}>
-              <Select options={Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
+            <Form.Item name="loaiLaoDong" label="Loại hình lao động" rules={[{ required: true }]}>
+              <Select options={Object.entries(LOAI_LAO_DONG_LABELS).filter(([k]) => k !== 'TAP_SU').map(([k, v]) => ({ value: k, label: v }))} />
             </Form.Item>
           </Col>
+          {watchLoaiLaoDong === 'VIEN_CHUC' && (
+            <>
+              <Col xs={24} sm={12} md={8}>
+                <Form.Item name="nguonKinhPhi" label="Nguồn kinh phí" rules={[{ required: true, message: 'Chọn nguồn kinh phí' }]}>
+                  <Select options={Object.entries(NGUON_KINH_PHI_LABELS).map(([k, v]) => ({ value: k, label: v }))} placeholder="Chọn nguồn kinh phí" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <Form.Item name="trangThai" label="Trạng thái công tác" rules={[{ required: true }]}>
+                  <Select options={Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
+                </Form.Item>
+              </Col>
+            </>
+          )}
           {pccvInfo && (
             <Col xs={24}>
               <Alert
@@ -358,7 +373,7 @@ export default function VienChucFormPage() {
           </Col>
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="trinhDoKhac" label="Trình độ khác">
-              <Input placeholder="VD: Tin học, ngoại ngữ, LLCT..." />
+              <Input placeholder="VD: Chuyên môn khác, tin học, ngoại ngữ, LLCT..." />
             </Form.Item>
           </Col>
         </Row>
@@ -399,6 +414,15 @@ export default function VienChucFormPage() {
               </Form.Item>
             </Col>
           )}
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item
+              name="mocHuongLuong"
+              label="Mốc hưởng lương"
+              tooltip="Ngày hiệu lực bậc lương — chỉ áp dụng khi thêm mới hoặc thay đổi bậc lương"
+            >
+              <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} placeholder="Chọn mốc hưởng lương" />
+            </Form.Item>
+          </Col>
         </Row>
 
         <div style={{ marginBottom: 16 }}>

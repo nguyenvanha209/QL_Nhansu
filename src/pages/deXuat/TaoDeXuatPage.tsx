@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, Typography, Divider, App } from 'antd'
+import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, Typography, Divider, Tag, App } from 'antd'
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SendOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useDeXuatStore } from '@/store/deXuatStore'
@@ -31,7 +31,7 @@ export default function TaoDeXuatPage() {
 
   const vcOptions = vienChucs.filter((v) => !selectedDonVi || v.donViId === selectedDonVi).map((v) => ({ value: v.id, label: `${v.ho} ${v.ten}` }))
 
-  const addVC = (vcId: string | undefined) => {
+  const addVC = (vcId: string | undefined, ngayHieuLucOverride?: string) => {
     if (!vcId) return
     if (chiTiet.find((c) => c.vienChucId === vcId)) { message.warning('Viên chức đã có trong danh sách'); return }
     const vc = vienChucs.find((v) => v.id === vcId)
@@ -46,9 +46,46 @@ export default function TaoDeXuatPage() {
       chucDanhMoiId: hsl.chucDanhId,
       bacMoi: nextBac?.bac ?? hsl.bac + 1,
       heSoMoi: nextBac?.heSo ?? +(hsl.heSo + 0.33).toFixed(2),
-      ngayHieuLuc: dayjs().format('YYYY-MM-DD'),
+      ngayHieuLuc: ngayHieuLucOverride ?? dayjs().format('YYYY-MM-DD'),
       lyDo: 'Đủ thời hạn nâng bậc thường xuyên',
     }])
+  }
+
+  // ── Gợi ý viên chức đến kỳ nâng lương thường xuyên (2 đợt/năm: 6 tháng đầu / 6 tháng cuối) ──
+  const currentYear = dayjs().year()
+  const [dotNam, setDotNam] = useState(currentYear)
+  const [dotKy, setDotKy] = useState<'H1' | 'H2'>(dayjs().month() < 6 ? 'H1' : 'H2')
+  const [selectedGoiY, setSelectedGoiY] = useState<string[]>([])
+
+  const dotRange = useMemo(() => (
+    dotKy === 'H1'
+      ? { start: `${dotNam}-01-01`, end: `${dotNam}-06-30` }
+      : { start: `${dotNam}-07-01`, end: `${dotNam}-12-31` }
+  ), [dotNam, dotKy])
+
+  const goiYData = useMemo(() => {
+    return vienChucs
+      .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
+      .filter((v) => !chiTiet.some((c) => c.vienChucId === v.id))
+      .map((v) => ({ vc: v, hsl: heSoLuongs.find((h) => h.vienChucId === v.id && h.isActive) }))
+      .filter((x): x is { vc: typeof vienChucs[number]; hsl: NonNullable<typeof x.hsl> } => !!x.hsl)
+      .filter(({ hsl }) => hsl.ngayNangLuongTiepTheo >= dotRange.start && hsl.ngayNangLuongTiepTheo <= dotRange.end)
+      .map(({ vc, hsl }) => ({
+        id: vc.id,
+        hoTen: `${vc.ho} ${vc.ten}`,
+        bac: hsl.bac,
+        heSo: hsl.heSo,
+        ngayNangLuongTiepTheo: hsl.ngayNangLuongTiepTheo,
+      }))
+      .sort((a, b) => a.ngayNangLuongTiepTheo.localeCompare(b.ngayNangLuongTiepTheo))
+  }, [vienChucs, selectedDonVi, chiTiet, heSoLuongs, dotRange])
+
+  const themDaChon = () => {
+    selectedGoiY.forEach((vcId) => {
+      const item = goiYData.find((g) => g.id === vcId)
+      if (item) addVC(item.id, item.ngayNangLuongTiepTheo)
+    })
+    setSelectedGoiY([])
   }
 
   const updateChiTiet = (idx: number, field: keyof ChiTietDeXuat, value: any) => {
@@ -117,6 +154,38 @@ export default function TaoDeXuatPage() {
         <Form.Item name="ghiChu" label="Ghi chú">
           <Input.TextArea rows={2} />
         </Form.Item>
+
+        <Divider plain>Gợi ý viên chức đến kỳ nâng lương thường xuyên</Divider>
+        <Space wrap style={{ marginBottom: 12 }}>
+          <InputNumber value={dotNam} onChange={(v) => setDotNam(v ?? currentYear)} style={{ width: 100 }} />
+          <Select
+            value={dotKy}
+            onChange={setDotKy}
+            style={{ width: 180 }}
+            options={[
+              { value: 'H1', label: '6 tháng đầu năm' },
+              { value: 'H2', label: '6 tháng cuối năm' },
+            ]}
+          />
+          <Button type="primary" ghost disabled={selectedGoiY.length === 0} onClick={themDaChon}>
+            Thêm {selectedGoiY.length > 0 ? selectedGoiY.length : ''} đã chọn vào đề xuất
+          </Button>
+        </Space>
+        <Table
+          dataSource={goiYData}
+          rowKey="id"
+          size="small"
+          pagination={false}
+          scroll={{ x: 500, y: 240 }}
+          style={{ marginBottom: 16 }}
+          rowSelection={{ selectedRowKeys: selectedGoiY, onChange: (keys) => setSelectedGoiY(keys as string[]) }}
+          locale={{ emptyText: 'Không có viên chức nào đến kỳ nâng lương trong đợt này' }}
+          columns={[
+            { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht' },
+            { title: 'Bậc/Hệ số hiện tại', key: 'bh', width: 140, render: (_: any, r: any) => `Bậc ${r.bac} — ${r.heSo}` },
+            { title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 160, render: (v: string) => <Tag color="blue">{dayjs(v).format('DD/MM/YYYY')}</Tag> },
+          ]}
+        />
 
         <Divider plain>Danh sách viên chức trong đề xuất</Divider>
         <Space style={{ marginBottom: 12 }}>

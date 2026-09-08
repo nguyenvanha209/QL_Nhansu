@@ -14,6 +14,8 @@ export type VTVL = 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN'
 
 export type TrangThaiCongTac = 'DANG_LAM_VIEC' | 'CHUYEN_DEN' | 'CHUYEN_DI' | 'NGHI_HUU' | 'THOI_VIEC'
 
+export type NguonKinhPhi = 'NGAN_SACH' | 'SU_NGHIEP'
+
 export interface VienChuc {
   id: string
   ma: string
@@ -32,6 +34,7 @@ export interface VienChuc {
   viTriViecLamId?: string
   vtvl?: VTVL
   trangThai?: TrangThaiCongTac
+  nguonKinhPhi?: NguonKinhPhi
   trinhDoChuyenMon?: string
   nhiemVuChinh?: string
   trinhDoKhac?: string
@@ -93,4 +96,9 @@ export const TRANG_THAI_CONG_TAC_LABELS: Record<TrangThaiCongTac, string> = {
 
 export function isDangCongTac(vc: Pick<VienChuc, 'trangThai'>): boolean {
   return !vc.trangThai || vc.trangThai === 'DANG_LAM_VIEC' || vc.trangThai === 'CHUYEN_DEN'
+}
+
+export const NGUON_KINH_PHI_LABELS: Record<NguonKinhPhi, string> = {
+  NGAN_SACH: 'Hưởng lương ngân sách',
+  SU_NGHIEP: 'Nguồn thu sự nghiệp',
 }

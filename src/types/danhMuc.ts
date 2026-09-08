@@ -19,7 +19,8 @@ export interface ViTriViecLam {
   ten: string
   loai: LoaiViTri
   donViId: string
-  soLuongBienChe: number
+  soLuongBienCheNganSach: number
+  soLuongBienCheSuNghiep: number
   soLuongHopDong: number
   chucDanhIds: string[]
   active: boolean

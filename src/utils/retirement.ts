@@ -1,49 +1,50 @@
-// NĐ 135/2020/NĐ-CP: tuổi nghỉ hưu tăng dần
-// Nam: từ 60 → 62 tuổi, tăng 3 tháng/năm từ 2021, đạt 62 vào 2028
-// Nữ: từ 55 → 60 tuổi, tăng 4 tháng/năm từ 2021, đạt 60 vào 2036
+// NĐ 135/2020/NĐ-CP: lộ trình tuổi nghỉ hưu
+// Nam: năm 2021 = 60 tuổi 3 tháng, mỗi năm tiếp theo +3 tháng, đạt 62 tuổi vào năm 2028
+// Nữ: năm 2021 = 55 tuổi 4 tháng, mỗi năm tiếp theo +4 tháng, đạt 60 tuổi vào năm 2035
+// Thời điểm nghỉ hưu = ngày cuối cùng của tháng đủ tuổi nghỉ hưu theo lộ trình
+// Thời điểm hưởng chế độ hưu trí = ngày đầu tiên của tháng liền kề sau thời điểm nghỉ hưu
+// Nếu hồ sơ không xác định được ngày, tháng sinh thì lấy ngày 01/01 của năm sinh làm căn cứ
 
-export function getRetirementAge(gioiTinh: 'NAM' | 'NU', birthYear: number): number {
-  const retirementYear = birthYear + (gioiTinh === 'NAM' ? 62 : 60)
-  if (gioiTinh === 'NAM') {
-    // Phase-in: +3 months/year from 2021, base 60 → 62 reached 2028
-    const yearsSince2021 = Math.max(0, retirementYear - 2021)
-    const addMonths = Math.min(yearsSince2021 * 3, 24) // cap at 24 months = 2 years
-    return 60 + addMonths / 12
-  } else {
-    const yearsSince2021 = Math.max(0, retirementYear - 2021)
-    const addMonths = Math.min(yearsSince2021 * 4, 60) // cap at 60 months = 5 years
-    return 55 + addMonths / 12
-  }
+const BASE_AGE: Record<'NAM' | 'NU', number> = { NAM: 60, NU: 55 }
+const THANG_TANG_MOI_NAM: Record<'NAM' | 'NU', number> = { NAM: 3, NU: 4 }
+const CAP_THANG_TANG: Record<'NAM' | 'NU', number> = { NAM: 24, NU: 60 } // Nam tối đa +24 tháng (62 tuổi); Nữ tối đa +60 tháng (60 tuổi)
+
+// Chuẩn hoá ngày sinh — nếu không xác định được ngày/tháng hợp lệ, lấy 01/01 năm sinh
+function chuanHoaNgaySinh(ngaySinh: string): Date {
+  const d = new Date(ngaySinh)
+  if (!isNaN(d.getTime())) return d
+  const year = parseInt((ngaySinh ?? '').slice(0, 4), 10)
+  return new Date(year || new Date().getFullYear(), 0, 1)
 }
 
-export interface RetirementInfo {
-  id: string
-  hoTen: string
-  ngaySinh: string
-  gioiTinh: 'NAM' | 'NU'
-  donViId: string
-  donViTen: string
-  chucDanhId: string
-  ngayNghiHuu: string
-  daysUntilRetirement: number
-  yearsUntilRetirement: number
+// Số tháng được cộng thêm vào tuổi nghỉ hưu cơ sở, theo năm đủ tuổi cơ sở (60/55)
+function soThangTangTheoLoTrinh(namDuTuoiCoSo: number, gioiTinh: 'NAM' | 'NU'): number {
+  if (namDuTuoiCoSo < 2021) return 0
+  return Math.min((namDuTuoiCoSo - 2020) * THANG_TANG_MOI_NAM[gioiTinh], CAP_THANG_TANG[gioiTinh])
 }
 
+// Ngày đủ tuổi nghỉ hưu theo lộ trình (chưa làm tròn về cuối tháng)
+function ngayDuTuoiNghiHuu(ngaySinh: string, gioiTinh: 'NAM' | 'NU'): Date {
+  const birth = chuanHoaNgaySinh(ngaySinh)
+  const baseAge = BASE_AGE[gioiTinh]
+  const namDuTuoiCoSo = birth.getFullYear() + baseAge
+  const soThang = soThangTangTheoLoTrinh(namDuTuoiCoSo, gioiTinh)
+  const d = new Date(birth)
+  d.setFullYear(d.getFullYear() + baseAge)
+  d.setMonth(d.getMonth() + soThang)
+  return d
+}
+
+// Thời điểm nghỉ hưu = ngày cuối cùng của tháng đủ tuổi nghỉ hưu
 export function calcRetirementDate(ngaySinh: string, gioiTinh: 'NAM' | 'NU'): Date {
-  const birth = new Date(ngaySinh)
-  const birthYear = birth.getFullYear()
-  const baseAge = gioiTinh === 'NAM' ? 60 : 55
-  const phaseYears = gioiTinh === 'NAM' ? 8 : 15
-  const monthsPerYear = gioiTinh === 'NAM' ? 3 : 4
+  const d = ngayDuTuoiNghiHuu(ngaySinh, gioiTinh)
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0)
+}
 
-  const estimatedRetirementYear = birthYear + baseAge + 2
-  const yearsSince2021 = Math.max(0, estimatedRetirementYear - 2021)
-  const addMonths = Math.min(yearsSince2021 * monthsPerYear, gioiTinh === 'NAM' ? 24 : 60)
-
-  const retirementDate = new Date(birth)
-  retirementDate.setFullYear(birth.getFullYear() + baseAge)
-  retirementDate.setMonth(retirementDate.getMonth() + addMonths)
-  return retirementDate
+// Thời điểm hưởng chế độ hưu trí = ngày đầu tiên của tháng liền kề sau thời điểm nghỉ hưu
+export function calcPensionStartDate(ngaySinh: string, gioiTinh: 'NAM' | 'NU'): Date {
+  const retire = calcRetirementDate(ngaySinh, gioiTinh)
+  return new Date(retire.getFullYear(), retire.getMonth() + 1, 1)
 }
 
 export function getDaysUntilRetirement(ngaySinh: string, gioiTinh: 'NAM' | 'NU'): number {

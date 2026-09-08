@@ -7,6 +7,7 @@ import { useUserStore } from '@/store/userStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { getHangTruong, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
 import type { ChucVu, VTVL } from '@/types/vienChuc'
+import { IS_BIEN_CHE } from '@/types/vienChuc'
 
 const REQUIRED_PHU_CAPS = [
   { ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường, cộng thẳng vào tổng hệ số lương', active: true },
@@ -44,9 +45,25 @@ function migratePhuCapChucVuFormula() {
   }
 }
 
+// Chỉ tiêu biên chế tách "Hưởng lương ngân sách" / "Nguồn thu sự nghiệp" thay vì 1 số duy nhất
+function migrateViTriBienCheSplit() {
+  const dm = useDanhMucStore.getState()
+  const needsFix = dm.viTriViecLams.some((v: any) => v.soLuongBienCheNganSach === undefined)
+  if (needsFix) {
+    dm.setViTriViecLams(
+      dm.viTriViecLams.map((v: any) =>
+        v.soLuongBienCheNganSach === undefined
+          ? { ...v, soLuongBienCheNganSach: v.soLuongBienChe ?? 0, soLuongBienCheSuNghiep: 0 }
+          : v
+      )
+    )
+  }
+}
+
 export function initSeedData() {
   ensureRequiredPhuCaps()
   migratePhuCapChucVuFormula()
+  migrateViTriBienCheSplit()
 
   const dm = useDanhMucStore.getState()
 
@@ -225,16 +242,16 @@ export function initSeedData() {
     THCS: ['cd_cs1', 'cd_cs2', 'cd_cs3'],
   }
   const viTriDataFn = (loaiDv: string) => [
-    { ten: 'Hiệu trưởng', loai: 'QUAN_LY' as const, soLuongBienChe: 1, soLuongHopDong: 0, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
-    { ten: 'Phó Hiệu trưởng', loai: 'QUAN_LY' as const, soLuongBienChe: 2, soLuongHopDong: 0, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
-    { ten: 'Giáo viên đứng lớp', loai: 'CHUYEN_MON' as const, soLuongBienChe: 15, soLuongHopDong: 3, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
-    { ten: 'Kế toán', loai: 'HO_TRO' as const, soLuongBienChe: 1, soLuongHopDong: 0, chucDanhIds: ['cd_kt'] },
-    { ten: 'Văn thư - Thư viện', loai: 'HO_TRO' as const, soLuongBienChe: 1, soLuongHopDong: 1, chucDanhIds: ['cd_vt'] },
+    { ten: 'Hiệu trưởng', loai: 'QUAN_LY' as const, soLuongBienCheNganSach: 1, soLuongBienCheSuNghiep: 0, soLuongHopDong: 0, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Phó Hiệu trưởng', loai: 'QUAN_LY' as const, soLuongBienCheNganSach: 2, soLuongBienCheSuNghiep: 0, soLuongHopDong: 0, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Giáo viên đứng lớp', loai: 'CHUYEN_MON' as const, soLuongBienCheNganSach: 13, soLuongBienCheSuNghiep: 2, soLuongHopDong: 3, chucDanhIds: gvCdByLoaiDv[loaiDv] || [] },
+    { ten: 'Kế toán', loai: 'HO_TRO' as const, soLuongBienCheNganSach: 1, soLuongBienCheSuNghiep: 0, soLuongHopDong: 0, chucDanhIds: ['cd_kt'] },
+    { ten: 'Văn thư - Thư viện', loai: 'HO_TRO' as const, soLuongBienCheNganSach: 1, soLuongBienCheSuNghiep: 0, soLuongHopDong: 1, chucDanhIds: ['cd_vt'] },
   ]
   const viTriViecLams: any[] = []
   donVis.forEach((dv) => {
     viTriDataFn(dv.loai).forEach((vt, vi) => {
-      viTriViecLams.push({ id: `vt_${dv.id}_${vi}`, ma: `${vt.ten.substring(0, 3).toUpperCase()}-${dv.ma}`, ten: vt.ten, loai: vt.loai, donViId: dv.id, soLuongBienChe: vt.soLuongBienChe, soLuongHopDong: vt.soLuongHopDong, chucDanhIds: vt.chucDanhIds, active: true })
+      viTriViecLams.push({ id: `vt_${dv.id}_${vi}`, ma: `${vt.ten.substring(0, 3).toUpperCase()}-${dv.ma}`, ten: vt.ten, loai: vt.loai, donViId: dv.id, soLuongBienCheNganSach: vt.soLuongBienCheNganSach, soLuongBienCheSuNghiep: vt.soLuongBienCheSuNghiep, soLuongHopDong: vt.soLuongHopDong, chucDanhIds: vt.chucDanhIds, active: true })
     })
   })
   setViTriViecLams(viTriViecLams)
@@ -290,6 +307,7 @@ export function initSeedData() {
         chucDanhId,
         vtvl,
         trangThai: 'DANG_LAM_VIEC',
+        nguonKinhPhi: IS_BIEN_CHE[loaiLDs[i]] ? 'NGAN_SACH' : undefined,
         ngayVaoNganh,
         ngayVaoDonVi: ngayVaoNganh,
         heSoLuongHienTaiId: hslId,

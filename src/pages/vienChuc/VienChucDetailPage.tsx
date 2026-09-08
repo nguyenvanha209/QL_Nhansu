@@ -5,7 +5,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, IS_BIEN_CHE } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
 import { formatDate } from '@/utils/helpers'
@@ -94,6 +94,9 @@ export default function VienChucDetailPage() {
                 <Descriptions.Item label="Đơn vị">{donVi?.ten ?? vc.donViId}</Descriptions.Item>
                 <Descriptions.Item label="Ngạch/hạng">{chucDanh?.ten ?? vc.chucDanhId}</Descriptions.Item>
                 <Descriptions.Item label="Loại hình">{LOAI_LAO_DONG_LABELS[vc.loaiLaoDong]}</Descriptions.Item>
+                {IS_BIEN_CHE[vc.loaiLaoDong] && (
+                  <Descriptions.Item label="Nguồn kinh phí">{vc.nguonKinhPhi ? NGUON_KINH_PHI_LABELS[vc.nguonKinhPhi] : '—'}</Descriptions.Item>
+                )}
                 <Descriptions.Item label="VTVL">{vc.vtvl ? VTVL_LABELS[vc.vtvl] : '—'}</Descriptions.Item>
                 <Descriptions.Item label="Đảng viên">{vc.laDangVien ? 'Có' : 'Không'}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào ngành">{formatDate(vc.ngayVaoNganh)}</Descriptions.Item>

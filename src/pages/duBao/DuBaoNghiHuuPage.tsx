@@ -4,11 +4,13 @@ import { ClockCircleOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { calcRetirementDate, getDaysUntilRetirement } from '@/utils/retirement'
+import { calcRetirementDate, calcPensionStartDate, getDaysUntilRetirement } from '@/utils/retirement'
 import { formatDate } from '@/utils/helpers'
 import { isDangCongTac } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
+
+const toDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
 export default function DuBaoNghiHuuPage() {
   const { scopeDonViId } = useAuth()
@@ -28,9 +30,10 @@ export default function DuBaoNghiHuuPage() {
         const gt = vc.gioiTinh as 'NAM' | 'NU'
         const days = getDaysUntilRetirement(vc.ngaySinh, gt)
         const retireDate = calcRetirementDate(vc.ngaySinh, gt)
+        const pensionDate = calcPensionStartDate(vc.ngaySinh, gt)
         const dv = donVis.find((d) => d.id === vc.donViId)
         const cd = chucDanhs.find((c) => c.id === vc.chucDanhId)
-        return { ...vc, days, retireDate: retireDate.toISOString().slice(0, 10), donViTen: dv?.ten ?? '', chucDanhTen: cd?.ten ?? '' }
+        return { ...vc, days, retireDate: toDateStr(retireDate), pensionDate: toDateStr(pensionDate), donViTen: dv?.ten ?? '', chucDanhTen: cd?.ten ?? '' }
       })
       .filter((r) => {
         if (r.days < 0 || r.days > limit) return false
@@ -49,8 +52,12 @@ export default function DuBaoNghiHuuPage() {
     { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', ellipsis: true },
     { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd', ellipsis: true },
     {
-      title: 'Dự kiến nghỉ hưu', dataIndex: 'retireDate', key: 'rd', width: 140,
+      title: 'Thời điểm nghỉ hưu', dataIndex: 'retireDate', key: 'rd', width: 140,
       render: (v: string) => <Text strong>{formatDate(v)}</Text>,
+    },
+    {
+      title: 'Thời điểm hưởng chế độ hưu trí', dataIndex: 'pensionDate', key: 'pd', width: 160,
+      render: (v: string) => formatDate(v),
     },
     {
       title: 'Còn lại', dataIndex: 'days', key: 'days', width: 110,
@@ -87,7 +94,7 @@ export default function DuBaoNghiHuuPage() {
         columns={columns}
         rowKey="id"
         size="small"
-        scroll={{ x: 800 }}
+        scroll={{ x: 1000 }}
         pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} viên chức dự kiến nghỉ hưu` }}
       />
     </Card>

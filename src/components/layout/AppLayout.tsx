@@ -28,8 +28,13 @@ export default function AppLayout() {
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ viên chức' },
     hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
-    // Tạm ẩn nhóm "Lương & Phụ cấp" — theo dõi qua Đề xuất lương & hồ sơ viên chức
-    hasPermission('deXuat', 'read') && { key: '/de-xuat', icon: <FileTextOutlined />, label: 'Đề xuất lương' },
+    // Tạm ẩn nhóm "Lương & Phụ cấp" — theo dõi qua Đề xuất điều chỉnh HSL - PCTN & hồ sơ viên chức
+    hasPermission('deXuat', 'read') && {
+      key: '/de-xuat', icon: <FileTextOutlined />,
+      label: 'Đề xuất điều chỉnh Hệ số lương - PCTN',
+      title: 'Đề xuất điều chỉnh Hệ số lương - PCTN',
+      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
+    },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
     hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },
     isAdmin && {

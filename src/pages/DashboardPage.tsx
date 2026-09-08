@@ -127,7 +127,7 @@ export default function DashboardPage() {
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         {/* Trạng thái đề xuất */}
         <Col xs={24} lg={10}>
-          <Card title="Trạng thái đề xuất lương" size="small">
+          <Card title="Trạng thái đề xuất điều chỉnh HSL - PCTN" size="small">
             <Space orientation="vertical" style={{ width: '100%' }}>
               {statusCounts.map(({ status, count }) => (
                 <div key={status} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

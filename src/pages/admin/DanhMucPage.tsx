@@ -327,6 +327,9 @@ function VtvlTab() {
           Phân loại vị trí việc làm (VTVL) của viên chức, được chọn thủ công khi khai báo hồ sơ. Mã CBQL / GIAO_VIEN / NHAN_VIEN là 3 nhóm chuẩn,
           admin có thể bổ sung thêm nhóm khác nếu cần.
         </Descriptions.Item>
+        <Descriptions.Item label="Phụ cấp thâm niên">
+          Chỉ CBQL và giáo viên được hưởng phụ cấp thâm niên nên hồ sơ có thêm ô "Mốc hưởng PCTN"; VTVL mã NHAN_VIEN không hưởng và không khai báo mốc này.
+        </Descriptions.Item>
       </Descriptions>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm VTVL</Button>
       <Table dataSource={vtvls.filter((v) => v.active)} columns={cols} rowKey="id" size="small" pagination={false} />
@@ -366,7 +369,7 @@ function TrangThaiTab() {
       <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
         <Descriptions.Item label="Căn cứ">
           Trạng thái công tác phản ánh vòng đời làm việc của viên chức. Chỉ người có trạng thái "Đang làm việc" hoặc "Chuyển đến" được tính vào số liệu
-          Tổng quan, chỉ tiêu Vị trí việc làm, Báo cáo, Dự báo nghỉ hưu và danh sách chọn ở Đề xuất lương.
+          Tổng quan, chỉ tiêu Vị trí việc làm, Báo cáo, Dự báo nghỉ hưu và danh sách chọn ở Đề xuất điều chỉnh Hệ số lương - PCTN.
         </Descriptions.Item>
       </Descriptions>
       <Table dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />

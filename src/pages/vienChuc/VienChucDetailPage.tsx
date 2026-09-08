@@ -5,7 +5,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, IS_BIEN_CHE } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, IS_BIEN_CHE, coPhuCapThamNien } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
 import { formatDate } from '@/utils/helpers'
@@ -105,6 +105,9 @@ export default function VienChucDetailPage() {
                 <Descriptions.Item label="Trình độ chuyên môn nghiệp vụ">{vc.trinhDoChuyenMon ?? '—'}</Descriptions.Item>
                 <Descriptions.Item label="Nhiệm vụ chính">{vc.nhiemVuChinh ?? '—'}</Descriptions.Item>
                 <Descriptions.Item label="Trình độ khác">{vc.trinhDoKhac ?? '—'}</Descriptions.Item>
+                {coPhuCapThamNien(vc.vtvl) && (
+                  <Descriptions.Item label="Mốc hưởng PCTN">{vc.mocHuongPctn ? formatDate(vc.mocHuongPctn) : '—'}</Descriptions.Item>
+                )}
                 {activeHeSo && <>
                   <Descriptions.Item label="Bậc lương hiện tại">Bậc {activeHeSo.bac} — Hệ số {activeHeSo.heSo}</Descriptions.Item>
                   <Descriptions.Item label="Ngày nâng lương tiếp theo">

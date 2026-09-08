@@ -125,11 +125,15 @@ export const useDeXuatStore = create<DeXuatState>()(
           const { addPhuCap, deactivatePhuCap, getActivePhuCaps, addLichSuBienDong, addNhatKy } =
             useLuongStore.getState()
           const loaiPctn = useDanhMucStore.getState().loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
+          const { updateVienChuc } = useVienChucStore.getState()
 
           dx.chiTiet.forEach((ct: ChiTietDeXuat) => {
             if (!loaiPctn) return
             const cu = getActivePhuCaps(ct.vienChucId).find((p) => p.loaiPhuCapId === loaiPctn.id)
             if (cu) deactivatePhuCap(cu.id)
+
+            // Ghi mốc hưởng PCTN mới vào hồ sơ để làm căn cứ cho kỳ đề xuất sau
+            updateVienChuc(ct.vienChucId, { mocHuongPctn: ct.ngayHieuLuc })
 
             addPhuCap({
               vienChucId: ct.vienChucId,

@@ -10,7 +10,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import type { ChiTietDeXuat, LoaiDeXuat } from '@/types/deXuat'
 import { LOAI_DE_XUAT_LABELS } from '@/types/deXuat'
-import { isDangCongTac } from '@/types/vienChuc'
+import { isDangCongTac, coPhuCapThamNien } from '@/types/vienChuc'
 
 const { Title } = Typography
 
@@ -35,7 +35,11 @@ export default function TaoDeXuatPage() {
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const loaiPctn = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
 
-  const vcOptions = vienChucs.filter((v) => !selectedDonVi || v.donViId === selectedDonVi).map((v) => ({ value: v.id, label: `${v.ho} ${v.ten}` }))
+  // Phiếu PCTN chỉ áp dụng cho CBQL và giáo viên (nhân viên không hưởng phụ cấp thâm niên)
+  const vcOptions = vienChucs
+    .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
+    .filter((v) => !laPctn || coPhuCapThamNien(v.vtvl))
+    .map((v) => ({ value: v.id, label: `${v.ho} ${v.ten}` }))
 
   const addVC = (vcId: string | undefined, ngayHieuLucOverride?: string) => {
     if (!vcId) return
@@ -43,12 +47,18 @@ export default function TaoDeXuatPage() {
     const vc = vienChucs.find((v) => v.id === vcId)
     const hsl = heSoLuongs.find((h) => h.vienChucId === vcId && h.isActive)
     if (!vc || !hsl) return
+    if (laPctn && !coPhuCapThamNien(vc.vtvl)) {
+      message.warning('Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên')
+      return
+    }
     const bacs = bacLuongs.filter((b) => b.chucDanhId === hsl.chucDanhId).sort((a, b) => a.bac - b.bac)
     const nextBac = bacs.find((b) => b.bac === hsl.bac + 1)
     // PCTN đang hưởng (nếu có) để cán bộ đối chiếu khi nhập mức mới
     const pctnHienTai = loaiPctn
       ? phuCapVienChucs.find((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiPctn.id)?.giaTri ?? 0
       : 0
+    // Phiếu PCTN: gợi ý mốc mới = mốc hưởng PCTN hiện tại + 1 năm, mức mới = mức cũ + 1% (chưa có thì 5%)
+    const mocPctnMoi = vc.mocHuongPctn ? dayjs(vc.mocHuongPctn).add(1, 'year').format('YYYY-MM-DD') : undefined
     setChiTiet((prev) => [...prev, {
       vienChucId: vcId,
       chucDanhCuId: hsl.chucDanhId,
@@ -56,10 +66,10 @@ export default function TaoDeXuatPage() {
       chucDanhMoiId: hsl.chucDanhId,
       bacMoi: nextBac?.bac ?? hsl.bac + 1,
       heSoMoi: nextBac?.heSo ?? +(hsl.heSo + 0.33).toFixed(2),
-      ngayHieuLuc: ngayHieuLucOverride ?? dayjs().format('YYYY-MM-DD'),
+      ngayHieuLuc: ngayHieuLucOverride ?? (laPctn ? mocPctnMoi : undefined) ?? dayjs().format('YYYY-MM-DD'),
       lyDo: laPctn ? 'Nâng phụ cấp thâm niên theo niên hạn' : 'Đủ thời hạn nâng bậc thường xuyên',
       pctnCu: pctnHienTai,
-      pctnMoi: pctnHienTai,
+      pctnMoi: laPctn ? (pctnHienTai > 0 ? pctnHienTai + 1 : 5) : pctnHienTai,
     }])
   }
 
@@ -135,6 +145,13 @@ export default function TaoDeXuatPage() {
   const detailCols = laPctn
     ? [
         colVienChuc,
+        {
+          title: 'Mốc PCTN hiện tại', key: 'moc_cu', width: 140,
+          render: (_: any, r: ChiTietDeXuat) => {
+            const moc = vienChucs.find((v) => v.id === r.vienChucId)?.mocHuongPctn
+            return moc ? dayjs(moc).format('DD/MM/YYYY') : <Typography.Text type="secondary">Chưa khai báo</Typography.Text>
+          },
+        },
         { title: 'PCTN hiện tại', key: 'pctn_cu', width: 110, render: (_: any, r: ChiTietDeXuat) => `${r.pctnCu ?? 0}%` },
         {
           title: 'PCTN đề nghị', key: 'pctn_moi', width: 120,
@@ -163,7 +180,7 @@ export default function TaoDeXuatPage() {
       <Space style={{ marginBottom: 16 }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/de-xuat')}>Quay lại</Button>
       </Space>
-      <Title level={4}>Tạo đề xuất lương</Title>
+      <Title level={4}>Tạo đề xuất điều chỉnh Hệ số lương - PCTN</Title>
 
       <Form form={form} layout="vertical" onFinish={(v) => onFinish(v, false)}>
         <Form.Item name="tieuDe" label="Tiêu đề" rules={[{ required: true }]}>
@@ -222,6 +239,7 @@ export default function TaoDeXuatPage() {
         <Space style={{ marginBottom: 12 }}>
           <Select showSearch style={{ width: 260 }} placeholder="Chọn viên chức để thêm..." options={vcOptions} onSelect={(v: string | undefined) => addVC(v)} filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())} value={undefined} />
           <span>{chiTiet.length} viên chức đã thêm</span>
+          {laPctn && <Typography.Text type="secondary">Chỉ CBQL và giáo viên (nhân viên không hưởng PCTN)</Typography.Text>}
         </Space>
 
         <Table dataSource={chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: 700 }} style={{ marginBottom: 16 }} />

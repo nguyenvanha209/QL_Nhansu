@@ -41,6 +41,8 @@ export interface VienChuc {
   nhiemVuChinh?: string
   trinhDoKhac?: string
   laDangVien?: boolean
+  /** Mốc hưởng phụ cấp thâm niên — căn cứ đề xuất nâng 1%/năm ở kỳ sau (chỉ CBQL và giáo viên) */
+  mocHuongPctn?: string
   ngayVaoNganh: string
   ngayVaoDonVi: string
   ngayHetTapSu?: string
@@ -94,6 +96,11 @@ export const TRANG_THAI_CONG_TAC_LABELS: Record<TrangThaiCongTac, string> = {
   CHUYEN_DI: 'Chuyển đi',
   NGHI_HUU: 'Nghỉ hưu',
   THOI_VIEC: 'Thôi việc',
+}
+
+/** Chỉ cán bộ quản lý và giáo viên được hưởng phụ cấp thâm niên; nhân viên không có */
+export function coPhuCapThamNien(vtvl?: VTVL): boolean {
+  return !!vtvl && vtvl !== 'NHAN_VIEN'
 }
 
 export function isDangCongTac(vc: Pick<VienChuc, 'trangThai'>): boolean {

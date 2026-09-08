@@ -10,7 +10,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, coPhuCapThamNien } from '@/types/vienChuc'
 import type { ChucVu, LoaiLaoDong } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import type { LoaiDonVi } from '@/types/donVi'
@@ -99,6 +99,8 @@ export default function VienChucFormPage() {
   const watchBacLuongId = Form.useWatch('bacLuongId', form)
   const selectedBac = useMemo(() => bacLuongs.find((b) => b.id === watchBacLuongId), [watchBacLuongId])
   const watchLoaiLaoDong = Form.useWatch('loaiLaoDong', form) as LoaiLaoDong | undefined
+  const watchVtvl = Form.useWatch('vtvl', form) as string | undefined
+  const duocHuongPctn = coPhuCapThamNien(watchVtvl)
 
   useEffect(() => {
     if (!vc) return
@@ -110,6 +112,7 @@ export default function VienChucFormPage() {
       ngayVaoDonVi: dayjs(vc.ngayVaoDonVi),
       ngayHetTapSu: vc.ngayHetTapSu ? dayjs(vc.ngayHetTapSu) : undefined,
       ngayVaoBienChe: vc.ngayVaoBienChe ? dayjs(vc.ngayVaoBienChe) : undefined,
+      mocHuongPctn: vc.mocHuongPctn ? dayjs(vc.mocHuongPctn) : undefined,
     })
     const heSo = luongState.getActiveHeSo(id!)
     if (heSo) {
@@ -138,8 +141,11 @@ export default function VienChucFormPage() {
       ngayVaoDonVi: values.ngayVaoDonVi?.format('YYYY-MM-DD'),
       ngayHetTapSu: values.ngayHetTapSu?.format('YYYY-MM-DD'),
       ngayVaoBienChe: values.ngayVaoBienChe?.format('YYYY-MM-DD'),
+      mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
     }
     if (formatted.loaiLaoDong !== 'VIEN_CHUC') formatted.nguonKinhPhi = undefined
+    // Nhân viên không hưởng phụ cấp thâm niên → không giữ mốc PCTN
+    if (!coPhuCapThamNien(formatted.vtvl)) formatted.mocHuongPctn = undefined
     const { bacLuongId, phuCaps, ...vcData } = formatted
     const mocHuongLuongStr: string | undefined = mocHuongLuong?.format('YYYY-MM-DD')
 
@@ -419,7 +425,23 @@ export default function VienChucFormPage() {
               <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} placeholder="Chọn mốc hưởng lương" />
             </Form.Item>
           </Col>
+          {duocHuongPctn && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item
+                name="mocHuongPctn"
+                label="Mốc hưởng PCTN"
+                tooltip="Mốc hưởng phụ cấp thâm niên — căn cứ để trường đề xuất nâng 1%/năm ở kỳ sau (6 tháng đầu hoặc cuối năm). Chỉ áp dụng với CBQL và giáo viên."
+              >
+                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} placeholder="Chọn mốc hưởng PCTN" />
+              </Form.Item>
+            </Col>
+          )}
         </Row>
+        {!duocHuongPctn && watchVtvl && (
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+            Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên nên không khai báo mốc hưởng PCTN.
+          </Text>
+        )}
 
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>

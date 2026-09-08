@@ -59,7 +59,7 @@ export default function DeXuatListPage() {
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>Đề xuất lương & Phụ cấp</Title>
+        <Title level={4} style={{ margin: 0 }}>Đề xuất điều chỉnh Hệ số lương - PCTN</Title>
         {canCreate && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/de-xuat/new')}>Tạo đề xuất</Button>
         )}

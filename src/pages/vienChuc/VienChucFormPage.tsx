@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Card, Form, Input, Select, DatePicker, Button, Row, Col,
-  message, Space, Typography, Divider, InputNumber,
+  message, Space, Typography, Divider, InputNumber, Alert,
 } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -11,6 +11,9 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import { LOAI_LAO_DONG_LABELS, CHUC_VU_LABELS } from '@/types/vienChuc'
+import type { ChucVu } from '@/types/vienChuc'
+import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
+import type { LoaiDonVi } from '@/types/donVi'
 
 const { Title, Text } = Typography
 
@@ -55,6 +58,17 @@ export default function VienChucFormPage() {
       label: `Bậc ${b.bac} — Hệ số ${b.heSo.toFixed(2)}`,
     }))
   }, [watchChucDanhId])
+
+  const watchDonViId = Form.useWatch('donViId', form)
+  const watchChucVu = Form.useWatch('chucVu', form)
+  const pccvInfo = useMemo(() => {
+    if (!watchDonViId || !watchChucVu) return null
+    const dv = donVis.find((d) => d.id === watchDonViId)
+    if (!dv || !dv.soLop || dv.loai === 'OTHER') return null
+    const hang = getHangTruong(dv.loai as LoaiDonVi, dv.soLop)
+    const heSo = getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, hang, watchChucVu as ChucVu)
+    return { hang, heSo, loai: dv.loai }
+  }, [watchDonViId, watchChucVu, donVis])
 
   const watchBacLuongId = Form.useWatch('bacLuongId', form)
   const selectedBac = useMemo(() => bacLuongs.find((b) => b.id === watchBacLuongId), [watchBacLuongId])
@@ -261,6 +275,16 @@ export default function VienChucFormPage() {
               />
             </Form.Item>
           </Col>
+          {pccvInfo && (
+            <Col xs={24}>
+              <Alert
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+                message={`PC Chức vụ: hệ số ${pccvInfo.heSo.toFixed(2)} × lương cơ sở (${HANG_TRUONG_LABELS[pccvInfo.hang]} — TT 33/2005)`}
+              />
+            </Col>
+          )}
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="ngayVaoNganh" label="Ngày vào ngành" rules={[{ required: true }]}>
               <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />

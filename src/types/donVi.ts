@@ -1,10 +1,13 @@
 export type LoaiDonVi = 'MAM_NON' | 'TIEU_HOC' | 'THCS' | 'OTHER'
 
+export type HangTruong = 1 | 2 | 3
+
 export interface DonVi {
   id: string
   ma: string
   ten: string
   loai: LoaiDonVi
+  soLop?: number
   diaChi?: string
   hieuTruong?: string
   active: boolean

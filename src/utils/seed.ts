@@ -6,16 +6,12 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useUserStore } from '@/store/userStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
+import { getHangTruong, getPhuCapChucVuPercent } from '@/utils/hangTruong'
+import type { ChucVu } from '@/types/vienChuc'
 
 const REQUIRED_PHU_CAPS = [
-  { ma: 'PCCV_HT_H1', ten: 'PC Chức vụ HT (Hạng I)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 70, moTa: 'Hiệu trưởng trường hạng I - hệ số 0.7', active: true },
-  { ma: 'PCCV_HT_H2', ten: 'PC Chức vụ HT (Hạng II)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 50, moTa: 'Hiệu trưởng trường hạng II - hệ số 0.5', active: true },
-  { ma: 'PCCV_HT_H3', ten: 'PC Chức vụ HT (Hạng III)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 35, moTa: 'Hiệu trưởng trường hạng III - hệ số 0.35', active: true },
-  { ma: 'PCCV_PHT_H1', ten: 'PC Chức vụ PHT (Hạng I)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 55, moTa: 'Phó HT trường hạng I - hệ số 0.55', active: true },
-  { ma: 'PCCV_PHT_H2', ten: 'PC Chức vụ PHT (Hạng II)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 40, moTa: 'Phó HT trường hạng II - hệ số 0.4', active: true },
-  { ma: 'PCCV_PHT_H3', ten: 'PC Chức vụ PHT (Hạng III)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 25, moTa: 'Phó HT trường hạng III - hệ số 0.25', active: true },
+  { ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường', active: true },
   { ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: '5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026', active: true },
-  { ma: 'PC_TRACH_NHIEM', ten: 'PC Trách nhiệm', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 15, moTa: 'Tổ trưởng, tổ phó chuyên môn', active: true },
 ]
 
 function ensureRequiredPhuCaps() {
@@ -48,6 +44,18 @@ export function initSeedData() {
     useDeXuatStore.getState().setDeXuats([])
   }
 
+  // Force re-seed if using old per-hạng PCCV entries or missing soLop on donVi
+  const hasOldPCCV = dm.loaiPhuCaps.some((p) => p.ma.startsWith('PCCV_'))
+  const missingSoLop = dm.donVis.length > 0 && !dm.donVis.some((d) => d.soLop)
+  if (hasOldPCCV || missingSoLop) {
+    dm.setLoaiPhuCaps([])
+    dm.setDonVis([])
+    vcState.setVienChucs([])
+    useLuongStore.getState().setHeSoLuongs([])
+    useLuongStore.getState().setPhuCapVienChucs([])
+    useDeXuatStore.getState().setDeXuats([])
+  }
+
   // Only skip seed when ALL categories are present — prevents partial data
   if (
     dm.donVis.length > 0 &&
@@ -67,11 +75,11 @@ export function initSeedData() {
 
   // --- Đơn vị ---
   const donVis = [
-    { id: 'dv1', ma: 'MN01', ten: 'Trường MN Gia Viên', loai: 'MAM_NON' as const, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
-    { id: 'dv2', ma: 'TH01', ten: 'Trường TH Gia Viên 1', loai: 'TIEU_HOC' as const, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
-    { id: 'dv3', ma: 'TH02', ten: 'Trường TH Gia Viên 2', loai: 'TIEU_HOC' as const, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
-    { id: 'dv4', ma: 'CS01', ten: 'Trường THCS Gia Viên', loai: 'THCS' as const, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
-    { id: 'dv5', ma: 'CS02', ten: 'Trường THCS Phạm Hồng Thái', loai: 'THCS' as const, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
+    { id: 'dv1', ma: 'MN01', ten: 'Trường MN Gia Viên', loai: 'MAM_NON' as const, soLop: 8, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
+    { id: 'dv2', ma: 'TH01', ten: 'Trường TH Gia Viên 1', loai: 'TIEU_HOC' as const, soLop: 22, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
+    { id: 'dv3', ma: 'TH02', ten: 'Trường TH Gia Viên 2', loai: 'TIEU_HOC' as const, soLop: 15, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
+    { id: 'dv4', ma: 'CS01', ten: 'Trường THCS Gia Viên', loai: 'THCS' as const, soLop: 24, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
+    { id: 'dv5', ma: 'CS02', ten: 'Trường THCS Phạm Hồng Thái', loai: 'THCS' as const, soLop: 12, diaChi: 'Phường Gia Viên', active: true, createdAt: d('2020-01-01') },
   ]
   setDonVis(donVis)
 
@@ -167,18 +175,10 @@ export function initSeedData() {
     { id: 'pc1', ma: 'PCUD_35', ten: 'PC Ưu đãi nghề (35%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 35, moTa: 'GV MN, TH - NĐ 182/2026', active: true },
     { id: 'pc2', ma: 'PCUD_30', ten: 'PC Ưu đãi nghề (30%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 30, moTa: 'GV THCS - NĐ 182/2026', active: true },
     { id: 'pc3', ma: 'PCUD_20', ten: 'PC Ưu đãi nghề (20%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 20, moTa: 'NV hỗ trợ - NĐ 182/2026', active: true },
-    // PC Chức vụ Hiệu trưởng theo hạng trường
-    { id: 'pc4', ma: 'PCCV_HT_H1', ten: 'PC Chức vụ HT (Hạng I)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 70, moTa: 'Hiệu trưởng trường hạng I - hệ số 0.7', active: true },
-    { id: 'pc4b', ma: 'PCCV_HT_H2', ten: 'PC Chức vụ HT (Hạng II)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 50, moTa: 'Hiệu trưởng trường hạng II - hệ số 0.5', active: true },
-    { id: 'pc4c', ma: 'PCCV_HT_H3', ten: 'PC Chức vụ HT (Hạng III)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 35, moTa: 'Hiệu trưởng trường hạng III - hệ số 0.35', active: true },
-    // PC Chức vụ Phó Hiệu trưởng theo hạng trường
-    { id: 'pc5', ma: 'PCCV_PHT_H1', ten: 'PC Chức vụ PHT (Hạng I)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 55, moTa: 'Phó HT trường hạng I - hệ số 0.55', active: true },
-    { id: 'pc5b', ma: 'PCCV_PHT_H2', ten: 'PC Chức vụ PHT (Hạng II)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 40, moTa: 'Phó HT trường hạng II - hệ số 0.4', active: true },
-    { id: 'pc5c', ma: 'PCCV_PHT_H3', ten: 'PC Chức vụ PHT (Hạng III)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 25, moTa: 'Phó HT trường hạng III - hệ số 0.25', active: true },
+    // PC Chức vụ — hệ số tự động theo loại trường × hạng trường × chức vụ (TT 33/2005)
+    { id: 'pc_cv', ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường', active: true },
     // PC Thâm niên nghề
     { id: 'pc6', ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: '5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026', active: true },
-    // PC Trách nhiệm
-    { id: 'pc7', ma: 'PC_TRACH_NHIEM', ten: 'PC Trách nhiệm', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 15, moTa: 'Tổ trưởng, tổ phó chuyên môn', active: true },
   ])
 
   // --- Vị trí việc làm ---
@@ -286,6 +286,24 @@ export function initSeedData() {
         createdAt: d('2024-01-01'),
         createdBy: 'system',
       })
+
+      // PC Chức vụ — auto-calculated from school type × ranking × position
+      if (chucVu) {
+        const hang = getHangTruong(dv.loai, dv.soLop ?? 0)
+        const pccvPercent = getPhuCapChucVuPercent(dv.loai, hang, chucVu as ChucVu)
+        if (pccvPercent > 0) {
+          allPhuCaps.push({
+            id: nanoid(),
+            vienChucId: vcId,
+            loaiPhuCapId: 'pc_cv',
+            giaTri: pccvPercent,
+            ngayHieuLuc: ngayVaoNganh,
+            isActive: true,
+            createdAt: d('2024-01-01'),
+            createdBy: 'system',
+          })
+        }
+      }
     })
   })
 

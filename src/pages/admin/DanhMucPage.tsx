@@ -1,9 +1,13 @@
 import { useState } from 'react'
-import { Card, Tabs, Table, Button, Modal, Form, Input, InputNumber, Select, Space, message, Popconfirm, Tag } from 'antd'
+import { Card, Tabs, Table, Button, Modal, Form, Input, InputNumber, Select, Space, message, Popconfirm, Tag, Descriptions } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
 import { LOAI_DON_VI_LABELS } from '@/types/donVi'
+import type { LoaiDonVi } from '@/types/donVi'
+import { getHangTruong, HANG_TRUONG_LABELS, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
+import { CHUC_VU_LABELS } from '@/types/vienChuc'
+import type { ChucVu } from '@/types/vienChuc'
 
 export default function DanhMucPage() {
   return (
@@ -33,9 +37,18 @@ function DonViTab() {
   const cols = [
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 80 },
     { title: 'Tên trường', dataIndex: 'ten', key: 'ten' },
-    { title: 'Loại', dataIndex: 'loai', key: 'loai', render: (v: string) => LOAI_DON_VI_LABELS[v as keyof typeof LOAI_DON_VI_LABELS] ?? v },
-    { title: 'Trạng thái', dataIndex: 'active', key: 'ac', render: (v: boolean) => <Tag color={v ? 'green' : 'default'}>{v ? 'Hoạt động' : 'Dừng'}</Tag> },
-    { title: '', key: 'act', render: (_: any, r: any) => (
+    { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 90, render: (v: string) => LOAI_DON_VI_LABELS[v as keyof typeof LOAI_DON_VI_LABELS] ?? v },
+    { title: 'Số lớp', dataIndex: 'soLop', key: 'sl', width: 75, align: 'center' as const, render: (v: number) => v ?? '—' },
+    {
+      title: 'Hạng trường', key: 'hang', width: 95, align: 'center' as const,
+      render: (_: any, r: any) => {
+        if (!r.soLop || r.loai === 'OTHER') return '—'
+        const hang = getHangTruong(r.loai, r.soLop)
+        return <Tag color={hang === 1 ? 'gold' : hang === 2 ? 'blue' : 'default'}>{HANG_TRUONG_LABELS[hang]}</Tag>
+      },
+    },
+    { title: 'Trạng thái', dataIndex: 'active', key: 'ac', width: 100, render: (v: boolean) => <Tag color={v ? 'green' : 'default'}>{v ? 'Hoạt động' : 'Dừng'}</Tag> },
+    { title: '', key: 'act', width: 80, render: (_: any, r: any) => (
       <Space size="small">
         <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} />
         <Popconfirm title="Xác nhận?" onConfirm={() => updateDonVi(r.id, { active: false })}><Button size="small" danger icon={<DeleteOutlined />} /></Popconfirm>
@@ -43,16 +56,50 @@ function DonViTab() {
     )},
   ]
 
+  const pccvData = donVis.filter((d) => d.active && d.soLop && d.loai !== 'OTHER').map((d) => {
+    const hang = getHangTruong(d.loai as LoaiDonVi, d.soLop!)
+    const rates = (['HIEU_TRUONG', 'PHO_HIEU_TRUONG', 'TO_TRUONG_CM', 'TO_PHO_CM'] as ChucVu[]).map(
+      (cv) => ({ cv, heSo: getPhuCapChucVuHeSo(d.loai as LoaiDonVi, hang, cv) })
+    )
+    return { ...d, hang, rates }
+  })
+
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm đơn vị</Button>
       <Table dataSource={donVis} columns={cols} rowKey="id" size="small" pagination={false} />
+
+      {pccvData.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <h4 style={{ marginBottom: 12 }}>Hệ số phụ cấp chức vụ theo hạng trường (TT 33/2005)</h4>
+          <Table
+            dataSource={pccvData}
+            rowKey="id"
+            size="small"
+            pagination={false}
+            columns={[
+              { title: 'Trường', dataIndex: 'ten', key: 'ten', ellipsis: true },
+              { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 80, render: (v: string) => LOAI_DON_VI_LABELS[v as keyof typeof LOAI_DON_VI_LABELS] },
+              { title: 'Số lớp', dataIndex: 'soLop', key: 'sl', width: 70, align: 'center' as const },
+              { title: 'Hạng', key: 'h', width: 70, align: 'center' as const, render: (_: any, r: any) => HANG_TRUONG_LABELS[r.hang as 1|2|3] },
+              { title: 'Hiệu trưởng', key: 'ht', width: 95, align: 'center' as const, render: (_: any, r: any) => r.rates[0].heSo.toFixed(2) },
+              { title: 'Phó HT', key: 'pht', width: 80, align: 'center' as const, render: (_: any, r: any) => r.rates[1].heSo.toFixed(2) },
+              { title: 'Tổ trưởng', key: 'tt', width: 85, align: 'center' as const, render: (_: any, r: any) => r.rates[2].heSo.toFixed(2) },
+              { title: 'Tổ phó', key: 'tp', width: 70, align: 'center' as const, render: (_: any, r: any) => r.rates[3].heSo.toFixed(2) },
+            ]}
+          />
+        </div>
+      )}
+
       <Modal open={open} title={editing ? 'Sửa đơn vị' : 'Thêm đơn vị'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnClose>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="ten" label="Tên trường" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="loai" label="Loại" rules={[{ required: true }]}>
             <Select options={Object.entries(LOAI_DON_VI_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
+          </Form.Item>
+          <Form.Item name="soLop" label="Số lớp" tooltip="Dùng xếp hạng trường → phụ cấp chức vụ">
+            <InputNumber min={1} max={100} style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="diaChi" label="Địa chỉ"><Input /></Form.Item>
         </Form>

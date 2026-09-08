@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Spin } from 'antd'
+import { Spin, App as AntApp } from 'antd'
 import { ConfigProvider } from 'antd'
 import viVN from 'antd/locale/vi_VN'
 import dayjs from 'dayjs'
@@ -48,7 +48,9 @@ export default function App() {
       locale={viVN}
       theme={{ token: { colorPrimary: '#1677ff', borderRadius: 6 } }}
     >
-      <AppRouter />
+      <AntApp>
+        <AppRouter />
+      </AntApp>
     </ConfigProvider>
   )
 }

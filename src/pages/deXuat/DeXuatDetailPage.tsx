@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Steps, Button, Table, Tag, Descriptions, Modal, Input, Select, Space, Typography, Result, message, Divider } from 'antd'
+import { Card, Steps, Button, Table, Tag, Descriptions, Modal, Input, Select, Space, Typography, Result, Divider, App } from 'antd'
 import { ArrowLeftOutlined, CheckOutlined, CloseOutlined, SyncOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useDeXuatStore } from '@/store/deXuatStore'
@@ -13,6 +13,7 @@ const { Title, Text } = Typography
 const { TextArea } = Input
 
 export default function DeXuatDetailPage() {
+  const { message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { currentUser, isVHXH, isLanhDao, isAdmin } = useAuth()

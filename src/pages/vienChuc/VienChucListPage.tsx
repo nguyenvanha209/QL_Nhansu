@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Table, Button, Input, Select, Space, Tag, Typography, Card, Tooltip, Popconfirm, message } from 'antd'
+import { Table, Button, Input, Select, Space, Tag, Typography, Card, Tooltip, Popconfirm, App } from 'antd'
 import { PlusOutlined, SearchOutlined, EditOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -11,6 +11,7 @@ import { LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
 const { Title } = Typography
 
 export default function VienChucListPage() {
+  const { message } = App.useApp()
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission } = useAuth()
   const allVienChucs = useVienChucStore((s) => s.vienChucs)

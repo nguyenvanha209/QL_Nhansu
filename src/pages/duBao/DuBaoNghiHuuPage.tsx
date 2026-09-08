@@ -70,8 +70,8 @@ export default function DuBaoNghiHuuPage() {
       <Title level={4} style={{ marginBottom: 16 }}>Dự báo nghỉ hưu</Title>
 
       <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col xs={24} sm={8}><Statistic title={`Nghỉ hưu trong ${years} năm`} value={data.length} prefix={<ClockCircleOutlined />} valueStyle={{ color: data.length > 0 ? '#f5222d' : '#52c41a' }} /></Col>
-        <Col xs={24} sm={8}><Statistic title="Cần chuẩn bị gấp (≤ 6 tháng)" value={urgentCount} valueStyle={{ color: urgentCount > 0 ? '#fa8c16' : '#52c41a' }} /></Col>
+        <Col xs={24} sm={8}><Statistic title={`Nghỉ hưu trong ${years} năm`} value={data.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: data.length > 0 ? '#f5222d' : '#52c41a' } }} /></Col>
+        <Col xs={24} sm={8}><Statistic title="Cần chuẩn bị gấp (≤ 6 tháng)" value={urgentCount} styles={{ content: { color: urgentCount > 0 ? '#fa8c16' : '#52c41a' } }} /></Col>
       </Row>
 
       <Space wrap style={{ marginBottom: 16 }}>

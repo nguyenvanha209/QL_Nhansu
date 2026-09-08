@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Tabs, Table, Button, Modal, Form, Input, InputNumber, Select, Space, message, Popconfirm, Tag, Descriptions } from 'antd'
+import { Card, Tabs, Table, Button, Modal, Form, Input, InputNumber, Select, Space, Popconfirm, Tag, Descriptions, App } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
@@ -23,6 +23,7 @@ export default function DanhMucPage() {
 }
 
 function DonViTab() {
+  const { message } = App.useApp()
   const { donVis, addDonVi, updateDonVi } = useDanhMucStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
@@ -91,7 +92,7 @@ function DonViTab() {
         </div>
       )}
 
-      <Modal open={open} title={editing ? 'Sửa đơn vị' : 'Thêm đơn vị'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnClose>
+      <Modal open={open} title={editing ? 'Sửa đơn vị' : 'Thêm đơn vị'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="ten" label="Tên trường" rules={[{ required: true }]}><Input /></Form.Item>
@@ -109,6 +110,7 @@ function DonViTab() {
 }
 
 function ChucDanhTab() {
+  const { message } = App.useApp()
   const { chucDanhs, addChucDanh, updateChucDanh } = useDanhMucStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
@@ -136,7 +138,7 @@ function ChucDanhTab() {
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức danh</Button>
       <Table dataSource={chucDanhs.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} />
-      <Modal open={open} title={editing ? 'Sửa chức danh' : 'Thêm chức danh'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnClose>
+      <Modal open={open} title={editing ? 'Sửa chức danh' : 'Thêm chức danh'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="ten" label="Tên" rules={[{ required: true }]}><Input /></Form.Item>
@@ -153,6 +155,7 @@ function ChucDanhTab() {
 }
 
 function PhuCapTab() {
+  const { message } = App.useApp()
   const { loaiPhuCaps, addLoaiPhuCap, updateLoaiPhuCap } = useDanhMucStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
@@ -176,7 +179,7 @@ function PhuCapTab() {
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm loại phụ cấp</Button>
       <Table dataSource={loaiPhuCaps.filter((p) => p.active)} columns={cols} rowKey="id" size="small" pagination={false} />
-      <Modal open={open} title={editing ? 'Sửa phụ cấp' : 'Thêm phụ cấp'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnClose>
+      <Modal open={open} title={editing ? 'Sửa phụ cấp' : 'Thêm phụ cấp'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="ten" label="Tên" rules={[{ required: true }]}><Input /></Form.Item>
@@ -192,6 +195,7 @@ function PhuCapTab() {
 }
 
 function LuongCoSoTab() {
+  const { message } = App.useApp()
   const { mucLuongCosos, addMucLuongCoso, updateMucLuongCoso } = useDanhMucStore()
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
@@ -214,7 +218,7 @@ function LuongCoSoTab() {
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { form.resetFields(); setOpen(true) }}>Thêm mức lương cơ sở</Button>
       <Table dataSource={[...mucLuongCosos].sort((a, b) => b.hieuLucTu.localeCompare(a.hieuLucTu))} columns={cols} rowKey="id" size="small" pagination={false} />
-      <Modal open={open} title="Thêm mức lương cơ sở" onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnClose>
+      <Modal open={open} title="Thêm mức lương cơ sở" onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={(v) => { addMucLuongCoso(v); setOpen(false); form.resetFields(); message.success('Đã thêm') }}>
           <Form.Item name="mucLuong" label="Mức lương (VNĐ)" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
           <Form.Item name="hieuLucTu" label="Hiệu lực từ" rules={[{ required: true }]}><Input placeholder="YYYY-MM-DD" /></Form.Item>

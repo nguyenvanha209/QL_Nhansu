@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, message, Typography, Divider } from 'antd'
+import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, Typography, Divider, App } from 'antd'
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SendOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useDeXuatStore } from '@/store/deXuatStore'
@@ -13,6 +13,7 @@ import type { ChiTietDeXuat } from '@/types/deXuat'
 const { Title } = Typography
 
 export default function TaoDeXuatPage() {
+  const { message } = App.useApp()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const { currentUser, scopeDonViId } = useAuth()

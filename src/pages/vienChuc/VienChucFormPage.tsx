@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Card, Form, Input, Select, DatePicker, Button, Row, Col,
-  message, Space, Typography, Divider, InputNumber, Alert,
+  Space, Typography, Divider, InputNumber, Alert, App,
 } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -27,6 +27,7 @@ function PhuCapGiaTriInput({ value, onChange, fieldName }: { value?: number; onC
 }
 
 export default function VienChucFormPage() {
+  const { message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const navigate = useNavigate()

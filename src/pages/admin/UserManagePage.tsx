@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Card, Table, Button, Modal, Form, Input, Select, Space, Tag, Popconfirm, message, Typography } from 'antd'
+import { Card, Table, Button, Modal, Form, Input, Select, Space, Tag, Popconfirm, Typography, App } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -10,6 +10,7 @@ import { formatDate } from '@/utils/helpers'
 const { Title } = Typography
 
 export default function UserManagePage() {
+  const { message } = App.useApp()
   const { users, addUser, updateUser, softDelete } = useUserStore()
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
@@ -60,7 +61,7 @@ export default function UserManagePage() {
       </div>
       <Table dataSource={users} columns={cols} rowKey="id" size="small" pagination={{ pageSize: 20 }} />
 
-      <Modal open={open} title={editing ? 'Sửa tài khoản' : 'Tạo tài khoản'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnClose>
+      <Modal open={open} title={editing ? 'Sửa tài khoản' : 'Tạo tài khoản'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           {!editing && <Form.Item name="username" label="Tên đăng nhập" rules={[{ required: true }]}><Input /></Form.Item>}
           <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true }]}><Input /></Form.Item>

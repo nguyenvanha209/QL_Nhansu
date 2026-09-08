@@ -65,22 +65,22 @@ export default function DashboardPage() {
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Tổng viên chức" value={vienChucs.length} prefix={<TeamOutlined />} valueStyle={{ color: '#1677ff' }} />
+            <Statistic title="Tổng viên chức" value={vienChucs.length} prefix={<TeamOutlined />} styles={{ content: { color: '#1677ff' } }} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Đề xuất đang xử lý" value={deXuats.filter((d) => d.trangThai === 'CHO_XET_DUYET' || d.trangThai === 'CHO_PHE_DUYET').length} prefix={<FileTextOutlined />} valueStyle={{ color: '#faad14' }} />
+            <Statistic title="Đề xuất đang xử lý" value={deXuats.filter((d) => d.trangThai === 'CHO_XET_DUYET' || d.trangThai === 'CHO_PHE_DUYET').length} prefix={<FileTextOutlined />} styles={{ content: { color: '#faad14' } }} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Sắp đến kỳ nâng lương" value={salaryAlerts.length} prefix={<WarningOutlined />} valueStyle={{ color: salaryAlerts.length > 0 ? '#f5222d' : '#52c41a' }} />
+            <Statistic title="Sắp đến kỳ nâng lương" value={salaryAlerts.length} prefix={<WarningOutlined />} styles={{ content: { color: salaryAlerts.length > 0 ? '#f5222d' : '#52c41a' } }} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title={`Nghỉ hưu trong ${retireYears} năm`} value={retireIds.length} prefix={<ClockCircleOutlined />} valueStyle={{ color: '#722ed1' }} suffix={
+            <Statistic title={`Nghỉ hưu trong ${retireYears} năm`} value={retireIds.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: '#722ed1' } }} suffix={
               <Select size="small" value={retireYears} onChange={setRetireYears} style={{ marginLeft: 8, width: 80 }}>
                 <Select.Option value={1}>1 năm</Select.Option>
                 <Select.Option value={3}>3 năm</Select.Option>
@@ -127,7 +127,7 @@ export default function DashboardPage() {
         {/* Trạng thái đề xuất */}
         <Col xs={24} lg={10}>
           <Card title="Trạng thái đề xuất lương" size="small">
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space orientation="vertical" style={{ width: '100%' }}>
               {statusCounts.map(({ status, count }) => (
                 <div key={status} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Tag color={TRANG_THAI_COLORS[status]}>{TRANG_THAI_LABELS[status]}</Tag>

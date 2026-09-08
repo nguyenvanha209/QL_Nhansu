@@ -128,7 +128,7 @@ export default function VienChucDetailPage() {
             children: (
               <Timeline items={lichSu.map((ls) => ({
                 color: ls.loai === 'LUONG' ? 'blue' : ls.loai === 'CHUC_DANH' ? 'green' : 'gray',
-                children: (
+                content: (
                   <div>
                     <Text strong>{ls.truongThayDoi}</Text>
                     <Text type="secondary"> — {formatDate(ls.ngayThayDoi)}</Text>

@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import type { DeXuatLuong, TrangThaiDeXuat, ChiTietDeXuat } from '@/types/deXuat'
 import type { LyDoNangLuong } from '@/types/luong'
+import { coPhuCapThamNien } from '@/types/vienChuc'
 import { persistStorage } from '@/lib/supabase'
 import { useLuongStore } from './luongStore'
 import { useVienChucStore } from './vienChucStore'
@@ -124,11 +125,16 @@ export const useDeXuatStore = create<DeXuatState>()(
           // Phiếu phụ cấp thâm niên: cập nhật PCTN vào Phụ cấp + Lịch sử biến động
           const { addPhuCap, deactivatePhuCap, getActivePhuCaps, addLichSuBienDong, addNhatKy } =
             useLuongStore.getState()
-          const loaiPctn = useDanhMucStore.getState().loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
-          const { updateVienChuc } = useVienChucStore.getState()
+          const { loaiPhuCaps, chucDanhs } = useDanhMucStore.getState()
+          const loaiPctn = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
+          const { updateVienChuc, getById: getVienChuc } = useVienChucStore.getState()
 
           dx.chiTiet.forEach((ct: ChiTietDeXuat) => {
             if (!loaiPctn) return
+            // Chốt chặn: nhân viên không hưởng phụ cấp thâm niên, bỏ qua dù phiếu có lọt
+            const vc = getVienChuc(ct.vienChucId)
+            if (vc && !coPhuCapThamNien(vc.vtvl, chucDanhs.find((c) => c.id === vc.chucDanhId)?.nhom)) return
+
             const cu = getActivePhuCaps(ct.vienChucId).find((p) => p.loaiPhuCapId === loaiPctn.id)
             if (cu) deactivatePhuCap(cu.id)
 

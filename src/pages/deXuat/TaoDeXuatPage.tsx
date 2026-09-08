@@ -35,10 +35,14 @@ export default function TaoDeXuatPage() {
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const loaiPctn = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
 
-  // Phiếu PCTN chỉ áp dụng cho CBQL và giáo viên (nhân viên không hưởng phụ cấp thâm niên)
+  // Phiếu PCTN chỉ áp dụng cho CBQL và giáo viên (nhân viên không hưởng phụ cấp thâm niên);
+  // hồ sơ cũ chưa gán VTVL thì xét theo nhóm ngạch/hạng đang xếp
+  const duocHuongPctn = (v: { vtvl?: string; chucDanhId: string }) =>
+    coPhuCapThamNien(v.vtvl, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom)
+
   const vcOptions = vienChucs
     .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
-    .filter((v) => !laPctn || coPhuCapThamNien(v.vtvl))
+    .filter((v) => !laPctn || duocHuongPctn(v))
     .map((v) => ({ value: v.id, label: `${v.ho} ${v.ten}` }))
 
   const addVC = (vcId: string | undefined, ngayHieuLucOverride?: string) => {
@@ -47,7 +51,7 @@ export default function TaoDeXuatPage() {
     const vc = vienChucs.find((v) => v.id === vcId)
     const hsl = heSoLuongs.find((h) => h.vienChucId === vcId && h.isActive)
     if (!vc || !hsl) return
-    if (laPctn && !coPhuCapThamNien(vc.vtvl)) {
+    if (laPctn && !duocHuongPctn(vc)) {
       message.warning('Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên')
       return
     }

@@ -11,6 +11,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, coPhuCapThamNien } from '@/types/vienChuc'
+import { chucDanhHopLeVoiVtvl } from '@/utils/vtvlRules'
 import type { ChucVu, LoaiLaoDong } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import type { LoaiDonVi } from '@/types/donVi'
@@ -49,12 +50,24 @@ export default function VienChucFormPage() {
     : donVis.filter((d) => d.active)
   ).map((d) => ({ value: d.id, label: d.ten }))
 
+  const watchVtvl = Form.useWatch('vtvl', form) as string | undefined
+  const watchChucDanhIdRaw = Form.useWatch('chucDanhId', form) as string | undefined
+  const duocHuongPctn = coPhuCapThamNien(watchVtvl, chucDanhs.find((c) => c.id === watchChucDanhIdRaw)?.nhom)
+
+  // Ngạch/hạng lọc theo VTVL; ngạch đang gán của hồ sơ cũ luôn được giữ lại để không mất dữ liệu
   const chucDanhOptions = chucDanhs
     .filter((c) => c.active)
-    .map((c) => ({ value: c.id, label: `${c.ma} — ${c.ten}` }))
+    .filter((c) => chucDanhHopLeVoiVtvl(c.nhom, watchVtvl) || c.id === watchChucDanhIdRaw)
+    .map((c) => ({
+      value: c.id,
+      label: chucDanhHopLeVoiVtvl(c.nhom, watchVtvl)
+        ? `${c.ma} — ${c.ten}`
+        : `${c.ma} — ${c.ten} (không thuộc VTVL đang chọn)`,
+    }))
 
   const phuCapOptions = loaiPhuCaps
     .filter((pc) => pc.active)
+    .filter((pc) => duocHuongPctn || pc.ma !== 'PC_THAM_NIEN')
     .map((pc) => ({ value: pc.id, label: `${pc.ma} — ${pc.ten}` }))
 
   const vtvlOptions = vtvls.filter((v) => v.active).map((v) => ({ value: v.ma, label: v.ten }))
@@ -96,11 +109,21 @@ export default function VienChucFormPage() {
     }
   }, [pccvInfo, loaiPhuCaps])
 
+  // Nhân viên không hưởng PC thâm niên → gỡ dòng phụ cấp này nếu đang có
+  const watchPhuCaps = Form.useWatch('phuCaps', form) as { loaiPhuCapId?: string }[] | undefined
+  useEffect(() => {
+    if (duocHuongPctn) return
+    const pcThamNien = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
+    if (!pcThamNien) return
+    const current: any[] = form.getFieldValue('phuCaps') || []
+    if (!current.some((pc) => pc?.loaiPhuCapId === pcThamNien.id)) return
+    form.setFieldValue('phuCaps', current.filter((pc) => pc?.loaiPhuCapId !== pcThamNien.id))
+    message.warning('Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên — đã gỡ dòng PC Thâm niên nghề')
+  }, [duocHuongPctn, watchPhuCaps, loaiPhuCaps])
+
   const watchBacLuongId = Form.useWatch('bacLuongId', form)
   const selectedBac = useMemo(() => bacLuongs.find((b) => b.id === watchBacLuongId), [watchBacLuongId])
   const watchLoaiLaoDong = Form.useWatch('loaiLaoDong', form) as LoaiLaoDong | undefined
-  const watchVtvl = Form.useWatch('vtvl', form) as string | undefined
-  const duocHuongPctn = coPhuCapThamNien(watchVtvl)
 
   useEffect(() => {
     if (!vc) return
@@ -144,9 +167,16 @@ export default function VienChucFormPage() {
       mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
     }
     if (formatted.loaiLaoDong !== 'VIEN_CHUC') formatted.nguonKinhPhi = undefined
+    const nhomNgach = chucDanhs.find((c) => c.id === formatted.chucDanhId)?.nhom
+    const huongPctn = coPhuCapThamNien(formatted.vtvl, nhomNgach)
     // Nhân viên không hưởng phụ cấp thâm niên → không giữ mốc PCTN
-    if (!coPhuCapThamNien(formatted.vtvl)) formatted.mocHuongPctn = undefined
-    const { bacLuongId, phuCaps, ...vcData } = formatted
+    if (!huongPctn) formatted.mocHuongPctn = undefined
+    const { bacLuongId, phuCaps: phuCapsRaw, ...vcData } = formatted
+    // Chốt chặn cuối: không ghi PC thâm niên cho vị trí không được hưởng
+    const pcThamNienId = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')?.id
+    const phuCaps = huongPctn
+      ? phuCapsRaw
+      : (phuCapsRaw || []).filter((pc: any) => pc?.loaiPhuCapId !== pcThamNienId)
     const mocHuongLuongStr: string | undefined = mocHuongLuong?.format('YYYY-MM-DD')
 
     if (isEdit && vc) {
@@ -294,8 +324,24 @@ export default function VienChucFormPage() {
             </Col>
           )}
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="vtvl" label="VTVL (Vị trí việc làm)" rules={[{ required: true, message: 'Chọn VTVL' }]}>
-              <Select options={vtvlOptions} placeholder="Chọn VTVL" />
+            <Form.Item
+              name="vtvl"
+              label="VTVL (Vị trí việc làm)"
+              rules={[{ required: true, message: 'Chọn VTVL' }]}
+              tooltip="VTVL quyết định nhóm ngạch/hạng được chọn và quyền hưởng phụ cấp thâm niên"
+            >
+              <Select
+                options={vtvlOptions}
+                placeholder="Chọn VTVL"
+                onChange={(v: string) => {
+                  // Ngạch đang chọn không còn hợp lệ với VTVL mới → bỏ ngạch và bậc lương kèm theo
+                  const dangChon = chucDanhs.find((c) => c.id === form.getFieldValue('chucDanhId'))
+                  if (dangChon && !chucDanhHopLeVoiVtvl(dangChon.nhom, v)) {
+                    form.setFieldsValue({ chucDanhId: undefined, bacLuongId: undefined })
+                    message.info(`Ngạch "${dangChon.ma} — ${dangChon.ten}" không thuộc VTVL vừa chọn, vui lòng chọn lại ngạch/hạng`)
+                  }
+                }}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>

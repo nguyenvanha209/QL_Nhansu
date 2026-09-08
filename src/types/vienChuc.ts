@@ -98,9 +98,13 @@ export const TRANG_THAI_CONG_TAC_LABELS: Record<TrangThaiCongTac, string> = {
   THOI_VIEC: 'Thôi việc',
 }
 
-/** Chỉ cán bộ quản lý và giáo viên được hưởng phụ cấp thâm niên; nhân viên không có */
-export function coPhuCapThamNien(vtvl?: VTVL): boolean {
-  return !!vtvl && vtvl !== 'NHAN_VIEN'
+/**
+ * Chỉ cán bộ quản lý và giáo viên được hưởng phụ cấp thâm niên; nhân viên không có.
+ * Hồ sơ cũ chưa gán VTVL thì suy từ nhóm ngạch/hạng đang xếp (nếu biết).
+ */
+export function coPhuCapThamNien(vtvl?: VTVL, nhomChucDanh?: 'GIAO_VIEN' | 'NHAN_VIEN' | 'QUAN_LY'): boolean {
+  if (vtvl) return vtvl !== 'NHAN_VIEN'
+  return !!nhomChucDanh && nhomChucDanh !== 'NHAN_VIEN'
 }
 
 export function isDangCongTac(vc: Pick<VienChuc, 'trangThai'>): boolean {

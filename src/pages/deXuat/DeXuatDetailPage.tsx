@@ -34,9 +34,9 @@ export default function DeXuatDetailPage() {
   const donVi = donVis.find((d) => d.id === dx.donViId)
 
   const stepItems = [
-    { title: 'Trường đề xuất', description: dx.ngayDeXuat ? formatDate(dx.ngayDeXuat) : 'Chờ nộp' },
-    { title: 'VH-XH thẩm định', description: dx.ngayXetDuyet ? `${formatDate(dx.ngayXetDuyet)} — ${dx.ketQuaXetDuyet}` : 'Chờ xử lý' },
-    { title: 'Lãnh đạo phê duyệt', description: dx.ngayPheDuyet ? `${formatDate(dx.ngayPheDuyet)} — ${dx.ketQuaPheDuyet}` : 'Chờ duyệt' },
+    { title: 'Trường đề xuất', content: dx.ngayDeXuat ? formatDate(dx.ngayDeXuat) : 'Chờ nộp' },
+    { title: 'VH-XH thẩm định', content: dx.ngayXetDuyet ? `${formatDate(dx.ngayXetDuyet)} — ${dx.ketQuaXetDuyet}` : 'Chờ xử lý' },
+    { title: 'Lãnh đạo phê duyệt', content: dx.ngayPheDuyet ? `${formatDate(dx.ngayPheDuyet)} — ${dx.ketQuaPheDuyet}` : 'Chờ duyệt' },
   ]
 
   const currentStep = dx.trangThai === 'NHAP' ? 0 : dx.trangThai === 'CHO_XET_DUYET' ? 1 : dx.trangThai === 'CHO_PHE_DUYET' ? 2 : 3

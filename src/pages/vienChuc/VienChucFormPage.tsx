@@ -282,7 +282,7 @@ export default function VienChucFormPage() {
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
-                message={`PC Chức vụ: hệ số ${pccvInfo.heSo.toFixed(2)} × lương cơ sở (${HANG_TRUONG_LABELS[pccvInfo.hang]} — TT 33/2005)`}
+                title={`PC Chức vụ: hệ số ${pccvInfo.heSo.toFixed(2)} × lương cơ sở (${HANG_TRUONG_LABELS[pccvInfo.hang]} — TT 33/2005)`}
               />
             </Col>
           )}

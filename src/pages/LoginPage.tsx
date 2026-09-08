@@ -44,7 +44,7 @@ export default function LoginPage() {
           <Text type="secondary">UBND Phường Gia Viên</Text>
         </div>
 
-        {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
+        {error && <Alert type="error" title={error} showIcon style={{ marginBottom: 16 }} />}
 
         <Form form={form} onFinish={onFinish} size="large">
           <Form.Item name="username" rules={[{ required: true, message: 'Nhập tên đăng nhập' }]}>

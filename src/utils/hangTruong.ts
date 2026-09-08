@@ -42,7 +42,3 @@ const PCCV: Record<string, Record<HangTruong, Record<ChucVu, number>>> = {
 export function getPhuCapChucVuHeSo(loai: LoaiDonVi, hang: HangTruong, chucVu: ChucVu): number {
   return PCCV[loai]?.[hang]?.[chucVu] ?? 0
 }
-
-export function getPhuCapChucVuPercent(loai: LoaiDonVi, hang: HangTruong, chucVu: ChucVu): number {
-  return Math.round(getPhuCapChucVuHeSo(loai, hang, chucVu) * 100)
-}

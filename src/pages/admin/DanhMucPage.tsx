@@ -143,7 +143,10 @@ function PhuCapTab() {
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 120 },
     { title: 'Tên phụ cấp', dataIndex: 'ten', key: 'ten' },
     { title: 'Công thức', dataIndex: 'loaiCongThuc', key: 'ct', render: (v: string) => CONG_THUC_LABELS[v as keyof typeof CONG_THUC_LABELS] ?? v },
-    { title: 'Giá trị', dataIndex: 'giaTri', key: 'gt', render: (v: number, r: any) => r.loaiCongThuc === 'TIEN_MAT' ? `${v.toLocaleString()} đ` : `${v}%` },
+    {
+      title: 'Giá trị', dataIndex: 'giaTri', key: 'gt',
+      render: (v: number, r: any) => r.loaiCongThuc === 'TIEN_MAT' ? `${v.toLocaleString()} đ` : r.loaiCongThuc === 'HE_SO' ? `+${v}` : `${v}%`,
+    },
     { title: '', key: 'act', render: (_: any, r: any) => <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} /> },
   ]
 
@@ -158,7 +161,7 @@ function PhuCapTab() {
           <Form.Item name="loaiCongThuc" label="Công thức" rules={[{ required: true }]}>
             <Select options={Object.entries(CONG_THUC_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
           </Form.Item>
-          <Form.Item name="giaTri" label="Giá trị (% hoặc VNĐ)" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
+          <Form.Item name="giaTri" label="Giá trị (% / VNĐ / hệ số)" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
           <Form.Item name="moTa" label="Mô tả"><Input.TextArea rows={2} /></Form.Item>
         </Form>
       </Modal>

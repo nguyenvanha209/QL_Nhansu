@@ -7,6 +7,10 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
+import { LY_DO_LABELS } from '@/types/luong'
+import { formatDate } from '@/utils/helpers'
+
+const { Title, Text } = Typography
 
 const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
   DANG_LAM_VIEC: 'green',
@@ -15,11 +19,6 @@ const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
   NGHI_HUU: 'purple',
   THOI_VIEC: 'default',
 }
-import { LY_DO_LABELS } from '@/types/luong'
-import { formatDate } from '@/utils/helpers'
-import { formatVND, getLuongChinh } from '@/utils/calculations'
-
-const { Title, Text } = Typography
 
 export default function VienChucDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -55,7 +54,17 @@ export default function VienChucDetailPage() {
 
   const phuCapCols = [
     { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapId', key: 'lpc', render: (id: string) => loaiPhuCaps.find((l) => l.id === id)?.ten ?? id },
-    { title: 'Tỷ lệ/Mức', dataIndex: 'loaiPhuCapId', key: 'tl', render: (id: string) => { const lpc = loaiPhuCaps.find((l) => l.id === id); return lpc ? `${lpc.giaTri}${lpc.loaiCongThuc !== 'TIEN_MAT' ? '%' : 'đ'}` : '' } },
+    {
+      title: 'Tỷ lệ/Mức', key: 'tl',
+      render: (_: any, r: any) => {
+        const lpc = loaiPhuCaps.find((l) => l.id === r.loaiPhuCapId)
+        if (!lpc) return ''
+        const giaTri = r.giaTri > 0 ? r.giaTri : lpc.giaTri
+        if (lpc.loaiCongThuc === 'TIEN_MAT') return `${giaTri.toLocaleString()}đ`
+        if (lpc.loaiCongThuc === 'HE_SO') return `+${giaTri}`
+        return `${giaTri}%`
+      },
+    },
     { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
   ]
 
@@ -94,7 +103,6 @@ export default function VienChucDetailPage() {
                 <Descriptions.Item label="Trình độ khác">{vc.trinhDoKhac ?? '—'}</Descriptions.Item>
                 {activeHeSo && <>
                   <Descriptions.Item label="Bậc lương hiện tại">Bậc {activeHeSo.bac} — Hệ số {activeHeSo.heSo}</Descriptions.Item>
-                  <Descriptions.Item label="Lương chính tham chiếu">{formatVND(getLuongChinh(activeHeSo.heSo))}</Descriptions.Item>
                   <Descriptions.Item label="Ngày nâng lương tiếp theo">
                     <Text type={new Date(activeHeSo.ngayNangLuongTiepTheo) < new Date() ? 'danger' : undefined}>
                       {formatDate(activeHeSo.ngayNangLuongTiepTheo)}

@@ -1,6 +1,6 @@
 export type NhomChucDanh = 'GIAO_VIEN' | 'NHAN_VIEN' | 'QUAN_LY'
 export type LoaiViTri = 'QUAN_LY' | 'CHUYEN_MON' | 'HO_TRO'
-export type CongThucPhuCap = 'PHAN_TRAM_LUONG_CHINH' | 'PHAN_TRAM_LUONG_CO_SO' | 'TIEN_MAT'
+export type CongThucPhuCap = 'PHAN_TRAM_LUONG_CHINH' | 'PHAN_TRAM_LUONG_CO_SO' | 'TIEN_MAT' | 'HE_SO'
 
 export interface ChucDanhNgheNghiep {
   id: string
@@ -67,4 +67,5 @@ export const CONG_THUC_LABELS: Record<CongThucPhuCap, string> = {
   PHAN_TRAM_LUONG_CHINH: '% Lương chính',
   PHAN_TRAM_LUONG_CO_SO: '% Lương cơ sở',
   TIEN_MAT: 'Tiền mặt (VNĐ)',
+  HE_SO: 'Hệ số (cộng vào tổng hệ số lương)',
 }

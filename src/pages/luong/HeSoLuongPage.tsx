@@ -6,7 +6,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
-import { getDaysUntilReview, getReviewUrgencyColor, formatVND, getLuongChinh } from '@/utils/calculations'
+import { getDaysUntilReview, getReviewUrgencyColor } from '@/utils/calculations'
 import { matchSearch, formatDate } from '@/utils/helpers'
 import { LY_DO_LABELS } from '@/types/luong'
 
@@ -58,7 +58,6 @@ export default function HeSoLuongPage() {
     { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd', ellipsis: true },
     { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60, align: 'center' as const },
     { title: 'Hệ số', dataIndex: 'heSo', key: 'hs', width: 80, align: 'center' as const },
-    { title: 'Lương chính', key: 'lc', width: 130, render: (_: any, r: any) => formatVND(getLuongChinh(r.heSo)) },
     { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 110, render: (v: string) => formatDate(v) },
     {
       title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 180,

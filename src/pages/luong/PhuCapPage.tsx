@@ -6,7 +6,6 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { matchSearch, formatDate } from '@/utils/helpers'
-import { getLuongChinh, formatVND } from '@/utils/calculations'
 
 const { Title } = Typography
 
@@ -16,7 +15,6 @@ export default function PhuCapPage() {
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
 
   const phuCapVienChucs = useLuongStore((s) => s.phuCapVienChucs)
-  const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
@@ -29,15 +27,8 @@ export default function PhuCapPage() {
         const vc = vienChucs.find((v) => v.id === p.vienChucId)
         const dv = donVis.find((d) => d.id === vc?.donViId)
         const lpc = loaiPhuCaps.find((l) => l.id === p.loaiPhuCapId)
-        const activeHeSo = heSoLuongs.find((h) => h.vienChucId === p.vienChucId && h.isActive)
-        const luongChinh = activeHeSo ? getLuongChinh(activeHeSo.heSo) : 0
-        let soTien = 0
-        if (lpc) {
-          if (lpc.loaiCongThuc === 'PHAN_TRAM_LUONG_CHINH') soTien = Math.round(luongChinh * lpc.giaTri / 100)
-          else if (lpc.loaiCongThuc === 'PHAN_TRAM_LUONG_CO_SO') soTien = Math.round(2530000 * lpc.giaTri / 100)
-          else soTien = lpc.giaTri
-        }
-        return { ...p, hoTen: vc ? `${vc.ho} ${vc.ten}` : '', donViId: vc?.donViId ?? '', donViTen: dv?.ten ?? '', loaiPhuCapTen: lpc?.ten ?? '', tyLe: lpc?.giaTri ?? 0, soTien }
+        const giaTri = p.giaTri > 0 ? p.giaTri : (lpc?.giaTri ?? 0)
+        return { ...p, giaTri, hoTen: vc ? `${vc.ho} ${vc.ten}` : '', donViId: vc?.donViId ?? '', donViTen: dv?.ten ?? '', loaiPhuCapTen: lpc?.ten ?? '', loaiCongThuc: lpc?.loaiCongThuc }
       })
       .filter((r) => {
         if (scopeDonViId && r.donViId !== scopeDonViId) return false
@@ -45,14 +36,16 @@ export default function PhuCapPage() {
         if (search) return matchSearch(r.hoTen, search)
         return true
       })
-  }, [phuCapVienChucs, heSoLuongs, vienChucs, donVis, loaiPhuCaps, filterDonVi, search, scopeDonViId])
+  }, [phuCapVienChucs, vienChucs, donVis, loaiPhuCaps, filterDonVi, search, scopeDonViId])
 
   const columns = [
     { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht', ellipsis: true },
     { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', ellipsis: true, responsive: ['lg' as const] },
     { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapTen', key: 'lpc' },
-    { title: 'Tỷ lệ', key: 'tl', width: 80, render: (_: any, r: any) => `${r.tyLe}%` },
-    { title: 'Số tiền tham chiếu', key: 'st', width: 160, render: (_: any, r: any) => formatVND(r.soTien) },
+    {
+      title: 'Tỷ lệ/Hệ số', key: 'tl', width: 100,
+      render: (_: any, r: any) => r.loaiCongThuc === 'TIEN_MAT' ? `${r.giaTri.toLocaleString()}đ` : r.loaiCongThuc === 'HE_SO' ? `+${r.giaTri}` : `${r.giaTri}%`,
+    },
     { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 110, render: (v: string) => formatDate(v) },
     { title: 'Trạng thái', key: 'ts', render: (_: any, r: any) => <Tag color={r.isActive ? 'green' : 'default'}>{r.isActive ? 'Đang hưởng' : 'Hết hạn'}</Tag> },
   ]

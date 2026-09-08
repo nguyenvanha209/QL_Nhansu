@@ -5,12 +5,14 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useUserStore } from '@/store/userStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
-import { getHangTruong, getPhuCapChucVuPercent } from '@/utils/hangTruong'
+import { getHangTruong, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
 import type { ChucVu, VTVL } from '@/types/vienChuc'
 
 const REQUIRED_PHU_CAPS = [
-  { ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường', active: true },
+  { ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường, cộng thẳng vào tổng hệ số lương', active: true },
   { ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: '5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026', active: true },
+  { ma: 'PC_TRACH_NHIEM', ten: 'PC Trách nhiệm công việc', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Hệ số theo từng vị trí công việc, VD: Kế toán 0,2 — chọn và nhập hệ số thủ công', active: true },
+  { ma: 'PC_THAM_NIEN_VK', ten: 'PC Thâm niên vượt khung', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 0, moTa: 'Đã xếp bậc lương cuối cùng đủ 36 tháng (loại A0-A3) hoặc 24 tháng (loại B,C): 5%, +1%/năm từ năm tiếp theo — chọn và nhập % thủ công', active: true },
 ]
 
 function ensureRequiredPhuCaps() {
@@ -21,8 +23,30 @@ function ensureRequiredPhuCaps() {
   }
 }
 
+// PC Chức vụ đổi từ "% lương cơ sở" sang "hệ số cộng thẳng" (TT 33/2005 vốn là hệ số, không phải %)
+function migratePhuCapChucVuFormula() {
+  const { loaiPhuCaps, updateLoaiPhuCap } = useDanhMucStore.getState()
+  const pcChucVu = loaiPhuCaps.find((p) => p.ma === 'PC_CHUC_VU')
+  if (pcChucVu && pcChucVu.loaiCongThuc !== 'HE_SO') {
+    updateLoaiPhuCap(pcChucVu.id, { loaiCongThuc: 'HE_SO' })
+  }
+  // Dữ liệu PC Chức vụ đã lưu theo % cũ (vd 50) cần quy đổi lại thành hệ số (0.5)
+  const luongState = useLuongStore.getState()
+  if (pcChucVu) {
+    const needsFix = luongState.phuCapVienChucs.some((p) => p.loaiPhuCapId === pcChucVu.id && p.giaTri > 1)
+    if (needsFix) {
+      luongState.setPhuCapVienChucs(
+        luongState.phuCapVienChucs.map((p) =>
+          p.loaiPhuCapId === pcChucVu.id && p.giaTri > 1 ? { ...p, giaTri: p.giaTri / 100 } : p
+        )
+      )
+    }
+  }
+}
+
 export function initSeedData() {
   ensureRequiredPhuCaps()
+  migratePhuCapChucVuFormula()
 
   const dm = useDanhMucStore.getState()
 
@@ -184,10 +208,14 @@ export function initSeedData() {
     { id: 'pc1', ma: 'PCUD_35', ten: 'PC Ưu đãi nghề (35%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 35, moTa: 'GV MN, TH - NĐ 182/2026', active: true },
     { id: 'pc2', ma: 'PCUD_30', ten: 'PC Ưu đãi nghề (30%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 30, moTa: 'GV THCS - NĐ 182/2026', active: true },
     { id: 'pc3', ma: 'PCUD_20', ten: 'PC Ưu đãi nghề (20%)', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 20, moTa: 'NV hỗ trợ - NĐ 182/2026', active: true },
-    // PC Chức vụ — hệ số tự động theo loại trường × hạng trường × chức vụ (TT 33/2005)
-    { id: 'pc_cv', ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'PHAN_TRAM_LUONG_CO_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường', active: true },
+    // PC Chức vụ — hệ số tự động theo loại trường × hạng trường × chức vụ (TT 33/2005), cộng thẳng vào tổng hệ số lương
+    { id: 'pc_cv', ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường, cộng thẳng vào tổng hệ số lương', active: true },
     // PC Thâm niên nghề
     { id: 'pc6', ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: '5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026', active: true },
+    // PC Trách nhiệm công việc — hệ số theo vị trí, chọn và nhập tay
+    { id: 'pc_tn', ma: 'PC_TRACH_NHIEM', ten: 'PC Trách nhiệm công việc', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Hệ số theo từng vị trí công việc, VD: Kế toán 0,2 — chọn và nhập hệ số thủ công', active: true },
+    // PC Thâm niên vượt khung — chọn và nhập tay
+    { id: 'pc_tnvk', ma: 'PC_THAM_NIEN_VK', ten: 'PC Thâm niên vượt khung', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 0, moTa: 'Đã xếp bậc lương cuối cùng đủ 36 tháng (loại A0-A3) hoặc 24 tháng (loại B,C): 5%, +1%/năm từ năm tiếp theo — chọn và nhập % thủ công', active: true },
   ])
 
   // --- Vị trí việc làm ---
@@ -302,13 +330,13 @@ export function initSeedData() {
       // PC Chức vụ — auto-calculated from school type × ranking × position
       if (chucVu) {
         const hang = getHangTruong(dv.loai, dv.soLop ?? 0)
-        const pccvPercent = getPhuCapChucVuPercent(dv.loai, hang, chucVu as ChucVu)
-        if (pccvPercent > 0) {
+        const pccvHeSo = getPhuCapChucVuHeSo(dv.loai, hang, chucVu as ChucVu)
+        if (pccvHeSo > 0) {
           allPhuCaps.push({
             id: `pccv_${di}_${i}`,
             vienChucId: vcId,
             loaiPhuCapId: 'pc_cv',
-            giaTri: pccvPercent,
+            giaTri: pccvHeSo,
             ngayHieuLuc: ngayVaoNganh,
             isActive: true,
             createdAt: d('2024-01-01'),

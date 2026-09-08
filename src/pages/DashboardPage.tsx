@@ -51,7 +51,7 @@ export default function DashboardPage() {
 
   // Đề xuất theo trạng thái
   const statusCounts = useMemo(() => {
-    const statuses = ['CHO_XET_DUYET', 'CHO_PHE_DUYET', 'DA_PHE_DUYET', 'TU_CHOI'] as const
+    const statuses = ['CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET', 'CHO_PHE_DUYET', 'DA_PHE_DUYET', 'TU_CHOI'] as const
     return statuses.map((s) => ({ status: s, count: deXuats.filter((d) => d.trangThai === s).length }))
   }, [deXuats])
 
@@ -71,7 +71,7 @@ export default function DashboardPage() {
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Đề xuất đang xử lý" value={deXuats.filter((d) => d.trangThai === 'CHO_XET_DUYET' || d.trangThai === 'CHO_PHE_DUYET').length} prefix={<FileTextOutlined />} styles={{ content: { color: '#faad14' } }} />
+            <Statistic title="Đề xuất đang xử lý" value={deXuats.filter((d) => d.trangThai === 'CHO_HIEU_TRUONG_DUYET' || d.trangThai === 'CHO_XET_DUYET' || d.trangThai === 'CHO_PHE_DUYET').length} prefix={<FileTextOutlined />} styles={{ content: { color: '#faad14' } }} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>

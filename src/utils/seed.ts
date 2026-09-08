@@ -404,7 +404,8 @@ export function initSeedData() {
     { id: 'u1', username: 'admin', password: '123456', fullName: 'Quản trị viên', role: 'ADMIN', donViId: null, active: true, createdAt: d('2024-01-01') },
     { id: 'u2', username: 'vhxh01', password: '123456', fullName: 'Nguyễn Văn Phong (VH-XH)', role: 'CB_VH_XH', donViId: null, active: true, createdAt: d('2024-01-01') },
     { id: 'u3', username: 'lanhdao01', password: '123456', fullName: 'Trần Thị Bích (Lãnh đạo)', role: 'LANH_DAO', donViId: null, active: true, createdAt: d('2024-01-01') },
-    { id: 'u4', username: 'truong01', password: '123456', fullName: 'Lê Văn Hải (HT TH Gia Viên 1)', role: 'CB_TRUONG', donViId: 'dv2', active: true, createdAt: d('2024-01-01') },
+    { id: 'u4', username: 'truong01', password: '123456', fullName: 'Lê Thị Mai (Kế toán TH Gia Viên 1)', role: 'CB_TRUONG', donViId: 'dv2', active: true, createdAt: d('2024-01-01') },
+    { id: 'u5', username: 'hieutruong01', password: '123456', fullName: 'Lê Văn Hải (HT TH Gia Viên 1)', role: 'HIEU_TRUONG', donViId: 'dv2', active: true, createdAt: d('2024-01-01') },
   ])
 
   // --- Đề xuất mẫu ---

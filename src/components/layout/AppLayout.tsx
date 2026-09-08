@@ -28,13 +28,7 @@ export default function AppLayout() {
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ viên chức' },
     hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
-    hasPermission('luong', 'read') && {
-      key: 'luong-group', icon: <DollarOutlined />, label: 'Lương & Phụ cấp',
-      children: [
-        { key: '/luong/he-so', label: 'Hệ số lương' },
-        { key: '/luong/phu-cap', label: 'Phụ cấp' },
-      ],
-    },
+    // Tạm ẩn nhóm "Lương & Phụ cấp" — theo dõi qua Đề xuất lương & hồ sơ viên chức
     hasPermission('deXuat', 'read') && { key: '/de-xuat', icon: <FileTextOutlined />, label: 'Đề xuất lương' },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
     hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },
@@ -89,7 +83,7 @@ export default function AppLayout() {
         <Menu
           mode="inline"
           selectedKeys={[getSelectedKey()]}
-          defaultOpenKeys={['luong-group', 'admin-group']}
+          defaultOpenKeys={['admin-group']}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
           style={{ border: 'none', marginTop: 8 }}
@@ -105,7 +99,7 @@ export default function AppLayout() {
           />
           <Space>
             <Badge count={alerts.length} size="small">
-              <Button type="text" icon={<BellOutlined />} onClick={() => navigate('/luong/he-so')} />
+              <Button type="text" icon={<BellOutlined />} onClick={() => navigate('/de-xuat')} />
             </Badge>
             <Dropdown menu={userMenu} placement="bottomRight">
               <Space style={{ cursor: 'pointer' }}>

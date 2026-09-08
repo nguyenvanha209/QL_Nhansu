@@ -22,6 +22,14 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
     baoCao: ['read'],
     duBao: ['read'],
   },
+  HIEU_TRUONG: {
+    vienChuc: ['read', 'write'],
+    viTri: ['read'],
+    luong: ['read'],
+    deXuat: ['read', 'approve'],
+    baoCao: ['read'],
+    duBao: ['read'],
+  },
   CB_TRUONG: {
     vienChuc: ['read', 'write'],
     viTri: ['read'],

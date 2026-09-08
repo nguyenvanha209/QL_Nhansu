@@ -11,7 +11,7 @@ import type { TrangThaiDeXuat } from '@/types/deXuat'
 
 const { Title } = Typography
 
-const ALL_STATUSES: TrangThaiDeXuat[] = ['NHAP', 'CHO_XET_DUYET', 'CHO_PHE_DUYET', 'DA_PHE_DUYET', 'TU_CHOI', 'YEU_CAU_BO_SUNG']
+const ALL_STATUSES: TrangThaiDeXuat[] = ['NHAP', 'CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET', 'CHO_PHE_DUYET', 'DA_PHE_DUYET', 'TU_CHOI', 'YEU_CAU_BO_SUNG']
 
 export default function DeXuatListPage() {
   const navigate = useNavigate()

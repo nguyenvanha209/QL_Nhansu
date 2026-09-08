@@ -10,7 +10,8 @@ export function useAuth() {
     return can(currentUser.role, resource, action)
   }
 
-  const isScopedToDonVi = currentUser?.role === 'CB_TRUONG'
+  // Hiệu trưởng và cán bộ trường đều chỉ thấy dữ liệu trường mình
+  const isScopedToDonVi = currentUser?.role === 'CB_TRUONG' || currentUser?.role === 'HIEU_TRUONG'
   const scopeDonViId = isScopedToDonVi ? currentUser?.donViId : null
 
   return {
@@ -21,6 +22,7 @@ export function useAuth() {
     isVHXH: currentUser?.role === 'CB_VH_XH',
     isLanhDao: currentUser?.role === 'LANH_DAO',
     isCBTruong: currentUser?.role === 'CB_TRUONG',
+    isHieuTruong: currentUser?.role === 'HIEU_TRUONG',
     scopeDonViId,
     isScopedToDonVi,
   }

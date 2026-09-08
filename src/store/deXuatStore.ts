@@ -6,6 +6,7 @@ import type { LyDoNangLuong } from '@/types/luong'
 import { persistStorage } from '@/lib/supabase'
 import { useLuongStore } from './luongStore'
 import { useVienChucStore } from './vienChucStore'
+import { useDanhMucStore } from './danhMucStore'
 
 interface DeXuatState {
   deXuats: DeXuatLuong[]
@@ -17,6 +18,7 @@ interface DeXuatState {
   getCountByStatus: (trangThai: TrangThaiDeXuat, donViId?: string | null) => number
 
   submitDeXuat: (id: string, actorId: string, actorName: string) => void
+  duyetHieuTruong: (id: string, ketQua: 'DONG_Y' | 'TU_CHOI' | 'YEU_CAU_BO_SUNG', ghiChu: string, actorId: string, actorName: string) => void
   xetDuyetDeXuat: (id: string, ketQua: 'DONG_Y' | 'TU_CHOI' | 'YEU_CAU_BO_SUNG', ghiChu: string, actorId: string, actorName: string) => void
   pheDuyetDeXuat: (id: string, ketQua: 'PHE_DUYET' | 'TU_CHOI', ghiChu: string, actorId: string, actorName: string) => void
 }
@@ -61,9 +63,29 @@ export const useDeXuatStore = create<DeXuatState>()(
           .filter((d) => d.trangThai === trangThai).length,
 
       submitDeXuat: (id, actorId, actorName) => {
-        get().updateDeXuat(id, { trangThai: 'CHO_XET_DUYET', buocHienTai: 2, ngayDeXuat: now().slice(0, 10), nguoiDeXuatId: actorId })
+        get().updateDeXuat(id, { trangThai: 'CHO_HIEU_TRUONG_DUYET', buocHienTai: 2, ngayDeXuat: now().slice(0, 10), nguoiDeXuatId: actorId })
         const { addNhatKy } = useLuongStore.getState()
-        addNhatKy({ userId: actorId, userFullName: actorName, action: 'UPDATE', entity: 'DeXuatLuong', entityId: id, moTa: `Trình đề xuất ${id} lên VH-XH`, thoiGian: now() })
+        addNhatKy({ userId: actorId, userFullName: actorName, action: 'UPDATE', entity: 'DeXuatLuong', entityId: id, moTa: `Trình đề xuất ${id} lên Hiệu trưởng`, thoiGian: now() })
+      },
+
+      duyetHieuTruong: (id, ketQua, ghiChu, actorId, actorName) => {
+        const patch: Partial<DeXuatLuong> = {
+          nguoiDuyetHTId: actorId,
+          ngayDuyetHT: now().slice(0, 10),
+          ketQuaDuyetHT: ketQua,
+          ghiChuDuyetHT: ghiChu,
+        }
+        if (ketQua === 'DONG_Y') {
+          patch.trangThai = 'CHO_XET_DUYET'
+          patch.buocHienTai = 3
+        } else if (ketQua === 'TU_CHOI') {
+          patch.trangThai = 'TU_CHOI'
+        } else {
+          patch.trangThai = 'YEU_CAU_BO_SUNG'
+        }
+        get().updateDeXuat(id, patch)
+        const { addNhatKy } = useLuongStore.getState()
+        addNhatKy({ userId: actorId, userFullName: actorName, action: ketQua === 'DONG_Y' ? 'APPROVE' : 'REJECT', entity: 'DeXuatLuong', entityId: id, moTa: `Hiệu trưởng duyệt đề xuất ${id}: ${ketQua}`, thoiGian: now() })
       },
 
       xetDuyetDeXuat: (id, ketQua, ghiChu, actorId, actorName) => {
@@ -75,7 +97,7 @@ export const useDeXuatStore = create<DeXuatState>()(
         }
         if (ketQua === 'DONG_Y') {
           patch.trangThai = 'CHO_PHE_DUYET'
-          patch.buocHienTai = 3
+          patch.buocHienTai = 4
         } else if (ketQua === 'TU_CHOI') {
           patch.trangThai = 'TU_CHOI'
         } else {
@@ -98,7 +120,41 @@ export const useDeXuatStore = create<DeXuatState>()(
         }
         get().updateDeXuat(id, patch)
 
-        if (ketQua === 'PHE_DUYET') {
+        if (ketQua === 'PHE_DUYET' && dx.loai === 'PHU_CAP_THAM_NIEN') {
+          // Phiếu phụ cấp thâm niên: cập nhật PCTN vào Phụ cấp + Lịch sử biến động
+          const { addPhuCap, deactivatePhuCap, getActivePhuCaps, addLichSuBienDong, addNhatKy } =
+            useLuongStore.getState()
+          const loaiPctn = useDanhMucStore.getState().loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
+
+          dx.chiTiet.forEach((ct: ChiTietDeXuat) => {
+            if (!loaiPctn) return
+            const cu = getActivePhuCaps(ct.vienChucId).find((p) => p.loaiPhuCapId === loaiPctn.id)
+            if (cu) deactivatePhuCap(cu.id)
+
+            addPhuCap({
+              vienChucId: ct.vienChucId,
+              loaiPhuCapId: loaiPctn.id,
+              giaTri: ct.pctnMoi ?? 0,
+              ngayHieuLuc: ct.ngayHieuLuc,
+              ghiChu: `Theo đề xuất ${dx.ma}`,
+              isActive: true,
+              createdBy: actorId,
+            })
+
+            addLichSuBienDong({
+              vienChucId: ct.vienChucId,
+              loai: 'PHU_CAP',
+              truongThayDoi: 'Phụ cấp thâm niên',
+              giaTriCu: cu ? `${cu.giaTri}%` : `${ct.pctnCu ?? 0}%`,
+              giaTriMoi: `${ct.pctnMoi ?? 0}%`,
+              ngayThayDoi: ct.ngayHieuLuc,
+              nguoiThayDoiId: actorId,
+              deXuatId: id,
+            })
+          })
+
+          addNhatKy({ userId: actorId, userFullName: actorName, action: 'APPROVE', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo phê duyệt đề xuất phụ cấp thâm niên ${id}`, thoiGian: now() })
+        } else if (ketQua === 'PHE_DUYET') {
           const { addHeSoLuong, deactivateHeSoLuong, getActiveHeSo, addLichSuBienDong, addNhatKy } =
             useLuongStore.getState()
           const { updateVienChuc } = useVienChucStore.getState()

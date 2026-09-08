@@ -8,7 +8,8 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import type { ChiTietDeXuat } from '@/types/deXuat'
+import type { ChiTietDeXuat, LoaiDeXuat } from '@/types/deXuat'
+import { LOAI_DE_XUAT_LABELS } from '@/types/deXuat'
 import { isDangCongTac } from '@/types/vienChuc'
 
 const { Title } = Typography
@@ -28,6 +29,11 @@ export default function TaoDeXuatPage() {
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
   const [chiTiet, setChiTiet] = useState<ChiTietDeXuat[]>([])
   const [selectedDonVi, setSelectedDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  const [loaiDeXuat, setLoaiDeXuat] = useState<LoaiDeXuat>('NANG_BAC')
+  const laPctn = loaiDeXuat === 'PHU_CAP_THAM_NIEN'
+  const phuCapVienChucs = useLuongStore((s) => s.phuCapVienChucs)
+  const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
+  const loaiPctn = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
 
   const vcOptions = vienChucs.filter((v) => !selectedDonVi || v.donViId === selectedDonVi).map((v) => ({ value: v.id, label: `${v.ho} ${v.ten}` }))
 
@@ -39,6 +45,10 @@ export default function TaoDeXuatPage() {
     if (!vc || !hsl) return
     const bacs = bacLuongs.filter((b) => b.chucDanhId === hsl.chucDanhId).sort((a, b) => a.bac - b.bac)
     const nextBac = bacs.find((b) => b.bac === hsl.bac + 1)
+    // PCTN đang hưởng (nếu có) để cán bộ đối chiếu khi nhập mức mới
+    const pctnHienTai = loaiPctn
+      ? phuCapVienChucs.find((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiPctn.id)?.giaTri ?? 0
+      : 0
     setChiTiet((prev) => [...prev, {
       vienChucId: vcId,
       chucDanhCuId: hsl.chucDanhId,
@@ -47,7 +57,9 @@ export default function TaoDeXuatPage() {
       bacMoi: nextBac?.bac ?? hsl.bac + 1,
       heSoMoi: nextBac?.heSo ?? +(hsl.heSo + 0.33).toFixed(2),
       ngayHieuLuc: ngayHieuLucOverride ?? dayjs().format('YYYY-MM-DD'),
-      lyDo: 'Đủ thời hạn nâng bậc thường xuyên',
+      lyDo: laPctn ? 'Nâng phụ cấp thâm niên theo niên hạn' : 'Đủ thời hạn nâng bậc thường xuyên',
+      pctnCu: pctnHienTai,
+      pctnMoi: pctnHienTai,
     }])
   }
 
@@ -117,15 +129,34 @@ export default function TaoDeXuatPage() {
     navigate(`/de-xuat/${dx.id}`)
   }
 
-  const detailCols = [
-    { title: 'Viên chức', key: 'vc', render: (_: any, r: ChiTietDeXuat) => { const vc = vienChucs.find((v) => v.id === r.vienChucId); return vc ? `${vc.ho} ${vc.ten}` : r.vienChucId } },
-    { title: 'Bậc cũ', dataIndex: 'bacCu', key: 'bac_cu', width: 80 },
-    { title: 'Hệ số cũ', dataIndex: 'heSoCu', key: 'hs_cu', width: 90 },
-    { title: 'Bậc mới', key: 'bac_moi', width: 90, render: (_: any, r: ChiTietDeXuat, idx: number) => <InputNumber size="small" value={r.bacMoi} min={1} max={12} onChange={(v) => updateChiTiet(idx, 'bacMoi', v)} /> },
-    { title: 'Hệ số mới', key: 'hs_moi', width: 100, render: (_: any, r: ChiTietDeXuat, idx: number) => <InputNumber size="small" value={r.heSoMoi} min={1} step={0.01} onChange={(v) => updateChiTiet(idx, 'heSoMoi', v)} /> },
-    { title: 'Ngày hiệu lực', key: 'nhl', width: 130, render: (_: any, r: ChiTietDeXuat, idx: number) => <DatePicker size="small" value={dayjs(r.ngayHieuLuc)} format="DD/MM/YYYY" onChange={(d) => updateChiTiet(idx, 'ngayHieuLuc', d?.format('YYYY-MM-DD') ?? '')} /> },
-    { title: 'Xóa', key: 'del', width: 50, render: (_: any, __: any, idx: number) => <Button size="small" danger icon={<DeleteOutlined />} onClick={() => setChiTiet((p) => p.filter((_, i) => i !== idx))} /> },
-  ]
+  const colVienChuc = { title: 'Viên chức', key: 'vc', render: (_: any, r: ChiTietDeXuat) => { const vc = vienChucs.find((v) => v.id === r.vienChucId); return vc ? `${vc.ho} ${vc.ten}` : r.vienChucId } }
+  const colXoa = { title: 'Xóa', key: 'del', width: 50, render: (_: any, __: any, idx: number) => <Button size="small" danger icon={<DeleteOutlined />} onClick={() => setChiTiet((p) => p.filter((_, i) => i !== idx))} /> }
+
+  const detailCols = laPctn
+    ? [
+        colVienChuc,
+        { title: 'PCTN hiện tại', key: 'pctn_cu', width: 110, render: (_: any, r: ChiTietDeXuat) => `${r.pctnCu ?? 0}%` },
+        {
+          title: 'PCTN đề nghị', key: 'pctn_moi', width: 120,
+          render: (_: any, r: ChiTietDeXuat, idx: number) => (
+            <InputNumber size="small" value={r.pctnMoi} min={0} max={100} addonAfter={undefined} onChange={(v) => updateChiTiet(idx, 'pctnMoi', v)} />
+          ),
+        },
+        {
+          title: 'Mốc hưởng PCTN', key: 'nhl', width: 150,
+          render: (_: any, r: ChiTietDeXuat, idx: number) => <DatePicker size="small" value={dayjs(r.ngayHieuLuc)} format="DD/MM/YYYY" onChange={(d) => updateChiTiet(idx, 'ngayHieuLuc', d?.format('YYYY-MM-DD') ?? '')} />,
+        },
+        colXoa,
+      ]
+    : [
+        colVienChuc,
+        { title: 'Bậc cũ', dataIndex: 'bacCu', key: 'bac_cu', width: 80 },
+        { title: 'Hệ số cũ', dataIndex: 'heSoCu', key: 'hs_cu', width: 90 },
+        { title: 'Bậc mới', key: 'bac_moi', width: 90, render: (_: any, r: ChiTietDeXuat, idx: number) => <InputNumber size="small" value={r.bacMoi} min={1} max={12} onChange={(v) => updateChiTiet(idx, 'bacMoi', v)} /> },
+        { title: 'Hệ số mới', key: 'hs_moi', width: 100, render: (_: any, r: ChiTietDeXuat, idx: number) => <InputNumber size="small" value={r.heSoMoi} min={1} step={0.01} onChange={(v) => updateChiTiet(idx, 'heSoMoi', v)} /> },
+        { title: 'Mốc hưởng lương', key: 'nhl', width: 150, render: (_: any, r: ChiTietDeXuat, idx: number) => <DatePicker size="small" value={dayjs(r.ngayHieuLuc)} format="DD/MM/YYYY" onChange={(d) => updateChiTiet(idx, 'ngayHieuLuc', d?.format('YYYY-MM-DD') ?? '')} /> },
+        colXoa,
+      ]
 
   return (
     <Card>
@@ -142,19 +173,18 @@ export default function TaoDeXuatPage() {
           <Form.Item name="donViId" label="Đơn vị" rules={[{ required: true }]} style={{ minWidth: 220 }}>
             <Select options={(scopeDonViId ? donVis.filter((d) => d.id === scopeDonViId) : donVis).map((d) => ({ value: d.id, label: d.ten }))} onChange={setSelectedDonVi} placeholder="Chọn đơn vị" />
           </Form.Item>
-          <Form.Item name="loai" label="Loại đề xuất" rules={[{ required: true }]} style={{ minWidth: 180 }}>
-            <Select options={[
-              { value: 'NANG_BAC', label: 'Nâng bậc thường xuyên' },
-              { value: 'NANG_TRUOC_HAN', label: 'Nâng bậc trước hạn' },
-              { value: 'DIEU_CHINH', label: 'Điều chỉnh lương' },
-              { value: 'CHUYEN_NGACH', label: 'Chuyển ngạch/chức danh' },
-            ]} />
+          <Form.Item name="loai" label="Loại đề xuất" rules={[{ required: true }]} style={{ minWidth: 220 }}>
+            <Select
+              options={Object.entries(LOAI_DE_XUAT_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+              onChange={(v: LoaiDeXuat) => { setLoaiDeXuat(v); setChiTiet([]) }}
+            />
           </Form.Item>
         </Space>
         <Form.Item name="ghiChu" label="Ghi chú">
           <Input.TextArea rows={2} />
         </Form.Item>
 
+        {!laPctn && <>
         <Divider plain>Gợi ý viên chức đến kỳ nâng lương thường xuyên</Divider>
         <Space wrap style={{ marginBottom: 12 }}>
           <InputNumber value={dotNam} onChange={(v) => setDotNam(v ?? currentYear)} style={{ width: 100 }} />
@@ -186,6 +216,7 @@ export default function TaoDeXuatPage() {
             { title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 160, render: (v: string) => <Tag color="blue">{dayjs(v).format('DD/MM/YYYY')}</Tag> },
           ]}
         />
+        </>}
 
         <Divider plain>Danh sách viên chức trong đề xuất</Divider>
         <Space style={{ marginBottom: 12 }}>

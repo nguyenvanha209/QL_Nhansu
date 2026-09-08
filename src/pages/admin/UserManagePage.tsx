@@ -35,7 +35,7 @@ export default function UserManagePage() {
   const cols = [
     { title: 'Tên đăng nhập', dataIndex: 'username', key: 'un', width: 140 },
     { title: 'Họ và tên', dataIndex: 'fullName', key: 'fn' },
-    { title: 'Vai trò', dataIndex: 'role', key: 'role', render: (v: UserRole) => <Tag color={v === 'ADMIN' ? 'red' : v === 'CB_VH_XH' ? 'blue' : v === 'LANH_DAO' ? 'purple' : 'green'}>{ROLE_LABELS[v]}</Tag> },
+    { title: 'Vai trò', dataIndex: 'role', key: 'role', render: (v: UserRole) => <Tag color={v === 'ADMIN' ? 'red' : v === 'CB_VH_XH' ? 'blue' : v === 'LANH_DAO' ? 'purple' : v === 'HIEU_TRUONG' ? 'gold' : 'green'}>{ROLE_LABELS[v]}</Tag> },
     {
       title: 'Phạm vi đơn vị', dataIndex: 'donViId', key: 'dv',
       render: (id: string | null) => id ? donVis.find((d) => d.id === id)?.ten ?? id : <Tag>Toàn phường</Tag>,
@@ -71,7 +71,7 @@ export default function UserManagePage() {
           <Form.Item name="role" label="Vai trò" rules={[{ required: true }]}>
             <Select options={Object.entries(ROLE_LABELS).map(([k, v]) => ({ value: k, label: v }))} onChange={(v) => setSelectedRole(v as UserRole)} />
           </Form.Item>
-          {selectedRole === 'CB_TRUONG' && (
+          {(selectedRole === 'CB_TRUONG' || selectedRole === 'HIEU_TRUONG') && (
             <Form.Item name="donViId" label="Đơn vị phụ trách" rules={[{ required: true }]}>
               <Select options={donVis.map((d) => ({ value: d.id, label: d.ten }))} placeholder="Chọn trường" />
             </Form.Item>

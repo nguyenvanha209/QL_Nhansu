@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid'
 import dayjs from 'dayjs'
 import type { BacLuong } from '@/types/danhMuc'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -38,6 +37,16 @@ export function initSeedData() {
   const vcState = useVienChucStore.getState()
   const needsChucVuMigration = vcState.vienChucs.length > 0 && !vcState.vienChucs.some((vc) => vc.chucVu)
   if (needsChucVuMigration) {
+    vcState.setVienChucs([])
+    useLuongStore.getState().setHeSoLuongs([])
+    useLuongStore.getState().setPhuCapVienChucs([])
+    useDeXuatStore.getState().setDeXuats([])
+  }
+
+  // Force re-seed if viên chức IDs are random (nanoid) or birth years are outdated
+  const hasRandomVcIds = vcState.vienChucs.length > 0 && !vcState.vienChucs[0].id.startsWith('vc_')
+  const hasOldBirthYears = vcState.vienChucs.length > 0 && vcState.vienChucs.some((vc) => vc.ngaySinh?.startsWith('1975'))
+  if (hasRandomVcIds || hasOldBirthYears) {
     vcState.setVienChucs([])
     useLuongStore.getState().setHeSoLuongs([])
     useLuongStore.getState().setPhuCapVienChucs([])
@@ -114,7 +123,7 @@ export function initSeedData() {
     { bac: 7, heSo: 6.44 }, { bac: 8, heSo: 6.78 },
   ]
   ;['cd_th1', 'cd_cs1'].forEach((cdId) => {
-    a21Bacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
+    a21Bacs.forEach((b) => bacLuongs.push({ id: `bl_${cdId}_${b.bac}`, chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
   })
 
   // A2.2: GV MN hạng I, GV TH hạng II, GV THCS hạng II
@@ -124,7 +133,7 @@ export function initSeedData() {
     { bac: 7, heSo: 6.04 }, { bac: 8, heSo: 6.38 },
   ]
   ;['cd_mn1', 'cd_th2', 'cd_cs2'].forEach((cdId) => {
-    a22Bacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
+    a22Bacs.forEach((b) => bacLuongs.push({ id: `bl_${cdId}_${b.bac}`, chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
   })
 
   // A1: GV MN hạng II, GV TH hạng III, GV THCS hạng III
@@ -134,7 +143,7 @@ export function initSeedData() {
     { bac: 7, heSo: 4.32 }, { bac: 8, heSo: 4.65 }, { bac: 9, heSo: 4.98 },
   ]
   ;['cd_mn2', 'cd_th3', 'cd_cs3'].forEach((cdId) => {
-    a1Bacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
+    a1Bacs.forEach((b) => bacLuongs.push({ id: `bl_${cdId}_${b.bac}`, chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
   })
 
   // A0: GV MN hạng III, Kế toán
@@ -145,7 +154,7 @@ export function initSeedData() {
     { bac: 10, heSo: 4.89 },
   ]
   ;['cd_mn3', 'cd_kt'].forEach((cdId) => {
-    a0Bacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
+    a0Bacs.forEach((b) => bacLuongs.push({ id: `bl_${cdId}_${b.bac}`, chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 3 as const }))
   })
 
   // B: Văn thư, Y tế
@@ -156,7 +165,7 @@ export function initSeedData() {
     { bac: 10, heSo: 3.66 }, { bac: 11, heSo: 3.86 }, { bac: 12, heSo: 4.06 },
   ]
   ;['cd_vt', 'cd_yt'].forEach((cdId) => {
-    bBacs.forEach((b) => bacLuongs.push({ id: nanoid(), chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 2 as const }))
+    bBacs.forEach((b) => bacLuongs.push({ id: `bl_${cdId}_${b.bac}`, chucDanhId: cdId, bac: b.bac, heSo: b.heSo, thoiGianNangLuong: 2 as const }))
   })
 
   setBacLuongs(bacLuongs)
@@ -196,8 +205,8 @@ export function initSeedData() {
   ]
   const viTriViecLams: any[] = []
   donVis.forEach((dv) => {
-    viTriDataFn(dv.loai).forEach((vt) => {
-      viTriViecLams.push({ id: nanoid(), ma: `${vt.ten.substring(0, 3).toUpperCase()}-${dv.ma}`, ten: vt.ten, loai: vt.loai, donViId: dv.id, soLuongBienChe: vt.soLuongBienChe, soLuongHopDong: vt.soLuongHopDong, chucDanhIds: vt.chucDanhIds, active: true })
+    viTriDataFn(dv.loai).forEach((vt, vi) => {
+      viTriViecLams.push({ id: `vt_${dv.id}_${vi}`, ma: `${vt.ten.substring(0, 3).toUpperCase()}-${dv.ma}`, ten: vt.ten, loai: vt.loai, donViId: dv.id, soLuongBienChe: vt.soLuongBienChe, soLuongHopDong: vt.soLuongHopDong, chucDanhIds: vt.chucDanhIds, active: true })
     })
   })
   setViTriViecLams(viTriViecLams)
@@ -210,7 +219,7 @@ export function initSeedData() {
   ]
   const loaiLDs = ['VIEN_CHUC', 'VIEN_CHUC', 'VIEN_CHUC', 'VIEN_CHUC', 'VIEN_CHUC', 'VIEN_CHUC', 'HOP_DONG_235', 'HOP_DONG_235', 'TAP_SU', 'HOP_DONG_TRUONG'] as const
   const gioiTinhs: Array<'NAM' | 'NU'> = ['NU', 'NAM', 'NU', 'NAM', 'NU', 'NAM', 'NU', 'NAM', 'NU', 'NAM']
-  const birthYears = [1975, 1980, 1982, 1978, 1985, 1990, 1988, 1992, 1995, 1970]
+  const birthYears = [1970, 1980, 1982, 1978, 1985, 1990, 1988, 1992, 1972, 1966]
   // Default hạng: MN hạng II (A1), TH hạng III (A1), THCS hạng III (A1)
   const chucDanhMap: Record<string, string> = { dv1: 'cd_mn2', dv2: 'cd_th3', dv3: 'cd_th3', dv4: 'cd_cs3', dv5: 'cd_cs3' }
 
@@ -220,8 +229,8 @@ export function initSeedData() {
 
   donVis.forEach((dv, di) => {
     names.forEach(([ho, ten], i) => {
-      const vcId = nanoid()
-      const hslId = nanoid()
+      const vcId = `vc_${di}_${i}`
+      const hslId = `hsl_${di}_${i}`
       const gioiTinh = i % 2 === 0 ? 'NU' : ('NAM' as 'NAM' | 'NU')
       const byear = birthYears[i]
       const chucDanhId = i === 8 ? 'cd_kt' : i === 9 ? 'cd_vt' : chucDanhMap[dv.id]
@@ -277,7 +286,7 @@ export function initSeedData() {
       // PC ưu đãi nghề
       const pcUuDaiId = dv.loai === 'THCS' ? 'pc2' : dv.loai === 'MAM_NON' || dv.loai === 'TIEU_HOC' ? 'pc1' : 'pc3'
       allPhuCaps.push({
-        id: nanoid(),
+        id: `pcud_${di}_${i}`,
         vienChucId: vcId,
         loaiPhuCapId: pcUuDaiId,
         giaTri: 0,
@@ -293,7 +302,7 @@ export function initSeedData() {
         const pccvPercent = getPhuCapChucVuPercent(dv.loai, hang, chucVu as ChucVu)
         if (pccvPercent > 0) {
           allPhuCaps.push({
-            id: nanoid(),
+            id: `pccv_${di}_${i}`,
             vienChucId: vcId,
             loaiPhuCapId: 'pc_cv',
             giaTri: pccvPercent,

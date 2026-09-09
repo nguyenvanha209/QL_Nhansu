@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import AppRouter from '@/router/AppRouter'
 import { useHydration } from '@/hooks/useHydration'
+import { useIdleTimeout } from '@/hooks/useIdleTimeout'
 import { initSeedData } from '@/utils/seed'
 import { isSupabaseEnabled } from '@/lib/supabase'
 import { syncFromSupabase } from '@/lib/syncFromSupabase'
@@ -13,6 +14,7 @@ import { syncFromSupabase } from '@/lib/syncFromSupabase'
 dayjs.locale('vi')
 
 export default function App() {
+  useIdleTimeout()
   const hydrated = useHydration()
   const [ready, setReady] = useState(false)
   const [syncError, setSyncError] = useState(false)

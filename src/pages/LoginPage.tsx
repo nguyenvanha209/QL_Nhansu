@@ -1,19 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Form, Input, Button, Typography, Alert, Space, Divider, Tag } from 'antd'
+import { Card, Form, Input, Button, Typography, Alert, Divider, Tag, Space } from 'antd'
 import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import { logAction } from '@/utils/auditLogger'
 
 const { Title, Text } = Typography
-
-const DEMO_ACCOUNTS = [
-  { username: 'admin', label: 'Quản trị viên', color: 'red' },
-  { username: 'vhxh01', label: 'Cán bộ VH-XH', color: 'blue' },
-  { username: 'lanhdao01', label: 'Lãnh đạo', color: 'purple' },
-  { username: 'truong01', label: 'Cán bộ trường', color: 'green' },
-]
 
 export default function LoginPage() {
   const [form] = Form.useForm()
@@ -44,40 +37,36 @@ export default function LoginPage() {
           <Text type="secondary">UBND Phường Gia Viên</Text>
         </div>
 
-        {error && <Alert type="error" title={error} showIcon style={{ marginBottom: 16 }} />}
+        {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
 
         <Form form={form} onFinish={onFinish} size="large">
           <Form.Item name="username" rules={[{ required: true, message: 'Nhập tên đăng nhập' }]}>
-            <Input prefix={<UserOutlined />} placeholder="Tên đăng nhập" />
+            <Input prefix={<UserOutlined />} placeholder="Tên đăng nhập" autoComplete="username" />
           </Form.Item>
           <Form.Item name="password" rules={[{ required: true, message: 'Nhập mật khẩu' }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" autoComplete="current-password" />
           </Form.Item>
-          <Form.Item>
+          <Form.Item style={{ marginBottom: 0 }}>
             <Button type="primary" htmlType="submit" block loading={loading}>Đăng nhập</Button>
           </Form.Item>
         </Form>
 
-        <Divider plain><Text type="secondary" style={{ fontSize: 12 }}>Tài khoản demo (mật khẩu: 123456)</Text></Divider>
-        <Space wrap style={{ justifyContent: 'center', width: '100%' }}>
-          {DEMO_ACCOUNTS.map((acc) => (
-            <Tag
-              key={acc.username}
-              color={acc.color}
-              style={{ cursor: 'pointer', marginBottom: 4 }}
-              onClick={() => {
-                form.setFieldsValue({ username: acc.username, password: '123456' })
-                form.submit()
-              }}
-            >
-              {acc.username} · {acc.label}
-            </Tag>
-          ))}
+        <Divider plain style={{ margin: '20px 0 12px' }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>Loại tài khoản</Text>
+        </Divider>
+        <Space style={{ justifyContent: 'center', width: '100%', marginBottom: 4 }}>
+          <Tag color="gold" style={{ fontSize: 13, padding: '2px 10px' }}>Hiệu trưởng</Tag>
+          <Tag color="green" style={{ fontSize: 13, padding: '2px 10px' }}>Kế toán</Tag>
         </Space>
+        <div style={{ textAlign: 'center', marginTop: 4 }}>
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            Tài khoản và mật khẩu do quản trị viên cung cấp
+          </Text>
+        </div>
 
         <Divider style={{ margin: '16px 0 12px' }} />
         <div style={{ textAlign: 'center', padding: '0 8px' }}>
-          <Text type="secondary" style={{ fontSize: 12, lineHeight: 1.6 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
             Nếu không đăng nhập được, xin liên hệ:
           </Text>
           <br />

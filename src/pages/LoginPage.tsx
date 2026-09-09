@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Form, Input, Button, Typography, Alert, Divider, Tag, Space } from 'antd'
+import { Card, Form, Input, Button, Typography, Alert, Divider, Tag, Table } from 'antd'
 import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
+import { useDanhMucStore } from '@/store/danhMucStore'
 import { logAction } from '@/utils/auditLogger'
 
 const { Title, Text } = Typography
@@ -14,6 +15,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
   const findByUsername = useUserStore((s) => s.findByUsername)
+  const users = useUserStore((s) => s.users)
+  const donVis = useDanhMucStore((s) => s.donVis)
   const navigate = useNavigate()
 
   const onFinish = ({ username, password }: { username: string; password: string }) => {
@@ -29,12 +32,39 @@ export default function LoginPage() {
     }, 300)
   }
 
+  // Lấy danh sách trường có ít nhất 1 tài khoản KT hoặc HT
+  const schoolAccounts = useMemo(() => {
+    const activeDonVis = donVis
+      .filter((d) => d.active)
+      .sort((a, b) => a.ten.localeCompare(b.ten, 'vi'))
+
+    return activeDonVis.map((dv) => {
+      const kt = users.find((u) => u.active && u.donViId === dv.id && u.role === 'CB_TRUONG')
+      const ht = users.find((u) => u.active && u.donViId === dv.id && u.role === 'HIEU_TRUONG')
+      return { key: dv.id, ten: dv.ten, kt: kt?.username ?? '—', ht: ht?.username ?? '—' }
+    }).filter((r) => r.kt !== '—' || r.ht !== '—')
+  }, [donVis, users])
+
+  const columns = [
+    { title: 'Trường', dataIndex: 'ten', key: 'ten', ellipsis: true },
+    {
+      title: <Tag color="green" style={{ margin: 0 }}>Kế toán (KT)</Tag>,
+      dataIndex: 'kt', key: 'kt', width: 120, align: 'center' as const,
+      render: (v: string) => v === '—' ? <Text type="secondary">—</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
+    },
+    {
+      title: <Tag color="gold" style={{ margin: 0 }}>Hiệu trưởng (HT)</Tag>,
+      dataIndex: 'ht', key: 'ht', width: 140, align: 'center' as const,
+      render: (v: string) => v === '—' ? <Text type="secondary">—</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
+    },
+  ]
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #e6f4ff 0%, #f0f5ff 100%)' }}>
-      <Card style={{ width: 420, boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Title level={4} style={{ margin: 0 }}>Hệ thống Quản lý Viên chức</Title>
-          <Text type="secondary">UBND Phường Gia Viên</Text>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #e6f4ff 0%, #f0f5ff 100%)', padding: '24px 16px' }}>
+      <Card style={{ width: '100%', maxWidth: 680, boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <Title level={3} style={{ margin: 0 }}>Hệ thống Quản lý Viên chức</Title>
+          <Text type="secondary" style={{ fontSize: 15 }}>UBND Phường Gia Viên</Text>
         </div>
 
         {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
@@ -47,22 +77,29 @@ export default function LoginPage() {
             <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" autoComplete="current-password" />
           </Form.Item>
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button type="primary" htmlType="submit" block loading={loading}>Đăng nhập</Button>
+            <Button type="primary" htmlType="submit" block loading={loading} size="large">Đăng nhập</Button>
           </Form.Item>
         </Form>
 
-        <Divider plain style={{ margin: '20px 0 12px' }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>Loại tài khoản</Text>
-        </Divider>
-        <Space style={{ justifyContent: 'center', width: '100%', marginBottom: 4 }}>
-          <Tag color="gold" style={{ fontSize: 13, padding: '2px 10px' }}>Hiệu trưởng</Tag>
-          <Tag color="green" style={{ fontSize: 13, padding: '2px 10px' }}>Kế toán</Tag>
-        </Space>
-        <div style={{ textAlign: 'center', marginTop: 4 }}>
-          <Text type="secondary" style={{ fontSize: 11 }}>
-            Tài khoản và mật khẩu do quản trị viên cung cấp
-          </Text>
-        </div>
+        {schoolAccounts.length > 0 && (
+          <>
+            <Divider plain style={{ margin: '24px 0 12px' }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>Danh mục tài khoản theo trường</Text>
+            </Divider>
+            <Table
+              dataSource={schoolAccounts}
+              columns={columns}
+              size="small"
+              pagination={false}
+              style={{ marginBottom: 4 }}
+            />
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                Mật khẩu sẽ được cung cấp riêng — không hiển thị tại đây
+              </Text>
+            </div>
+          </>
+        )}
 
         <Divider style={{ margin: '16px 0 12px' }} />
         <div style={{ textAlign: 'center', padding: '0 8px' }}>

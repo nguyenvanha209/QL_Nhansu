@@ -15,22 +15,41 @@ dayjs.locale('vi')
 export default function App() {
   const hydrated = useHydration()
   const [ready, setReady] = useState(false)
+  const [syncError, setSyncError] = useState(false)
 
   useEffect(() => {
     if (!hydrated) return
 
     const init = async () => {
-      // 1. Fetch latest data from Supabase (if configured) before seeding
-      if (isSupabaseEnabled) {
-        await syncFromSupabase()
+      // 1. Kéo dữ liệu mới nhất từ Supabase trước khi nghĩ đến việc seed
+      const result = isSupabaseEnabled ? await syncFromSupabase() : 'disabled'
+
+      // 2. Không đọc được máy chủ thì DỪNG: nếu seed lúc này, bản seed sẽ được
+      //    đẩy ngược lên Supabase và xoá sạch dữ liệu thật đang có ở đó.
+      if (result === 'error') {
+        setSyncError(true)
+        return
       }
-      // 2. Seed demo data only if stores are still empty after sync
+
+      // 3. Chỉ seed khi máy chủ thực sự chưa có dữ liệu (hoặc chưa bật Supabase)
       initSeedData()
       setReady(true)
     }
 
     init()
   }, [hydrated])
+
+  if (syncError) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12, padding: 24, textAlign: 'center' }}>
+        <h2 style={{ margin: 0, color: '#cf1322' }}>Không kết nối được máy chủ dữ liệu</h2>
+        <p style={{ color: '#666', maxWidth: 460 }}>
+          Hệ thống dừng lại để bảo vệ dữ liệu trên máy chủ. Vui lòng kiểm tra kết nối mạng rồi tải lại trang.
+        </p>
+        <button onClick={() => window.location.reload()} style={{ padding: '6px 16px', cursor: 'pointer' }}>Tải lại trang</button>
+      </div>
+    )
+  }
 
   if (!ready) {
     return (

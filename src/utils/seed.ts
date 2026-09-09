@@ -97,54 +97,15 @@ export function initSeedData() {
 
   const dm = useDanhMucStore.getState()
 
-  // Force re-seed if chức danh uses old IDs (pre-TT31/2026 format)
-  const hasOldChucDanh = dm.chucDanhs.some((cd) => ['cd1', 'cd2', 'cd3', 'cd4', 'cd5'].includes(cd.id))
-  if (hasOldChucDanh) {
-    dm.setChucDanhs([])
-    dm.setBacLuongs([])
-  }
+  // KHÔNG BAO GIỜ tự xoá dữ liệu đang có.
+  // Trước đây ở đây có các nhánh "force re-seed" dựa trên suy đoán (id ngẫu nhiên,
+  // năm sinh 1975, thiếu soLop...). Khi hệ thống chạy dữ liệu thật, các suy đoán đó
+  // bắt trúng hồ sơ thật và xoá sạch toàn bộ viên chức, lương, phụ cấp, đề xuất —
+  // bản seed sau đó còn bị đẩy ngược lên Supabase. Mọi thay đổi cấu trúc dữ liệu
+  // phải xử lý bằng hàm ensure*/migrate* bổ sung tại chỗ, không xoá rồi tạo lại.
 
-  // Force re-seed viên chức if missing chucVu field (added for vị trí việc làm counting)
-  const vcState = useVienChucStore.getState()
-  const needsChucVuMigration = vcState.vienChucs.length > 0 && !vcState.vienChucs.some((vc) => vc.chucVu)
-  if (needsChucVuMigration) {
-    vcState.setVienChucs([])
-    useLuongStore.getState().setHeSoLuongs([])
-    useLuongStore.getState().setPhuCapVienChucs([])
-    useDeXuatStore.getState().setDeXuats([])
-  }
-
-  // Force re-seed if viên chức IDs are random (nanoid) or birth years are outdated
-  const hasRandomVcIds = vcState.vienChucs.length > 0 && !vcState.vienChucs[0].id.startsWith('vc_')
-  const hasOldBirthYears = vcState.vienChucs.length > 0 && vcState.vienChucs.some((vc) => vc.ngaySinh?.startsWith('1975'))
-  if (hasRandomVcIds || hasOldBirthYears) {
-    vcState.setVienChucs([])
-    useLuongStore.getState().setHeSoLuongs([])
-    useLuongStore.getState().setPhuCapVienChucs([])
-    useDeXuatStore.getState().setDeXuats([])
-  }
-
-  // Force re-seed if using old per-hạng PCCV entries or missing soLop on donVi
-  const hasOldPCCV = dm.loaiPhuCaps.some((p) => p.ma.startsWith('PCCV_'))
-  const missingSoLop = dm.donVis.length > 0 && !dm.donVis.some((d) => d.soLop)
-  if (hasOldPCCV || missingSoLop) {
-    dm.setLoaiPhuCaps([])
-    dm.setDonVis([])
-    vcState.setVienChucs([])
-    useLuongStore.getState().setHeSoLuongs([])
-    useLuongStore.getState().setPhuCapVienChucs([])
-    useDeXuatStore.getState().setDeXuats([])
-  }
-
-  // Only skip seed when ALL categories are present — prevents partial data
-  if (
-    dm.donVis.length > 0 &&
-    dm.chucDanhs.length > 0 &&
-    dm.mucLuongCosos.length > 0 &&
-    dm.loaiPhuCaps.length > 0 &&
-    dm.bacLuongs.length > 0 &&
-    useVienChucStore.getState().vienChucs.length > 0
-  ) return
+  // Chỉ seed khi CHƯA có bất kỳ dữ liệu nào (lần chạy đầu tiên trên máy trống)
+  if (dm.donVis.length > 0 || useVienChucStore.getState().vienChucs.length > 0) return
 
   const { setDonVis, setChucDanhs, setBacLuongs, setMucLuongCosos, setLoaiPhuCaps, setViTriViecLams } =
     useDanhMucStore.getState()

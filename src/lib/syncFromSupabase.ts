@@ -15,27 +15,36 @@ const STORES = [
   useDeXuatStore,
 ]
 
-// Pull all app state from Supabase into localStorage, then rehydrate all stores.
-// Returns true if data was found in Supabase, false if table is empty / unreachable.
-export async function syncFromSupabase(): Promise<boolean> {
-  if (!supabase) return false
+export type SyncResult =
+  | 'loaded' // đã kéo được dữ liệu từ máy chủ
+  | 'empty' // kết nối được nhưng máy chủ chưa có dữ liệu (lần chạy đầu tiên)
+  | 'error' // không kết nối được / lỗi — KHÔNG được coi là "chưa có dữ liệu"
+  | 'disabled' // chưa cấu hình Supabase
+
+// Kéo toàn bộ state từ Supabase về localStorage rồi rehydrate các store.
+// Phân biệt rõ "máy chủ trống" với "lỗi kết nối": nếu lỗi mà vẫn seed dữ liệu mẫu
+// thì bản seed sẽ được đẩy ngược lên Supabase và xoá sạch dữ liệu thật.
+export async function syncFromSupabase(): Promise<SyncResult> {
+  if (!supabase) return 'disabled'
 
   try {
-    const { data, error } = await supabase
-      .from('app_state')
-      .select('key, value')
+    const { data, error } = await supabase.from('app_state').select('key, value')
 
-    if (error || !data || data.length === 0) return false
+    if (error) {
+      console.error('[Supabase] Không đọc được app_state:', error.message)
+      return 'error'
+    }
+    if (!data || data.length === 0) return 'empty'
 
-    // Write Supabase data into localStorage so rehydrate() picks it up
+    // Ghi dữ liệu Supabase vào localStorage để rehydrate() đọc lại
     for (const row of data) {
       localStorage.setItem(row.key, JSON.stringify(row.value))
     }
 
-    // Rehydrate all stores from the updated localStorage
     await Promise.all(STORES.map((s) => s.persist.rehydrate()))
-    return true
-  } catch {
-    return false
+    return 'loaded'
+  } catch (e) {
+    console.error('[Supabase] Lỗi khi đồng bộ:', e)
+    return 'error'
   }
 }

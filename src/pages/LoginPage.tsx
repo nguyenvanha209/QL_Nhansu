@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Form, Input, Button, Typography, Alert, Space, Divider, Tag } from 'antd'
-import { UserOutlined, LockOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import { logAction } from '@/utils/auditLogger'
@@ -74,6 +74,18 @@ export default function LoginPage() {
             </Tag>
           ))}
         </Space>
+
+        <Divider style={{ margin: '16px 0 12px' }} />
+        <div style={{ textAlign: 'center', padding: '0 8px' }}>
+          <Text type="secondary" style={{ fontSize: 12, lineHeight: 1.6 }}>
+            Nếu không đăng nhập được, xin liên hệ:
+          </Text>
+          <br />
+          <Text style={{ fontSize: 13, fontWeight: 600 }}>
+            <PhoneOutlined style={{ marginRight: 6, color: '#1677ff' }} />
+            Đ/c Nguyễn Văn Hạ — 0902.121.599
+          </Text>
+        </div>
       </Card>
     </div>
   )

@@ -7,14 +7,17 @@ import {
   DashboardOutlined, TeamOutlined, FileTextOutlined, DollarOutlined,
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
-  AuditOutlined, FundOutlined,
+  AuditOutlined, FundOutlined, TableOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { ROLE_LABELS } from '@/types/auth'
 
-const { Header, Sider, Content } = Layout
+const { Header, Sider, Content, Footer } = Layout
 const { Text } = Typography
+
+const APP_NAME = 'QLVC&LĐ phường Gia Viên (các CSGD)'
+const FOOTER_TEXT = `${APP_NAME} | Đơn vị: Phòng Văn hóa - Xã hội phường Gia Viên`
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
@@ -27,6 +30,7 @@ export default function AppLayout() {
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ viên chức' },
+    { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
     hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
     // Tạm ẩn nhóm "Lương & Phụ cấp" — theo dõi qua Đề xuất điều chỉnh HSL - PCTN & hồ sơ viên chức
     hasPermission('deXuat', 'read') && {
@@ -79,7 +83,7 @@ export default function AppLayout() {
           {!collapsed ? (
             <Space>
               <Avatar style={{ background: token.colorPrimary }} icon={<UserOutlined />} size="small" />
-              <Text strong style={{ fontSize: 13 }}>QLVC Gia Viên</Text>
+              <Text strong style={{ fontSize: 12, lineHeight: '16px' }}>QLVC&amp;LĐ Gia Viên</Text>
             </Space>
           ) : (
             <Avatar style={{ background: token.colorPrimary }} icon={<UserOutlined />} size="small" />
@@ -95,8 +99,8 @@ export default function AppLayout() {
         />
       </Sider>
 
-      <Layout>
-        <Header style={{ background: token.colorBgContainer, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
+      <Layout style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Header style={{ background: token.colorBgContainer, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${token.colorBorderSecondary}`, flexShrink: 0 }}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -122,9 +126,12 @@ export default function AppLayout() {
           </Space>
         </Header>
 
-        <Content style={{ margin: 16, minHeight: 280, overflow: 'auto' }}>
+        <Content style={{ margin: 16, flex: 1, overflow: 'auto', minHeight: 0 }}>
           <Outlet />
         </Content>
+        <Footer style={{ textAlign: 'center', padding: '8px 16px', borderTop: `1px solid ${token.colorBorderSecondary}`, fontSize: 12, color: token.colorTextSecondary }}>
+          {FOOTER_TEXT}
+        </Footer>
       </Layout>
     </Layout>
   )

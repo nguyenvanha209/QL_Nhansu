@@ -12,6 +12,7 @@ import { getReviewUrgencyColor } from '@/utils/calculations'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS } from '@/types/deXuat'
 import { isDangCongTac } from '@/types/vienChuc'
+import type { LoaiDonVi } from '@/types/donVi'
 
 const { Title, Text } = Typography
 const PIE_COLORS = ['#1677ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16']
@@ -26,6 +27,35 @@ export default function DashboardPage() {
   const deXuats = useMemo(() => allDeXuats.filter((d) => !scopeDonViId || d.donViId === scopeDonViId), [allDeXuats, scopeDonViId])
   const salaryAlerts = useSalaryAlerts(scopeDonViId, 90)
   const [retireYears, setRetireYears] = useState(3)
+
+  // Bản đồ donViId → loại đơn vị (để phân loại nhân viên nuôi dưỡng vs phục vụ)
+  const donViLoaiMap = useMemo(() => {
+    const map: Record<string, LoaiDonVi | undefined> = {}
+    allDonVis.forEach((d) => { map[d.id] = d.loai as LoaiDonVi | undefined })
+    return map
+  }, [allDonVis])
+
+  // 4 nhóm lao động
+  const nhomLaoDong = useMemo(() => {
+    let vienChucBienChe = 0
+    let laoDongHopDong = 0
+    let nhanVienPhucVu = 0
+    let nhanVienNuoiDuong = 0
+    vienChucs.forEach((v) => {
+      if (v.loaiLaoDong === 'VIEN_CHUC' || v.loaiLaoDong === 'TAP_SU') {
+        vienChucBienChe++
+      } else if (v.loaiLaoDong === 'HOP_DONG_XDT' || v.loaiLaoDong === 'HOP_DONG_111' || v.loaiLaoDong === 'HOP_DONG_235') {
+        laoDongHopDong++
+      } else if (v.loaiLaoDong === 'HOP_DONG_TRUONG') {
+        if (donViLoaiMap[v.donViId] === 'MAM_NON') {
+          nhanVienNuoiDuong++
+        } else {
+          nhanVienPhucVu++
+        }
+      }
+    })
+    return { vienChucBienChe, laoDongHopDong, nhanVienPhucVu, nhanVienNuoiDuong }
+  }, [vienChucs, donViLoaiMap])
 
   // Nhân sự theo trường
   const bySchoolData = useMemo(() => {
@@ -66,7 +96,7 @@ export default function DashboardPage() {
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Tổng viên chức" value={vienChucs.length} prefix={<TeamOutlined />} styles={{ content: { color: '#1677ff' } }} />
+            <Statistic title="Tổng số lao động" value={vienChucs.length} prefix={<TeamOutlined />} styles={{ content: { color: '#1677ff' } }} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -88,6 +118,34 @@ export default function DashboardPage() {
                 <Select.Option value={5}>5 năm</Select.Option>
               </Select>
             } />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Phân loại lao động */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card size="small" style={{ borderLeft: '4px solid #1677ff' }}>
+            <Statistic title="Viên chức biên chế" value={nhomLaoDong.vienChucBienChe} valueStyle={{ fontSize: 22, color: '#1677ff' }} />
+            <Text type="secondary" style={{ fontSize: 11 }}>Viên chức + Tập sự</Text>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card size="small" style={{ borderLeft: '4px solid #13c2c2' }}>
+            <Statistic title="Lao động hợp đồng" value={nhomLaoDong.laoDongHopDong} valueStyle={{ fontSize: 22, color: '#13c2c2' }} />
+            <Text type="secondary" style={{ fontSize: 11 }}>HĐ 111, 235, xác định thời hạn</Text>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card size="small" style={{ borderLeft: '4px solid #fa8c16' }}>
+            <Statistic title="Nhân viên phục vụ" value={nhomLaoDong.nhanVienPhucVu} valueStyle={{ fontSize: 22, color: '#fa8c16' }} />
+            <Text type="secondary" style={{ fontSize: 11 }}>HĐ trường (Tiểu học, THCS)</Text>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card size="small" style={{ borderLeft: '4px solid #52c41a' }}>
+            <Statistic title="Nhân viên nuôi dưỡng" value={nhomLaoDong.nhanVienNuoiDuong} valueStyle={{ fontSize: 22, color: '#52c41a' }} />
+            <Text type="secondary" style={{ fontSize: 11 }}>HĐ trường (Mầm non)</Text>
           </Card>
         </Col>
       </Row>

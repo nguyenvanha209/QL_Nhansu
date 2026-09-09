@@ -12,12 +12,14 @@ interface LuongState {
 
   setHeSoLuongs: (v: HeSoLuong[]) => void
   addHeSoLuong: (d: Omit<HeSoLuong, 'id' | 'createdAt'>) => HeSoLuong
+  updateHeSoLuong: (id: string, patch: Partial<HeSoLuong>) => void
   deactivateHeSoLuong: (id: string) => void
   getActiveHeSo: (vienChucId: string) => HeSoLuong | undefined
   getHeSoHistory: (vienChucId: string) => HeSoLuong[]
 
   setPhuCapVienChucs: (v: PhuCapVienChuc[]) => void
   addPhuCap: (d: Omit<PhuCapVienChuc, 'id' | 'createdAt'>) => PhuCapVienChuc
+  updatePhuCap: (id: string, patch: Partial<PhuCapVienChuc>) => void
   deactivatePhuCap: (id: string) => void
   getActivePhuCaps: (vienChucId: string) => PhuCapVienChuc[]
 
@@ -44,6 +46,10 @@ export const useLuongStore = create<LuongState>()(
         set((s) => ({ heSoLuongs: [...s.heSoLuongs, item] }))
         return item
       },
+      updateHeSoLuong: (id, patch) =>
+        set((s) => ({
+          heSoLuongs: s.heSoLuongs.map((h) => (h.id === id ? { ...h, ...patch } : h)),
+        })),
       deactivateHeSoLuong: (id) =>
         set((s) => ({
           heSoLuongs: s.heSoLuongs.map((h) => (h.id === id ? { ...h, isActive: false } : h)),
@@ -61,6 +67,10 @@ export const useLuongStore = create<LuongState>()(
         set((s) => ({ phuCapVienChucs: [...s.phuCapVienChucs, item] }))
         return item
       },
+      updatePhuCap: (id, patch) =>
+        set((s) => ({
+          phuCapVienChucs: s.phuCapVienChucs.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+        })),
       deactivatePhuCap: (id) =>
         set((s) => ({
           phuCapVienChucs: s.phuCapVienChucs.map((p) =>

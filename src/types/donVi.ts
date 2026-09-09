@@ -13,6 +13,7 @@ export interface DonVi {
   chiTieuBienCheNganSach?: number
   chiTieuBienCheSuNghiep?: number
   chiTieuHopDong?: number
+  chiTieuCoNuoi?: number
   active: boolean
   createdAt: string
 }

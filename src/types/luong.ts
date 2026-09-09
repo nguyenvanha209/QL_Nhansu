@@ -6,6 +6,7 @@ export interface HeSoLuong {
   chucDanhId: string
   bac: number
   heSo: number
+  heSoBaoLuu?: number
   ngayHieuLuc: string
   ngayNangLuongTiepTheo: string
   lyDo: LyDoNangLuong

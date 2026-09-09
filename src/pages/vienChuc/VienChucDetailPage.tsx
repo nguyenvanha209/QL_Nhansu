@@ -47,6 +47,7 @@ export default function VienChucDetailPage() {
   const heSoCols = [
     { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60 },
     { title: 'Hệ số', dataIndex: 'heSo', key: 'heSo', width: 80 },
+    { title: 'HS bảo lưu', dataIndex: 'heSoBaoLuu', key: 'baoLuu', width: 100, render: (v?: number) => v ?? '—' },
     { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
     { title: 'Ngày nâng tiếp', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', render: (v: string) => formatDate(v) },
     { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', render: (v: string) => LY_DO_LABELS[v as keyof typeof LY_DO_LABELS] ?? v },

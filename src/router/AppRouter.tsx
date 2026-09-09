@@ -11,6 +11,7 @@ import VienChucDetailPage from '@/pages/vienChuc/VienChucDetailPage'
 import ViTriPage from '@/pages/viTri/ViTriPage'
 import HeSoLuongPage from '@/pages/luong/HeSoLuongPage'
 import PhuCapPage from '@/pages/luong/PhuCapPage'
+import BangTongHopLuongPage from '@/pages/luong/BangTongHopLuongPage'
 import DeXuatListPage from '@/pages/deXuat/DeXuatListPage'
 import TaoDeXuatPage from '@/pages/deXuat/TaoDeXuatPage'
 import DeXuatDetailPage from '@/pages/deXuat/DeXuatDetailPage'
@@ -38,6 +39,7 @@ export default function AppRouter() {
           <Route path="vien-chuc/new" element={<VienChucFormPage />} />
           <Route path="vien-chuc/:id" element={<VienChucDetailPage />} />
           <Route path="vien-chuc/:id/edit" element={<VienChucFormPage />} />
+          <Route path="bang-tong-hop-luong" element={<BangTongHopLuongPage />} />
           <Route path="vi-tri" element={<ViTriPage />} />
           <Route path="luong/he-so" element={<HeSoLuongPage />} />
           <Route path="luong/phu-cap" element={<PhuCapPage />} />

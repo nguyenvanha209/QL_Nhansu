@@ -111,14 +111,16 @@ export default function ViTriPage() {
       const chiTieuNS = dv.chiTieuBienCheNganSach ?? 0
       const chiTieuSN = dv.chiTieuBienCheSuNghiep ?? 0
       const chiTieuHD = dv.chiTieuHopDong ?? 0
-      const chiTieuTong = chiTieuNS + chiTieuSN + chiTieuHD
+      const chiTieuCoNuoi = dv.chiTieuCoNuoi ?? 0
+      const chiTieuTong = chiTieuNS + chiTieuSN + chiTieuHD + chiTieuCoNuoi
       const coMatTong = subNS + subSN + subHD
       rows.push({
         id: `subtotal_${dv.id}`,
         rowType: 'subtotal' as const,
         donViId: dv.id,
         donViTen: dv.ten,
-        chiTieuNS, chiTieuSN, chiTieuHD, chiTieuTong,
+        donViLoai: dv.loai,
+        chiTieuNS, chiTieuSN, chiTieuHD, chiTieuCoNuoi, chiTieuTong,
         coMatNS: subNS, coMatSN: subSN, coMatHD: subHD, coMatTong,
         overQuota: coMatTong > chiTieuTong,
       })
@@ -157,6 +159,10 @@ export default function ViTriPage() {
         {
           title: 'Sự nghiệp', dataIndex: 'chiTieuSN', key: 'ctsn', width: 90, align: 'center' as const,
           render: (v: number, r: any) => r.rowType === 'subtotal' ? <Text strong>{v}</Text> : '',
+        },
+        {
+          title: 'Cô nuôi MN', dataIndex: 'chiTieuCoNuoi', key: 'ctcn', width: 90, align: 'center' as const,
+          render: (v: number, r: any) => r.rowType === 'subtotal' ? (v > 0 ? <Text strong>{v}</Text> : <Text type="secondary">—</Text>) : '',
         },
         {
           title: 'Hợp đồng', dataIndex: 'chiTieuHD', key: 'cthd', width: 90, align: 'center' as const,
@@ -216,6 +222,7 @@ export default function ViTriPage() {
             form.setFieldsValue({
               chiTieuBienCheNganSach: r.chiTieuNS,
               chiTieuBienCheSuNghiep: r.chiTieuSN,
+              chiTieuCoNuoi: r.chiTieuCoNuoi,
               chiTieuHopDong: r.chiTieuHD,
             })
           }}
@@ -248,6 +255,11 @@ export default function ViTriPage() {
           <Form.Item name="chiTieuBienCheSuNghiep" label="Biên chế — Nguồn thu sự nghiệp" rules={[{ required: true }]}>
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
+          {editing?.donViLoai === 'MAM_NON' && (
+            <Form.Item name="chiTieuCoNuoi" label="Cô nuôi mầm non">
+              <InputNumber min={0} style={{ width: '100%' }} />
+            </Form.Item>
+          )}
           <Form.Item name="chiTieuHopDong" label="Hợp đồng" rules={[{ required: true }]}>
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>

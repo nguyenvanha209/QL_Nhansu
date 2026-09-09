@@ -82,6 +82,7 @@ export default function TaoDeXuatPage() {
   const [dotNam, setDotNam] = useState(currentYear)
   const [dotKy, setDotKy] = useState<'H1' | 'H2'>(dayjs().month() < 6 ? 'H1' : 'H2')
   const [selectedGoiY, setSelectedGoiY] = useState<string[]>([])
+  const [selectedGoiYPctn, setSelectedGoiYPctn] = useState<string[]>([])
 
   const dotRange = useMemo(() => (
     dotKy === 'H1'
@@ -112,6 +113,41 @@ export default function TaoDeXuatPage() {
       if (item) addVC(item.id, item.ngayNangLuongTiepTheo)
     })
     setSelectedGoiY([])
+  }
+
+  // ── Gợi ý viên chức đến kỳ nâng PCTN (mỗi năm +1% vào đúng ngày kỷ niệm mocHuongPctn) ──
+  const goiYPctnData = useMemo(() => {
+    if (!laPctn) return []
+    return vienChucs
+      .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
+      .filter((v) => !!v.mocHuongPctn && coPhuCapThamNien(v.vtvl, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom))
+      .filter((v) => !chiTiet.some((c) => c.vienChucId === v.id))
+      .map((v) => {
+        const moc = dayjs(v.mocHuongPctn!)
+        // Ngày kỷ niệm trong năm được chọn (cùng tháng/ngày, khác năm)
+        const anniversaryStr = `${dotNam}-${moc.format('MM-DD')}`
+        const pctnHienTai = loaiPctn
+          ? phuCapVienChucs.find((p) => p.vienChucId === v.id && p.isActive && p.loaiPhuCapId === loaiPctn.id)?.giaTri ?? 0
+          : 0
+        return {
+          id: v.id,
+          hoTen: `${v.ho} ${v.ten}`,
+          mocHuongPctn: v.mocHuongPctn!,
+          anniversaryStr,
+          pctnHienTai,
+          pctnMoi: pctnHienTai > 0 ? pctnHienTai + 1 : 5,
+        }
+      })
+      .filter(({ anniversaryStr }) => anniversaryStr >= dotRange.start && anniversaryStr <= dotRange.end)
+      .sort((a, b) => a.anniversaryStr.localeCompare(b.anniversaryStr))
+  }, [laPctn, vienChucs, selectedDonVi, chiTiet, dotNam, dotRange, loaiPctn, phuCapVienChucs, chucDanhs])
+
+  const themDaChonPctn = () => {
+    selectedGoiYPctn.forEach((vcId) => {
+      const item = goiYPctnData.find((g) => g.id === vcId)
+      if (item) addVC(item.id, item.anniversaryStr)
+    })
+    setSelectedGoiYPctn([])
   }
 
   const updateChiTiet = (idx: number, field: keyof ChiTietDeXuat, value: any) => {
@@ -235,6 +271,42 @@ export default function TaoDeXuatPage() {
             { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht' },
             { title: 'Bậc/Hệ số hiện tại', key: 'bh', width: 140, render: (_: any, r: any) => `Bậc ${r.bac} — ${r.heSo}` },
             { title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 160, render: (v: string) => <Tag color="blue">{dayjs(v).format('DD/MM/YYYY')}</Tag> },
+          ]}
+        />
+        </>}
+
+        {laPctn && <>
+        <Divider plain>Gợi ý CBQL/Giáo viên đến kỳ nâng phụ cấp thâm niên (+1%/năm)</Divider>
+        <Space wrap style={{ marginBottom: 12 }}>
+          <InputNumber value={dotNam} onChange={(v) => setDotNam(v ?? currentYear)} style={{ width: 100 }} />
+          <Select
+            value={dotKy}
+            onChange={setDotKy}
+            style={{ width: 180 }}
+            options={[
+              { value: 'H1', label: '6 tháng đầu năm' },
+              { value: 'H2', label: '6 tháng cuối năm' },
+            ]}
+          />
+          <Button type="primary" ghost disabled={selectedGoiYPctn.length === 0} onClick={themDaChonPctn}>
+            Thêm {selectedGoiYPctn.length > 0 ? selectedGoiYPctn.length : ''} đã chọn vào đề xuất
+          </Button>
+        </Space>
+        <Table
+          dataSource={goiYPctnData}
+          rowKey="id"
+          size="small"
+          pagination={false}
+          scroll={{ x: 600, y: 240 }}
+          style={{ marginBottom: 16 }}
+          rowSelection={{ selectedRowKeys: selectedGoiYPctn, onChange: (keys) => setSelectedGoiYPctn(keys as string[]) }}
+          locale={{ emptyText: 'Không có giáo viên/CBQL nào đến kỳ nâng PCTN trong đợt này' }}
+          columns={[
+            { title: 'Họ và tên', dataIndex: 'hoTen', key: 'ht' },
+            { title: 'Mốc hưởng PCTN', key: 'moc', width: 130, render: (_: any, r: any) => dayjs(r.mocHuongPctn).format('DD/MM/YYYY') },
+            { title: 'PCTN hiện tại', key: 'pc_cu', width: 110, render: (_: any, r: any) => `${r.pctnHienTai}%` },
+            { title: 'PCTN đề nghị', key: 'pc_moi', width: 120, render: (_: any, r: any) => <Tag color="green">+1% → {r.pctnMoi}%</Tag> },
+            { title: 'Ngày tăng PCTN', key: 'ngay', width: 140, render: (_: any, r: any) => <Tag color="blue">{dayjs(r.anniversaryStr).format('DD/MM/YYYY')}</Tag> },
           ]}
         />
         </>}

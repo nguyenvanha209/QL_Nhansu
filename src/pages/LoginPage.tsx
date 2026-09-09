@@ -32,30 +32,51 @@ export default function LoginPage() {
     }, 300)
   }
 
-  // Lấy danh sách trường có ít nhất 1 tài khoản KT hoặc HT
+  const DV_ORDER: Record<string, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3 }
+  const DV_LABEL: Record<string, string> = { MAM_NON: 'Mầm non', TIEU_HOC: 'Tiểu học', THCS: 'THCS' }
+
+  // Lấy danh sách trường có ít nhất 1 tài khoản KT hoặc HT, nhóm theo loại trường
   const schoolAccounts = useMemo(() => {
     const activeDonVis = donVis
       .filter((d) => d.active)
-      .sort((a, b) => a.ten.localeCompare(b.ten, 'vi'))
+      .sort((a, b) => {
+        const oa = DV_ORDER[a.loai] ?? 9
+        const ob = DV_ORDER[b.loai] ?? 9
+        if (oa !== ob) return oa - ob
+        return a.ten.localeCompare(b.ten, 'vi')
+      })
 
-    return activeDonVis.map((dv) => {
+    const result: Array<{ key: string; ten: string; kt: string; ht: string; loai?: string; isGroup?: boolean }> = []
+    let lastLoai = ''
+    for (const dv of activeDonVis) {
       const kt = users.find((u) => u.active && u.donViId === dv.id && u.role === 'CB_TRUONG')
       const ht = users.find((u) => u.active && u.donViId === dv.id && u.role === 'HIEU_TRUONG')
-      return { key: dv.id, ten: dv.ten, kt: kt?.username ?? '—', ht: ht?.username ?? '—' }
-    }).filter((r) => r.kt !== '—' || r.ht !== '—')
+      if (!kt && !ht) continue
+      if (dv.loai !== lastLoai) {
+        result.push({ key: `group_${dv.loai}`, ten: DV_LABEL[dv.loai] ?? dv.loai, kt: '', ht: '', isGroup: true })
+        lastLoai = dv.loai
+      }
+      result.push({ key: dv.id, ten: dv.ten, kt: kt?.username ?? '—', ht: ht?.username ?? '—' })
+    }
+    return result
   }, [donVis, users])
 
   const columns = [
-    { title: 'Trường', dataIndex: 'ten', key: 'ten', ellipsis: true },
+    {
+      title: 'Trường', dataIndex: 'ten', key: 'ten',
+      render: (v: string, r: any) => r.isGroup
+        ? <Text strong style={{ color: '#1677ff', fontSize: 13 }}>── {v} ──</Text>
+        : v,
+    },
     {
       title: <Tag color="green" style={{ margin: 0 }}>Kế toán (KT)</Tag>,
-      dataIndex: 'kt', key: 'kt', width: 120, align: 'center' as const,
-      render: (v: string) => v === '—' ? <Text type="secondary">—</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
+      dataIndex: 'kt', key: 'kt', width: 130, align: 'center' as const,
+      render: (v: string, r: any) => r.isGroup ? null : v === '—' ? <Text type="secondary">—</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
     },
     {
       title: <Tag color="gold" style={{ margin: 0 }}>Hiệu trưởng (HT)</Tag>,
-      dataIndex: 'ht', key: 'ht', width: 140, align: 'center' as const,
-      render: (v: string) => v === '—' ? <Text type="secondary">—</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
+      dataIndex: 'ht', key: 'ht', width: 145, align: 'center' as const,
+      render: (v: string, r: any) => r.isGroup ? null : v === '—' ? <Text type="secondary">—</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
     },
   ]
 
@@ -91,8 +112,10 @@ export default function LoginPage() {
               columns={columns}
               size="small"
               pagination={false}
+              rowClassName={(r: any) => r.isGroup ? 'login-group-row' : ''}
               style={{ marginBottom: 4 }}
             />
+            <style>{`.login-group-row td { background: #f0f5ff !important; padding-top: 6px !important; padding-bottom: 6px !important; }`}</style>
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <Text type="secondary" style={{ fontSize: 11 }}>
                 Mật khẩu sẽ được cung cấp riêng — không hiển thị tại đây

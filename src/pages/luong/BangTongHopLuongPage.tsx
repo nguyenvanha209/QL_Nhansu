@@ -445,8 +445,8 @@ export default function BangTongHopLuongPage() {
               <Table.Summary.Cell index={15} />
               <Table.Summary.Cell index={16} align="right">{d3(grandTotal.hsBaoLuu)}</Table.Summary.Cell>
               <Table.Summary.Cell index={17} align="right">{d3(grandTotal.pcUD)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={18} align="right" style={{ color: '#1677ff' }}>{grandTotal.tong1Thang.toFixed(3)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={19} align="right" style={{ color: '#1677ff' }}>{grandTotal.tong6Thang.toFixed(3)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={18} align="right"><span style={{ color: '#1677ff' }}>{grandTotal.tong1Thang.toFixed(3)}</span></Table.Summary.Cell>
+              <Table.Summary.Cell index={19} align="right"><span style={{ color: '#1677ff' }}>{grandTotal.tong6Thang.toFixed(3)}</span></Table.Summary.Cell>
             </Table.Summary.Row>
           </Table.Summary>
         )}

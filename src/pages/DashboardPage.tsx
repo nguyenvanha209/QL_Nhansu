@@ -217,7 +217,7 @@ export default function DashboardPage() {
                 <Pie
                   data={viTriViecLamData} dataKey="value" nameKey="name"
                   cx="50%" cy="42%" outerRadius={78} innerRadius={28}
-                  label={({ name, value, percent }) => `${value} (${(percent * 100).toFixed(0)}%)`}
+                  label={({ name, value, percent }) => `${value} (${((percent ?? 0) * 100).toFixed(0)}%)`}
                   labelLine={{ strokeWidth: 1 }}
                 >
                   {viTriViecLamData.map((entry, index) => (

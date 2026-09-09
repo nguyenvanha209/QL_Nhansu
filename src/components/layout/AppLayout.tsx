@@ -7,7 +7,7 @@ import {
   DashboardOutlined, TeamOutlined, FileTextOutlined, DollarOutlined,
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
-  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined,
+  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
@@ -110,6 +110,14 @@ export default function AppLayout() {
             onClick={() => setCollapsed(!collapsed)}
           />
           <Space>
+            <Button
+              type="text"
+              icon={<ReadOutlined />}
+              onClick={() => navigate('/huong-dan')}
+              title="Hướng dẫn sử dụng — xem và in"
+            >
+              <span className="hd-btn-label">Hướng dẫn sử dụng</span>
+            </Button>
             <Badge count={alerts.length} size="small">
               <Button type="text" icon={<BellOutlined />} onClick={() => navigate('/de-xuat')} />
             </Badge>

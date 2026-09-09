@@ -2,3 +2,6 @@
 body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .ant-layout { min-height: 100vh; }
 .vt-subtotal-row > td { background: #fafafa !important; font-weight: 600; border-top: 1px solid #e8e8e8 !important; }
+
+/* Nút Hướng dẫn sử dụng trên header: thu về icon khi màn hình hẹp */
+@media (max-width: 900px) { .hd-btn-label { display: none; } }

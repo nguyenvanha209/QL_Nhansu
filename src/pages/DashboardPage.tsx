@@ -15,7 +15,7 @@ import { isDangCongTac } from '@/types/vienChuc'
 import type { LoaiDonVi } from '@/types/donVi'
 
 const { Title, Text } = Typography
-const PIE_COLORS = ['#1677ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16']
+const LOAI_ORDER: Record<string, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3, OTHER: 4 }
 
 export default function DashboardPage() {
   const { scopeDonViId } = useAuth()
@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
   const deXuats = useMemo(() => allDeXuats.filter((d) => !scopeDonViId || d.donViId === scopeDonViId), [allDeXuats, scopeDonViId])
   const salaryAlerts = useSalaryAlerts(scopeDonViId, 90)
@@ -57,27 +58,57 @@ export default function DashboardPage() {
     return { vienChucBienChe, laoDongHopDong, nhanVienPhucVu, nhanVienNuoiDuong }
   }, [vienChucs, donViLoaiMap])
 
-  // Nhân sự theo trường
+  // Nhân sự theo trường (sắp xếp MN → TH → THCS → ABC)
   const bySchoolData = useMemo(() => {
-    return donVis.map((dv) => ({
+    const sorted = [...donVis].sort((a, b) => {
+      const oa = LOAI_ORDER[a.loai] ?? 99
+      const ob = LOAI_ORDER[b.loai] ?? 99
+      if (oa !== ob) return oa - ob
+      return a.ten.localeCompare(b.ten, 'vi')
+    })
+    return sorted.map((dv) => ({
       name: dv.ten.replace('Trường ', '').replace('Trường THCS ', 'THCS '),
       total: vienChucs.filter((v) => v.donViId === dv.id).length,
     })).filter((d) => d.total > 0)
   }, [donVis, vienChucs])
 
-  // Loại hình lao động
-  const byTypeData = useMemo(() => {
-    const counts: Record<string, number> = {}
-    vienChucs.forEach((v) => {
-      const label = v.loaiLaoDong
-      counts[label] = (counts[label] || 0) + 1
-    })
-    const labels: Record<string, string> = {
-      VIEN_CHUC: 'Viên chức', TAP_SU: 'Tập sự', HOP_DONG_XDT: 'HĐ xác định thời hạn',
-      HOP_DONG_235: 'HĐ 235', HOP_DONG_TRUONG: 'HĐ trường', KHAC: 'Khác',
+  // Cơ cấu theo vị trí việc làm
+  const viTriViecLamData = useMemo(() => {
+    const cdMap = new Map(chucDanhs.map((c) => [c.id, c]))
+    const counts: Record<string, number> = {
+      cbql: 0, giaoVien: 0, keToan: 0, vanThu: 0, thuVien: 0,
+      thietBi: 0, nuoiDuong: 0, phucVu: 0, yTe: 0, khac: 0,
     }
-    return Object.entries(counts).map(([k, v]) => ({ name: labels[k] ?? k, value: v }))
-  }, [vienChucs])
+    vienChucs.forEach((v) => {
+      const cd = cdMap.get(v.chucDanhId)
+      const nhom = cd?.nhom
+      const ten = (cd?.ten ?? '').toLowerCase()
+      const isCBQL = v.vtvl === 'CBQL' || nhom === 'QUAN_LY'
+      const isGV = !isCBQL && (v.vtvl === 'GIAO_VIEN' || nhom === 'GIAO_VIEN')
+      if (isCBQL) counts.cbql++
+      else if (isGV) counts.giaoVien++
+      else if (ten.includes('kế toán')) counts.keToan++
+      else if (ten.includes('văn thư')) counts.vanThu++
+      else if (ten.includes('thư viện')) counts.thuVien++
+      else if (ten.includes('thiết bị')) counts.thietBi++
+      else if (ten.includes('nuôi dưỡng')) counts.nuoiDuong++
+      else if (ten.includes('phục vụ') || ten.includes('lao động') || ten.includes('bảo vệ')) counts.phucVu++
+      else if (ten.includes('y tế')) counts.yTe++
+      else counts.khac++
+    })
+    return [
+      { name: 'CBQL', value: counts.cbql, color: '#722ed1' },
+      { name: 'Giáo viên', value: counts.giaoVien, color: '#1677ff' },
+      { name: 'Kế toán', value: counts.keToan, color: '#13c2c2' },
+      { name: 'Văn thư', value: counts.vanThu, color: '#fa8c16' },
+      { name: 'Thư viện', value: counts.thuVien, color: '#eb2f96' },
+      { name: 'Thiết bị', value: counts.thietBi, color: '#faad14' },
+      { name: 'Nuôi dưỡng', value: counts.nuoiDuong, color: '#52c41a' },
+      { name: 'Phục vụ/LĐ', value: counts.phucVu, color: '#f5222d' },
+      { name: 'Y tế', value: counts.yTe, color: '#a0d911' },
+      { name: 'Nhân viên khác', value: counts.khac, color: '#8c8c8c' },
+    ].filter((d) => d.value > 0)
+  }, [vienChucs, chucDanhs])
 
   // Đề xuất theo trạng thái
   const statusCounts = useMemo(() => {
@@ -92,24 +123,19 @@ export default function DashboardPage() {
     <div>
       <Title level={4} style={{ marginBottom: 16 }}>Tổng quan hệ thống</Title>
 
-      {/* KPI Cards */}
+      {/* KPI vận hành */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic title="Tổng số lao động" value={vienChucs.length} prefix={<TeamOutlined />} styles={{ content: { color: '#1677ff' } }} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic title="Đề xuất đang xử lý" value={deXuats.filter((d) => d.trangThai === 'CHO_HIEU_TRUONG_DUYET' || d.trangThai === 'CHO_XET_DUYET' || d.trangThai === 'CHO_PHE_DUYET').length} prefix={<FileTextOutlined />} styles={{ content: { color: '#faad14' } }} />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic title="Sắp đến kỳ nâng lương" value={salaryAlerts.length} prefix={<WarningOutlined />} styles={{ content: { color: salaryAlerts.length > 0 ? '#f5222d' : '#52c41a' } }} />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic title={`Nghỉ hưu trong ${retireYears} năm`} value={retireIds.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: '#722ed1' } }} suffix={
               <Select size="small" value={retireYears} onChange={setRetireYears} style={{ marginLeft: 8, width: 80 }}>
@@ -122,28 +148,44 @@ export default function DashboardPage() {
         </Col>
       </Row>
 
-      {/* Phân loại lao động */}
+      {/* Tổng số lao động + cơ cấu — cùng một hàng */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        {/* Tổng số LĐ — nổi bật */}
         <Col xs={24} sm={12} lg={6}>
-          <Card size="small" style={{ borderLeft: '4px solid #1677ff' }}>
-            <Statistic title="Viên chức biên chế" value={nhomLaoDong.vienChucBienChe} valueStyle={{ fontSize: 22, color: '#1677ff' }} />
+          <Card style={{ background: '#1677ff', border: 'none', height: '100%' }}>
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, marginBottom: 6 }}>
+              <TeamOutlined style={{ marginRight: 6 }} />Tổng số lao động
+            </div>
+            <div style={{ fontSize: 42, fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>
+              {vienChucs.length}
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11, marginTop: 8 }}>
+              Đang công tác tại các CSGD
+            </div>
+          </Card>
+        </Col>
+        {/* Viên chức biên chế — nổi bật thứ 2 */}
+        <Col xs={12} sm={6} lg={5}>
+          <Card size="small" style={{ borderTop: '3px solid #1677ff', height: '100%' }}>
+            <Statistic title="Viên chức biên chế" value={nhomLaoDong.vienChucBienChe} valueStyle={{ fontSize: 26, color: '#1677ff', fontWeight: 700 }} />
             <Text type="secondary" style={{ fontSize: 11 }}>Viên chức + Tập sự</Text>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card size="small" style={{ borderLeft: '4px solid #13c2c2' }}>
+        {/* 3 nhóm còn lại */}
+        <Col xs={12} sm={6} lg={4}>
+          <Card size="small" style={{ borderTop: '3px solid #13c2c2', height: '100%' }}>
             <Statistic title="Lao động hợp đồng" value={nhomLaoDong.laoDongHopDong} valueStyle={{ fontSize: 22, color: '#13c2c2' }} />
-            <Text type="secondary" style={{ fontSize: 11 }}>HĐ 111, 235, xác định thời hạn</Text>
+            <Text type="secondary" style={{ fontSize: 11 }}>HĐ 111, 235, XĐT</Text>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card size="small" style={{ borderLeft: '4px solid #fa8c16' }}>
+        <Col xs={12} sm={6} lg={5}>
+          <Card size="small" style={{ borderTop: '3px solid #fa8c16', height: '100%' }}>
             <Statistic title="Nhân viên phục vụ" value={nhomLaoDong.nhanVienPhucVu} valueStyle={{ fontSize: 22, color: '#fa8c16' }} />
-            <Text type="secondary" style={{ fontSize: 11 }}>HĐ trường (Tiểu học, THCS)</Text>
+            <Text type="secondary" style={{ fontSize: 11 }}>HĐ trường (TH, THCS)</Text>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card size="small" style={{ borderLeft: '4px solid #52c41a' }}>
+        <Col xs={12} sm={6} lg={4}>
+          <Card size="small" style={{ borderTop: '3px solid #52c41a', height: '100%' }}>
             <Statistic title="Nhân viên nuôi dưỡng" value={nhomLaoDong.nhanVienNuoiDuong} valueStyle={{ fontSize: 22, color: '#52c41a' }} />
             <Text type="secondary" style={{ fontSize: 11 }}>HĐ trường (Mầm non)</Text>
           </Card>
@@ -154,7 +196,7 @@ export default function DashboardPage() {
         {/* Biểu đồ theo trường */}
         <Col xs={24} lg={14}>
           <Card title="Nhân sự theo đơn vị trường" size="small">
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart data={bySchoolData} margin={{ top: 5, right: 10, left: 0, bottom: 40 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
                 <YAxis tick={{ fontSize: 11 }} />
@@ -165,17 +207,18 @@ export default function DashboardPage() {
           </Card>
         </Col>
 
-        {/* Pie loại hình */}
+        {/* Cơ cấu theo vị trí việc làm */}
         <Col xs={24} lg={10}>
-          <Card title="Loại hình lao động" size="small">
-            <ResponsiveContainer width="100%" height={220}>
+          <Card title="Cơ cấu vị trí việc làm" size="small">
+            <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie data={byTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>
-                  {byTypeData.map((_, index) => (
-                    <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                <Pie data={viTriViecLamData} dataKey="value" nameKey="name" cx="50%" cy="38%" outerRadius={72} innerRadius={30}>
+                  {viTriViecLamData.map((entry, index) => (
+                    <Cell key={index} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(v: number) => [`${v} người`]} />
+                <Legend wrapperStyle={{ fontSize: 11 }} iconSize={10} />
               </PieChart>
             </ResponsiveContainer>
           </Card>

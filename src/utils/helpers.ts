@@ -31,6 +31,11 @@ export function formatDatetime(iso?: string): string {
   return new Date(iso).toLocaleString('vi-VN')
 }
 
+export function toProperName(s: string): string {
+  if (!s) return s
+  return s.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+}
+
 export function ago(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const days = Math.floor(diff / 86400000)

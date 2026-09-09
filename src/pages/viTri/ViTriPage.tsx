@@ -18,8 +18,13 @@ export default function ViTriPage() {
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const updateDonVi = useDanhMucStore((s) => s.updateDonVi)
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
+  const LOAI_ORDER: Record<string, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3, OTHER: 4 }
   const viTris = useMemo(() => allViTris.filter((v) => v.active), [allViTris])
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort((a, b) => {
+    const oa = LOAI_ORDER[a.loai] ?? 4; const ob = LOAI_ORDER[b.loai] ?? 4
+    if (oa !== ob) return oa - ob
+    return a.ten.localeCompare(b.ten, 'vi')
+  }), [allDonVis])
   const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v)), [allVienChucs])
   const canEdit = hasPermission('viTri', 'write')
 
@@ -146,8 +151,8 @@ export default function ViTriPage() {
       render: (v: string, r: any) => r.rowType === 'subtotal' ? <Text strong>Tổng cộng</Text> : v,
     },
     {
-      title: 'Loại', dataIndex: 'loai', key: 'loai', width: 90,
-      render: (v: string, r: any) => r.rowType === 'subtotal' ? '' : (LOAI_LABELS[v] ?? v),
+      title: 'Loại', dataIndex: 'loai', key: 'loai', width: 110,
+      render: (v: string, r: any) => r.rowType === 'subtotal' ? '' : <span style={{ whiteSpace: 'nowrap' }}>{LOAI_LABELS[v] ?? v}</span>,
     },
     {
       title: 'Chỉ tiêu giao (theo trường)',
@@ -233,10 +238,32 @@ export default function ViTriPage() {
     }] : []),
   ]
 
+  // Gán màu nền xen kẽ cho từng khối trường
+  const groupColors = ['#e6f4ff', '#f6ffed', '#fff7e6', '#f9f0ff', '#fff1f0', '#e6fffb', '#fffbe6', '#fff0f6', '#f0f5ff', '#fcffe6', '#fff2e8']
+  const donViColorMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    let idx = 0
+    for (const row of data) {
+      if (row.rowType === 'position' && row.isFirstInGroup) {
+        if (!map[row.donViTen]) { map[row.donViTen] = groupColors[idx % groupColors.length]; idx++ }
+      } else if (row.rowType === 'subtotal') {
+        if (!map[row.donViTen]) { map[row.donViTen] = groupColors[idx % groupColors.length]; idx++ }
+      }
+    }
+    return map
+  }, [data])
+
   return (
     <Card>
       <Title level={4} style={{ marginBottom: 16 }}>Vị trí việc làm & Chỉ tiêu biên chế</Title>
+      <style>{`
+        .vt-table .ant-table-cell { padding: 3px 8px !important; line-height: 1.4 !important; }
+        .vt-table .ant-table-thead .ant-table-cell { padding: 5px 8px !important; }
+        .vt-subtotal-row td { border-top: 2px solid #096dd9 !important; background: transparent !important; font-weight: 700; }
+        .vt-subtotal-row td.ant-table-cell-fix-left { background: inherit !important; }
+      `}</style>
       <Table
+        className="vt-table"
         dataSource={data}
         columns={columns}
         rowKey="id"
@@ -245,6 +272,7 @@ export default function ViTriPage() {
         scroll={{ x: 1350 }}
         pagination={false}
         rowClassName={(r) => r.rowType === 'subtotal' ? 'vt-subtotal-row' : ''}
+        onRow={(r) => ({ style: { backgroundColor: donViColorMap[r.donViTen] ?? 'transparent' } })}
       />
 
       <Modal open={!!editing} title={`Giao chỉ tiêu: ${editing?.donViTen}`} onCancel={() => setEditing(null)} onOk={() => form.submit()} destroyOnHidden>

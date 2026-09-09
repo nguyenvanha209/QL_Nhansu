@@ -19,7 +19,12 @@ export default function BaoCaoPage() {
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort((a, b) => {
+    const oa = ({ MAM_NON: 1, TIEU_HOC: 2, THCS: 3, OTHER: 4 } as Record<string, number>)[a.loai] ?? 4
+    const ob = ({ MAM_NON: 1, TIEU_HOC: 2, THCS: 3, OTHER: 4 } as Record<string, number>)[b.loai] ?? 4
+    if (oa !== ob) return oa - ob
+    return a.ten.localeCompare(b.ten, 'vi')
+  }), [allDonVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
   const salaryAlerts = useSalaryAlerts(scopeDonViId, 90)

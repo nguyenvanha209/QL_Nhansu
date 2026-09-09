@@ -7,7 +7,7 @@ import {
   DashboardOutlined, TeamOutlined, FileTextOutlined, DollarOutlined,
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
-  AuditOutlined, FundOutlined, TableOutlined,
+  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
@@ -62,10 +62,13 @@ export default function AppLayout() {
     items: [
       { key: 'info', label: <Text type="secondary">{currentUser?.fullName}</Text>, disabled: true },
       { type: 'divider' as const },
+      { key: 'tai-khoan', icon: <IdcardOutlined />, label: 'Thông tin tài khoản' },
+      { type: 'divider' as const },
       { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất', danger: true },
     ],
     onClick: ({ key }: { key: string }) => {
       if (key === 'logout') { logout(); navigate('/login') }
+      if (key === 'tai-khoan') navigate('/tai-khoan')
     },
   }
 

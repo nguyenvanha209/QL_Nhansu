@@ -20,6 +20,7 @@ import BaoCaoPage from '@/pages/baoCao/BaoCaoPage'
 import DanhMucPage from '@/pages/admin/DanhMucPage'
 import UserManagePage from '@/pages/admin/UserManagePage'
 import AuditLogPage from '@/pages/admin/AuditLogPage'
+import AccountSettingsPage from '@/pages/account/AccountSettingsPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth()
@@ -51,6 +52,7 @@ export default function AppRouter() {
           <Route path="admin/danh-muc" element={<RoleGuard allowedRoles={['ADMIN']}><DanhMucPage /></RoleGuard>} />
           <Route path="admin/nguoi-dung" element={<RoleGuard allowedRoles={['ADMIN']}><UserManagePage /></RoleGuard>} />
           <Route path="admin/nhat-ky" element={<RoleGuard allowedRoles={['ADMIN']}><AuditLogPage /></RoleGuard>} />
+          <Route path="tai-khoan" element={<AccountSettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

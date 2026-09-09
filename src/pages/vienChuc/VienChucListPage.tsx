@@ -5,7 +5,7 @@ import { PlusOutlined, SearchOutlined, EditOutlined, EyeOutlined, DeleteOutlined
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { matchSearch, formatDate } from '@/utils/helpers'
+import { matchSearch, formatDate, toProperName } from '@/utils/helpers'
 import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import ImportVienChucModal, { ExportExcelButton } from './ImportVienChucModal'
@@ -27,7 +27,10 @@ export default function VienChucListPage() {
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const softDelete = useVienChucStore((s) => s.softDelete)
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(
+    () => allDonVis.filter((d) => d.active).sort((a, b) => a.ten.localeCompare(b.ten, 'vi')),
+    [allDonVis]
+  )
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const vtvls = useDanhMucStore((s) => s.vtvls)
 
@@ -54,7 +57,7 @@ export default function VienChucListPage() {
       title: 'Họ và tên', key: 'hoTen', ellipsis: true,
       render: (_: any, r: any) => (
         <Button type="link" onClick={() => navigate(`/vien-chuc/${r.id}`)} style={{ padding: 0 }}>
-          {r.ho} {r.ten}
+          {toProperName(`${r.ho} ${r.ten}`)}
         </Button>
       ),
     },

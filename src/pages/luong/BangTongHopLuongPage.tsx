@@ -117,10 +117,18 @@ function buildRow(
   }
 }
 
+const DV_ORDER: Record<string, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3, OTHER: 4 }
+
 export default function BangTongHopLuongPage() {
   const { scopeDonViId } = useAuth()
   const allVC = useVienChucStore((s) => s.vienChucs)
-  const donVis = useDanhMucStore((s) => s.donVis).filter((d) => d.active)
+  const allDonVis = useDanhMucStore((s) => s.donVis)
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort((a, b) => {
+    const oa = DV_ORDER[a.loai] ?? 4
+    const ob = DV_ORDER[b.loai] ?? 4
+    if (oa !== ob) return oa - ob
+    return a.ten.localeCompare(b.ten, 'vi')
+  }), [allDonVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const heSos = useLuongStore((s) => s.heSoLuongs)
@@ -134,8 +142,19 @@ export default function BangTongHopLuongPage() {
     if (scopeDonViId) list = list.filter((v) => v.donViId === scopeDonViId)
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
     if (search) list = list.filter((v) => matchSearch(`${v.ho} ${v.ten}`, search))
+    const dvMap = new Map(donVis.map((d) => [d.id, d]))
+    list = [...list].sort((a, b) => {
+      const da = dvMap.get(a.donViId)
+      const db = dvMap.get(b.donViId)
+      const oa = DV_ORDER[da?.loai ?? 'OTHER'] ?? 4
+      const ob = DV_ORDER[db?.loai ?? 'OTHER'] ?? 4
+      if (oa !== ob) return oa - ob
+      const tenCmp = (da?.ten ?? '').localeCompare(db?.ten ?? '', 'vi')
+      if (tenCmp !== 0) return tenCmp
+      return `${a.ho} ${a.ten}`.localeCompare(`${b.ho} ${b.ten}`, 'vi')
+    })
     return list.map((vc, i) => buildRow(i + 1, vc, heSos, phuCaps, loaiPhuCaps, chucDanhs))
-  }, [allVC, scopeDonViId, filterDonVi, search, heSos, phuCaps, loaiPhuCaps, chucDanhs])
+  }, [allVC, donVis, scopeDonViId, filterDonVi, search, heSos, phuCaps, loaiPhuCaps, chucDanhs])
 
   const columns: any[] = [
     {

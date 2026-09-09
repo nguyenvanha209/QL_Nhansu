@@ -39,14 +39,15 @@ export default function PhuCapPage() {
   }, [phuCapVienChucs, vienChucs, donVis, loaiPhuCaps, filterDonVi, search, scopeDonViId])
 
   const columns = [
-    { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht', ellipsis: true },
-    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', ellipsis: true, responsive: ['lg' as const] },
-    { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapTen', key: 'lpc' },
+    { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht', minWidth: 160, sorter: (a: any, b: any) => a.hoTen.localeCompare(b.hoTen, 'vi') },
+    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', minWidth: 130, responsive: ['lg' as const], sorter: (a: any, b: any) => a.donViTen.localeCompare(b.donViTen, 'vi') },
+    { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapTen', key: 'lpc', sorter: (a: any, b: any) => a.loaiPhuCapTen.localeCompare(b.loaiPhuCapTen, 'vi') },
     {
       title: 'Tỷ lệ/Hệ số', key: 'tl', width: 100,
       render: (_: any, r: any) => r.loaiCongThuc === 'TIEN_MAT' ? `${r.giaTri.toLocaleString()}đ` : r.loaiCongThuc === 'HE_SO' ? `+${r.giaTri}` : `${r.giaTri}%`,
+      sorter: (a: any, b: any) => a.giaTri - b.giaTri,
     },
-    { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 110, render: (v: string) => formatDate(v) },
+    { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 110, render: (v: string) => formatDate(v), sorter: (a: any, b: any) => (a.ngayHieuLuc ?? '').localeCompare(b.ngayHieuLuc ?? '') },
     { title: 'Trạng thái', key: 'ts', render: (_: any, r: any) => <Tag color={r.isActive ? 'green' : 'default'}>{r.isActive ? 'Đang hưởng' : 'Hết hạn'}</Tag> },
   ]
 
@@ -59,8 +60,8 @@ export default function PhuCapPage() {
           <Select placeholder="Lọc theo đơn vị" style={{ width: 200 }} value={filterDonVi} onChange={setFilterDonVi} allowClear options={donVis.map((d) => ({ value: d.id, label: d.ten }))} />
         )}
       </Space>
-      <Table dataSource={data} columns={columns} rowKey="id" size="small" scroll={{ x: 800 }}
-        pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} bản ghi` }}
+      <Table dataSource={data} columns={columns} rowKey="id" size="small" scroll={{ x: 800, y: 'calc(100vh - 260px)' }}
+        pagination={{ pageSize: 50, showSizeChanger: true, pageSizeOptions: [20, 50, 100], showTotal: (t) => `Tổng ${t} bản ghi` }}
       />
     </Card>
   )

@@ -41,26 +41,26 @@ export default function HeSoLuongPage() {
         if (search) return matchSearch(r.hoTen, search)
         return true
       })
-      .sort((a, b) => a.days - b.days)
   }, [heSoLuongs, vienChucs, donVis, chucDanhs, filterDonVi, search, scopeDonViId])
 
   const columns = [
     {
-      title: 'Viên chức', dataIndex: 'hoTen', key: 'ht', ellipsis: true,
+      title: 'Viên chức', dataIndex: 'hoTen', key: 'ht', minWidth: 160,
       render: (v: string, r: any) => (
         <span>
           {r.days <= 90 && <Badge status="warning" style={{ marginRight: 4 }} />}
           {v}
         </span>
       ),
+      sorter: (a: any, b: any) => a.hoTen.localeCompare(b.hoTen, 'vi'),
     },
-    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', ellipsis: true, responsive: ['lg' as const] },
-    { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd', ellipsis: true },
-    { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60, align: 'center' as const },
-    { title: 'Hệ số', dataIndex: 'heSo', key: 'hs', width: 80, align: 'center' as const },
-    { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 110, render: (v: string) => formatDate(v) },
+    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', minWidth: 130, responsive: ['lg' as const], sorter: (a: any, b: any) => a.donViTen.localeCompare(b.donViTen, 'vi') },
+    { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd', minWidth: 160, sorter: (a: any, b: any) => a.chucDanhTen.localeCompare(b.chucDanhTen, 'vi') },
+    { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60, align: 'center' as const, sorter: (a: any, b: any) => (a.bac ?? 0) - (b.bac ?? 0) },
+    { title: 'Hệ số', dataIndex: 'heSo', key: 'hs', width: 80, align: 'center' as const, sorter: (a: any, b: any) => (a.heSo ?? 0) - (b.heSo ?? 0) },
+    { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 110, render: (v: string) => formatDate(v), sorter: (a: any, b: any) => (a.ngayHieuLuc ?? '').localeCompare(b.ngayHieuLuc ?? '') },
     {
-      title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 180,
+      title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 200,
       render: (v: string, r: any) => (
         <Tooltip title={r.days <= 0 ? 'Đã quá hạn' : r.days <= 30 ? 'Rất gấp' : r.days <= 90 ? 'Sắp đến' : undefined}>
           <Text style={{ color: getReviewUrgencyColor(r.days) }}>
@@ -72,6 +72,8 @@ export default function HeSoLuongPage() {
           </Text>
         </Tooltip>
       ),
+      sorter: (a: any, b: any) => a.days - b.days,
+      defaultSortOrder: 'ascend' as const,
     },
     { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', render: (v: string) => LY_DO_LABELS[v as keyof typeof LY_DO_LABELS] ?? v },
   ]
@@ -92,7 +94,7 @@ export default function HeSoLuongPage() {
         )}
       </Space>
 
-      <Table dataSource={data} columns={columns} rowKey="id" size="small" scroll={{ x: 900 }}
+      <Table dataSource={data} columns={columns} rowKey="id" size="small" scroll={{ x: 900, y: 'calc(100vh - 280px)' }}
         rowClassName={(r) => r.days <= 30 ? 'ant-table-row-danger' : r.days <= 90 ? 'ant-table-row-warning' : ''}
         pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} bản ghi` }}
       />

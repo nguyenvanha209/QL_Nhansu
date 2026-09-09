@@ -13,7 +13,7 @@ import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { LoaiPhuCap, ChucDanhNgheNghiep } from '@/types/danhMuc'
 import type { VienChuc } from '@/types/vienChuc'
 
-const { Title } = Typography
+const { Title, Text } = Typography
 
 const PC_VK_MA  = 'PC_THAM_NIEN_VK'
 const PC_CV_MA  = 'PC_CHUC_VU'
@@ -25,6 +25,7 @@ const r3 = (n: number) => Math.round(n * 1000) / 1000
 const d3 = (n: number) => (n ? n.toFixed(3) : '')
 
 interface RowData {
+  _type: 'data'
   key: string
   stt: number
   donViId: string
@@ -47,6 +48,32 @@ interface RowData {
   pcUD: number
   tong1Thang: number
   tong6Thang: number
+}
+
+interface SubtotalRow {
+  _type: 'subtotal'
+  key: string
+  donViTen: string
+  count: number
+  vkHeSo: number
+  tongHSLC: number
+  pcCV: number
+  pcTN: number
+  pcTNNG_HeSo: number
+  hsBaoLuu: number
+  pcUD: number
+  tong1Thang: number
+  tong6Thang: number
+}
+
+type DisplayRow = RowData | SubtotalRow
+
+const SUM_COLS = ['vkHeSo', 'tongHSLC', 'pcCV', 'pcTN', 'pcTNNG_HeSo', 'hsBaoLuu', 'pcUD', 'tong1Thang', 'tong6Thang'] as const
+
+function sumGroup(rows: RowData[]): Omit<SubtotalRow, '_type' | 'key' | 'donViTen' | 'count'> {
+  const result: Record<string, number> = {}
+  for (const col of SUM_COLS) result[col] = r3(rows.reduce((s, r) => s + (r[col] as number), 0))
+  return result as Omit<SubtotalRow, '_type' | 'key' | 'donViTen' | 'count'>
 }
 
 function buildRow(
@@ -92,6 +119,7 @@ function buildRow(
     : (chucDanh?.ten ?? '')
 
   return {
+    _type: 'data',
     key: vc.id,
     stt,
     donViId: vc.donViId,
@@ -137,7 +165,7 @@ export default function BangTongHopLuongPage() {
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const [search, setSearch] = useState('')
 
-  const rows = useMemo(() => {
+  const rows = useMemo<RowData[]>(() => {
     let list = allVC.filter((v) => v.active)
     if (scopeDonViId) list = list.filter((v) => v.donViId === scopeDonViId)
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
@@ -156,96 +184,164 @@ export default function BangTongHopLuongPage() {
     return list.map((vc, i) => buildRow(i + 1, vc, heSos, phuCaps, loaiPhuCaps, chucDanhs))
   }, [allVC, donVis, scopeDonViId, filterDonVi, search, heSos, phuCaps, loaiPhuCaps, chucDanhs])
 
+  // Chèn subtotal rows khi xem tất cả trường (không filter, không search)
+  const displayRows = useMemo<DisplayRow[]>(() => {
+    const showSubtotals = !filterDonVi && !search && !scopeDonViId
+    if (!showSubtotals) return rows
+    const dvMap = new Map(donVis.map((d) => [d.id, d.ten]))
+    const groups: Map<string, RowData[]> = new Map()
+    for (const r of rows) {
+      const g = groups.get(r.donViId) ?? []
+      g.push(r)
+      groups.set(r.donViId, g)
+    }
+    const result: DisplayRow[] = []
+    for (const [dvId, grp] of groups) {
+      result.push(...grp)
+      result.push({
+        _type: 'subtotal',
+        key: `sub_${dvId}`,
+        donViTen: dvMap.get(dvId) ?? dvId,
+        count: grp.length,
+        ...sumGroup(grp),
+      })
+    }
+    return result
+  }, [rows, filterDonVi, search, scopeDonViId, donVis])
+
+  // Grand total cho summary row
+  const grandTotal = useMemo(() => sumGroup(rows), [rows])
+
   const columns: any[] = [
     {
       title: 'TT', key: 'stt', width: 46, fixed: 'left' as const, align: 'center' as const,
-      render: (_: any, __: any, i: number) => i + 1,
+      render: (_: any, r: DisplayRow, i: number) => r._type === 'subtotal' ? '' : i + 1,
     },
     {
-      title: 'Họ và tên', key: 'hoTen', width: 175, fixed: 'left' as const,
-      render: (_: any, r: RowData) => r.hoTen,
+      title: 'Họ và tên', key: 'hoTen', width: 200, fixed: 'left' as const,
+      render: (_: any, r: DisplayRow) =>
+        r._type === 'subtotal'
+          ? <Text strong style={{ color: '#1677ff' }}>Cộng: {r.donViTen} ({r.count} người)</Text>
+          : r.hoTen,
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0
+          : (a as RowData).hoTen.localeCompare((b as RowData).hoTen, 'vi'),
     },
     {
       title: 'Ngày, tháng, năm sinh', key: 'ngaySinh', width: 105, align: 'center' as const,
-      render: (_: any, r: RowData) => r.ngaySinh,
+      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.ngaySinh : '',
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0
+          : ((a as RowData).ngaySinh ?? '').localeCompare((b as RowData).ngaySinh ?? ''),
     },
     {
       title: 'Chức vụ, vị trí đảm nhiệm', key: 'chucVu', width: 165,
-      render: (_: any, r: RowData) => r.chucVuHienThi,
+      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.chucVuHienThi : '',
     },
     {
-      title: 'Mã CDNN', key: 'maCDNN', width: 105, align: 'center' as const,
-      render: (_: any, r: RowData) => r.maCDNN,
+      title: 'Mã CDNN', key: 'maCDNN', width: 110, align: 'center' as const,
+      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.maCDNN : '',
     },
     {
       title: 'Bậc', key: 'bac', width: 55, align: 'center' as const,
-      render: (_: any, r: RowData) => r.bac,
+      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.bac : '',
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0
+          : ((a as RowData).bac as number || 0) - ((b as RowData).bac as number || 0),
     },
     {
       title: 'Hệ số', key: 'heSo', width: 65, align: 'right' as const,
-      render: (_: any, r: RowData) => r.heSo,
+      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.heSo : '',
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0
+          : ((a as RowData).heSo as number || 0) - ((b as RowData).heSo as number || 0),
     },
     {
       title: 'Phụ cấp thâm niên vượt khung',
       children: [
         {
           title: '%', key: 'vkPct', width: 55, align: 'center' as const,
-          render: (_: any, r: RowData) => r.vkPct ? r.vkPct : '',
+          render: (_: any, r: DisplayRow) => r._type === 'data' && r.vkPct ? r.vkPct : '',
         },
         {
           title: 'Hệ số', key: 'vkHeSo', width: 70, align: 'right' as const,
-          render: (_: any, r: RowData) => d3(r.vkHeSo),
+          render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.vkHeSo)}</Text> : d3((r as RowData).vkHeSo),
+          sorter: (a: DisplayRow, b: DisplayRow) =>
+            a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).vkHeSo - (b as RowData).vkHeSo,
         },
       ],
     },
     {
       title: 'Tổng hệ số lương chính', key: 'tongHSLC', width: 90, align: 'right' as const,
-      render: (_: any, r: RowData) => r.tongHSLC ? r.tongHSLC.toFixed(3) : '',
+      render: (_: any, r: DisplayRow) =>
+        r._type === 'subtotal'
+          ? <Text strong>{r.tongHSLC.toFixed(3)}</Text>
+          : (r.tongHSLC ? r.tongHSLC.toFixed(3) : ''),
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).tongHSLC - (b as RowData).tongHSLC,
     },
     {
       title: 'Thời điểm tính nâng bậc lương hoặc phụ cấp TNVK', key: 'thoiDiem', width: 120, align: 'center' as const,
-      render: (_: any, r: RowData) => r.thoiDiem,
+      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.thoiDiem : '',
     },
     {
       title: 'Phụ cấp chức vụ', key: 'pcCV', width: 85, align: 'right' as const,
-      render: (_: any, r: RowData) => d3(r.pcCV),
+      render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcCV)}</Text> : d3((r as RowData).pcCV),
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcCV - (b as RowData).pcCV,
     },
     {
       title: 'Phụ cấp trách nhiệm', key: 'pcTN', width: 95, align: 'right' as const,
-      render: (_: any, r: RowData) => d3(r.pcTN),
+      render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcTN)}</Text> : d3((r as RowData).pcTN),
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcTN - (b as RowData).pcTN,
     },
     {
       title: 'Phụ cấp thâm niên nhà giáo',
       children: [
         {
           title: '%', key: 'pcTNNG_Pct', width: 55, align: 'center' as const,
-          render: (_: any, r: RowData) => r.pcTNNG_Pct ? `${r.pcTNNG_Pct}%` : '',
+          render: (_: any, r: DisplayRow) => r._type === 'data' && r.pcTNNG_Pct ? `${r.pcTNNG_Pct}%` : '',
         },
         {
           title: 'Hệ số', key: 'pcTNNG_HeSo', width: 70, align: 'right' as const,
-          render: (_: any, r: RowData) => d3(r.pcTNNG_HeSo),
+          render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcTNNG_HeSo)}</Text> : d3((r as RowData).pcTNNG_HeSo),
+          sorter: (a: DisplayRow, b: DisplayRow) =>
+            a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcTNNG_HeSo - (b as RowData).pcTNNG_HeSo,
         },
         {
           title: 'Mốc xét nâng PC TNNG', key: 'mocTNNG', width: 100, align: 'center' as const,
-          render: (_: any, r: RowData) => r.mocTNNG,
+          render: (_: any, r: DisplayRow) => r._type === 'data' ? r.mocTNNG : '',
         },
       ],
     },
     {
       title: 'Hệ số chênh lệch bảo lưu', key: 'hsBaoLuu', width: 95, align: 'right' as const,
-      render: (_: any, r: RowData) => d3(r.hsBaoLuu),
+      render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.hsBaoLuu)}</Text> : d3((r as RowData).hsBaoLuu),
     },
     {
       title: 'Phụ cấp ưu đãi', key: 'pcUD', width: 90, align: 'right' as const,
-      render: (_: any, r: RowData) => d3(r.pcUD),
+      render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcUD)}</Text> : d3((r as RowData).pcUD),
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcUD - (b as RowData).pcUD,
     },
     {
       title: 'Tổng hệ số lương 1 tháng', key: 'tong1Thang', width: 100, align: 'right' as const,
-      render: (_: any, r: RowData) => <strong>{r.tong1Thang.toFixed(3)}</strong>,
+      render: (_: any, r: DisplayRow) =>
+        r._type === 'subtotal'
+          ? <Text strong style={{ color: '#1677ff' }}>{r.tong1Thang.toFixed(3)}</Text>
+          : <strong>{(r as RowData).tong1Thang.toFixed(3)}</strong>,
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).tong1Thang - (b as RowData).tong1Thang,
     },
     {
       title: 'Tổng hệ số lương 6 tháng đầu năm', key: 'tong6Thang', width: 120, align: 'right' as const,
-      render: (_: any, r: RowData) => <strong>{r.tong6Thang.toFixed(3)}</strong>,
+      render: (_: any, r: DisplayRow) =>
+        r._type === 'subtotal'
+          ? <Text strong style={{ color: '#1677ff' }}>{r.tong6Thang.toFixed(3)}</Text>
+          : <strong>{(r as RowData).tong6Thang.toFixed(3)}</strong>,
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).tong6Thang - (b as RowData).tong6Thang,
     },
   ]
 
@@ -287,15 +383,13 @@ export default function BangTongHopLuongPage() {
     XLSX.writeFile(wb, `BangTongHopLuong_${donViTen}_${dayjs().format('YYYYMMDD')}.xlsx`)
   }
 
-  const tongTong6Thang = useMemo(() => rows.reduce((s, r) => s + r.tong6Thang, 0), [rows])
-
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>
           Bảng tổng hợp lương{' '}
           <span style={{ fontWeight: 400, fontSize: 14, color: '#666' }}>
-            ({rows.length} người — Tổng HS 6 tháng: <strong>{tongTong6Thang.toFixed(3)}</strong>)
+            ({rows.length} người — Tổng HS 6 tháng: <strong>{grandTotal.tong6Thang.toFixed(3)}</strong>)
           </span>
         </Title>
         <Button icon={<DownloadOutlined />} onClick={handleExport}>Xuất Excel</Button>
@@ -323,14 +417,42 @@ export default function BangTongHopLuongPage() {
       </Space>
 
       <Table
-        dataSource={rows}
+        dataSource={displayRows}
         columns={columns}
         rowKey="key"
         size="small"
         bordered
-        scroll={{ x: 2000 }}
-        pagination={{ pageSize: 50, showSizeChanger: true, showTotal: (t) => `Tổng ${t} viên chức` }}
+        scroll={{ x: 2100, y: 'calc(100vh - 280px)' }}
+        rowClassName={(r: DisplayRow) => r._type === 'subtotal' ? 'subtotal-row' : ''}
+        pagination={{ pageSize: 100, showSizeChanger: true, pageSizeOptions: [50, 100, 200], showTotal: (t) => `Tổng ${rows.length} viên chức` }}
+        summary={() => (
+          <Table.Summary fixed>
+            <Table.Summary.Row style={{ background: '#e6f4ff', fontWeight: 700 }}>
+              <Table.Summary.Cell index={0} colSpan={2} align="center">Tổng cộng</Table.Summary.Cell>
+              <Table.Summary.Cell index={2} align="center">{rows.length} người</Table.Summary.Cell>
+              <Table.Summary.Cell index={3} />
+              <Table.Summary.Cell index={4} />
+              <Table.Summary.Cell index={5} />
+              <Table.Summary.Cell index={6} />
+              <Table.Summary.Cell index={7} />
+              <Table.Summary.Cell index={8} align="right">{d3(grandTotal.vkHeSo)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={9} align="right">{grandTotal.tongHSLC.toFixed(3)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={10} />
+              <Table.Summary.Cell index={11} align="right">{d3(grandTotal.pcCV)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={12} align="right">{d3(grandTotal.pcTN)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={13} />
+              <Table.Summary.Cell index={14} align="right">{d3(grandTotal.pcTNNG_HeSo)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={15} />
+              <Table.Summary.Cell index={16} align="right">{d3(grandTotal.hsBaoLuu)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={17} align="right">{d3(grandTotal.pcUD)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={18} align="right" style={{ color: '#1677ff' }}>{grandTotal.tong1Thang.toFixed(3)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={19} align="right" style={{ color: '#1677ff' }}>{grandTotal.tong6Thang.toFixed(3)}</Table.Summary.Cell>
+            </Table.Summary.Row>
+          </Table.Summary>
+        )}
       />
+
+      <style>{`.subtotal-row td { background: #f0f5ff !important; font-weight: 600; }`}</style>
     </Card>
   )
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Row, Col, Card, Statistic, Table, Tag, Select, Typography, Progress, Space, Badge } from 'antd'
 import { TeamOutlined, FileTextOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList } from 'recharts'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
@@ -201,7 +201,9 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="total" fill="#1677ff" name="Nhân sự" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="total" fill="#1677ff" name="Nhân sự" radius={[3, 3, 0, 0]}>
+                  <LabelList dataKey="total" position="top" style={{ fontSize: 11, fill: '#595959', fontWeight: 600 }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </Card>
@@ -212,13 +214,18 @@ export default function DashboardPage() {
           <Card title="Cơ cấu vị trí việc làm" size="small">
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie data={viTriViecLamData} dataKey="value" nameKey="name" cx="50%" cy="38%" outerRadius={72} innerRadius={30}>
+                <Pie
+                  data={viTriViecLamData} dataKey="value" nameKey="name"
+                  cx="50%" cy="42%" outerRadius={78} innerRadius={28}
+                  label={({ name, value, percent }) => `${value} (${(percent * 100).toFixed(0)}%)`}
+                  labelLine={{ strokeWidth: 1 }}
+                >
                   {viTriViecLamData.map((entry, index) => (
                     <Cell key={index} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(v) => [`${v} người`]} />
-                <Legend wrapperStyle={{ fontSize: 11 }} iconSize={10} />
+                <Legend wrapperStyle={{ fontSize: 10 }} iconSize={9} />
               </PieChart>
             </ResponsiveContainer>
           </Card>

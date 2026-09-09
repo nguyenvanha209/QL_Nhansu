@@ -96,6 +96,24 @@ export default function HuongDanPage() {
     },
   ]
 
+  const buocChuyen = [
+    {
+      so: 1, ai: 'Trường có người chuyển đi', tieuDe: 'Lập đề nghị chuyển',
+      noiDung: <>Chọn viên chức, trường đến, ngày chuyển và lý do (số quyết định điều động). Bấm <b>Lưu &amp; Trình duyệt</b>.</>,
+      chip: <><Tag>Bản nháp</Tag> <Text type="secondary">→</Text> <Tag color="processing">Chờ Quản trị duyệt</Tag></>,
+    },
+    {
+      so: 2, ai: 'Quản trị hệ thống', tieuDe: 'Duyệt và chuyển hồ sơ',
+      noiDung: <>Quản trị duyệt phiếu. Hệ thống <b>tự chuyển toàn bộ hồ sơ</b> sang trường đến, đặt trạng thái <i>Chuyển đến</i> và ghi một dòng vào Lịch sử biến động.</>,
+      chip: <Tag color="warning">Chờ trường đến tiếp nhận</Tag>,
+    },
+    {
+      so: 3, ai: 'Trường tiếp nhận', tieuDe: 'Phân công và ghi ngày về đơn vị', cuoi: true,
+      noiDung: <>Trường đến bấm <b>Tiếp nhận</b>, chọn vị trí việc làm, chức vụ và <b>thời điểm về đơn vị</b>. Hồ sơ trở lại trạng thái <i>Đang làm việc</i>.</>,
+      chip: <Tag color="success">Đã hoàn tất</Tag>,
+    },
+  ]
+
   return (
     <Card className="hd-root">
       <div className="hd-toolbar">
@@ -113,7 +131,7 @@ export default function HuongDanPage() {
         showIcon
         style={{ marginBottom: 28 }}
         title="Dữ liệu viên chức đã được nhập sẵn từ bảng lương tháng 6/2026"
-        description="Ba việc chính: (1) rà soát, hoàn thiện hồ sơ viên chức; (2) không tự sửa hệ số lương và phụ cấp; (3) mọi điều chỉnh lương đi qua phiếu đề xuất — được phê duyệt là hệ thống tự ghi vào hồ sơ."
+        description="Bốn việc chính: (1) rà soát, hoàn thiện hồ sơ viên chức; (2) không tự sửa hệ số lương và phụ cấp; (3) mọi điều chỉnh lương đi qua phiếu đề xuất — được phê duyệt là hệ thống tự ghi vào hồ sơ; (4) viên chức chuyển trường đi qua phiếu chuyển công tác, hồ sơ tự sang trường mới."
       />
 
       {/* ── I ── */}
@@ -160,6 +178,35 @@ export default function HuongDanPage() {
         </ol>
         <Paragraph>
           Có thể bấm vào tiêu đề bất kỳ cột nào để sắp xếp danh sách — ví dụ sắp theo <b>Ngày sinh</b> để tìm nhanh những hồ sơ chưa có ngày sinh.
+        </Paragraph>
+
+        <h3>Hai quy ước áp dụng cho mọi danh sách</h3>
+        <div className="hd-tw">
+          <table className="hd-table">
+            <thead><tr><th style={{ width: 190 }}>Quy ước</th><th>Hệ thống thực hiện</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>Họ tên luôn IN HOA</b></td>
+                <td>
+                  Gõ thường hay gõ hoa đều được — hệ thống tự chuyển sang IN HOA khi lưu và khi
+                  hiển thị. Toàn bộ hồ sơ đã nhập trước đây cũng đã được chuẩn hoá.
+                  Kế toán <b>không phải tự gõ hoa</b>.
+                </td>
+              </tr>
+              <tr>
+                <td><b>Thứ tự: CBQL – Giáo viên – Nhân viên</b></td>
+                <td>
+                  Mọi danh sách viên chức đều xếp cán bộ quản lý trước, rồi giáo viên, cuối cùng
+                  nhân viên. Trong từng nhóm xếp theo chức vụ (Hiệu trưởng, Phó Hiệu trưởng,
+                  Tổ trưởng, Tổ phó) rồi đến tên A→Z — đúng thứ tự bảng lương quen dùng.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <Paragraph type="secondary" style={{ fontSize: 13.5 }}>
+          Vì thứ tự này lấy theo <b>Vị trí việc làm</b> và <b>Chức vụ</b> trong hồ sơ, hai mục đó khai
+          sai sẽ khiến người đó đứng nhầm nhóm. Đây là lý do cần rà kỹ hai trường này.
         </Paragraph>
 
         <h3>Các nhóm thông tin trong hồ sơ</h3>
@@ -405,7 +452,58 @@ export default function HuongDanPage() {
       </Section>
 
       {/* ── VI ── */}
-      <Section so="VI" tieuDe="Theo dõi và tra cứu">
+      <Section
+        so="VI"
+        tieuDe="Chuyển công tác viên chức"
+        moTa="Dùng khi có viên chức chuyển sang trường khác trong phường. Trường có người chuyển đi lập đề nghị, Quản trị duyệt, hồ sơ tự sang trường mới; trường tiếp nhận chỉ việc phân công vị trí."
+      >
+        <div className="hd-flow">
+          {buocChuyen.map((b) => (
+            <div key={b.so} className={b.cuoi ? 'hd-step hd-step-final' : 'hd-step'}>
+              <div className="hd-dot">{b.so}</div>
+              <span className="hd-who">{b.ai}</span>
+              <h4>{b.tieuDe}</h4>
+              <p>{b.noiDung}</p>
+              <p><Text type="secondary" style={{ fontSize: 13, marginRight: 6 }}>Trạng thái:</Text>{b.chip}</p>
+            </div>
+          ))}
+        </div>
+
+        <KhungLuuY nhan="Lương giữ nguyên khi chuyển" ok>
+          <p>
+            Ngạch, bậc, hệ số lương, mốc hưởng lương và toàn bộ khoản phụ cấp <b>đi theo người</b>,
+            không phải khai lại. Trường tiếp nhận chỉ điền bốn mục: vị trí việc làm, chức vụ,
+            vị trí cụ thể tại trường và thời điểm về đơn vị.
+          </p>
+        </KhungLuuY>
+
+        <h3>Trường có người chuyển đi cần biết</h3>
+        <ul>
+          <li>Vào menu <b>Chuyển công tác</b> → <b>Đề nghị chuyển đi</b>. Danh sách chỉ hiện viên chức của trường mình.</li>
+          <li>Một người đang có phiếu chuyển dở dang sẽ không hiện lại trong danh sách, tránh lập trùng phiếu.</li>
+          <li><b>Không xoá hồ sơ</b> người chuyển đi. Khi Quản trị duyệt, hồ sơ tự rời khỏi danh sách của trường.</li>
+          <li>Phiếu ở trạng thái <Tag>Bản nháp</Tag> có thể sửa hoặc xoá; đã trình thì phải chờ Quản trị xử lý.</li>
+        </ul>
+
+        <h3>Trường tiếp nhận cần biết</h3>
+        <ul>
+          <li>Khi Quản trị duyệt xong, phiếu hiện ở menu <b>Chuyển công tác</b> với nhãn <Tag color="warning">Chờ trường đến tiếp nhận</Tag> kèm số đếm trên tiêu đề trang.</li>
+          <li>Hồ sơ đã nằm trong danh sách viên chức của trường, trạng thái <i>Chuyển đến</i>.</li>
+          <li>Bấm <b>Tiếp nhận</b> và điền phân công. <b>Thời điểm về đơn vị</b> được ghi vào hồ sơ làm mốc công tác tại trường.</li>
+          <li>Vị trí việc làm cũ đã được gỡ vì thuộc trường cũ — cần chọn lại từ danh mục vị trí của trường mình.</li>
+        </ul>
+
+        <KhungLuuY nhan="Chưa tiếp nhận thì hồ sơ chưa hoàn chỉnh">
+          <p>
+            Người mới chuyển đến vẫn ở trạng thái <i>Chuyển đến</i> cho tới khi trường bấm Tiếp nhận.
+            Trong thời gian đó, hồ sơ chưa có vị trí việc làm nên có thể đứng sai nhóm trong danh sách
+            và trong bảng tổng hợp lương. Nên tiếp nhận ngay khi người đó đến nhận nhiệm vụ.
+          </p>
+        </KhungLuuY>
+      </Section>
+
+      {/* ── VII ── */}
+      <Section so="VII" tieuDe="Theo dõi và tra cứu">
         <div className="hd-tw">
           <table className="hd-table">
             <thead><tr><th style={{ width: 250 }}>Menu</th><th>Dùng để làm gì</th></tr></thead>
@@ -414,6 +512,7 @@ export default function HuongDanPage() {
               <tr><td><b>Hồ sơ viên chức</b></td><td>Danh sách và chi tiết từng người, kèm lịch sử biến động lương – phụ cấp. Xuất được ra Excel.</td></tr>
               <tr><td><b>Bảng tổng hợp lương</b></td><td>Bảng lương theo mẫu quen thuộc, có dòng cộng của từng trường và dòng tổng cuối bảng. Bấm <b>Xuất Excel</b> để lấy file đối chiếu.</td></tr>
               <tr><td><b>Đề xuất điều chỉnh HSL – PCTN</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
+              <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
               <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu để chủ động bố trí nhân sự.</td></tr>
               <tr><td><b>Báo cáo</b></td><td>Các biểu tổng hợp phục vụ báo cáo cấp trên.</td></tr>
             </tbody>
@@ -425,8 +524,8 @@ export default function HuongDanPage() {
         </Paragraph>
       </Section>
 
-      {/* ── VII ── */}
-      <Section so="VII" tieuDe="Câu hỏi thường gặp">
+      {/* ── VIII ── */}
+      <Section so="VIII" tieuDe="Câu hỏi thường gặp">
         <Collapse
           ghost
           className="hd-faq"
@@ -436,8 +535,21 @@ export default function HuongDanPage() {
               children: <p>Không sửa trực tiếp. Lập phiếu đề xuất loại <b>Điều chỉnh lương</b>, ghi rõ trong phần Ghi chú số liệu đúng và căn cứ kèm theo. Nếu sai lệch xảy ra ở nhiều hồ sơ, liên hệ trực tiếp số hỗ trợ để rà soát lại dữ liệu gốc.</p>,
             },
             {
-              key: '2', label: 'Trường có viên chức mới chuyển đến giữa năm, thêm vào bằng cách nào?',
-              children: <p>Vào <b>Hồ sơ viên chức</b> → <b>Thêm viên chức</b>, khai đầy đủ thông tin kèm bậc và hệ số lương đang hưởng theo quyết định điều động. Đặt <b>Trạng thái công tác</b> là <i>Chuyển đến</i>. Hồ sơ mới không cần qua phiếu đề xuất.</p>,
+              key: '2', label: 'Trường có viên chức mới chuyển đến, thêm vào bằng cách nào?',
+              children: (
+                <>
+                  <p><b>Nếu chuyển từ một trường khác trong phường:</b> không tự khai lại. Trường có người chuyển đi lập phiếu ở menu <b>Chuyển công tác</b>; sau khi Quản trị duyệt, hồ sơ tự sang trường mình kèm nguyên ngạch, bậc, hệ số và phụ cấp. Việc của trường tiếp nhận chỉ là bấm <b>Tiếp nhận</b> và phân công vị trí.</p>
+                  <p><b>Nếu chuyển từ ngoài phường hoặc tuyển mới:</b> vào <b>Hồ sơ viên chức</b> → <b>Thêm viên chức</b>, khai đầy đủ kèm bậc và hệ số lương đang hưởng theo quyết định. Đặt <b>Trạng thái công tác</b> là <i>Chuyển đến</i>.</p>
+                </>
+              ),
+            },
+            {
+              key: '2b', label: 'Vì sao tên viên chức hiển thị IN HOA, gõ chữ thường có sao không?',
+              children: <p>Đây là quy định thống nhất toàn hệ thống để tên trong hồ sơ, bảng lương và các báo cáo luôn giống nhau. Kế toán gõ thường hay gõ hoa đều được — hệ thống tự chuyển khi lưu.</p>,
+            },
+            {
+              key: '2c', label: 'Vì sao danh sách không xếp theo thứ tự A→Z?',
+              children: <p>Danh sách xếp theo thứ tự nghiệp vụ: cán bộ quản lý trước, rồi giáo viên, cuối cùng nhân viên; trong mỗi nhóm mới xếp theo chức vụ rồi đến tên A→Z. Thứ tự này khớp với bảng lương quen dùng. Nếu muốn xem theo cách khác, bấm vào tiêu đề cột bất kỳ để sắp xếp lại.</p>,
             },
             {
               key: '3', label: 'Đã trình phiếu nhưng phát hiện nhầm số liệu?',

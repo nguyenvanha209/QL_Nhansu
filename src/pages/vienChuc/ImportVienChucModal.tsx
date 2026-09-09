@@ -513,7 +513,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             const heSoMoi = num(row[COL.HE_SO])
             checkLuong('Hệ số lương', 'heSo', cur.heSo, heSoMoi, () => { patchHeSo.heSo = heSoMoi })
 
-            const asDate = (v: string | undefined) => formatDate(String(v ?? '')) || '(trống)'
+            const asDate = (v: unknown) => formatDate(String(v ?? '')) || '(trống)'
 
             const rMoc = readDate(row[COL.MOC_LUONG])
             if (!rMoc.ok) warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): "${COL.MOC_LUONG}" sai định dạng ngày`)

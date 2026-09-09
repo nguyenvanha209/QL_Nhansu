@@ -22,6 +22,7 @@ import UserManagePage from '@/pages/admin/UserManagePage'
 import AuditLogPage from '@/pages/admin/AuditLogPage'
 import AccountSettingsPage from '@/pages/account/AccountSettingsPage'
 import HuongDanPage from '@/pages/HuongDanPage'
+import ChuyenCongTacPage from '@/pages/chuyenCongTac/ChuyenCongTacPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth()
@@ -45,6 +46,7 @@ export default function AppRouter() {
           <Route path="vi-tri" element={<ViTriPage />} />
           <Route path="luong/he-so" element={<HeSoLuongPage />} />
           <Route path="luong/phu-cap" element={<PhuCapPage />} />
+          <Route path="chuyen-cong-tac" element={<ChuyenCongTacPage />} />
           <Route path="de-xuat" element={<DeXuatListPage />} />
           <Route path="de-xuat/new" element={<TaoDeXuatPage />} />
           <Route path="de-xuat/:id" element={<DeXuatDetailPage />} />

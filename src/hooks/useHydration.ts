@@ -5,6 +5,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
+import { useChuyenCongTacStore } from '@/store/chuyenCongTacStore'
 
 const stores = [
   useAuthStore,
@@ -13,6 +14,7 @@ const stores = [
   useVienChucStore,
   useLuongStore,
   useDeXuatStore,
+  useChuyenCongTacStore,
 ] as const
 
 export function useHydration() {

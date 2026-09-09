@@ -1,18 +1,19 @@
 import { supabase } from './supabase'
-import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
+import { useChuyenCongTacStore } from '@/store/chuyenCongTacStore'
 
+// Không đồng bộ useAuthStore: phiên đăng nhập là của riêng từng máy.
 const STORES = [
-  useAuthStore,
   useUserStore,
   useDanhMucStore,
   useVienChucStore,
   useLuongStore,
   useDeXuatStore,
+  useChuyenCongTacStore,
 ]
 
 export type SyncResult =
@@ -36,8 +37,12 @@ export async function syncFromSupabase(): Promise<SyncResult> {
     }
     if (!data || data.length === 0) return 'empty'
 
-    // Ghi dữ liệu Supabase vào localStorage để rehydrate() đọc lại
+    // Ghi dữ liệu Supabase vào localStorage để rehydrate() đọc lại.
+    // Bỏ qua ql-auth: phiên đăng nhập là của riêng từng máy, kéo về sẽ biến
+    // người dùng này thành người dùng khác. Bản ghi cũ trên máy chủ (nếu còn)
+    // cũng không được phép ghi đè phiên tại chỗ.
     for (const row of data) {
+      if (row.key === 'ql-auth') continue
       localStorage.setItem(row.key, JSON.stringify(row.value))
     }
 

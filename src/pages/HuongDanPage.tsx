@@ -112,7 +112,7 @@ export default function HuongDanPage() {
         type="info"
         showIcon
         style={{ marginBottom: 28 }}
-        message="Dữ liệu viên chức đã được nhập sẵn từ bảng lương tháng 6/2026"
+        title="Dữ liệu viên chức đã được nhập sẵn từ bảng lương tháng 6/2026"
         description="Ba việc chính: (1) rà soát, hoàn thiện hồ sơ viên chức; (2) không tự sửa hệ số lương và phụ cấp; (3) mọi điều chỉnh lương đi qua phiếu đề xuất — được phê duyệt là hệ thống tự ghi vào hồ sơ."
       />
 

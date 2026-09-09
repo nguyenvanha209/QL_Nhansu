@@ -1,7 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { User } from '@/types/auth'
-import { persistStorage } from '@/lib/supabase'
 
 interface AuthState {
   currentUser: User | null
@@ -9,6 +8,10 @@ interface AuthState {
   logout: () => void
 }
 
+// Phiên đăng nhập chỉ được lưu trên máy người dùng.
+// Trước đây store này dùng persistStorage() (localStorage + Supabase), khiến người
+// đăng nhập sau ghi đè phiên của tất cả các trường khác — mọi máy cùng đọc một
+// bản ghi ql-auth nên bị "hoá thân" thành nhau, kèm theo mật khẩu lộ trong DB.
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -16,6 +19,6 @@ export const useAuthStore = create<AuthState>()(
       login: (user) => set({ currentUser: user }),
       logout: () => set({ currentUser: null }),
     }),
-    { name: 'ql-auth', storage: persistStorage() }
+    { name: 'ql-auth', storage: createJSONStorage(() => localStorage) }
   )
 )

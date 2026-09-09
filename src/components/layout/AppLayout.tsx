@@ -7,7 +7,7 @@ import {
   DashboardOutlined, TeamOutlined, FileTextOutlined, DollarOutlined,
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
-  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined,
+  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
@@ -39,6 +39,7 @@ export default function AppLayout() {
       title: 'Đề xuất điều chỉnh Hệ số lương - PCTN',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
+    hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
     hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },
     isAdmin && {

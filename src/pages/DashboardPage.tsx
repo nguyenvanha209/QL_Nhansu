@@ -217,7 +217,7 @@ export default function DashboardPage() {
                     <Cell key={index} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => [`${v} người`]} />
+                <Tooltip formatter={(v) => [`${v} người`]} />
                 <Legend wrapperStyle={{ fontSize: 11 }} iconSize={10} />
               </PieChart>
             </ResponsiveContainer>

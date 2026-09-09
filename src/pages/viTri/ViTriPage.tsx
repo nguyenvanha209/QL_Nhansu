@@ -62,12 +62,12 @@ export default function ViTriPage() {
       const positionRows = vtsQuanLyChuyenMon.map((vt, idx) => {
         let matched: typeof vcInDv
         if (vt.ten === 'Hiệu trưởng') {
-          matched = vcInDv.filter((vc) => vc.chucVu === 'HIEU_TRUONG')
+          matched = vcInDv.filter((vc) => vc.chucVu === 'HT')
         } else if (vt.ten === 'Phó Hiệu trưởng') {
-          matched = vcInDv.filter((vc) => vc.chucVu === 'PHO_HIEU_TRUONG')
+          matched = vcInDv.filter((vc) => vc.chucVu === 'P.HT')
         } else if (vt.loai === 'CHUYEN_MON') {
           matched = vcInDv.filter((vc) =>
-            gvChucDanhIds.includes(vc.chucDanhId) && vc.chucVu !== 'HIEU_TRUONG' && vc.chucVu !== 'PHO_HIEU_TRUONG'
+            gvChucDanhIds.includes(vc.chucDanhId) && vc.chucVu !== 'HT' && vc.chucVu !== 'P.HT'
           )
         } else {
           matched = vcInDv.filter((vc) => vt.chucDanhIds.includes(vc.chucDanhId))

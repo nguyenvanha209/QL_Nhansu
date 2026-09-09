@@ -21,21 +21,21 @@ export const HANG_TRUONG_LABELS: Record<HangTruong, string> = {
 
 // Hệ số phụ cấp chức vụ theo TT 33/2005/TT-BGDĐT
 // Đơn vị: hệ số × mức lương cơ sở
-const PCCV: Record<string, Record<HangTruong, Record<ChucVu, number>>> = {
+const PCCV: Record<string, Record<HangTruong, Record<string, number>>> = {
   MAM_NON: {
-    1: { HIEU_TRUONG: 0.50, PHO_HIEU_TRUONG: 0.35, TO_TRUONG_CM: 0.20, TO_PHO_CM: 0.15 },
-    2: { HIEU_TRUONG: 0.35, PHO_HIEU_TRUONG: 0.25, TO_TRUONG_CM: 0.20, TO_PHO_CM: 0.15 },
-    3: { HIEU_TRUONG: 0.25, PHO_HIEU_TRUONG: 0.15, TO_TRUONG_CM: 0.20, TO_PHO_CM: 0.15 },
+    1: { HT: 0.50, 'P.HT': 0.35, TTCM: 0.20, TPCM: 0.15 },
+    2: { HT: 0.35, 'P.HT': 0.25, TTCM: 0.20, TPCM: 0.15 },
+    3: { HT: 0.25, 'P.HT': 0.15, TTCM: 0.20, TPCM: 0.15 },
   },
   TIEU_HOC: {
-    1: { HIEU_TRUONG: 0.50, PHO_HIEU_TRUONG: 0.35, TO_TRUONG_CM: 0.20, TO_PHO_CM: 0.15 },
-    2: { HIEU_TRUONG: 0.40, PHO_HIEU_TRUONG: 0.25, TO_TRUONG_CM: 0.20, TO_PHO_CM: 0.15 },
-    3: { HIEU_TRUONG: 0.30, PHO_HIEU_TRUONG: 0.20, TO_TRUONG_CM: 0.20, TO_PHO_CM: 0.15 },
+    1: { HT: 0.50, 'P.HT': 0.35, TTCM: 0.20, TPCM: 0.15 },
+    2: { HT: 0.40, 'P.HT': 0.25, TTCM: 0.20, TPCM: 0.15 },
+    3: { HT: 0.30, 'P.HT': 0.20, TTCM: 0.20, TPCM: 0.15 },
   },
   THCS: {
-    1: { HIEU_TRUONG: 0.55, PHO_HIEU_TRUONG: 0.40, TO_TRUONG_CM: 0.25, TO_PHO_CM: 0.20 },
-    2: { HIEU_TRUONG: 0.45, PHO_HIEU_TRUONG: 0.30, TO_TRUONG_CM: 0.20, TO_PHO_CM: 0.15 },
-    3: { HIEU_TRUONG: 0.35, PHO_HIEU_TRUONG: 0.25, TO_TRUONG_CM: 0.20, TO_PHO_CM: 0.15 },
+    1: { HT: 0.55, 'P.HT': 0.40, TTCM: 0.25, TPCM: 0.20 },
+    2: { HT: 0.45, 'P.HT': 0.30, TTCM: 0.20, TPCM: 0.15 },
+    3: { HT: 0.35, 'P.HT': 0.25, TTCM: 0.20, TPCM: 0.15 },
   },
 }
 

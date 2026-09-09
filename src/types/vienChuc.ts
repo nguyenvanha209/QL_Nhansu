@@ -9,7 +9,7 @@ export type LoaiLaoDong =
   | 'KHAC'
 
 // 4 mã chuẩn dùng để tính phụ cấp chức vụ (TT 33/2005); admin có thể thêm mã khác trong danh mục
-export type ChucVu = 'HIEU_TRUONG' | 'PHO_HIEU_TRUONG' | 'TO_TRUONG_CM' | 'TO_PHO_CM' | (string & {})
+export type ChucVu = 'HT' | 'P.HT' | 'TTCM' | 'TPCM' | (string & {})
 
 // 3 nhóm chuẩn; admin có thể thêm nhóm khác trong danh mục
 export type VTVL = 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN' | (string & {})
@@ -66,11 +66,11 @@ export const LOAI_LAO_DONG_LABELS: Record<LoaiLaoDong, string> = {
   KHAC: 'Loại khác',
 }
 
-export const CHUC_VU_LABELS: Record<ChucVu, string> = {
-  HIEU_TRUONG: 'Hiệu trưởng',
-  PHO_HIEU_TRUONG: 'Phó Hiệu trưởng',
-  TO_TRUONG_CM: 'Tổ trưởng chuyên môn',
-  TO_PHO_CM: 'Tổ phó chuyên môn',
+export const CHUC_VU_LABELS: Record<string, string> = {
+  HT: 'Hiệu trưởng',
+  'P.HT': 'Phó Hiệu trưởng',
+  TTCM: 'Tổ trưởng',
+  TPCM: 'Tổ phó',
 }
 
 export const IS_BIEN_CHE: Record<LoaiLaoDong, boolean> = {

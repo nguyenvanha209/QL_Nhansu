@@ -270,14 +270,14 @@ function ChucVuTab() {
       <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
         <Descriptions.Item label="Căn cứ">
           Chức vụ quản lý trường học theo TT 19/2023/TT-BGDĐT (mầm non) và TT 20/2023/TT-BGDĐT (phổ thông). Hệ số phụ cấp chức vụ theo hạng trường
-          (TT 33/2005/TT-BGDĐT) chỉ tự động tính cho 4 mã chuẩn: HIEU_TRUONG, PHO_HIEU_TRUONG, TO_TRUONG_CM, TO_PHO_CM.
+          (TT 33/2005/TT-BGDĐT) chỉ tự động tính cho 4 mã chuẩn: HT, P.HT, TTCM, TPCM.
         </Descriptions.Item>
       </Descriptions>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức vụ</Button>
       <Table dataSource={chucVus.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} scroll={{ x: 800 }} />
       <Modal open={open} title={editing ? 'Sửa chức vụ' : 'Thêm chức vụ'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
-          <Form.Item name="ma" label="Mã" rules={[{ required: true }]} tooltip="Dùng 4 mã chuẩn để hệ thống tự tính phụ cấp chức vụ: HIEU_TRUONG, PHO_HIEU_TRUONG, TO_TRUONG_CM, TO_PHO_CM">
+          <Form.Item name="ma" label="Mã" rules={[{ required: true }]} tooltip="Dùng 4 mã chuẩn để hệ thống tự tính phụ cấp chức vụ: HT, P.HT, TTCM, TPCM">
             <Input placeholder="VD: TO_TRUONG_VP" />
           </Form.Item>
           <Form.Item name="ten" label="Tên chức vụ" rules={[{ required: true }]}><Input placeholder="VD: Tổ trưởng văn phòng" /></Form.Item>

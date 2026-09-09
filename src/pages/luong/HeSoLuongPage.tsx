@@ -7,7 +7,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { getDaysUntilReview, getReviewUrgencyColor } from '@/utils/calculations'
-import { matchSearch, formatDate } from '@/utils/helpers'
+import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
 import { LY_DO_LABELS } from '@/types/luong'
 
 const { Title, Text } = Typography
@@ -33,7 +33,11 @@ export default function HeSoLuongPage() {
         const dv = donVis.find((d) => d.id === vc?.donViId)
         const cd = chucDanhs.find((c) => c.id === h.chucDanhId)
         const days = getDaysUntilReview(h.ngayNangLuongTiepTheo)
-        return { ...h, hoTen: vc ? `${vc.ho} ${vc.ten}` : '', donViId: vc?.donViId ?? '', donViTen: dv?.ten ?? '', chucDanhTen: cd?.ten ?? '', days }
+        return {
+          ...h, hoTen: vc ? `${vc.ho} ${vc.ten}` : '', donViId: vc?.donViId ?? '',
+          donViTen: dv?.ten ?? '', chucDanhTen: cd?.ten ?? '', days,
+          ho: vc?.ho ?? '', ten: vc?.ten ?? '', vtvl: vc?.vtvl, chucVu: vc?.chucVu, nhom: cd?.nhom,
+        }
       })
       .filter((r) => {
         if (scopeDonViId && r.donViId !== scopeDonViId) return false
@@ -41,6 +45,7 @@ export default function HeSoLuongPage() {
         if (search) return matchSearch(r.hoTen, search)
         return true
       })
+      .sort(soSanhVienChuc((r) => r.nhom))
   }, [heSoLuongs, vienChucs, donVis, chucDanhs, filterDonVi, search, scopeDonViId])
 
   const columns = [
@@ -73,7 +78,6 @@ export default function HeSoLuongPage() {
         </Tooltip>
       ),
       sorter: (a: any, b: any) => a.days - b.days,
-      defaultSortOrder: 'ascend' as const,
     },
     { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', render: (v: string) => LY_DO_LABELS[v as keyof typeof LY_DO_LABELS] ?? v },
   ]

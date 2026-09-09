@@ -6,6 +6,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useUserStore } from '@/store/userStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { getHangTruong, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
+import { toUpperName } from '@/utils/helpers'
 import type { ChucVu, VTVL } from '@/types/vienChuc'
 import { IS_BIEN_CHE } from '@/types/vienChuc'
 
@@ -89,9 +90,23 @@ function migrateChiTieuToDonVi() {
   )
 }
 
+// Quy định: họ tên viên chức, người lao động luôn IN HOA. Chuẩn hoá một lần cho
+// dữ liệu đã nhập trước khi có quy định này; các bản ghi mới đã được store lo.
+function migrateHoTenInHoa() {
+  const vcState = useVienChucStore.getState()
+  const canSua = vcState.vienChucs.some(
+    (v) => v.ho !== toUpperName(v.ho) || v.ten !== toUpperName(v.ten),
+  )
+  if (!canSua) return
+  vcState.setVienChucs(
+    vcState.vienChucs.map((v) => ({ ...v, ho: toUpperName(v.ho), ten: toUpperName(v.ten) })),
+  )
+}
+
 export function initSeedData() {
   ensureRequiredPhuCaps()
   ensureVtvlVaChucVu()
+  migrateHoTenInHoa()
   migratePhuCapChucVuFormula()
   migrateChiTieuToDonVi()
 

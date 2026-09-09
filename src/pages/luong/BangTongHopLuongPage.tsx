@@ -8,7 +8,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import { CHUC_VU_LABELS } from '@/types/vienChuc'
-import { formatDate, matchSearch } from '@/utils/helpers'
+import { formatDate, matchSearch, soSanhVienChuc } from '@/utils/helpers'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { LoaiPhuCap, ChucDanhNgheNghiep } from '@/types/danhMuc'
 import type { VienChuc } from '@/types/vienChuc'
@@ -171,6 +171,8 @@ export default function BangTongHopLuongPage() {
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
     if (search) list = list.filter((v) => matchSearch(`${v.ho} ${v.ten}`, search))
     const dvMap = new Map(donVis.map((d) => [d.id, d]))
+    // Trong mỗi trường, xếp theo thứ tự chuẩn: CBQL → Giáo viên → Nhân viên
+    const theoVtvl = soSanhVienChuc<VienChuc>((v) => chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom)
     list = [...list].sort((a, b) => {
       const da = dvMap.get(a.donViId)
       const db = dvMap.get(b.donViId)
@@ -179,7 +181,7 @@ export default function BangTongHopLuongPage() {
       if (oa !== ob) return oa - ob
       const tenCmp = (da?.ten ?? '').localeCompare(db?.ten ?? '', 'vi')
       if (tenCmp !== 0) return tenCmp
-      return `${a.ho} ${a.ten}`.localeCompare(`${b.ho} ${b.ten}`, 'vi')
+      return theoVtvl(a, b)
     })
     return list.map((vc, i) => buildRow(i + 1, vc, heSos, phuCaps, loaiPhuCaps, chucDanhs))
   }, [allVC, donVis, scopeDonViId, filterDonVi, search, heSos, phuCaps, loaiPhuCaps, chucDanhs])

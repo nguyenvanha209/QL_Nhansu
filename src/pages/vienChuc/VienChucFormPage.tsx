@@ -15,7 +15,7 @@ import { chucDanhHopLeVoiVtvl } from '@/utils/vtvlRules'
 import type { ChucVu, LoaiLaoDong } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import type { LoaiDonVi } from '@/types/donVi'
-import { splitHoTen } from '@/utils/helpers'
+import { splitHoTen, toUpperName } from '@/utils/helpers'
 
 const { Title, Text } = Typography
 
@@ -154,7 +154,7 @@ export default function VienChucFormPage() {
 
   const onFinish = (values: any) => {
     const { hoTenFull, mocHuongLuong, ...restValues } = values
-    const { ho, ten } = splitHoTen(hoTenFull)
+    const { ho, ten } = splitHoTen(toUpperName(hoTenFull))
     const formatted = {
       ...restValues,
       ho,
@@ -282,8 +282,14 @@ export default function VienChucFormPage() {
         <Divider titlePlacement="left">Thông tin cá nhân</Divider>
         <Row gutter={16}>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="hoTenFull" label="Họ và tên" rules={[{ required: true, message: 'Nhập họ và tên' }]}>
-              <Input placeholder="VD: Nguyễn Thị Hoa" />
+            <Form.Item
+              name="hoTenFull"
+              label="Họ và tên"
+              rules={[{ required: true, message: 'Nhập họ và tên' }]}
+              getValueFromEvent={(e) => e.target.value.toLocaleUpperCase('vi')}
+              extra="Họ tên luôn được lưu IN HOA"
+            >
+              <Input placeholder="VD: NGUYỄN THỊ HOA" style={{ textTransform: 'uppercase' }} />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>

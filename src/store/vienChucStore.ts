@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import type { VienChuc } from '@/types/vienChuc'
 import { isDangCongTac } from '@/types/vienChuc'
 import { logAction } from '@/utils/auditLogger'
+import { toUpperName } from '@/utils/helpers'
 import { persistStorage } from '@/lib/supabase'
 
 interface VienChucState {
@@ -22,6 +23,15 @@ const now = () => new Date().toISOString()
 let _counter = 1
 const genMa = () => `VC${String(Date.now()).slice(-6)}${String(_counter++).padStart(3, '0')}`
 
+/** Quy định: họ tên viên chức, người lao động luôn lưu IN HOA. Chuẩn hoá tại store
+ *  để mọi đường ghi (biểu mẫu, nhập Excel, chuyển công tác) đều đi qua một chỗ. */
+function chuanHoaHoTen<T extends { ho?: string; ten?: string }>(d: T): T {
+  const out = { ...d }
+  if (out.ho !== undefined) out.ho = toUpperName(out.ho)
+  if (out.ten !== undefined) out.ten = toUpperName(out.ten)
+  return out
+}
+
 export const useVienChucStore = create<VienChucState>()(
   persist(
     (set, get) => ({
@@ -30,7 +40,7 @@ export const useVienChucStore = create<VienChucState>()(
 
       addVienChuc: (data, actorId = 'system', actorName = 'Hệ thống') => {
         const vc: VienChuc = {
-          ...data,
+          ...chuanHoaHoTen(data),
           id: nanoid(),
           ma: genMa(),
           createdAt: now(),
@@ -42,8 +52,9 @@ export const useVienChucStore = create<VienChucState>()(
       },
 
       updateVienChuc: (id, patch, actorId = 'system', actorName = 'Hệ thống') => {
+        const p = chuanHoaHoTen(patch)
         set((s) => ({
-          vienChucs: s.vienChucs.map((v) => (v.id === id ? { ...v, ...patch, updatedAt: now() } : v)),
+          vienChucs: s.vienChucs.map((v) => (v.id === id ? { ...v, ...p, updatedAt: now() } : v)),
         }))
         logAction(actorId, actorName, 'UPDATE', 'VienChuc', id, `Cập nhật viên chức ${id}`)
       },

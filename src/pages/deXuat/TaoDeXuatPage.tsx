@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth'
 import type { ChiTietDeXuat, LoaiDeXuat } from '@/types/deXuat'
 import { LOAI_DE_XUAT_LABELS } from '@/types/deXuat'
 import { isDangCongTac, coPhuCapThamNien } from '@/types/vienChuc'
+import { soSanhVienChuc } from '@/utils/helpers'
 
 const { Title } = Typography
 
@@ -43,6 +44,7 @@ export default function TaoDeXuatPage() {
   const vcOptions = vienChucs
     .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
     .filter((v) => !laPctn || duocHuongPctn(v))
+    .sort(soSanhVienChuc((v) => chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom))
     .map((v) => ({ value: v.id, label: `${v.ho} ${v.ten}` }))
 
   const addVC = (vcId: string | undefined, ngayHieuLucOverride?: string) => {

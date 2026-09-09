@@ -5,7 +5,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { matchSearch, formatDate } from '@/utils/helpers'
+import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
 
 const { Title } = Typography
 
@@ -28,7 +28,11 @@ export default function PhuCapPage() {
         const dv = donVis.find((d) => d.id === vc?.donViId)
         const lpc = loaiPhuCaps.find((l) => l.id === p.loaiPhuCapId)
         const giaTri = p.giaTri > 0 ? p.giaTri : (lpc?.giaTri ?? 0)
-        return { ...p, giaTri, hoTen: vc ? `${vc.ho} ${vc.ten}` : '', donViId: vc?.donViId ?? '', donViTen: dv?.ten ?? '', loaiPhuCapTen: lpc?.ten ?? '', loaiCongThuc: lpc?.loaiCongThuc }
+        return {
+          ...p, giaTri, hoTen: vc ? `${vc.ho} ${vc.ten}` : '', donViId: vc?.donViId ?? '',
+          donViTen: dv?.ten ?? '', loaiPhuCapTen: lpc?.ten ?? '', loaiCongThuc: lpc?.loaiCongThuc,
+          ho: vc?.ho ?? '', ten: vc?.ten ?? '', vtvl: vc?.vtvl, chucVu: vc?.chucVu,
+        }
       })
       .filter((r) => {
         if (scopeDonViId && r.donViId !== scopeDonViId) return false
@@ -36,6 +40,7 @@ export default function PhuCapPage() {
         if (search) return matchSearch(r.hoTen, search)
         return true
       })
+      .sort(soSanhVienChuc())
   }, [phuCapVienChucs, vienChucs, donVis, loaiPhuCaps, filterDonVi, search, scopeDonViId])
 
   const columns = [

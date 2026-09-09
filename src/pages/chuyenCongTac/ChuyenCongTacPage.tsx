@@ -10,7 +10,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useUserStore } from '@/store/userStore'
 import { useAuth } from '@/hooks/useAuth'
-import { formatDate } from '@/utils/helpers'
+import { formatDate, soSanhVienChuc } from '@/utils/helpers'
 import { isDangCongTac, VTVL_LABELS, CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { DeXuatChuyenCongTac } from '@/types/chuyenCongTac'
 import { TRANG_THAI_CCT_LABELS, TRANG_THAI_CCT_COLORS } from '@/types/chuyenCongTac'
@@ -50,7 +50,7 @@ export default function ChuyenCongTacPage() {
     return allVienChucs
       .filter((v) => v.active && isDangCongTac(v) && (!nguon || v.donViId === nguon))
       .filter((v) => !store.dangCoPhieuMo(v.id))
-      .sort((a, b) => `${a.ho} ${a.ten}`.localeCompare(`${b.ho} ${b.ten}`, 'vi'))
+      .sort(soSanhVienChuc())
   }, [allVienChucs, scopeDonViId, deXuats, store])
 
   const data = useMemo(() => {

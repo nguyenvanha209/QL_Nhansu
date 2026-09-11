@@ -39,11 +39,13 @@ export default function AccountSettingsPage() {
 
   const onChangePassword = async (values: { currentPassword: string; newPassword: string }) => {
     setDoiMkLoading(true)
-    const ok = await doiMatKhau(currentUser.username, values.currentPassword, values.newPassword)
+    const kq = await doiMatKhau(currentUser.username, values.currentPassword, values.newPassword)
     setDoiMkLoading(false)
 
-    if (!ok) {
-      message.error('Mật khẩu hiện tại không đúng')
+    if (!kq.ok) {
+      if (kq.lyDo === 'SAI_MK_CU') message.error('Mật khẩu hiện tại không đúng')
+      else if (kq.lyDo === 'CHUA_CAU_HINH') message.error('Chưa cấu hình máy chủ. Liên hệ quản trị viên.')
+      else message.error('CHƯA đổi được mật khẩu — không kết nối được máy chủ. Vui lòng thử lại, mật khẩu cũ vẫn còn hiệu lực.')
       return
     }
     message.success('Đã đổi mật khẩu thành công')

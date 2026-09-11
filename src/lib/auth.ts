@@ -29,16 +29,36 @@ export async function dangNhap(username: string, password: string): Promise<KetQ
   return { ok: false, lyDo: 'SAI', conLai: data?.con_lai ?? 0 }
 }
 
-export async function doiMatKhau(username: string, cu: string, moi: string): Promise<boolean> {
-  if (!supabase) return false
+// Phân biệt rõ "sai mật khẩu cũ" với "không gọi được máy chủ". Gộp chung thành
+// false khiến người dùng mất mạng bị báo là gõ sai mật khẩu, tưởng đã đổi xong
+// trong khi máy chủ chưa ghi nhận gì.
+export type KetQuaDoiMatKhau =
+  | { ok: true }
+  | { ok: false; lyDo: 'SAI_MK_CU' }
+  | { ok: false; lyDo: 'CHUA_CAU_HINH' }
+  | { ok: false; lyDo: 'LOI'; thongBao: string }
+
+export async function doiMatKhau(username: string, cu: string, moi: string): Promise<KetQuaDoiMatKhau> {
+  if (!supabase) return { ok: false, lyDo: 'CHUA_CAU_HINH' }
+
   const { data, error } = await supabase.rpc('doi_mat_khau', {
     p_username: username,
     p_cu: cu,
     p_moi: moi,
   })
-  if (error) { console.error('[doi_mat_khau]', error.message); return false }
-  return data === true
+
+  if (error) {
+    console.error('[doi_mat_khau]', error.message)
+    return { ok: false, lyDo: 'LOI', thongBao: error.message }
+  }
+  return data === true ? { ok: true } : { ok: false, lyDo: 'SAI_MK_CU' }
 }
+
+export type KetQuaDatMatKhau =
+  | { ok: true }
+  | { ok: false; lyDo: 'SAI_MK_ADMIN' }
+  | { ok: false; lyDo: 'CHUA_CAU_HINH' }
+  | { ok: false; lyDo: 'LOI'; thongBao: string }
 
 // Admin phải nhập lại mật khẩu của chính mình cho mỗi lần cấp/đặt lại mật khẩu.
 export async function adminDatMatKhau(
@@ -47,8 +67,9 @@ export async function adminDatMatKhau(
   username: string,
   matKhauMoi: string,
   laAdmin = false,
-): Promise<boolean> {
-  if (!supabase) return false
+): Promise<KetQuaDatMatKhau> {
+  if (!supabase) return { ok: false, lyDo: 'CHUA_CAU_HINH' }
+
   const { data, error } = await supabase.rpc('admin_dat_mat_khau', {
     p_admin: adminUsername,
     p_admin_pass: adminPassword,
@@ -56,8 +77,12 @@ export async function adminDatMatKhau(
     p_moi: matKhauMoi,
     p_la_admin: laAdmin,
   })
-  if (error) { console.error('[admin_dat_mat_khau]', error.message); return false }
-  return data === true
+
+  if (error) {
+    console.error('[admin_dat_mat_khau]', error.message)
+    return { ok: false, lyDo: 'LOI', thongBao: error.message }
+  }
+  return data === true ? { ok: true } : { ok: false, lyDo: 'SAI_MK_ADMIN' }
 }
 
 export async function adminXoaMatKhau(

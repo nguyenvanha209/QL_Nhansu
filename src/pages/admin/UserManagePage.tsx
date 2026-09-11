@@ -129,13 +129,15 @@ export default function UserManagePage() {
     // Đặt mật khẩu là thao tác đặc quyền nên admin phải xác nhận danh tính.
     if (values.password) {
       setSaving(true)
-      const ok = await adminDatMatKhau(
+      const kq = await adminDatMatKhau(
         currentUser.username, values.matKhauAdmin,
         username, values.password, values.role === 'ADMIN',
       )
       setSaving(false)
-      if (!ok) {
-        message.error('Mật khẩu quản trị viên không đúng, hoặc tài khoản của bạn không có quyền đặt mật khẩu.')
+      if (!kq.ok) {
+        if (kq.lyDo === 'SAI_MK_ADMIN') message.error('Mật khẩu quản trị viên không đúng, hoặc tài khoản của bạn không có quyền đặt mật khẩu.')
+        else if (kq.lyDo === 'CHUA_CAU_HINH') message.error('Chưa cấu hình máy chủ. Liên hệ quản trị viên.')
+        else message.error('CHƯA đặt được mật khẩu — không kết nối được máy chủ. Vui lòng thử lại.')
         return
       }
     }

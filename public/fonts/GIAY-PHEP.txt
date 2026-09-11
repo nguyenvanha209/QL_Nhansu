@@ -1,0 +1,6 @@
+Roboto — Copyright 2015 Google Inc. All Rights Reserved.
+Giấy phép: Apache License 2.0
+https://www.apache.org/licenses/LICENSE-2.0
+
+Dùng để nhúng vào tệp PDF khi kết xuất báo cáo. Các phông chuẩn có sẵn của
+jsPDF chỉ hỗ trợ bảng mã Latin-1 nên không hiển thị được dấu tiếng Việt.

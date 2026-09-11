@@ -250,7 +250,7 @@ export default function DashboardPage() {
         {/* Cảnh báo nâng lương */}
         <Col xs={24} lg={14}>
           <Card title={<>Cảnh báo sắp đến kỳ nâng lương <Tag color="orange">{salaryAlerts.length}</Tag></>} size="small">
-            <Table
+            <Table scroll={{ x: 'max-content' }}
               size="small"
               dataSource={salaryAlerts.slice(0, 5)}
               rowKey="vienChucId"

@@ -5,3 +5,20 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 
 /* Nút Hướng dẫn sử dụng trên header: thu về icon khi màn hình hẹp */
 @media (max-width: 900px) { .hd-btn-label { display: none; } }
+
+/* ── Chống tràn bảng ──────────────────────────────────────────────────────
+   Bảng rộng hơn khung phải tự cuộn ngang bên trong nó, không được đẩy cả
+   trang lệch sang phải. Đây là lớp an toàn chung: bảng nào lỡ thiếu thuộc
+   tính scroll thì vẫn không làm vỡ bố cục. */
+.ant-table-wrapper { max-width: 100%; }
+.ant-table-content,
+.ant-table-body { overflow-x: auto; }
+
+/* Vùng nội dung chính không bao giờ cuộn ngang — phần tràn nằm trong bảng */
+.ant-layout-content { overflow-x: hidden; }
+
+/* Bảng HTML tự viết (ma trận quyền, sổ tay hướng dẫn) cũng cần cuộn riêng */
+.bang-cuon-ngang { overflow-x: auto; max-width: 100%; }
+
+/* Ô quá dài thì xuống dòng thay vì kéo giãn cột */
+.ant-table-tbody > tr > td { word-break: break-word; }

@@ -191,7 +191,7 @@ export default function AuditLogPage() {
 
             <Title level={5} style={{ marginTop: 20 }}>Các trường đã thay đổi</Title>
             {xemChiTiet.chiTiet?.length ? (
-              <Table
+              <Table scroll={{ x: 'max-content' }}
                 size="small"
                 pagination={false}
                 rowKey={(r) => r.truong}

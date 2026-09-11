@@ -90,7 +90,7 @@ function DonViTab() {
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm đơn vị</Button>
-      <Table dataSource={donVis} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={donVis} columns={cols} rowKey="id" size="small" pagination={false} />
 
       <Modal open={open} title={editing ? 'Sửa đơn vị' : 'Thêm đơn vị'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
@@ -137,7 +137,7 @@ function ChucDanhTab() {
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức danh</Button>
-      <Table dataSource={chucDanhs.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={chucDanhs.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa chức danh' : 'Thêm chức danh'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
@@ -181,7 +181,7 @@ function PhuCapTab() {
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm loại phụ cấp</Button>
-      <Table dataSource={loaiPhuCaps.filter((p) => p.active)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={loaiPhuCaps.filter((p) => p.active)} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa phụ cấp' : 'Thêm phụ cấp'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
@@ -220,7 +220,7 @@ function LuongCoSoTab() {
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { form.resetFields(); setOpen(true) }}>Thêm mức lương cơ sở</Button>
-      <Table dataSource={[...mucLuongCosos].sort((a, b) => b.hieuLucTu.localeCompare(a.hieuLucTu))} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={[...mucLuongCosos].sort((a, b) => b.hieuLucTu.localeCompare(a.hieuLucTu))} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title="Thêm mức lương cơ sở" onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={(v) => { addMucLuongCoso(v); setOpen(false); form.resetFields(); message.success('Đã thêm') }}>
           <Form.Item name="mucLuong" label="Mức lương (VNĐ)" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
@@ -332,7 +332,7 @@ function VtvlTab() {
         </Descriptions.Item>
       </Descriptions>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm VTVL</Button>
-      <Table dataSource={vtvls.filter((v) => v.active)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={vtvls.filter((v) => v.active)} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa VTVL' : 'Thêm VTVL'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input placeholder="VD: NHAN_VIEN_YT" /></Form.Item>
@@ -372,7 +372,7 @@ function TrangThaiTab() {
           Tổng quan, chỉ tiêu Vị trí việc làm, Báo cáo, Dự báo nghỉ hưu và danh sách chọn ở Đề xuất điều chỉnh Hệ số lương - PCTN.
         </Descriptions.Item>
       </Descriptions>
-      <Table dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />
     </>
   )
 }

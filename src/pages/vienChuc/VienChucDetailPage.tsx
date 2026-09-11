@@ -122,11 +122,11 @@ export default function VienChucDetailPage() {
           },
           {
             key: '2', label: `Lịch sử lương (${heSoHistory.length})`,
-            children: <Table dataSource={heSoHistory} columns={heSoCols} rowKey="id" size="small" pagination={false} />,
+            children: <Table scroll={{ x: 'max-content' }} dataSource={heSoHistory} columns={heSoCols} rowKey="id" size="small" pagination={false} />,
           },
           {
             key: '3', label: `Phụ cấp (${activePhuCaps.length})`,
-            children: <Table dataSource={activePhuCaps} columns={phuCapCols} rowKey="id" size="small" pagination={false} />,
+            children: <Table scroll={{ x: 'max-content' }} dataSource={activePhuCaps} columns={phuCapCols} rowKey="id" size="small" pagination={false} />,
           },
           {
             key: '4', label: `Lịch sử biến động (${lichSu.length})`,

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Card, Tabs, Table, Button, Select, Space, Typography, Statistic, Row, Col } from 'antd'
+import { Card, Tabs, Table, Button, Select, Space, Typography, Statistic, Row, Col, App } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -14,6 +14,7 @@ import { LOAI_LAO_DONG_LABELS, isDangCongTac } from '@/types/vienChuc'
 const { Title } = Typography
 
 export default function BaoCaoPage() {
+  const { message } = App.useApp()
   const { scopeDonViId } = useAuth()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
@@ -69,13 +70,28 @@ export default function BaoCaoPage() {
     exportToExcel(rows, 'BaoCao_VienChuc', 'Viên chức')
   }
 
-  const exportVCPdf = () => {
-    exportToPdf(
-      'Báo cáo tổng hợp nhân sự',
-      ['Mã VC', 'Họ tên', 'Đơn vị', 'Chức danh', 'Bậc', 'Hệ số'],
-      enriched.map((r) => [r.ma, `${r.ho} ${r.ten}`, r.donViTen, r.chucDanhTen, r.bac, r.heSo]),
-      'BaoCao_VienChuc'
-    )
+  const [dangXuatPdf, setDangXuatPdf] = useState(false)
+
+  // Phông tiếng Việt nặng ~500KB, tải lần đầu mất vài giây — phải khoá nút và
+  // báo lỗi rõ, tránh người dùng bấm nhiều lần rồi tưởng hỏng.
+  const exportVCPdf = async () => {
+    setDangXuatPdf(true)
+    try {
+      await exportToPdf(
+        'BÁO CÁO TỔNG HỢP NHÂN SỰ',
+        ['Mã VC', 'Họ và tên', 'Ngày sinh', 'Giới tính', 'Đơn vị', 'Chức danh', 'Bậc', 'Hệ số'],
+        enriched.map((r) => [
+          r.ma, `${r.ho} ${r.ten}`, formatDate(r.ngaySinh), r.gioiTinh === 'NAM' ? 'Nam' : 'Nữ',
+          r.donViTen, r.chucDanhTen, r.bac, r.heSo,
+        ]),
+        'BaoCao_NhanSu',
+        `${filterDonVi ? donVis.find((d) => d.id === filterDonVi)?.ten ?? '' : 'Toàn phường'} — ${enriched.length} người`,
+      )
+    } catch (e) {
+      message.warning(e instanceof Error ? e.message : 'Xuất PDF gặp sự cố')
+    } finally {
+      setDangXuatPdf(false)
+    }
   }
 
   return (
@@ -95,7 +111,7 @@ export default function BaoCaoPage() {
             <>
               <Space style={{ marginBottom: 12 }}>
                 <Button icon={<FileExcelOutlined />} onClick={exportVCExcel}>Xuất Excel</Button>
-                <Button icon={<FilePdfOutlined />} onClick={exportVCPdf}>Xuất PDF</Button>
+                <Button icon={<FilePdfOutlined />} onClick={exportVCPdf} loading={dangXuatPdf}>Xuất PDF</Button>
               </Space>
               <Table dataSource={enriched} columns={vcCols} rowKey="id" size="small" scroll={{ x: 1100 }} pagination={{ pageSize: 20 }} />
             </>

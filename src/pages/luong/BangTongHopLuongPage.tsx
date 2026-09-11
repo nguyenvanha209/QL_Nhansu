@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Table, Card, Select, Input, Space, Typography, Button } from 'antd'
 import { SearchOutlined, DownloadOutlined } from '@ant-design/icons'
 import * as XLSX from 'xlsx'
@@ -163,6 +164,10 @@ export default function BangTongHopLuongPage() {
   const phuCaps = useLuongStore((s) => s.phuCapVienChucs)
 
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  const tenDonVi = useMemo(() => {
+    const m = new Map(donVis.map((d) => [d.id, d.ten]))
+    return (id: string) => m.get(id) ?? id
+  }, [donVis])
   const [search, setSearch] = useState('')
 
   const rows = useMemo<RowData[]>(() => {
@@ -229,6 +234,15 @@ export default function BangTongHopLuongPage() {
         a._type === 'subtotal' || b._type === 'subtotal' ? 0
           : (a as RowData).hoTen.localeCompare((b as RowData).hoTen, 'vi'),
     },
+    // Tài khoản xem được nhiều trường thì phải biết mỗi dòng thuộc trường nào.
+    // Dòng "Cộng" chỉ hiện ở cuối mỗi nhóm, cuộn giữa bảng là mất dấu.
+    ...(scopeDonViId ? [] : [{
+      title: 'Đơn vị trường', key: 'donVi', width: 170, fixed: 'left' as const,
+      render: (_: any, r: DisplayRow) => (r._type === 'data' ? tenDonVi(r.donViId) : ''),
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0
+          : tenDonVi((a as RowData).donViId).localeCompare(tenDonVi((b as RowData).donViId), 'vi'),
+    }]),
     {
       title: 'Ngày, tháng, năm sinh', key: 'ngaySinh', width: 105, align: 'center' as const,
       render: (_: any, r: DisplayRow) => r._type === 'data' ? r.ngaySinh : '',
@@ -427,31 +441,46 @@ export default function BangTongHopLuongPage() {
         scroll={{ x: 2100, y: 'calc(100vh - 280px)' }}
         rowClassName={(r: DisplayRow) => r._type === 'subtotal' ? 'subtotal-row' : ''}
         pagination={{ pageSize: 100, showSizeChanger: true, pageSizeOptions: [50, 100, 200], showTotal: (t) => `Tổng ${rows.length} viên chức` }}
-        summary={() => (
-          <Table.Summary fixed>
-            <Table.Summary.Row style={{ background: '#e6f4ff', fontWeight: 700 }}>
-              <Table.Summary.Cell index={0} colSpan={2} align="center">Tổng cộng</Table.Summary.Cell>
-              <Table.Summary.Cell index={2} align="center">{rows.length} người</Table.Summary.Cell>
-              <Table.Summary.Cell index={3} />
-              <Table.Summary.Cell index={4} />
-              <Table.Summary.Cell index={5} />
-              <Table.Summary.Cell index={6} />
-              <Table.Summary.Cell index={7} />
-              <Table.Summary.Cell index={8} align="right">{d3(grandTotal.vkHeSo)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={9} align="right">{grandTotal.tongHSLC.toFixed(3)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={10} />
-              <Table.Summary.Cell index={11} align="right">{d3(grandTotal.pcCV)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={12} align="right">{d3(grandTotal.pcTN)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={13} />
-              <Table.Summary.Cell index={14} align="right">{d3(grandTotal.pcTNNG_HeSo)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={15} />
-              <Table.Summary.Cell index={16} align="right">{d3(grandTotal.hsBaoLuu)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={17} align="right">{d3(grandTotal.pcUD)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={18} align="right"><span style={{ color: '#1677ff' }}>{grandTotal.tong1Thang.toFixed(3)}</span></Table.Summary.Cell>
-              <Table.Summary.Cell index={19} align="right"><span style={{ color: '#1677ff' }}>{grandTotal.tong6Thang.toFixed(3)}</span></Table.Summary.Cell>
-            </Table.Summary.Row>
-          </Table.Summary>
-        )}
+        summary={() => {
+          // Dựng theo danh sách thay vì viết cứng từng chỉ số cột. Trước đây các
+          // chỉ số 0..19 cố định, nên chỉ cần thêm một cột là toàn bộ dòng tổng
+          // lệch sang phải mà không ai để ý.
+          const oTong: { noiDung?: ReactNode; canPhai?: boolean }[] = [
+            { noiDung: `${rows.length} người`, canPhai: false }, // cột ngày sinh
+            {}, // chức vụ
+            {}, // mã CDNN
+            {}, // bậc
+            {}, // hệ số
+            {}, // % vượt khung
+            { noiDung: d3(grandTotal.vkHeSo), canPhai: true },
+            { noiDung: grandTotal.tongHSLC.toFixed(3), canPhai: true },
+            {}, // thời điểm
+            { noiDung: d3(grandTotal.pcCV), canPhai: true },
+            { noiDung: d3(grandTotal.pcTN), canPhai: true },
+            {}, // % thâm niên nhà giáo
+            { noiDung: d3(grandTotal.pcTNNG_HeSo), canPhai: true },
+            {}, // mốc thâm niên
+            { noiDung: d3(grandTotal.hsBaoLuu), canPhai: true },
+            { noiDung: d3(grandTotal.pcUD), canPhai: true },
+            { noiDung: <span style={{ color: '#1677ff' }}>{grandTotal.tong1Thang.toFixed(3)}</span>, canPhai: true },
+            { noiDung: <span style={{ color: '#1677ff' }}>{grandTotal.tong6Thang.toFixed(3)}</span>, canPhai: true },
+          ]
+          let i = 0
+          return (
+            <Table.Summary fixed="top">
+              <Table.Summary.Row style={{ background: '#e6f4ff', fontWeight: 700 }}>
+                <Table.Summary.Cell index={i++} colSpan={2} align="center">Tổng cộng</Table.Summary.Cell>
+                {/* Cột đơn vị trường chỉ có khi xem nhiều trường */}
+                {!scopeDonViId && <Table.Summary.Cell index={i++} />}
+                {oTong.map((o) => (
+                  <Table.Summary.Cell key={i} index={i++} align={o.canPhai ? 'right' : 'center'}>
+                    {o.noiDung}
+                  </Table.Summary.Cell>
+                ))}
+              </Table.Summary.Row>
+            </Table.Summary>
+          )
+        }}
       />
 
       <style>{`.subtotal-row td { background: #f0f5ff !important; font-weight: 600; }`}</style>

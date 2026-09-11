@@ -348,7 +348,7 @@ export default function UserManagePage() {
         )}
       </Space>
 
-      <Table
+      <Table scroll={{ x: 'max-content' }}
         dataSource={filtered}
         columns={cols}
         rowKey="id"

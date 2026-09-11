@@ -1,4 +1,4 @@
-import { supabase, ghiNhanPhienBan, datCoDangDongBo } from './supabase'
+import { supabase, ghiNhanPhienBan, datCoDangDongBo, dangKyNapLai } from './supabase'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -17,6 +17,30 @@ const STORES = [
   useChuyenCongTacStore,
   useNhatKyStore,
 ]
+
+// Sau khi tầng đồng bộ hợp nhất dữ liệu, store tương ứng phải nạp lại để bộ nhớ
+// tại máy khớp với nội dung vừa ghi. Thiếu bước này thì lần ghi kế tiếp sẽ đè
+// mất đúng phần vừa hợp nhất của người khác.
+const KHO_THEO_KHOA: Record<string, { persist: { rehydrate: () => void | Promise<void> } }> = {
+  'ql-users': useUserStore,
+  'ql-danh-muc': useDanhMucStore,
+  'ql-vien-chuc': useVienChucStore,
+  'ql-luong': useLuongStore,
+  'ql-de-xuat': useDeXuatStore,
+  'ql-chuyen-cong-tac': useChuyenCongTacStore,
+  'ql-nhat-ky': useNhatKyStore,
+}
+
+dangKyNapLai(async (key) => {
+  const kho = KHO_THEO_KHOA[key]
+  if (!kho) return
+  datCoDangDongBo(true)
+  try {
+    await kho.persist.rehydrate()
+  } finally {
+    datCoDangDongBo(false)
+  }
+})
 
 export type SyncResult =
   | 'loaded' // đã kéo được dữ liệu từ máy chủ

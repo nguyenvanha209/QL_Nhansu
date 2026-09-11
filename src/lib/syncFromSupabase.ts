@@ -1,4 +1,8 @@
-import { supabase, ghiNhanPhienBan, datCoDangDongBo, dangKyNapLai } from './supabase'
+import {
+  supabase, ghiNhanPhienBan, datCoDangDongBo, dangKyNapLai,
+  dangKyChiaKho, laKhoChia, tachKhoa, gopCacManh, KHOA_GOC,
+} from './supabase'
+import type { KhoiTrangThai } from './supabase'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -31,8 +35,20 @@ const KHO_THEO_KHOA: Record<string, { persist: { rehydrate: () => void | Promise
   'ql-nhat-ky': useNhatKyStore,
 }
 
+// Khai báo chia kho theo đơn vị trường.
+// Hồ sơ viên chức có sẵn donViId. Hệ số lương, phụ cấp, lịch sử biến động thì
+// gắn với viên chức, phải tra ngược qua vienChucId để biết thuộc trường nào.
+dangKyChiaKho('ql-vien-chuc', (bg) => String(bg.donViId ?? KHOA_GOC))
+dangKyChiaKho('ql-luong', (bg) => {
+  const vcId = bg.vienChucId
+  if (typeof vcId !== 'string') return KHOA_GOC
+  const vc = useVienChucStore.getState().vienChucs.find((v) => v.id === vcId)
+  return vc?.donViId ?? KHOA_GOC
+})
+
 dangKyNapLai(async (key) => {
-  const kho = KHO_THEO_KHOA[key]
+  const { ten } = tachKhoa(key)
+  const kho = KHO_THEO_KHOA[ten] ?? KHO_THEO_KHOA[key]
   if (!kho) return
   datCoDangDongBo(true)
   try {
@@ -71,10 +87,27 @@ export async function syncFromSupabase(): Promise<SyncResult> {
       // Bỏ qua ql-auth: phiên đăng nhập là của riêng từng máy, kéo về sẽ biến
       // người dùng này thành người dùng khác. Bản ghi cũ trên máy chủ (nếu còn)
       // cũng không được phép ghi đè phiên tại chỗ.
+      // Kho đã chia thì dữ liệu nằm rải ở nhiều mảnh, phải gộp lại thành một
+      // khối như store vẫn đọc. Ô cũ chưa chia (nếu máy nào còn chạy bản trước
+      // và ghi vào đó) cũng được gộp chung, nên không bị chia đôi dữ liệu.
+      const theoKho = new Map<string, KhoiTrangThai[]>()
+
       for (const row of data) {
         if (row.key === 'ql-auth') continue
-        localStorage.setItem(row.key, JSON.stringify(row.value))
         ghiNhanPhienBan(row.key, row.updated_at)
+
+        const { ten } = tachKhoa(row.key)
+        if (laKhoChia(ten)) {
+          if (!theoKho.has(ten)) theoKho.set(ten, [])
+          theoKho.get(ten)!.push(row.value as KhoiTrangThai)
+          continue
+        }
+        localStorage.setItem(row.key, JSON.stringify(row.value))
+      }
+
+      for (const [ten, manhList] of theoKho) {
+        const gop = gopCacManh(manhList)
+        if (gop) localStorage.setItem(ten, JSON.stringify(gop))
       }
 
       await Promise.all(STORES.map((s) => s.persist.rehydrate()))

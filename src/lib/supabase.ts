@@ -60,7 +60,7 @@ function tronTheoId(mayChu: { id: string }[], cucBo: { id: string }[]) {
   return [...ra.values()]
 }
 
-type KhoiTrangThai = { state?: Record<string, unknown> } & Record<string, unknown>
+export type KhoiTrangThai = { state?: Record<string, unknown> } & Record<string, unknown>
 
 // Những id vừa bị xóa có chủ đích tại máy này, theo từng mảng.
 type DaXoa = Record<string, string[]>
@@ -105,6 +105,93 @@ function tronTrangThai(mayChu: KhoiTrangThai, cucBo: KhoiTrangThai, daXoa: DaXoa
   return { ...cucBo, state }
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// Chia kho theo đơn vị
+//
+// Toàn bộ lương của 11 trường trước đây nằm chung một ô 567KB. Mỗi lần lưu bất
+// cứ thứ gì đều phải ghi lại cả ô, nên vừa chậm vừa hay đụng nhau.
+//
+// Nay mỗi trường một ô riêng: sửa hồ sơ trường nào chỉ ghi ô trường đó, khoảng
+// vài chục KB. Hai trường khác nhau thao tác cùng lúc thì không còn liên quan
+// gì tới nhau.
+//
+// Bộ nhớ tại máy và các store vẫn giữ nguyên một mảng gộp như cũ — việc chia
+// chỉ diễn ra ở lớp này khi ghi lên máy chủ.
+// ───────────────────────────────────────────────────────────────────────────
+
+export const KHOA_GOC = '_goc' // phần không chia được: trường vô hướng, mảng không có id
+const NGAN_CACH = '::'
+
+type ChiaTheo = (banGhi: Record<string, unknown>, tenMang: string) => string
+const cauHinhChia = new Map<string, ChiaTheo>()
+
+export function dangKyChiaKho(ten: string, chiaTheo: ChiaTheo) {
+  cauHinhChia.set(ten, chiaTheo)
+}
+
+export const laKhoChia = (ten: string) => cauHinhChia.has(ten)
+export const khoaManh = (ten: string, manh: string) => `${ten}${NGAN_CACH}${manh}`
+export const tachKhoa = (khoa: string) => {
+  const i = khoa.indexOf(NGAN_CACH)
+  return i < 0 ? { ten: khoa, manh: null } : { ten: khoa.slice(0, i), manh: khoa.slice(i + NGAN_CACH.length) }
+}
+
+// Nội dung mảnh đã ghi lần gần nhất, để bỏ qua những mảnh không đổi.
+// Đây chính là chỗ tiết kiệm: sửa một trường thì 10 mảnh còn lại không phải ghi.
+const manhDaGhi = new Map<string, string>()
+
+function chiaTrangThai(ten: string, khoi: KhoiTrangThai): Map<string, KhoiTrangThai> {
+  const chiaTheo = cauHinhChia.get(ten)!
+  const state = khoi.state ?? {}
+  const ra = new Map<string, Record<string, unknown>>()
+
+  const lay = (manh: string) => {
+    if (!ra.has(manh)) ra.set(manh, {})
+    return ra.get(manh)!
+  }
+  lay(KHOA_GOC)
+
+  for (const [tenMang, giaTri] of Object.entries(state)) {
+    if (!laMangCoId(giaTri)) {
+      lay(KHOA_GOC)[tenMang] = giaTri
+      continue
+    }
+    // Mảng có id thì rải từng bản ghi về mảnh của nó. Mọi mảnh đều phải có khoá
+    // này, kể cả khi rỗng — thiếu thì lúc gộp lại sẽ tưởng mảng không tồn tại.
+    for (const manh of ra.keys()) lay(manh)[tenMang] = []
+    for (const bg of giaTri) {
+      const manh = chiaTheo(bg as Record<string, unknown>, tenMang) || KHOA_GOC
+      const o = lay(manh)
+      if (!Array.isArray(o[tenMang])) o[tenMang] = []
+      ;(o[tenMang] as unknown[]).push(bg)
+    }
+    for (const o of ra.values()) if (!Array.isArray(o[tenMang])) o[tenMang] = []
+  }
+
+  const kq = new Map<string, KhoiTrangThai>()
+  for (const [manh, state2] of ra) kq.set(manh, { ...khoi, state: state2 })
+  return kq
+}
+
+// Gộp các mảnh (và ô cũ chưa chia, nếu còn) thành một khối như store vẫn đọc
+export function gopCacManh(manhList: KhoiTrangThai[]): KhoiTrangThai | null {
+  if (!manhList.length) return null
+  const goc = manhList[0]
+  const state: Record<string, unknown> = {}
+
+  for (const m of manhList) {
+    for (const [k, v] of Object.entries(m.state ?? {})) {
+      if (laMangCoId(v)) {
+        const daCo = state[k]
+        state[k] = laMangCoId(daCo) ? tronTheoId(daCo, v) : v
+      } else if (!(k in state)) {
+        state[k] = v
+      }
+    }
+  }
+  return { ...goc, state }
+}
+
 async function layBanMayChu(name: string) {
   if (!supabase) return null
   const { data, error } = await supabase
@@ -129,8 +216,62 @@ const hangCho = new Map<string, Promise<void>>()
 
 function xepHangGhi(name: string, value: string, daXoa: DaXoa) {
   const truoc = hangCho.get(name) ?? Promise.resolve()
-  const tiep = truoc.then(() => ghiLenMayChu(name, value, 0, daXoa)).catch(() => {})
+  const viec = laKhoChia(name)
+    ? () => ghiTheoManh(name, value, daXoa)
+    : () => ghiLenMayChu(name, value, 0, daXoa)
+  const tiep = truoc.then(viec).catch(() => {})
   hangCho.set(name, tiep)
+}
+
+// Chia khối thành từng mảnh rồi chỉ ghi những mảnh thực sự đổi.
+async function ghiTheoManh(name: string, value: string, daXoa: DaXoa): Promise<void> {
+  let khoi: KhoiTrangThai
+  try {
+    khoi = JSON.parse(value) as KhoiTrangThai
+  } catch {
+    console.error('[Supabase] Bỏ qua lệnh ghi: dữ liệu không phải JSON hợp lệ —', name)
+    return
+  }
+
+  const cacManh = chiaTrangThai(name, khoi)
+  let soGhi = 0
+
+  for (const [manh, noiDung] of cacManh) {
+    const khoa = khoaManh(name, manh)
+    const json = JSON.stringify(noiDung)
+    if (manhDaGhi.get(khoa) === json) continue // mảnh không đổi, khỏi ghi
+
+    await ghiLenMayChu(khoa, json, 0, daXoa)
+    manhDaGhi.set(khoa, json)
+    soGhi++
+  }
+
+  if (soGhi) {
+    const kb = Math.round(value.length / 1024)
+    console.info(`[Supabase] "${name}": ghi ${soGhi}/${cacManh.size} mảnh (khối gộp ${kb} KB)`)
+  }
+
+  await donODangCu(name)
+}
+
+// Ô cũ chưa chia vẫn giữ nguyên toàn bộ dữ liệu. Để nguyên thì mỗi lần đồng bộ
+// lại gộp nó vào, và bản ghi vừa xoá sẽ từ đó sống lại. Sau khi đã chia xong
+// thì dọn đi. Máy nào còn chạy bản cũ mà ghi lại vào ô đó thì lần đồng bộ sau
+// vẫn gộp được, nên không mất dữ liệu của họ.
+const daDonODangCu = new Set<string>()
+
+async function donODangCu(name: string) {
+  if (!supabase || daDonODangCu.has(name)) return
+  daDonODangCu.add(name)
+
+  const { error } = await supabase.from('app_state').delete().eq('key', name)
+  if (error) {
+    daDonODangCu.delete(name)
+    console.warn(`[Supabase] Chưa dọn được ô cũ "${name}" —`, error.message)
+    return
+  }
+  phienBanMayChu.delete(name)
+  console.info(`[Supabase] Đã dọn ô cũ "${name}" sau khi chia thành từng mảnh.`)
 }
 
 async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXoa = {}): Promise<void> {

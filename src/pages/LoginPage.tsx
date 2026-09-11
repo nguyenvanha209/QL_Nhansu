@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { logAction } from '@/utils/auditLogger'
+import { dangNhap } from '@/lib/auth'
 
 const { Title, Text } = Typography
 
@@ -19,17 +20,38 @@ export default function LoginPage() {
   const donVis = useDanhMucStore((s) => s.donVis)
   const navigate = useNavigate()
 
-  const onFinish = ({ username, password }: { username: string; password: string }) => {
+  const onFinish = async ({ username, password }: { username: string; password: string }) => {
     setLoading(true)
     setError('')
-    setTimeout(() => {
-      const user = findByUsername(username)
-      if (!user) { setError('Tài khoản không tồn tại'); setLoading(false); return }
-      if (user.password !== password) { setError('Mật khẩu không đúng'); setLoading(false); return }
-      login(user)
-      logAction(user.id, user.fullName, 'LOGIN', 'User', user.id, `Đăng nhập: ${user.username}`)
-      navigate('/dashboard')
-    }, 300)
+
+    // Mật khẩu được kiểm tra trên máy chủ (băm bcrypt), không so sánh tại trình duyệt
+    const kq = await dangNhap(username, password)
+
+    if (!kq.ok) {
+      if (kq.lyDo === 'KHOA') {
+        const den = new Date(kq.khoaDen)
+        setError(`Tài khoản tạm khóa do nhập sai nhiều lần. Thử lại sau ${den.toLocaleTimeString('vi-VN')}.`)
+      } else if (kq.lyDo === 'CHUA_CAU_HINH') {
+        setError('Chưa cấu hình máy chủ dữ liệu. Liên hệ quản trị viên.')
+      } else if (kq.lyDo === 'LOI') {
+        setError('Không kết nối được máy chủ. Kiểm tra kết nối mạng rồi thử lại.')
+      } else {
+        setError(`Tên đăng nhập hoặc mật khẩu không đúng. Còn ${kq.conLai} lần thử.`)
+      }
+      setLoading(false)
+      return
+    }
+
+    const user = findByUsername(username)
+    if (!user) {
+      setError('Tài khoản đã bị khóa hoặc không còn hiệu lực.')
+      setLoading(false)
+      return
+    }
+
+    login(user)
+    logAction(user.id, user.fullName, 'LOGIN', 'User', user.id, `Đăng nhập: ${user.username}`)
+    navigate('/dashboard')
   }
 
   const DV_ORDER: Record<string, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3 }
@@ -88,7 +110,7 @@ export default function LoginPage() {
           <Text type="secondary" style={{ fontSize: 15 }}>UBND Phường Gia Viên</Text>
         </div>
 
-        {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
+        {error && <Alert type="error" title={error} showIcon style={{ marginBottom: 16 }} />}
 
         <Form form={form} onFinish={onFinish} size="large">
           <Form.Item name="username" rules={[{ required: true, message: 'Nhập tên đăng nhập' }]}>

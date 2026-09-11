@@ -1,0 +1,28 @@
+# Thư mục phụ thuộc và thư viện bên thứ ba
+node_modules/
+bower_components/
+vendor/
+
+# Thư mục sản phẩm sau khi build/biên dịch
+dist/
+build/
+.next/
+.nuxt/
+out/
+bin/
+obj/
+
+# File nhật ký và bộ nhớ đệm hệ thống
+*.log
+.npm/
+.eslintcache
+.parcel-cache
+
+# Thư mục quản lý mã nguồn và môi trường ảo
+.git/
+.svn/
+.env
+.env.*
+.venv/
+env/
+venv/

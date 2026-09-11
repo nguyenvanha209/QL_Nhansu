@@ -11,6 +11,8 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 import { formatDate } from '@/utils/helpers'
+import { useAuth } from '@/hooks/useAuth'
+import { adminDatMatKhau } from '@/lib/auth'
 
 const { Title, Text } = Typography
 
@@ -59,7 +61,7 @@ function PermMatrix({ role }: { role: UserRole }) {
   ]
   return (
     <div style={{ overflowX: 'auto', marginTop: 8 }}>
-      <Alert message={ROLE_DESC[role]} type="info" showIcon style={{ marginBottom: 8, fontSize: 12 }} />
+      <Alert title={ROLE_DESC[role]} type="info" showIcon style={{ marginBottom: 8, fontSize: 12 }} />
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
         <thead>
           <tr style={{ background: '#fafafa' }}>
@@ -91,11 +93,13 @@ function PermMatrix({ role }: { role: UserRole }) {
 // ── Component chính ─────────────────────────────────────────────────────────
 export default function UserManagePage() {
   const { message } = App.useApp()
+  const { currentUser } = useAuth()
   const { users, addUser, updateUser, softDelete } = useUserStore()
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
 
   const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [form] = Form.useForm()
   const [selectedRole, setSelectedRole] = useState<UserRole | undefined>()
@@ -117,14 +121,30 @@ export default function UserManagePage() {
   const openEdit = (r: any) => { setEditing(r); setSelectedRole(r.role); form.setFieldsValue({ ...r, password: '' }); setOpen(true) }
   const closeModal = () => { setOpen(false); setEditing(null); form.resetFields(); setSelectedRole(undefined) }
 
-  const onSave = (values: any) => {
+  const onSave = async (values: any) => {
+    if (!currentUser) return
+    const username = editing ? editing.username : values.username
+
+    // Mật khẩu nằm trên máy chủ, không nằm trong hồ sơ tài khoản.
+    // Đặt mật khẩu là thao tác đặc quyền nên admin phải xác nhận danh tính.
+    if (values.password) {
+      setSaving(true)
+      const ok = await adminDatMatKhau(
+        currentUser.username, values.matKhauAdmin,
+        username, values.password, values.role === 'ADMIN',
+      )
+      setSaving(false)
+      if (!ok) {
+        message.error('Mật khẩu quản trị viên không đúng, hoặc tài khoản của bạn không có quyền đặt mật khẩu.')
+        return
+      }
+    }
+
     if (editing) {
-      const patch: any = { role: values.role, donViId: values.donViId ?? null, fullName: values.fullName }
-      if (values.password) patch.password = values.password
-      updateUser(editing.id, patch)
-      message.success('Đã cập nhật tài khoản')
+      updateUser(editing.id, { role: values.role, donViId: values.donViId ?? null, fullName: values.fullName })
+      message.success(values.password ? 'Đã cập nhật tài khoản và đặt lại mật khẩu' : 'Đã cập nhật tài khoản')
     } else {
-      addUser({ username: values.username, password: values.password, fullName: values.fullName, role: values.role, donViId: values.donViId ?? null, active: true })
+      addUser({ username, fullName: values.fullName, role: values.role, donViId: values.donViId ?? null, active: true })
       message.success('Đã tạo tài khoản')
     }
     closeModal()
@@ -270,6 +290,7 @@ export default function UserManagePage() {
         title={editing ? `Sửa tài khoản — ${editing.username}` : 'Tạo tài khoản mới'}
         onCancel={closeModal}
         onOk={() => form.submit()}
+        confirmLoading={saving}
         width={560}
         destroyOnHidden
       >
@@ -285,9 +306,25 @@ export default function UserManagePage() {
           <Form.Item
             name="password"
             label={editing ? 'Mật khẩu mới (để trống = không đổi)' : 'Mật khẩu'}
-            rules={!editing ? [{ required: true, min: 6, message: 'Tối thiểu 6 ký tự' }] : []}
+            rules={!editing ? [{ required: true, min: 6, message: 'Tối thiểu 6 ký tự' }] : [{ min: 6, message: 'Tối thiểu 6 ký tự' }]}
           >
-            <Input.Password />
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+
+          {/* Đặt mật khẩu là thao tác đặc quyền: admin phải tự xác nhận danh tính */}
+          <Form.Item noStyle shouldUpdate={(a, b) => a.password !== b.password}>
+            {({ getFieldValue }) =>
+              getFieldValue('password') ? (
+                <Form.Item
+                  name="matKhauAdmin"
+                  label="Mật khẩu của bạn (xác nhận)"
+                  extra="Cần nhập mật khẩu quản trị viên của chính bạn để đặt mật khẩu cho tài khoản khác."
+                  rules={[{ required: true, message: 'Nhập mật khẩu của bạn để xác nhận' }]}
+                >
+                  <Input.Password autoComplete="current-password" />
+                </Form.Item>
+              ) : null
+            }
           </Form.Item>
           <Form.Item name="role" label="Vai trò" rules={[{ required: true }]}>
             <Select

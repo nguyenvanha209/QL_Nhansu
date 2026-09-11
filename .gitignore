@@ -22,3 +22,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+tools/backups/
+tools/sql/02-nap-mat-khau.sql

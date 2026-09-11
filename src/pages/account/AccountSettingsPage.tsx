@@ -8,6 +8,7 @@ import { ROLE_LABELS } from '@/types/auth'
 import type { User } from '@/types/auth'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { formatDate } from '@/utils/helpers'
+import { doiMatKhau } from '@/lib/auth'
 
 const { Title, Text } = Typography
 
@@ -20,6 +21,7 @@ export default function AccountSettingsPage() {
 
   const [editingProfile, setEditingProfile] = useState(false)
   const [editingPassword, setEditingPassword] = useState(false)
+  const [doiMkLoading, setDoiMkLoading] = useState(false)
   const [profileForm] = Form.useForm()
   const [pwForm] = Form.useForm()
 
@@ -35,14 +37,15 @@ export default function AccountSettingsPage() {
     setEditingProfile(false)
   }
 
-  const onChangePassword = (values: { currentPassword: string; newPassword: string }) => {
-    if (values.currentPassword !== currentUser.password) {
+  const onChangePassword = async (values: { currentPassword: string; newPassword: string }) => {
+    setDoiMkLoading(true)
+    const ok = await doiMatKhau(currentUser.username, values.currentPassword, values.newPassword)
+    setDoiMkLoading(false)
+
+    if (!ok) {
       message.error('Mật khẩu hiện tại không đúng')
       return
     }
-    const updated: User = { ...currentUser, password: values.newPassword }
-    updateUser(currentUser.id, { password: values.newPassword })
-    login(updated)
     message.success('Đã đổi mật khẩu thành công')
     setEditingPassword(false)
     pwForm.resetFields()
@@ -134,7 +137,7 @@ export default function AccountSettingsPage() {
               <Input.Password />
             </Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>Đổi mật khẩu</Button>
+              <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={doiMkLoading}>Đổi mật khẩu</Button>
               <Button icon={<CloseOutlined />} onClick={() => { setEditingPassword(false); pwForm.resetFields() }}>Hủy</Button>
             </Space>
           </Form>

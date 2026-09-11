@@ -28,6 +28,17 @@ export default function LoginPage() {
     const kq = await dangNhap(username, password)
 
     if (!kq.ok) {
+      // Ghi cả lần đăng nhập hỏng — dò mật khẩu chỉ nhìn ra được khi có vết này
+      if (kq.lyDo === 'SAI' || kq.lyDo === 'KHOA') {
+        const u = users.find((x) => x.username === username)
+        logAction(u?.id ?? 'unknown', u?.fullName ?? username, 'LOGIN_FAIL', 'User', {
+          entityId: u?.id,
+          moTa: kq.lyDo === 'KHOA'
+            ? `Đăng nhập thất bại: ${username} — tài khoản đang bị tạm khóa`
+            : `Đăng nhập thất bại: ${username} — sai mật khẩu (còn ${kq.conLai} lần thử)`,
+          donViId: u?.donViId ?? undefined,
+        })
+      }
       if (kq.lyDo === 'KHOA') {
         const den = new Date(kq.khoaDen)
         setError(`Tài khoản tạm khóa do nhập sai nhiều lần. Thử lại sau ${den.toLocaleTimeString('vi-VN')}.`)
@@ -50,7 +61,11 @@ export default function LoginPage() {
     }
 
     login(user)
-    logAction(user.id, user.fullName, 'LOGIN', 'User', user.id, `Đăng nhập: ${user.username}`)
+    logAction(user.id, user.fullName, 'LOGIN', 'User', {
+      entityId: user.id,
+      moTa: `Đăng nhập: ${user.username}`,
+      donViId: user.donViId ?? undefined,
+    })
     navigate('/dashboard')
   }
 

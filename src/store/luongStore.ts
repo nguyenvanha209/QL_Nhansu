@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import type { HeSoLuong, PhuCapVienChuc, LichSuBienDong, NhatKyThaoTac } from '@/types/luong'
 import { persistStorage } from '@/lib/supabase'
+import { useNhatKyStore } from './nhatKyStore'
 
 interface LuongState {
   heSoLuongs: HeSoLuong[]
@@ -28,6 +29,7 @@ interface LuongState {
   getLichSuByVienChuc: (vienChucId: string) => LichSuBienDong[]
 
   addNhatKy: (d: Omit<NhatKyThaoTac, 'id'>) => void
+  setNhatKyThaoTacs: (v: NhatKyThaoTac[]) => void
 }
 
 const now = () => new Date().toISOString()
@@ -90,9 +92,13 @@ export const useLuongStore = create<LuongState>()(
           .lichSuBienDongs.filter((l) => l.vienChucId === vienChucId)
           .sort((a, b) => b.ngayThayDoi.localeCompare(a.ngayThayDoi)),
 
+      // Nhật ký đã chuyển sang kho riêng ql-nhat-ky. Giữ lại hàm này và chuyển
+      // hướng để mọi chỗ gọi cũ vẫn chạy đúng, không phải sửa hàng chục nơi.
+      // Ghi vào đây trước kia có nghĩa là viết lại cả khối lương hơn 500KB, nên
+      // hai người thao tác gần nhau là một bên mất bản ghi.
+      setNhatKyThaoTacs: (v) => set({ nhatKyThaoTacs: v }),
       addNhatKy: (data) => {
-        const item: NhatKyThaoTac = { ...data, id: nanoid() }
-        set((s) => ({ nhatKyThaoTacs: [item, ...s.nhatKyThaoTacs].slice(0, 5000) }))
+        useNhatKyStore.getState().them(data)
       },
     }),
     { name: 'ql-luong', storage: persistStorage() }

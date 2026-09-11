@@ -8,6 +8,32 @@ import { persistStorage } from '@/lib/supabase'
 import { useLuongStore } from './luongStore'
 import { useVienChucStore } from './vienChucStore'
 import { useDanhMucStore } from './danhMucStore'
+import { logAction, soSanhThayDoi } from '@/utils/auditLogger'
+import { useAuthStore } from './authStore'
+
+const nguoiThaoTac = () => {
+  const u = useAuthStore.getState().currentUser
+  return { id: u?.id ?? 'system', name: u?.fullName ?? 'Hệ thống' }
+}
+
+const TRANG_THAI_LABELS: Record<string, string> = {
+  NHAP: 'Nháp',
+  CHO_HIEU_TRUONG: 'Chờ hiệu trưởng duyệt',
+  CHO_XET_DUYET: 'Chờ phường thẩm định',
+  CHO_PHE_DUYET: 'Chờ lãnh đạo phê duyệt',
+  DA_PHE_DUYET: 'Đã phê duyệt',
+  TU_CHOI: 'Từ chối',
+}
+
+const NHAN_TRUONG_DE_XUAT: Record<string, string> = {
+  trangThai: 'Trạng thái',
+  buocHienTai: 'Bước hiện tại',
+  tieuDe: 'Tiêu đề',
+  ghiChuXetDuyet: 'Ý kiến thẩm định',
+  ghiChuPheDuyet: 'Ý kiến phê duyệt',
+  ketQuaXetDuyet: 'Kết quả thẩm định',
+  ketQuaPheDuyet: 'Kết quả phê duyệt',
+}
 
 interface DeXuatState {
   deXuats: DeXuatLuong[]
@@ -43,13 +69,44 @@ export const useDeXuatStore = create<DeXuatState>()(
           updatedAt: now(),
         }
         set((s) => ({ deXuats: [...s.deXuats, item] }))
+        const { id: aId, name: aTen } = nguoiThaoTac()
+        logAction(aId, aTen, 'CREATE', 'DeXuatLuong', {
+          entityId: item.id,
+          donViId: item.donViId,
+          moTa: `Tạo đề xuất ${item.ma}: ${item.tieuDe} (${item.chiTiet?.length ?? 0} viên chức)`,
+        })
         return item
       },
 
-      updateDeXuat: (id, patch) =>
+      updateDeXuat: (id, patch) => {
+        const truoc = get().deXuats.find((d) => d.id === id)
         set((s) => ({
           deXuats: s.deXuats.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: now() } : d)),
-        })),
+        }))
+        if (!truoc) return
+
+        // Đổi trạng thái là mốc đáng ghi nhất của quy trình duyệt: ai chuyển hồ
+        // sơ sang bước nào, lúc nào. Đây chính là phần BRS yêu cầu lưu vết.
+        const { id: aId, name: aTen } = nguoiThaoTac()
+        const doiTrangThai = patch.trangThai && patch.trangThai !== truoc.trangThai
+        const hanhDong =
+          patch.trangThai === 'DA_PHE_DUYET' ? 'APPROVE'
+            : patch.trangThai === 'TU_CHOI' ? 'REJECT'
+            : 'UPDATE'
+
+        logAction(aId, aTen, hanhDong, 'DeXuatLuong', {
+          entityId: id,
+          donViId: truoc.donViId,
+          moTa: doiTrangThai
+            ? `Đề xuất ${truoc.ma}: ${TRANG_THAI_LABELS[truoc.trangThai] ?? truoc.trangThai} → ${TRANG_THAI_LABELS[patch.trangThai!] ?? patch.trangThai}`
+            : `Cập nhật đề xuất ${truoc.ma}`,
+          chiTiet: soSanhThayDoi(
+            truoc as unknown as Record<string, unknown>,
+            patch as Record<string, unknown>,
+            NHAN_TRUONG_DE_XUAT,
+          ),
+        })
+      },
 
       getAll: (donViId) => {
         const list = get().deXuats

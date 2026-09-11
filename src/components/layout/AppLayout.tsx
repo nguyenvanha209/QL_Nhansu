@@ -21,7 +21,7 @@ const FOOTER_TEXT = `${APP_NAME} | Đơn vị: Phòng Văn hóa - Xã hội phư
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
-  const { currentUser, logout, isAdmin, isCBTruong, scopeDonViId, hasPermission } = useAuth()
+  const { currentUser, logout, isCBTruong, scopeDonViId, hasPermission } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -42,7 +42,7 @@ export default function AppLayout() {
     hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
     hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },
-    isAdmin && {
+    hasPermission('admin', 'admin') && {
       key: 'admin-group', icon: <SettingOutlined />, label: 'Quản trị',
       children: [
         { key: '/admin/danh-muc', label: 'Danh mục hệ thống' },

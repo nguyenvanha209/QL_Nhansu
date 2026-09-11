@@ -43,15 +43,32 @@ export interface LichSuBienDong {
   deXuatId?: string
 }
 
+export type HanhDongNhatKy =
+  | 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW' | 'EXPORT'
+  | 'LOGIN' | 'LOGIN_FAIL' | 'LOGOUT'
+  | 'APPROVE' | 'REJECT'
+  | 'PASSWORD' | 'PERMISSION'
+
+// Một thay đổi cụ thể ở cấp trường dữ liệu, để tra cứu được "sửa cái gì, từ gì
+// sang gì" chứ không chỉ biết là "có người đã sửa".
+export interface ThayDoiTruong {
+  truong: string
+  truoc?: string
+  sau?: string
+}
+
 export interface NhatKyThaoTac {
   id: string
   userId: string
   userFullName: string
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW' | 'EXPORT' | 'LOGIN' | 'APPROVE' | 'REJECT'
+  action: HanhDongNhatKy
   entity: string
   entityId?: string
   moTa: string
   thoiGian: string
+  donViId?: string
+  chiTiet?: ThayDoiTruong[]
+  thietBi?: string
 }
 
 export const LY_DO_LABELS: Record<LyDoNangLuong, string> = {

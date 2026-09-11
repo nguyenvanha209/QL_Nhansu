@@ -52,9 +52,9 @@ export default function AppRouter() {
           <Route path="de-xuat/:id" element={<DeXuatDetailPage />} />
           <Route path="du-bao" element={<DuBaoNghiHuuPage />} />
           <Route path="bao-cao" element={<BaoCaoPage />} />
-          <Route path="admin/danh-muc" element={<RoleGuard allowedRoles={['ADMIN']}><DanhMucPage /></RoleGuard>} />
-          <Route path="admin/nguoi-dung" element={<RoleGuard allowedRoles={['ADMIN']}><UserManagePage /></RoleGuard>} />
-          <Route path="admin/nhat-ky" element={<RoleGuard allowedRoles={['ADMIN']}><AuditLogPage /></RoleGuard>} />
+          <Route path="admin/danh-muc" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><DanhMucPage /></RoleGuard>} />
+          <Route path="admin/nguoi-dung" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><UserManagePage /></RoleGuard>} />
+          <Route path="admin/nhat-ky" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><AuditLogPage /></RoleGuard>} />
           <Route path="tai-khoan" element={<AccountSettingsPage />} />
           <Route path="huong-dan" element={<HuongDanPage />} />
         </Route>

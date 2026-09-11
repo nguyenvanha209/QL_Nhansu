@@ -61,7 +61,7 @@ export function useIdleTimeout() {
       if (nhanRoi >= HAN_NGHI) {
         daThoat.current = true
         setGiaySapThoat(null)
-        logout()
+        logout(true)
         return
       }
       const conLai = HAN_NGHI - nhanRoi

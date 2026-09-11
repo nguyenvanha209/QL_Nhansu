@@ -16,7 +16,7 @@ export default function DeXuatDetailPage() {
   const { message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { currentUser, isVHXH, isLanhDao, isAdmin, isHieuTruong } = useAuth()
+  const { currentUser, isVHXH, isLanhDao, laQuanTri, isHieuTruong } = useAuth()
   const getById = useDeXuatStore((s) => s.getById)
   const { submitDeXuat, duyetHieuTruong, xetDuyetDeXuat, pheDuyetDeXuat } = useDeXuatStore.getState()
   const donVis = useDanhMucStore((s) => s.donVis)
@@ -71,9 +71,9 @@ export default function DeXuatDetailPage() {
       ]
 
   const canSubmit = dx.trangThai === 'NHAP' && dx.nguoiDeXuatId === currentUser?.id
-  const canDuyetHT = (isHieuTruong || isAdmin) && dx.trangThai === 'CHO_HIEU_TRUONG_DUYET'
-  const canXetDuyet = (isVHXH || isAdmin) && dx.trangThai === 'CHO_XET_DUYET'
-  const canPheDuyet = (isLanhDao || isAdmin) && dx.trangThai === 'CHO_PHE_DUYET'
+  const canDuyetHT = (isHieuTruong || laQuanTri) && dx.trangThai === 'CHO_HIEU_TRUONG_DUYET'
+  const canXetDuyet = (isVHXH || laQuanTri) && dx.trangThai === 'CHO_XET_DUYET'
+  const canPheDuyet = (isLanhDao || laQuanTri) && dx.trangThai === 'CHO_PHE_DUYET'
 
   const handleAction = () => {
     if (!currentUser) return

@@ -4,6 +4,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useUserStore } from '@/store/userStore'
+import { useNhatKyStore } from '@/store/nhatKyStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { getHangTruong, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
 import { toUpperName } from '@/utils/helpers'
@@ -103,12 +104,32 @@ function migrateHoTenInHoa() {
   )
 }
 
+// Chuyển nhật ký cũ từ khối ql-luong sang kho riêng, rồi dọn khỏi chỗ cũ để
+// khối lương nhẹ bớt. Chạy một lần, gộp theo id nên chạy lại cũng không nhân đôi.
+function migrateNhatKySangKhoRieng() {
+  const lg = useLuongStore.getState()
+  const cu = lg.nhatKyThaoTacs ?? []
+  if (!cu.length) return
+
+  const nk = useNhatKyStore.getState()
+  const daCo = new Set(nk.nhatKys.map((n) => n.id))
+  const them = cu.filter((n) => !daCo.has(n.id))
+
+  if (them.length) {
+    nk.setNhatKys(
+      [...them, ...nk.nhatKys].sort((a, b) => (b.thoiGian ?? '').localeCompare(a.thoiGian ?? '')),
+    )
+  }
+  lg.setNhatKyThaoTacs([])
+}
+
 export function initSeedData() {
   ensureRequiredPhuCaps()
   ensureVtvlVaChucVu()
   migrateHoTenInHoa()
   migratePhuCapChucVuFormula()
   migrateChiTieuToDonVi()
+  migrateNhatKySangKhoRieng()
 
   const dm = useDanhMucStore.getState()
 

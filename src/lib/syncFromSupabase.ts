@@ -5,6 +5,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useChuyenCongTacStore } from '@/store/chuyenCongTacStore'
+import { useNhatKyStore } from '@/store/nhatKyStore'
 
 // Không đồng bộ useAuthStore: phiên đăng nhập là của riêng từng máy.
 const STORES = [
@@ -14,6 +15,7 @@ const STORES = [
   useLuongStore,
   useDeXuatStore,
   useChuyenCongTacStore,
+  useNhatKyStore,
 ]
 
 export type SyncResult =

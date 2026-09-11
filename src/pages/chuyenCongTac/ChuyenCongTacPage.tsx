@@ -19,7 +19,7 @@ const { Title, Text } = Typography
 
 export default function ChuyenCongTacPage() {
   const { message, modal } = App.useApp()
-  const { currentUser, scopeDonViId, isAdmin } = useAuth()
+  const { currentUser, scopeDonViId, laQuanTri } = useAuth()
   const [formTao] = Form.useForm()
   const [formNhan] = Form.useForm()
 
@@ -226,7 +226,7 @@ export default function ChuyenCongTacPage() {
               </>
             )}
 
-            {r.trangThai === 'CHO_DUYET' && isAdmin && (
+            {r.trangThai === 'CHO_DUYET' && laQuanTri && (
               <>
                 <Button size="small" type="primary" icon={<CheckOutlined />} onClick={() => onDuyet(r)}>Duyệt</Button>
                 <Button size="small" danger icon={<CloseOutlined />} onClick={() => onTuChoi(r)}>Từ chối</Button>
@@ -249,7 +249,7 @@ export default function ChuyenCongTacPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <Title level={4} style={{ margin: 0 }}>
           Chuyển công tác viên chức
-          {soChoDuyet > 0 && isAdmin && <Tag color="processing" style={{ marginLeft: 8 }}>{soChoDuyet} chờ duyệt</Tag>}
+          {soChoDuyet > 0 && laQuanTri && <Tag color="processing" style={{ marginLeft: 8 }}>{soChoDuyet} chờ duyệt</Tag>}
           {soChoTiepNhan > 0 && <Tag color="warning" style={{ marginLeft: 4 }}>{soChoTiepNhan} chờ tiếp nhận</Tag>}
         </Title>
         <Space>

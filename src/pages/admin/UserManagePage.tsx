@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import {
   Card, Table, Button, Modal, Form, Input, Select, Space, Tag, Popconfirm,
-  Typography, App, Row, Col, Alert, Badge, Tooltip,
+  Typography, App, Row, Col, Alert, Badge, Tooltip, Checkbox, Switch,
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, LockOutlined, UnlockOutlined, CheckOutlined, CloseOutlined,
@@ -9,56 +9,31 @@ import {
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { ROLE_LABELS } from '@/types/auth'
-import type { UserRole } from '@/types/auth'
+import type { User, UserRole } from '@/types/auth'
+import {
+  RESOURCES, ACTIONS, ROLE_DESC, khoaQuyen, quyenTheoVaiTro, tinhQuyenRieng, demQuyenRieng, can,
+} from '@/utils/rbac'
 import { formatDate } from '@/utils/helpers'
 import { useAuth } from '@/hooks/useAuth'
 import { adminDatMatKhau } from '@/lib/auth'
+import { logAction } from '@/utils/auditLogger'
 
 const { Title, Text } = Typography
-
-// ── Ma trận quyền ──────────────────────────────────────────────────────────
-const RESOURCES = [
-  { key: 'vienChuc', label: 'Hồ sơ viên chức' },
-  { key: 'viTri',    label: 'Vị trí việc làm' },
-  { key: 'luong',    label: 'Lương & hệ số' },
-  { key: 'deXuat',   label: 'Đề xuất điều chỉnh' },
-  { key: 'baoCao',   label: 'Báo cáo' },
-  { key: 'duBao',    label: 'Dự báo nghỉ hưu' },
-  { key: 'admin',    label: 'Quản trị hệ thống' },
-]
-
-const PERM_MATRIX: Record<UserRole, Record<string, string[]>> = {
-  ADMIN:      { '*': ['read', 'write', 'approve', 'admin'] },
-  CB_VH_XH:  { vienChuc: ['read','write'], viTri: ['read','write'], luong: ['read','write'], deXuat: ['read','write','approve'], baoCao: ['read'], duBao: ['read'] },
-  LANH_DAO:  { vienChuc: ['read'], viTri: ['read'], luong: ['read'], deXuat: ['read','approve'], baoCao: ['read'], duBao: ['read'] },
-  HIEU_TRUONG: { vienChuc: ['read','write'], viTri: ['read'], luong: ['read'], deXuat: ['read','approve'], baoCao: ['read'], duBao: ['read'] },
-  CB_TRUONG: { vienChuc: ['read','write'], viTri: ['read'], luong: ['read'], deXuat: ['read','write'], baoCao: ['read'], duBao: ['read'] },
-}
-
-const ROLE_DESC: Record<UserRole, string> = {
-  ADMIN: 'Toàn quyền — quản trị hệ thống, tài khoản, danh mục. Không giới hạn phạm vi đơn vị.',
-  CB_VH_XH: 'Cán bộ Phòng VH-XH: xem + sửa toàn bộ hồ sơ, lương, đề xuất của tất cả trường.',
-  LANH_DAO: 'Lãnh đạo UBND phường: chỉ xem và phê duyệt, không chỉnh sửa dữ liệu.',
-  HIEU_TRUONG: 'Hiệu trưởng: xem + sửa hồ sơ trường mình, tạo và duyệt đề xuất của trường.',
-  CB_TRUONG: 'Cán bộ trường (kế toán): xem + sửa hồ sơ và tạo đề xuất — chỉ trong phạm vi trường được gán.',
-}
 
 const ROLE_COLOR: Record<UserRole, string> = {
   ADMIN: 'red', CB_VH_XH: 'blue', LANH_DAO: 'purple', HIEU_TRUONG: 'gold', CB_TRUONG: 'green',
 }
 
-function hasPerm(role: UserRole, resource: string, action: string): boolean {
-  const m = PERM_MATRIX[role]
-  return m['*']?.includes(action) || m[resource]?.includes(action) || false
-}
-
-function PermMatrix({ role }: { role: UserRole }) {
-  const actions = [
-    { key: 'read',    label: 'Xem' },
-    { key: 'write',   label: 'Sửa' },
-    { key: 'approve', label: 'Duyệt' },
-    { key: 'admin',   label: 'Quản trị' },
-  ]
+// Bảng quyền: chỉ xem khi theo mặc định vai trò, tích chọn được khi bật tùy chỉnh.
+// Ô nào khác mặc định của vai trò được tô màu để thấy ngay đã sửa tay chỗ nào.
+function BangQuyen({
+  role, chon, onDoi, choSua,
+}: {
+  role: UserRole
+  chon: Record<string, boolean>
+  onDoi: (k: string, v: boolean) => void
+  choSua: boolean
+}) {
   return (
     <div style={{ overflowX: 'auto', marginTop: 8 }}>
       <Alert title={ROLE_DESC[role]} type="info" showIcon style={{ marginBottom: 8, fontSize: 12 }} />
@@ -66,8 +41,8 @@ function PermMatrix({ role }: { role: UserRole }) {
         <thead>
           <tr style={{ background: '#fafafa' }}>
             <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #f0f0f0' }}>Chức năng</th>
-            {actions.map((a) => (
-              <th key={a.key} style={{ textAlign: 'center', padding: '4px 8px', borderBottom: '1px solid #f0f0f0', width: 56 }}>{a.label}</th>
+            {ACTIONS.map((a) => (
+              <th key={a.key} style={{ textAlign: 'center', padding: '4px 8px', borderBottom: '1px solid #f0f0f0', width: 62 }}>{a.label}</th>
             ))}
           </tr>
         </thead>
@@ -75,13 +50,31 @@ function PermMatrix({ role }: { role: UserRole }) {
           {RESOURCES.map((r) => (
             <tr key={r.key} style={{ borderBottom: '1px solid #f5f5f5' }}>
               <td style={{ padding: '3px 8px' }}>{r.label}</td>
-              {actions.map((a) => (
-                <td key={a.key} style={{ textAlign: 'center', padding: '3px 8px' }}>
-                  {hasPerm(role, r.key, a.key)
-                    ? <CheckOutlined style={{ color: '#52c41a' }} />
-                    : <CloseOutlined style={{ color: '#d9d9d9' }} />}
-                </td>
-              ))}
+              {ACTIONS.map((a) => {
+                const k = khoaQuyen(r.key, a.key)
+                const macDinh = quyenTheoVaiTro(role, r.key, a.key)
+                const co = chon[k] ?? macDinh
+                const khac = co !== macDinh
+                return (
+                  <td
+                    key={a.key}
+                    style={{
+                      textAlign: 'center', padding: '3px 8px',
+                      background: khac ? (co ? '#f6ffed' : '#fff2f0') : undefined,
+                    }}
+                  >
+                    {choSua ? (
+                      <Tooltip title={khac ? (co ? 'Cấp thêm ngoài vai trò' : 'Đã thu hồi so với vai trò') : undefined}>
+                        <Checkbox checked={co} onChange={(e: { target: { checked: boolean } }) => onDoi(k, e.target.checked)} />
+                      </Tooltip>
+                    ) : co ? (
+                      <CheckOutlined style={{ color: '#52c41a' }} />
+                    ) : (
+                      <CloseOutlined style={{ color: '#d9d9d9' }} />
+                    )}
+                  </td>
+                )
+              })}
             </tr>
           ))}
         </tbody>
@@ -101,6 +94,9 @@ export default function UserManagePage() {
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState<any>(null)
+  // Bảng tích chọn quyền; rỗng nghĩa là đang theo đúng mặc định của vai trò
+  const [tuyChinhQuyen, setTuyChinhQuyen] = useState(false)
+  const [chonQuyen, setChonQuyen] = useState<Record<string, boolean>>({})
   const [form] = Form.useForm()
   const [selectedRole, setSelectedRole] = useState<UserRole | undefined>()
 
@@ -117,13 +113,55 @@ export default function UserManagePage() {
     return true
   }), [users, filterRole, filterStatus, filterDonVi])
 
-  const openCreate = () => { setEditing(null); setSelectedRole(undefined); form.resetFields(); setOpen(true) }
-  const openEdit = (r: any) => { setEditing(r); setSelectedRole(r.role); form.setFieldsValue({ ...r, password: '' }); setOpen(true) }
-  const closeModal = () => { setOpen(false); setEditing(null); form.resetFields(); setSelectedRole(undefined) }
+  // Trải quyền riêng đã lưu thành bảng tích chọn để hiển thị
+  const trai = (role: UserRole | undefined, q: User['quyenRieng']) => {
+    const out: Record<string, boolean> = {}
+    if (!role) return out
+    for (const r of RESOURCES) {
+      for (const a of ACTIONS) {
+        const k = khoaQuyen(r.key, a.key)
+        out[k] = quyenTheoVaiTro(role, r.key, a.key)
+      }
+    }
+    q?.them?.forEach((k: string) => { out[k] = true })
+    q?.bot?.forEach((k: string) => { out[k] = false })
+    return out
+  }
+
+  const openCreate = () => {
+    setEditing(null); setSelectedRole(undefined); form.resetFields()
+    setTuyChinhQuyen(false); setChonQuyen({}); setOpen(true)
+  }
+  const openEdit = (r: any) => {
+    setEditing(r); setSelectedRole(r.role)
+    form.setFieldsValue({ ...r, password: '', matKhauAdmin: '' })
+    setTuyChinhQuyen(demQuyenRieng(r.quyenRieng) > 0)
+    setChonQuyen(trai(r.role, r.quyenRieng))
+    setOpen(true)
+  }
+  const closeModal = () => {
+    setOpen(false); setEditing(null); form.resetFields(); setSelectedRole(undefined)
+    setTuyChinhQuyen(false); setChonQuyen({})
+  }
+
+  // Đổi vai trò thì bảng quyền phải vẽ lại theo mặc định của vai trò mới
+  const doiVaiTro = (v: UserRole) => {
+    setSelectedRole(v)
+    setChonQuyen(trai(v, undefined))
+  }
 
   const onSave = async (values: any) => {
     if (!currentUser) return
     const username = editing ? editing.username : values.username
+
+    // Không bật tùy chỉnh thì xóa hẳn quyền riêng, trả tài khoản về đúng vai trò
+    const quyenRieng = tuyChinhQuyen ? tinhQuyenRieng(values.role, chonQuyen) : undefined
+    const soRieng = demQuyenRieng(quyenRieng)
+
+    // Quyền đặt mật khẩu cho người khác đi theo quyền quản trị THỰC TẾ, không
+    // chỉ theo vai trò. Nếu chỉ xét vai trò thì người được cấp riêng quyền quản
+    // trị vào được trang này nhưng bấm lưu mật khẩu lại bị máy chủ từ chối.
+    const dichLaQuanTri = can({ role: values.role, quyenRieng }, 'admin', 'admin')
 
     // Mật khẩu nằm trên máy chủ, không nằm trong hồ sơ tài khoản.
     // Đặt mật khẩu là thao tác đặc quyền nên admin phải xác nhận danh tính.
@@ -131,7 +169,7 @@ export default function UserManagePage() {
       setSaving(true)
       const kq = await adminDatMatKhau(
         currentUser.username, values.matKhauAdmin,
-        username, values.password, values.role === 'ADMIN',
+        username, values.password, dichLaQuanTri,
       )
       setSaving(false)
       if (!kq.ok) {
@@ -140,14 +178,30 @@ export default function UserManagePage() {
         else message.error('CHƯA đặt được mật khẩu — không kết nối được máy chủ. Vui lòng thử lại.')
         return
       }
+      // Đặt lại mật khẩu cho người khác là thao tác đặc quyền, phải có vết
+      logAction(currentUser.id, currentUser.fullName, 'PASSWORD', 'User', {
+        entityId: editing?.id,
+        donViId: values.donViId ?? undefined,
+        moTa: editing
+          ? `Đặt lại mật khẩu cho tài khoản ${username}`
+          : `Cấp mật khẩu cho tài khoản mới ${username}`,
+      })
     }
 
     if (editing) {
-      updateUser(editing.id, { role: values.role, donViId: values.donViId ?? null, fullName: values.fullName })
-      message.success(values.password ? 'Đã cập nhật tài khoản và đặt lại mật khẩu' : 'Đã cập nhật tài khoản')
+      updateUser(editing.id, {
+        role: values.role, donViId: values.donViId ?? null, fullName: values.fullName, quyenRieng,
+      })
+      message.success(
+        (values.password ? 'Đã cập nhật tài khoản và đặt lại mật khẩu' : 'Đã cập nhật tài khoản')
+        + (soRieng ? ` — ${soRieng} quyền tùy chỉnh` : ''),
+      )
     } else {
-      addUser({ username, fullName: values.fullName, role: values.role, donViId: values.donViId ?? null, active: true })
-      message.success('Đã tạo tài khoản')
+      addUser({
+        username, fullName: values.fullName, role: values.role,
+        donViId: values.donViId ?? null, active: true, quyenRieng,
+      })
+      message.success('Đã tạo tài khoản' + (soRieng ? ` — ${soRieng} quyền tùy chỉnh` : ''))
     }
     closeModal()
   }
@@ -176,8 +230,25 @@ export default function UserManagePage() {
     { title: 'Tên đăng nhập', dataIndex: 'username', key: 'un', width: 140 },
     { title: 'Họ và tên', dataIndex: 'fullName', key: 'fn' },
     {
-      title: 'Vai trò', dataIndex: 'role', key: 'role', width: 200,
-      render: (v: UserRole) => <Tag color={ROLE_COLOR[v]}>{ROLE_LABELS[v]}</Tag>,
+      title: 'Vai trò', dataIndex: 'role', key: 'role', width: 240,
+      render: (v: UserRole, r: any) => {
+        const so = demQuyenRieng(r.quyenRieng)
+        return (
+          <Space size={4} wrap>
+            <Tag color={ROLE_COLOR[v]}>{ROLE_LABELS[v]}</Tag>
+            {so > 0 && (
+              <Tooltip
+                title={[
+                  r.quyenRieng?.them?.length ? `Cấp thêm: ${r.quyenRieng.them.join(', ')}` : '',
+                  r.quyenRieng?.bot?.length ? `Thu hồi: ${r.quyenRieng.bot.join(', ')}` : '',
+                ].filter(Boolean).join(' — ')}
+              >
+                <Tag color="orange">Quyền riêng ({so})</Tag>
+              </Tooltip>
+            )}
+          </Space>
+        )
+      },
     },
     {
       title: 'Đơn vị phụ trách', dataIndex: 'donViId', key: 'dv',
@@ -331,13 +402,45 @@ export default function UserManagePage() {
           <Form.Item name="role" label="Vai trò" rules={[{ required: true }]}>
             <Select
               options={Object.entries(ROLE_LABELS).map(([k, v]) => ({ value: k, label: v }))}
-              onChange={(v) => setSelectedRole(v as UserRole)}
+              onChange={(v) => doiVaiTro(v as UserRole)}
               placeholder="Chọn vai trò"
             />
           </Form.Item>
 
-          {/* Ma trận quyền theo vai trò được chọn */}
-          {selectedRole && <PermMatrix role={selectedRole} />}
+          {/* Quyền của tài khoản: mặc định theo vai trò, có thể sửa tay khi cần */}
+          {selectedRole && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                <Text strong>Quyền của tài khoản</Text>
+                <Space size={6}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>Tùy chỉnh riêng</Text>
+                  <Switch
+                    size="small"
+                    checked={tuyChinhQuyen}
+                    onChange={(v) => {
+                      setTuyChinhQuyen(v)
+                      if (!v) setChonQuyen(trai(selectedRole, undefined))
+                    }}
+                  />
+                </Space>
+              </div>
+              <BangQuyen
+                role={selectedRole}
+                chon={chonQuyen}
+                choSua={tuyChinhQuyen}
+                onDoi={(k, v) => setChonQuyen((s) => ({ ...s, [k]: v }))}
+              />
+              {tuyChinhQuyen && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  style={{ marginTop: 8, fontSize: 12 }}
+                  title="Tài khoản này không còn theo đúng mặc định của vai trò"
+                  description="Ô nền xanh là quyền cấp thêm, nền đỏ là quyền đã thu hồi. Tắt công tắc để trả về đúng vai trò."
+                />
+              )}
+            </>
+          )}
 
           {(selectedRole === 'CB_TRUONG' || selectedRole === 'HIEU_TRUONG') && (
             <Form.Item name="donViId" label="Đơn vị phụ trách" rules={[{ required: true, message: 'Chọn trường' }]} style={{ marginTop: 12 }}>

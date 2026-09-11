@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, ghiNhanPhienBan, datCoDangDongBo } from './supabase'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -29,7 +29,8 @@ export async function syncFromSupabase(): Promise<SyncResult> {
   if (!supabase) return 'disabled'
 
   try {
-    const { data, error } = await supabase.from('app_state').select('key, value')
+    // updated_at là phiên bản dùng cho khoá lạc quan khi ghi ngược lên.
+    const { data, error } = await supabase.from('app_state').select('key, value, updated_at')
 
     if (error) {
       console.error('[Supabase] Không đọc được app_state:', error.message)
@@ -37,19 +38,28 @@ export async function syncFromSupabase(): Promise<SyncResult> {
     }
     if (!data || data.length === 0) return 'empty'
 
-    // Ghi dữ liệu Supabase vào localStorage để rehydrate() đọc lại.
-    // Bỏ qua ql-auth: phiên đăng nhập là của riêng từng máy, kéo về sẽ biến
-    // người dùng này thành người dùng khác. Bản ghi cũ trên máy chủ (nếu còn)
-    // cũng không được phép ghi đè phiên tại chỗ.
-    for (const row of data) {
-      if (row.key === 'ql-auth') continue
-      localStorage.setItem(row.key, JSON.stringify(row.value))
+    // Khoá ghi trong lúc rehydrate, nếu không việc nạp lại state có thể kích
+    // hoạt lệnh ghi ngược lên máy chủ ngay giữa chừng.
+    datCoDangDongBo(true)
+    try {
+      // Bỏ qua ql-auth: phiên đăng nhập là của riêng từng máy, kéo về sẽ biến
+      // người dùng này thành người dùng khác. Bản ghi cũ trên máy chủ (nếu còn)
+      // cũng không được phép ghi đè phiên tại chỗ.
+      for (const row of data) {
+        if (row.key === 'ql-auth') continue
+        localStorage.setItem(row.key, JSON.stringify(row.value))
+        ghiNhanPhienBan(row.key, row.updated_at)
+      }
+
+      await Promise.all(STORES.map((s) => s.persist.rehydrate()))
+    } finally {
+      datCoDangDongBo(false)
     }
 
-    await Promise.all(STORES.map((s) => s.persist.rehydrate()))
     return 'loaded'
   } catch (e) {
     console.error('[Supabase] Lỗi khi đồng bộ:', e)
+    datCoDangDongBo(false)
     return 'error'
   }
 }

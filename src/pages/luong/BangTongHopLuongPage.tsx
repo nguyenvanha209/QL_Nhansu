@@ -20,6 +20,7 @@ const PC_VK_MA  = 'PC_THAM_NIEN_VK'
 const PC_CV_MA  = 'PC_CHUC_VU'
 const PC_TN_MA  = 'PC_TRACH_NHIEM'
 const PC_TNN_MA = 'PC_THAM_NIEN'
+const PC_BAO_LUU_MA = 'PC_BAO_LUU'
 const PC_UD_PREFIX = 'PCUD'
 
 const r3 = (n: number) => Math.round(n * 1000) / 1000
@@ -106,7 +107,12 @@ function buildRow(
   const { val: tnnPct, rec: tnnRec } = byMa(PC_TNN_MA)
 
   const heSo = heSoRec?.heSo ?? 0
-  const baoLuu = heSoRec?.heSoBaoLuu ?? 0
+  // Hệ số chênh lệch bảo lưu nằm ở hai chỗ tuỳ nguồn nhập: một số hồ sơ ghi
+  // thẳng vào bản ghi hệ số lương, số khác (nhập từ bảng lương Excel) lại ghi
+  // thành một khoản phụ cấp riêng. Đọc cả hai, nếu không cột này luôn trống và
+  // phần bảo lưu bị thiếu khỏi tổng hệ số của người đó.
+  const { val: baoLuuPhuCap } = byMa(PC_BAO_LUU_MA)
+  const baoLuu = baoLuuPhuCap || (heSoRec?.heSoBaoLuu ?? 0)
   const vkHeSo = r3(heSo * (vkPct / 100))
   const tongHSLC = r3(heSo + vkHeSo)
   const nen = tongHSLC + cvCoeff
@@ -244,13 +250,6 @@ export default function BangTongHopLuongPage() {
           : tenDonVi((a as RowData).donViId).localeCompare(tenDonVi((b as RowData).donViId), 'vi'),
     }]),
     {
-      title: 'Ngày, tháng, năm sinh', key: 'ngaySinh', width: 105, align: 'center' as const,
-      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.ngaySinh : '',
-      sorter: (a: DisplayRow, b: DisplayRow) =>
-        a._type === 'subtotal' || b._type === 'subtotal' ? 0
-          : ((a as RowData).ngaySinh ?? '').localeCompare((b as RowData).ngaySinh ?? ''),
-    },
-    {
       title: 'Chức vụ, vị trí đảm nhiệm', key: 'chucVu', width: 165,
       render: (_: any, r: DisplayRow) => r._type === 'data' ? r.chucVuHienThi : '',
     },
@@ -297,10 +296,6 @@ export default function BangTongHopLuongPage() {
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).tongHSLC - (b as RowData).tongHSLC,
     },
     {
-      title: 'Thời điểm tính nâng bậc lương hoặc phụ cấp TNVK', key: 'thoiDiem', width: 120, align: 'center' as const,
-      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.thoiDiem : '',
-    },
-    {
       title: 'Phụ cấp chức vụ', key: 'pcCV', width: 85, align: 'right' as const,
       render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcCV)}</Text> : d3((r as RowData).pcCV),
       sorter: (a: DisplayRow, b: DisplayRow) =>
@@ -325,10 +320,6 @@ export default function BangTongHopLuongPage() {
           sorter: (a: DisplayRow, b: DisplayRow) =>
             a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcTNNG_HeSo - (b as RowData).pcTNNG_HeSo,
         },
-        {
-          title: 'Mốc xét nâng PC TNNG', key: 'mocTNNG', width: 100, align: 'center' as const,
-          render: (_: any, r: DisplayRow) => r._type === 'data' ? r.mocTNNG : '',
-        },
       ],
     },
     {
@@ -342,22 +333,16 @@ export default function BangTongHopLuongPage() {
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcUD - (b as RowData).pcUD,
     },
     {
-      title: 'Tổng hệ số lương 1 tháng', key: 'tong1Thang', width: 100, align: 'right' as const,
+      // Cột chốt của cả bảng: tổng hệ số lương thực hưởng của từng viên chức,
+      // gồm lương chính cộng toàn bộ phụ cấp. Tô nền để đọc bảng rộng không lạc.
+      title: 'TỔNG HỆ SỐ LƯƠNG (1 tháng)', key: 'tong1Thang', width: 120, align: 'right' as const,
+      onCell: () => ({ style: { background: '#e6f4ff' } }),
       render: (_: any, r: DisplayRow) =>
         r._type === 'subtotal'
           ? <Text strong style={{ color: '#1677ff' }}>{r.tong1Thang.toFixed(3)}</Text>
-          : <strong>{(r as RowData).tong1Thang.toFixed(3)}</strong>,
+          : <Text strong style={{ color: '#0958d9', fontSize: 13 }}>{(r as RowData).tong1Thang.toFixed(3)}</Text>,
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).tong1Thang - (b as RowData).tong1Thang,
-    },
-    {
-      title: 'Tổng hệ số lương 6 tháng đầu năm', key: 'tong6Thang', width: 120, align: 'right' as const,
-      render: (_: any, r: DisplayRow) =>
-        r._type === 'subtotal'
-          ? <Text strong style={{ color: '#1677ff' }}>{r.tong6Thang.toFixed(3)}</Text>
-          : <strong>{(r as RowData).tong6Thang.toFixed(3)}</strong>,
-      sorter: (a: DisplayRow, b: DisplayRow) =>
-        a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).tong6Thang - (b as RowData).tong6Thang,
     },
   ]
 
@@ -405,7 +390,7 @@ export default function BangTongHopLuongPage() {
         <Title level={4} style={{ margin: 0 }}>
           Bảng tổng hợp lương{' '}
           <span style={{ fontWeight: 400, fontSize: 14, color: '#666' }}>
-            ({rows.length} người — Tổng HS 6 tháng: <strong>{grandTotal.tong6Thang.toFixed(3)}</strong>)
+            ({rows.length} người — Tổng hệ số lương: <strong>{grandTotal.tong1Thang.toFixed(3)}</strong>)
           </span>
         </Title>
         <Button icon={<DownloadOutlined />} onClick={handleExport}>Xuất Excel</Button>
@@ -446,24 +431,20 @@ export default function BangTongHopLuongPage() {
           // chỉ số 0..19 cố định, nên chỉ cần thêm một cột là toàn bộ dòng tổng
           // lệch sang phải mà không ai để ý.
           const oTong: { noiDung?: ReactNode; canPhai?: boolean }[] = [
-            { noiDung: `${rows.length} người`, canPhai: false }, // cột ngày sinh
-            {}, // chức vụ
+            { noiDung: `${rows.length} người` }, // chức vụ
             {}, // mã CDNN
             {}, // bậc
             {}, // hệ số
             {}, // % vượt khung
             { noiDung: d3(grandTotal.vkHeSo), canPhai: true },
             { noiDung: grandTotal.tongHSLC.toFixed(3), canPhai: true },
-            {}, // thời điểm
             { noiDung: d3(grandTotal.pcCV), canPhai: true },
             { noiDung: d3(grandTotal.pcTN), canPhai: true },
             {}, // % thâm niên nhà giáo
             { noiDung: d3(grandTotal.pcTNNG_HeSo), canPhai: true },
-            {}, // mốc thâm niên
             { noiDung: d3(grandTotal.hsBaoLuu), canPhai: true },
             { noiDung: d3(grandTotal.pcUD), canPhai: true },
-            { noiDung: <span style={{ color: '#1677ff' }}>{grandTotal.tong1Thang.toFixed(3)}</span>, canPhai: true },
-            { noiDung: <span style={{ color: '#1677ff' }}>{grandTotal.tong6Thang.toFixed(3)}</span>, canPhai: true },
+            { noiDung: <span style={{ color: '#0958d9' }}>{grandTotal.tong1Thang.toFixed(3)}</span>, canPhai: true },
           ]
           let i = 0
           return (

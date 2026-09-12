@@ -4,7 +4,7 @@ import { ClockCircleOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { calcRetirementDate, calcPensionStartDate, getDaysUntilRetirement } from '@/utils/retirement'
+import { calcRetirementDate, calcPensionStartDate, getDaysUntilRetirement, getMonthsUntilRetirement, moTaTuoiNghiHuu } from '@/utils/retirement'
 import { formatDate } from '@/utils/helpers'
 import { isDangCongTac } from '@/types/vienChuc'
 
@@ -24,19 +24,22 @@ export default function DuBaoNghiHuuPage() {
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
 
   const data = useMemo(() => {
-    const limit = years * 365
+    // Mốc tính theo ngày thật, không quy đổi 365 ngày/năm (lệch do năm nhuận)
+    const homNay = new Date()
+    const mocCuoi = new Date(homNay.getFullYear() + years, homNay.getMonth(), homNay.getDate())
     return vienChucs
       .map((vc) => {
         const gt = vc.gioiTinh as 'NAM' | 'NU'
         const days = getDaysUntilRetirement(vc.ngaySinh, gt)
+        const months = getMonthsUntilRetirement(vc.ngaySinh, gt)
         const retireDate = calcRetirementDate(vc.ngaySinh, gt)
         const pensionDate = calcPensionStartDate(vc.ngaySinh, gt)
         const dv = donVis.find((d) => d.id === vc.donViId)
         const cd = chucDanhs.find((c) => c.id === vc.chucDanhId)
-        return { ...vc, days, retireDate: toDateStr(retireDate), pensionDate: toDateStr(pensionDate), donViTen: dv?.ten ?? '', chucDanhTen: cd?.ten ?? '' }
+        return { ...vc, days, months, tuoiNghiHuu: moTaTuoiNghiHuu(vc.ngaySinh, gt), retireDate: toDateStr(retireDate), pensionDate: toDateStr(pensionDate), donViTen: dv?.ten ?? '', chucDanhTen: cd?.ten ?? '' }
       })
       .filter((r) => {
-        if (r.days < 0 || r.days > limit) return false
+        if (r.days < 0 || new Date(r.retireDate) > mocCuoi) return false
         if (filterDonVi && r.donViId !== filterDonVi) return false
         return true
       })
@@ -52,6 +55,11 @@ export default function DuBaoNghiHuuPage() {
     { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', ellipsis: true },
     { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd', ellipsis: true },
     {
+      // Hiện tuổi nghỉ hưu theo lộ trình để đối chiếu thẳng với Phụ lục I/II NĐ 135
+      title: 'Tuổi nghỉ hưu', dataIndex: 'tuoiNghiHuu', key: 'tnh', width: 140,
+      render: (v: string) => <Text type="secondary">{v}</Text>,
+    },
+    {
       title: 'Thời điểm nghỉ hưu', dataIndex: 'retireDate', key: 'rd', width: 140,
       render: (v: string) => <Text strong>{formatDate(v)}</Text>,
     },
@@ -60,12 +68,13 @@ export default function DuBaoNghiHuuPage() {
       render: (v: string) => formatDate(v),
     },
     {
-      title: 'Còn lại', dataIndex: 'days', key: 'days', width: 110,
-      render: (v: number) => (
-        <Tag color={v <= 180 ? 'red' : v <= 365 ? 'orange' : 'blue'}>
-          {Math.floor(v / 30)} tháng
+      title: 'Còn lại', dataIndex: 'months', key: 'months', width: 110,
+      render: (_: number, r: any) => (
+        <Tag color={r.days <= 180 ? 'red' : r.days <= 365 ? 'orange' : 'blue'}>
+          {r.months} tháng
         </Tag>
       ),
+      sorter: (a: any, b: any) => a.days - b.days,
     },
     {
       title: 'Mức độ', key: 'level',
@@ -94,7 +103,7 @@ export default function DuBaoNghiHuuPage() {
         columns={columns}
         rowKey="id"
         size="small"
-        scroll={{ x: 1000 }}
+        scroll={{ x: 1250 }}
         pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} viên chức dự kiến nghỉ hưu` }}
       />
     </Card>

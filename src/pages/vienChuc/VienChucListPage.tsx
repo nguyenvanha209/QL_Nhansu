@@ -92,7 +92,9 @@ export default function VienChucListPage() {
       sorter: (a: any, b: any) => (cdNameMap.get(a.chucDanhId) ?? '').localeCompare(cdNameMap.get(b.chucDanhId) ?? '', 'vi'),
     },
     {
-      title: 'Loại hình', dataIndex: 'loaiLaoDong', key: 'll',
+      // Không đặt width thì cột này nuốt hết phần dư của bảng, kéo tiêu đề rộng
+      // ra trong khi nội dung chỉ là một thẻ ngắn.
+      title: 'Loại hình LĐ', dataIndex: 'loaiLaoDong', key: 'll', width: 150,
       render: (v: string) => <Tag color={v === 'VIEN_CHUC' ? 'blue' : v === 'TAP_SU' ? 'cyan' : 'default'}>{LOAI_LAO_DONG_LABELS[v as keyof typeof LOAI_LAO_DONG_LABELS] ?? v}</Tag>,
       sorter: (a: any, b: any) => a.loaiLaoDong.localeCompare(b.loaiLaoDong),
     },
@@ -192,7 +194,7 @@ export default function VienChucListPage() {
         columns={columns}
         rowKey="id"
         size="small"
-        scroll={{ x: 1330, y: 'calc(100vh - 290px)' }}
+        scroll={{ x: 1315, y: 'calc(100vh - 290px)' }}
         pagination={{ pageSize: 50, showSizeChanger: true, pageSizeOptions: [20, 50, 100], showTotal: (t) => `Tổng ${t} bản ghi` }}
       />
 

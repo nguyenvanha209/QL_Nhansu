@@ -57,6 +57,7 @@ interface SubtotalRow {
   key: string
   donViTen: string
   count: number
+  heSo: number
   vkHeSo: number
   tongHSLC: number
   pcCV: number
@@ -70,11 +71,11 @@ interface SubtotalRow {
 
 type DisplayRow = RowData | SubtotalRow
 
-const SUM_COLS = ['vkHeSo', 'tongHSLC', 'pcCV', 'pcTN', 'pcTNNG_HeSo', 'hsBaoLuu', 'pcUD', 'tong1Thang', 'tong6Thang'] as const
+const SUM_COLS = ['heSo', 'vkHeSo', 'tongHSLC', 'pcCV', 'pcTN', 'pcTNNG_HeSo', 'hsBaoLuu', 'pcUD', 'tong1Thang', 'tong6Thang'] as const
 
 function sumGroup(rows: RowData[]): Omit<SubtotalRow, '_type' | 'key' | 'donViTen' | 'count'> {
   const result: Record<string, number> = {}
-  for (const col of SUM_COLS) result[col] = r3(rows.reduce((s, r) => s + (r[col] as number), 0))
+  for (const col of SUM_COLS) result[col] = r3(rows.reduce((s, r) => s + (Number(r[col]) || 0), 0))
   return result as Omit<SubtotalRow, '_type' | 'key' | 'donViTen' | 'count'>
 }
 
@@ -265,8 +266,11 @@ export default function BangTongHopLuongPage() {
           : ((a as RowData).bac as number || 0) - ((b as RowData).bac as number || 0),
     },
     {
-      title: 'Hệ số', key: 'heSo', width: 65, align: 'right' as const,
-      render: (_: any, r: DisplayRow) => r._type === 'data' ? r.heSo : '',
+      title: 'Hệ số', key: 'heSo', width: 70, align: 'right' as const,
+      render: (_: any, r: DisplayRow) =>
+        r._type === 'subtotal'
+          ? <Text strong style={{ color: '#1677ff' }}>{r.heSo.toFixed(3)}</Text>
+          : r.heSo,
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0
           : ((a as RowData).heSo as number || 0) - ((b as RowData).heSo as number || 0),
@@ -434,7 +438,7 @@ export default function BangTongHopLuongPage() {
             { noiDung: `${rows.length} người` }, // chức vụ
             {}, // mã CDNN
             {}, // bậc
-            {}, // hệ số
+            { noiDung: grandTotal.heSo.toFixed(3), canPhai: true }, // hệ số
             {}, // % vượt khung
             { noiDung: d3(grandTotal.vkHeSo), canPhai: true },
             { noiDung: grandTotal.tongHSLC.toFixed(3), canPhai: true },

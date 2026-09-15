@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Form, Input, Button, Typography, Alert, Divider, Tag, Table } from 'antd'
-import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Typography, Alert, Divider, Tag, Table } from 'antd'
+import { UserOutlined, LockOutlined, PhoneOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -24,11 +24,9 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    // Mật khẩu được kiểm tra trên máy chủ (băm bcrypt), không so sánh tại trình duyệt
     const kq = await dangNhap(username, password)
 
     if (!kq.ok) {
-      // Ghi cả lần đăng nhập hỏng — dò mật khẩu chỉ nhìn ra được khi có vết này
       if (kq.lyDo === 'SAI' || kq.lyDo === 'KHOA') {
         const u = users.find((x) => x.username === username)
         logAction(u?.id ?? 'unknown', u?.fullName ?? username, 'LOGIN_FAIL', 'User', {
@@ -72,7 +70,6 @@ export default function LoginPage() {
   const DV_ORDER: Record<string, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3 }
   const DV_LABEL: Record<string, string> = { MAM_NON: 'Mầm non', TIEU_HOC: 'Tiểu học', THCS: 'THCS' }
 
-  // Lấy danh sách trường có ít nhất 1 tài khoản KT hoặc HT, nhóm theo loại trường
   const schoolAccounts = useMemo(() => {
     const activeDonVis = donVis
       .filter((d) => d.active)
@@ -102,7 +99,7 @@ export default function LoginPage() {
     {
       title: 'Trường', dataIndex: 'ten', key: 'ten',
       render: (v: string, r: any) => r.isGroup
-        ? <Text strong style={{ color: '#1677ff', fontSize: 13 }}>── {v} ──</Text>
+        ? <Text strong style={{ color: '#2563eb', fontSize: 13 }}>── {v} ──</Text>
         : v,
     },
     {
@@ -118,61 +115,107 @@ export default function LoginPage() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #e6f4ff 0%, #f0f5ff 100%)', padding: '24px 16px' }}>
-      <Card style={{ width: '100%', maxWidth: 680, boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <Title level={3} style={{ margin: 0 }}>Hệ thống Quản lý Viên chức</Title>
-          <Text type="secondary" style={{ fontSize: 15 }}>UBND Phường Gia Viên</Text>
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#f1f5f9' }}>
+      {/* Layout 2 cột */}
+      <div className="login-layout" style={{ display: 'flex', width: '100%', minHeight: '100vh' }}>
+        {/* Hero panel bên trái */}
+        <div className="login-hero" style={{ flex: '0 0 400px', minHeight: '100vh' }}>
+          <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: 18,
+              background: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(12px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 24px', fontSize: 28, fontWeight: 700,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+            }}>
+              GV
+            </div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.3 }}>
+              Hệ thống Quản lý<br />Viên chức &amp; Lao động
+            </h1>
+            <p style={{ fontSize: 14, opacity: 0.75, margin: '0 0 32px', lineHeight: 1.6 }}>
+              UBND Phường Gia Viên<br />
+              Các cơ sở giáo dục trực thuộc
+            </p>
+            <div style={{
+              display: 'flex', gap: 16, justifyContent: 'center',
+              fontSize: 13, opacity: 0.6,
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <SafetyOutlined style={{ fontSize: 20, marginBottom: 4, display: 'block' }} />
+                Bảo mật
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <UserOutlined style={{ fontSize: 20, marginBottom: 4, display: 'block' }} />
+                Phân quyền
+              </div>
+            </div>
+          </div>
         </div>
 
-        {error && <Alert type="error" title={error} showIcon style={{ marginBottom: 16 }} />}
+        {/* Form bên phải */}
+        <div className="login-form-col" style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '40px 48px', overflow: 'auto',
+        }}>
+          <div style={{ width: '100%', maxWidth: 520 }}>
+            <div style={{ marginBottom: 28 }}>
+              <Title level={3} style={{ margin: '0 0 4px', fontWeight: 600 }}>Đăng nhập</Title>
+              <Text type="secondary" style={{ fontSize: 14 }}>Nhập tài khoản đã được cấp để truy cập hệ thống</Text>
+            </div>
 
-        <Form form={form} onFinish={onFinish} size="large">
-          <Form.Item name="username" rules={[{ required: true, message: 'Nhập tên đăng nhập' }]}>
-            <Input prefix={<UserOutlined />} placeholder="Tên đăng nhập" autoComplete="username" />
-          </Form.Item>
-          <Form.Item name="password" rules={[{ required: true, message: 'Nhập mật khẩu' }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" autoComplete="current-password" />
-          </Form.Item>
-          <Form.Item style={{ marginBottom: 0 }}>
-            <Button type="primary" htmlType="submit" block loading={loading} size="large">Đăng nhập</Button>
-          </Form.Item>
-        </Form>
+            {error && <Alert type="error" title={error} showIcon style={{ marginBottom: 16, borderRadius: 8 }} />}
 
-        {schoolAccounts.length > 0 && (
-          <>
-            <Divider plain style={{ margin: '24px 0 12px' }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>Danh mục tài khoản theo trường</Text>
-            </Divider>
-            <Table
-              dataSource={schoolAccounts}
-              columns={columns}
-              size="small"
-              pagination={false}
-              rowClassName={(r: any) => r.isGroup ? 'login-group-row' : ''}
-              style={{ marginBottom: 4 }}
-            />
-            <style>{`.login-group-row td { background: #f0f5ff !important; padding-top: 6px !important; padding-bottom: 6px !important; }`}</style>
-            <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                Mật khẩu sẽ được cung cấp riêng — không hiển thị tại đây
+            <Form form={form} onFinish={onFinish} size="large" layout="vertical">
+              <Form.Item name="username" label="Tên đăng nhập" rules={[{ required: true, message: 'Nhập tên đăng nhập' }]}>
+                <Input prefix={<UserOutlined style={{ color: '#94a3b8' }} />} placeholder="Nhập tên đăng nhập" autoComplete="username" style={{ borderRadius: 8, height: 44 }} />
+              </Form.Item>
+              <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Nhập mật khẩu' }]}>
+                <Input.Password prefix={<LockOutlined style={{ color: '#94a3b8' }} />} placeholder="Nhập mật khẩu" autoComplete="current-password" style={{ borderRadius: 8, height: 44 }} />
+              </Form.Item>
+              <Form.Item style={{ marginBottom: 16 }}>
+                <Button type="primary" htmlType="submit" block loading={loading} size="large" style={{ height: 44, borderRadius: 8, fontWeight: 600 }}>
+                  Đăng nhập
+                </Button>
+              </Form.Item>
+            </Form>
+
+            {schoolAccounts.length > 0 && (
+              <>
+                <Divider plain style={{ margin: '24px 0 12px' }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>Danh mục tài khoản theo trường</Text>
+                </Divider>
+                <Table
+                  dataSource={schoolAccounts}
+                  columns={columns}
+                  size="small"
+                  pagination={false}
+                  rowClassName={(r: any) => r.isGroup ? 'login-group-row' : ''}
+                  style={{ marginBottom: 4 }}
+                />
+                <div style={{ textAlign: 'center', marginTop: 8 }}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>
+                    Mật khẩu sẽ được cung cấp riêng — không hiển thị tại đây
+                  </Text>
+                </div>
+              </>
+            )}
+
+            <Divider style={{ margin: '16px 0 12px' }} />
+            <div style={{ textAlign: 'center', padding: '0 8px' }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Nếu không đăng nhập được, xin liên hệ:
+              </Text>
+              <br />
+              <Text style={{ fontSize: 13, fontWeight: 600 }}>
+                <PhoneOutlined style={{ marginRight: 6, color: '#2563eb' }} />
+                Đ/c Nguyễn Văn Hạ — 0902.121.599
               </Text>
             </div>
-          </>
-        )}
-
-        <Divider style={{ margin: '16px 0 12px' }} />
-        <div style={{ textAlign: 'center', padding: '0 8px' }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            Nếu không đăng nhập được, xin liên hệ:
-          </Text>
-          <br />
-          <Text style={{ fontSize: 13, fontWeight: 600 }}>
-            <PhoneOutlined style={{ marginRight: 6, color: '#1677ff' }} />
-            Đ/c Nguyễn Văn Hạ — 0902.121.599
-          </Text>
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

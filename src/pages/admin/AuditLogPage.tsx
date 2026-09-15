@@ -141,9 +141,9 @@ export default function AuditLogPage() {
 
       <Row gutter={12} style={{ marginBottom: 16 }}>
         <Col xs={12} sm={6}><Card size="small"><Statistic title="Tổng bản ghi" value={thongKe.tong} /></Card></Col>
-        <Col xs={12} sm={6}><Card size="small"><Statistic title="Đăng nhập hôm nay" value={thongKe.dangNhapHomNay} valueStyle={{ color: '#722ed1' }} /></Card></Col>
-        <Col xs={12} sm={6}><Card size="small"><Statistic title="Đăng nhập hỏng hôm nay" value={thongKe.hongHomNay} valueStyle={{ color: thongKe.hongHomNay ? '#cf1322' : undefined }} /></Card></Col>
-        <Col xs={12} sm={6}><Card size="small"><Statistic title="Thao tác hôm nay" value={thongKe.thaoTacHomNay} valueStyle={{ color: '#1677ff' }} /></Card></Col>
+        <Col xs={12} sm={6}><Card size="small"><Statistic title="Đăng nhập hôm nay" value={thongKe.dangNhapHomNay} styles={{ content: { color: '#722ed1' } }} /></Card></Col>
+        <Col xs={12} sm={6}><Card size="small"><Statistic title="Đăng nhập hỏng hôm nay" value={thongKe.hongHomNay} styles={{ content: { color: thongKe.hongHomNay ? '#cf1322' : undefined } }} /></Card></Col>
+        <Col xs={12} sm={6}><Card size="small"><Statistic title="Thao tác hôm nay" value={thongKe.thaoTacHomNay} styles={{ content: { color: '#1677ff' } }} /></Card></Col>
       </Row>
 
       <Space wrap style={{ marginBottom: 16 }}>

@@ -1,24 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * { box-sizing: border-box; }
-body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 .ant-layout { min-height: 100vh; }
+
+/* ── Subtotal row ────────────────────────────────────────────── */
 .vt-subtotal-row > td { background: #fafafa !important; font-weight: 600; border-top: 1px solid #e8e8e8 !important; }
 
-/* Nút Hướng dẫn sử dụng trên header: thu về icon khi màn hình hẹp */
+/* ── Header: ẩn label "Hướng dẫn" khi hẹp ───────────────────── */
 @media (max-width: 900px) { .hd-btn-label { display: none; } }
 
-/* ── Chống tràn bảng ──────────────────────────────────────────────────────
-   Bảng rộng hơn khung phải tự cuộn ngang bên trong nó, không được đẩy cả
-   trang lệch sang phải. Đây là lớp an toàn chung: bảng nào lỡ thiếu thuộc
-   tính scroll thì vẫn không làm vỡ bố cục. */
+/* ── Chống tràn bảng ─────────────────────────────────────────── */
 .ant-table-wrapper { max-width: 100%; }
 .ant-table-content,
 .ant-table-body { overflow-x: auto; }
-
-/* Vùng nội dung chính không bao giờ cuộn ngang — phần tràn nằm trong bảng */
 .ant-layout-content { overflow-x: hidden; }
-
-/* Bảng HTML tự viết (ma trận quyền, sổ tay hướng dẫn) cũng cần cuộn riêng */
 .bang-cuon-ngang { overflow-x: auto; max-width: 100%; }
-
-/* Ô quá dài thì xuống dòng thay vì kéo giãn cột */
 .ant-table-tbody > tr > td { word-break: break-word; }
+
+/* ── Zebra stripe cho bảng ───────────────────────────────────── */
+.ant-table-tbody > tr:nth-child(even) > td { background: #fafbfc; }
+
+/* ── Sidebar gradient xanh dương ─────────────────────────────── */
+.qlvc-sidebar {
+  background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%) !important;
+}
+.qlvc-sidebar .ant-layout-sider-trigger {
+  background: rgba(0,0,0,0.15) !important;
+}
+
+/* Sidebar menu — nền trong suốt, chữ trắng */
+.qlvc-sidebar .ant-menu {
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255,255,255,0.85);
+}
+.qlvc-sidebar .ant-menu .ant-menu-item,
+.qlvc-sidebar .ant-menu .ant-menu-submenu-title {
+  color: rgba(255,255,255,0.75) !important;
+  margin: 2px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.qlvc-sidebar .ant-menu .ant-menu-item:hover,
+.qlvc-sidebar .ant-menu .ant-menu-submenu-title:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,0.12) !important;
+}
+.qlvc-sidebar .ant-menu .ant-menu-item-selected {
+  color: #fff !important;
+  background: rgba(255,255,255,0.2) !important;
+  font-weight: 500;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+}
+.qlvc-sidebar .ant-menu .ant-menu-item-selected::after {
+  display: none;
+}
+/* Icon trong menu */
+.qlvc-sidebar .ant-menu .ant-menu-item .anticon,
+.qlvc-sidebar .ant-menu .ant-menu-submenu-title .anticon {
+  color: rgba(255,255,255,0.7) !important;
+  font-size: 16px;
+}
+.qlvc-sidebar .ant-menu .ant-menu-item-selected .anticon {
+  color: #fff !important;
+}
+/* Submenu children */
+.qlvc-sidebar .ant-menu .ant-menu-sub {
+  background: rgba(0,0,0,0.1) !important;
+  border-radius: 8px;
+}
+
+/* ── Content fade-in ─────────────────────────────────────────── */
+.qlvc-content-fade {
+  animation: fadeSlide 0.25s ease-out;
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Login page ──────────────────────────────────────────────── */
+.login-group-row td {
+  background: #f0f5ff !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+.login-hero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 40%, #3b82f6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.login-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 40%);
+}
+@media (max-width: 768px) {
+  .login-layout { flex-direction: column !important; }
+  .login-hero { padding: 32px 24px; min-height: auto !important; }
+  .login-form-col { padding: 24px 20px !important; }
+}
+
+/* ── KPI cards hover effect ──────────────────────────────────── */
+.kpi-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.kpi-card .ant-statistic-title {
+  font-size: 13px;
+  color: #64748b;
+}
+.kpi-card .ant-statistic-content-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Dashboard chart card ────────────────────────────────────── */
+.chart-card .ant-card-head {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.chart-card .ant-card-head-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}

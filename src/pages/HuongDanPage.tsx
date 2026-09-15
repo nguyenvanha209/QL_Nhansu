@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Card, Typography, Table, Tag, Button, Space, Collapse, Alert } from 'antd'
+import { Card, Typography, Table, Tag, Button, Collapse, Alert } from 'antd'
 import { PrinterOutlined } from '@ant-design/icons'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -61,7 +61,7 @@ export default function HuongDanPage() {
   const colTaiKhoan = [
     {
       title: 'Trường', dataIndex: 'ten', key: 'ten',
-      render: (v: string, r: any) => r.isGroup ? <Text strong style={{ color: '#1B4D8F' }}>{v}</Text> : v,
+      render: (v: string, r: any) => r.isGroup ? <Text strong style={{ color: '#2563eb' }}>{v}</Text> : v,
     },
     {
       title: 'Tài khoản Kế toán', dataIndex: 'kt', key: 'kt', width: 170,
@@ -118,10 +118,15 @@ export default function HuongDanPage() {
     <Card className="hd-root">
       <div className="hd-toolbar">
         <div>
-          <Title level={3} style={{ margin: 0 }}>Sổ tay Kế toán trường</Title>
-          <Text type="secondary">
-            Hướng dẫn rà soát hồ sơ viên chức và lập phiếu đề xuất điều chỉnh hệ số lương, phụ cấp thâm niên
-          </Text>
+          <div className="hd-brand">
+            <div className="hd-logo">GV</div>
+            <div>
+              <Title level={3} style={{ margin: 0, fontWeight: 700 }}>Sổ tay Kế toán trường</Title>
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                Hướng dẫn sử dụng Hệ thống Quản lý Viên chức &amp; Lao động
+              </Text>
+            </div>
+          </div>
         </div>
         <Button icon={<PrinterOutlined />} onClick={() => window.print()}>In tài liệu</Button>
       </div>
@@ -129,17 +134,40 @@ export default function HuongDanPage() {
       <Alert
         type="info"
         showIcon
-        style={{ marginBottom: 28 }}
+        style={{ marginBottom: 28, borderRadius: 8 }}
         title="Dữ liệu viên chức đã được nhập sẵn từ bảng lương tháng 6/2026"
         description="Bốn việc chính: (1) rà soát, hoàn thiện hồ sơ viên chức; (2) không tự sửa hệ số lương và phụ cấp; (3) mọi điều chỉnh lương đi qua phiếu đề xuất — được phê duyệt là hệ thống tự ghi vào hồ sơ; (4) viên chức chuyển trường đi qua phiếu chuyển công tác, hồ sơ tự sang trường mới."
       />
 
+      {/* ── Mục lục ── */}
+      <div className="hd-toc">
+        <div className="hd-toc-title">Nội dung</div>
+        <ol>
+          <li><a href="#hd-s1">Đăng nhập hệ thống</a></li>
+          <li><a href="#hd-s2">Rà soát và hoàn thiện hồ sơ viên chức</a></li>
+          <li><a href="#hd-s3">Nguyên tắc về hệ số lương và phụ cấp</a></li>
+          <li><a href="#hd-s4">Quy trình đề xuất điều chỉnh</a></li>
+          <li><a href="#hd-s5">Hướng dẫn lập phiếu đề xuất</a></li>
+          <li><a href="#hd-s6">Chuyển công tác viên chức</a></li>
+          <li><a href="#hd-s7">Theo dõi và tra cứu</a></li>
+          <li><a href="#hd-s8">Câu hỏi thường gặp</a></li>
+        </ol>
+      </div>
+
       {/* ── I ── */}
+      <div id="hd-s1" />
       <Section
         so="I"
         tieuDe="Đăng nhập hệ thống"
         moTa="Mỗi trường được cấp hai tài khoản: một cho Kế toán (KT) và một cho Hiệu trưởng (HT). Tài khoản Kế toán là tài khoản trực tiếp nhập liệu và lập phiếu đề xuất."
       >
+        <h3>Cách đăng nhập</h3>
+        <ol>
+          <li>Mở trình duyệt, vào địa chỉ hệ thống. Trang đăng nhập hiển thị hai phần: bên trái là bảng hiệu hệ thống, bên phải là ô nhập tài khoản.</li>
+          <li>Nhập <b>Tên đăng nhập</b> và <b>Mật khẩu</b> đã được cấp, bấm <b>Đăng nhập</b>.</li>
+          <li>Sau khi vào, thanh điều hướng bên trái (nền xanh) hiển thị các chức năng theo quyền tài khoản.</li>
+        </ol>
+
         <h3>Tên đăng nhập của từng trường</h3>
         <Table
           dataSource={taiKhoanTruong}
@@ -151,8 +179,8 @@ export default function HuongDanPage() {
           style={{ marginBottom: 16 }}
         />
         <Paragraph>
-          Mật khẩu được cung cấp riêng cho từng trường, không đăng công khai trên màn hình đăng nhập.
-          Sau khi đăng nhập lần đầu, vào menu tài khoản ở góc trên bên phải → <b>Thông tin tài khoản</b> để đổi mật khẩu.
+          Mật khẩu được cung cấp riêng cho từng trường, không hiển thị trên màn hình đăng nhập.
+          Sau khi đăng nhập lần đầu, bấm vào <b>tên người dùng</b> ở góc trên bên phải → <b>Thông tin tài khoản</b> để đổi mật khẩu.
         </Paragraph>
 
         <KhungLuuY nhan="Lưu ý bảo mật">
@@ -165,6 +193,7 @@ export default function HuongDanPage() {
       </Section>
 
       {/* ── II ── */}
+      <div id="hd-s2" />
       <Section
         so="II"
         tieuDe="Rà soát và hoàn thiện hồ sơ viên chức"
@@ -172,7 +201,7 @@ export default function HuongDanPage() {
       >
         <h3>Cách mở và sửa một hồ sơ</h3>
         <ol>
-          <li>Vào menu <b>Hồ sơ viên chức</b> ở thanh bên trái.</li>
+          <li>Bấm mục <b>Hồ sơ viên chức</b> trên thanh điều hướng bên trái.</li>
           <li>Bấm vào <b>họ tên</b> viên chức để mở trang chi tiết.</li>
           <li>Bấm nút <b>Chỉnh sửa</b>, cập nhật thông tin rồi <b>Lưu</b>.</li>
         </ol>
@@ -273,6 +302,7 @@ export default function HuongDanPage() {
       </Section>
 
       {/* ── III ── */}
+      <div id="hd-s3" />
       <Section
         so="III"
         tieuDe="Nguyên tắc về hệ số lương và phụ cấp"
@@ -281,19 +311,42 @@ export default function HuongDanPage() {
         <KhungLuuY nhan="Quy định bắt buộc">
           <p><b>Kế toán không tự sửa hệ số lương, bậc lương và phụ cấp trực tiếp trong hồ sơ.</b></p>
           <p>
-            Tài khoản Kế toán được cấp quyền <i>chỉ xem</i> đối với dữ liệu lương. Menu “Lương &amp; Phụ cấp”
-            đã được ẩn khỏi thanh điều hướng. Mọi thay đổi phải đi qua phiếu đề xuất và được
-            Phòng Văn hóa – Xã hội thẩm định.
+            Tài khoản Kế toán được cấp quyền <i>chỉ xem</i> đối với dữ liệu lương. Mọi thay đổi phải
+            đi qua phiếu đề xuất và được Phòng Văn hóa – Xã hội thẩm định.
           </p>
         </KhungLuuY>
 
         <h3>Vì sao phải làm như vậy</h3>
-        <ul>
-          <li><b>Mỗi thay đổi đều có căn cứ.</b> Hệ số lương gắn với một phiếu đề xuất đã được phê duyệt, tra ngược lại được ai đề nghị, ai duyệt, ngày nào.</li>
-          <li><b>Có lịch sử biến động.</b> Hệ thống tự ghi lại “Bậc 3 – Hệ số 3.00 → Bậc 4 – Hệ số 3.33” kèm ngày hiệu lực, xem được ngay trong hồ sơ viên chức.</li>
-          <li><b>Số liệu 11 trường thống nhất.</b> Bảng tổng hợp lương toàn phường và các báo cáo gửi cấp trên luôn khớp nhau vì cùng lấy từ một nguồn.</li>
-          <li><b>Giảm việc cho Kế toán.</b> Sau khi phiếu được phê duyệt, hệ thống tự cập nhật vào hồ sơ — không phải nhập lại lần thứ hai.</li>
-        </ul>
+        <div className="hd-reasons">
+          <div className="hd-reason">
+            <div className="hd-reason-num">1</div>
+            <div>
+              <b>Mỗi thay đổi đều có căn cứ.</b> Hệ số lương gắn với một phiếu đề xuất đã được phê duyệt,
+              tra ngược lại được ai đề nghị, ai duyệt, ngày nào.
+            </div>
+          </div>
+          <div className="hd-reason">
+            <div className="hd-reason-num">2</div>
+            <div>
+              <b>Có lịch sử biến động.</b> Hệ thống tự ghi lại "Bậc 3 – Hệ số 3.00 → Bậc 4 – Hệ số 3.33"
+              kèm ngày hiệu lực, xem được ngay trong hồ sơ viên chức.
+            </div>
+          </div>
+          <div className="hd-reason">
+            <div className="hd-reason-num">3</div>
+            <div>
+              <b>Số liệu 11 trường thống nhất.</b> Bảng tổng hợp lương toàn phường và các báo cáo gửi cấp trên
+              luôn khớp nhau vì cùng lấy từ một nguồn.
+            </div>
+          </div>
+          <div className="hd-reason">
+            <div className="hd-reason-num">4</div>
+            <div>
+              <b>Giảm việc cho Kế toán.</b> Sau khi phiếu được phê duyệt, hệ thống tự cập nhật vào hồ sơ —
+              không phải nhập lại lần thứ hai.
+            </div>
+          </div>
+        </div>
 
         <h3>Phân biệt hai việc</h3>
         <div className="hd-tw">
@@ -324,6 +377,7 @@ export default function HuongDanPage() {
       </Section>
 
       {/* ── IV ── */}
+      <div id="hd-s4" />
       <Section
         so="IV"
         tieuDe="Quy trình đề xuất điều chỉnh"
@@ -379,10 +433,11 @@ export default function HuongDanPage() {
       </Section>
 
       {/* ── V ── */}
+      <div id="hd-s5" />
       <Section
         so="V"
         tieuDe="Hướng dẫn lập phiếu đề xuất"
-        moTa="Vào menu Đề xuất điều chỉnh Hệ số lương – PCTN, bấm nút tạo phiếu mới. Một phiếu có thể gồm nhiều viên chức cùng đợt, không cần lập riêng từng người."
+        moTa="Vào menu Đề xuất điều chỉnh Hệ số lương – PCTN trên thanh điều hướng, bấm nút tạo phiếu mới. Một phiếu có thể gồm nhiều viên chức cùng đợt, không cần lập riêng từng người."
       >
         <h3>Phần thông tin chung</h3>
         <div className="hd-tw">
@@ -452,6 +507,7 @@ export default function HuongDanPage() {
       </Section>
 
       {/* ── VI ── */}
+      <div id="hd-s6" />
       <Section
         so="VI"
         tieuDe="Chuyển công tác viên chức"
@@ -503,28 +559,38 @@ export default function HuongDanPage() {
       </Section>
 
       {/* ── VII ── */}
+      <div id="hd-s7" />
       <Section so="VII" tieuDe="Theo dõi và tra cứu">
+        <Paragraph style={{ marginBottom: 16 }}>
+          Sau khi đăng nhập, trang <b>Tổng quan</b> hiển thị lời chào kèm ngày tháng, các thẻ
+          thông tin nhanh (tổng lao động, đề xuất đang xử lý, sắp nâng lương, dự báo nghỉ hưu)
+          và biểu đồ nhân sự theo trường. Bên dưới bảng liệt kê các chức năng:
+        </Paragraph>
         <div className="hd-tw">
           <table className="hd-table">
             <thead><tr><th style={{ width: 250 }}>Menu</th><th>Dùng để làm gì</th></tr></thead>
             <tbody>
-              <tr><td><b>Tổng quan</b></td><td>Số liệu nhanh về nhân sự, cơ cấu vị trí việc làm và số phiếu đề xuất đang xử lý.</td></tr>
+              <tr><td><b>Tổng quan</b></td><td>Số liệu nhanh về nhân sự, cơ cấu vị trí việc làm, biểu đồ theo trường và số phiếu đề xuất đang xử lý. Thẻ "Sắp nâng lương" hiện số viên chức cần lập phiếu trong 90 ngày tới.</td></tr>
               <tr><td><b>Hồ sơ viên chức</b></td><td>Danh sách và chi tiết từng người, kèm lịch sử biến động lương – phụ cấp. Xuất được ra Excel.</td></tr>
               <tr><td><b>Bảng tổng hợp lương</b></td><td>Bảng lương theo mẫu quen thuộc, có dòng cộng của từng trường và dòng tổng cuối bảng. Bấm <b>Xuất Excel</b> để lấy file đối chiếu.</td></tr>
               <tr><td><b>Đề xuất điều chỉnh HSL – PCTN</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
               <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
-              <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu để chủ động bố trí nhân sự.</td></tr>
+              <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu (theo Nghị định 135/2020) để chủ động bố trí nhân sự.</td></tr>
               <tr><td><b>Báo cáo</b></td><td>Các biểu tổng hợp phục vụ báo cáo cấp trên.</td></tr>
             </tbody>
           </table>
         </div>
         <Paragraph>
           Ở các bảng danh sách, bấm vào <b>tiêu đề cột</b> để sắp xếp tăng hoặc giảm dần. Riêng trang
-          <b> Hồ sơ viên chức</b> có thêm bộ lọc theo loại hình lao động và trạng thái công tác.
+          <b> Hồ sơ viên chức</b> có thêm bộ lọc theo đơn vị, loại hình lao động và trạng thái công tác.
+        </Paragraph>
+        <Paragraph>
+          Thanh điều hướng bên trái có thể thu gọn thành biểu tượng bằng nút ở cuối thanh, giúp mở rộng vùng hiển thị trên màn hình nhỏ.
         </Paragraph>
       </Section>
 
       {/* ── VIII ── */}
+      <div id="hd-s8" />
       <Section so="VIII" tieuDe="Câu hỏi thường gặp">
         <Collapse
           ghost
@@ -567,6 +633,10 @@ export default function HuongDanPage() {
               key: '6', label: 'Vì sao đang làm thì bị đăng xuất?',
               children: <p>Hệ thống tự đăng xuất sau 10 phút không thao tác để bảo vệ dữ liệu nhân sự. Phần đã bấm Lưu vẫn còn nguyên. Đăng nhập lại và làm tiếp bình thường.</p>,
             },
+            {
+              key: '7', label: 'Làm sao thu gọn thanh menu bên trái để bảng rộng hơn?',
+              children: <p>Bấm nút mũi tên ở cuối thanh điều hướng xanh bên trái. Thanh thu lại thành biểu tượng, bấm lại để mở rộng. Trên thiết bị di động thanh tự động thu gọn.</p>,
+            },
           ]}
         />
       </Section>
@@ -578,80 +648,121 @@ export default function HuongDanPage() {
         </div>
         <div style={{ textAlign: 'right' }}>
           <Text type="secondary" style={{ fontSize: 13 }}>UBND Phường Gia Viên</Text><br />
-          <Text type="secondary" style={{ fontSize: 13 }}>Hệ thống Quản lý Viên chức ngành Giáo dục</Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>Hệ thống Quản lý Viên chức &amp; Lao động ngành Giáo dục</Text>
         </div>
       </div>
 
       <style>{`
-.hd-root { max-width: 1000px; margin: 0 auto; }
+.hd-root { max-width: 1000px; margin: 0 auto; border-radius: 12px; }
 .hd-toolbar {
   display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-  flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 18px;
-  border-bottom: 2px solid rgba(0,0,0,.85);
+  flex-wrap: wrap; margin-bottom: 24px; padding-bottom: 20px;
+  border-bottom: 3px solid #2563eb;
+}
+.hd-brand { display: flex; align-items: center; gap: 14px; }
+.hd-logo {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 18px; font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.25);
 }
 .hd-section { display: grid; grid-template-columns: 52px minmax(0,1fr); gap: 0 20px; margin-bottom: 46px; }
-.hd-rail { font-weight: 700; font-size: 21px; color: #1B4D8F; line-height: 1; padding-top: 4px; text-align: right; }
+.hd-rail {
+  font-weight: 700; font-size: 20px; color: #2563eb; line-height: 1; padding-top: 5px;
+  text-align: right; font-variant-numeric: tabular-nums;
+}
 .hd-body { min-width: 0; }
-.hd-body h2 { font-size: 22px; font-weight: 700; line-height: 1.25; margin: 0 0 4px; }
-.hd-body h3 { font-size: 16px; font-weight: 600; margin: 26px 0 10px; }
-.hd-body h4 { font-size: 16px; font-weight: 600; margin: 3px 0 4px; }
-.hd-lede { color: rgba(0,0,0,.55); font-size: 15px; margin: 0 0 18px; max-width: 70ch; }
-.hd-body p { margin: 0 0 12px; max-width: 74ch; }
+.hd-body h2 { font-size: 21px; font-weight: 700; line-height: 1.3; margin: 0 0 4px; }
+.hd-body h3 { font-size: 15px; font-weight: 600; margin: 26px 0 10px; color: #1e293b; }
+.hd-body h4 { font-size: 15px; font-weight: 600; margin: 3px 0 4px; }
+.hd-lede { color: #64748b; font-size: 14.5px; margin: 0 0 18px; max-width: 70ch; line-height: 1.6; }
+.hd-body p { margin: 0 0 12px; max-width: 74ch; line-height: 1.65; }
 .hd-body ul, .hd-body ol { margin: 0 0 14px; padding-left: 22px; max-width: 74ch; }
-.hd-body li { margin-bottom: 6px; }
+.hd-body li { margin-bottom: 6px; line-height: 1.6; }
 .hd-todo li { margin-bottom: 9px; }
-.hd-req { color: #B4232A; font-weight: 700; font-style: normal; }
+.hd-req { color: #dc2626; font-weight: 700; font-style: normal; }
 
+/* ── Mục lục ── */
+.hd-toc {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 16px 20px; margin-bottom: 32px;
+}
+.hd-toc-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #64748b; margin-bottom: 8px; }
+.hd-toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 24px; }
+.hd-toc li { margin-bottom: 4px; font-size: 14px; break-inside: avoid; }
+.hd-toc a { color: #2563eb; text-decoration: none; }
+.hd-toc a:hover { text-decoration: underline; }
+
+/* ── Bảng ── */
 .hd-tw { overflow-x: auto; margin: 0 0 18px; }
 .hd-table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 460px;
-  border: 1px solid rgba(0,0,0,.12); }
+  border: 1px solid #e2e8f0; border-radius: 8px; }
 .hd-table th { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase;
-  color: rgba(0,0,0,.5); text-align: left; padding: 10px 13px;
-  border-bottom: 1px solid rgba(0,0,0,.12); font-weight: 600; }
-.hd-table td { padding: 10px 13px; border-bottom: 1px solid rgba(0,0,0,.06); vertical-align: top; }
+  color: #64748b; text-align: left; padding: 10px 14px;
+  border-bottom: 1px solid #e2e8f0; font-weight: 600; background: #f8fafc; }
+.hd-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; line-height: 1.55; }
 .hd-table tr:last-child td { border-bottom: none; }
-.hd-grp td { background: #EEF3FA !important; }
+.hd-table tr:hover td { background: #f8fafc; }
+.hd-grp td { background: #eff6ff !important; }
 
-.hd-note { position: relative; border: 1px solid #B4232A; background: #FDF1F1;
-  padding: 20px 20px 4px; margin: 20px 0 22px; border-radius: 2px; }
-.hd-note::before { content: attr(data-label); position: absolute; top: -8px; left: 14px;
-  background: #FDF1F1; padding: 0 8px; font-weight: 700; font-size: 10.5px;
-  letter-spacing: .14em; text-transform: uppercase; color: #B4232A; }
+/* ── Khung lưu ý ── */
+.hd-note { position: relative; border: 1px solid #dc2626; background: #fef2f2;
+  padding: 20px 20px 4px; margin: 20px 0 22px; border-radius: 8px; }
+.hd-note::before { content: attr(data-label); position: absolute; top: -9px; left: 14px;
+  background: #fef2f2; padding: 0 8px; font-weight: 700; font-size: 10.5px;
+  letter-spacing: .12em; text-transform: uppercase; color: #dc2626; }
 .hd-note p:last-child { margin-bottom: 16px; }
 .hd-note ul { margin-bottom: 16px; }
-.hd-note-ok { border-color: #1F7A4D; background: #EDF6F1; }
-.hd-note-ok::before { background: #EDF6F1; color: #1F7A4D; }
+.hd-note-ok { border-color: #16a34a; background: #f0fdf4; }
+.hd-note-ok::before { background: #f0fdf4; color: #16a34a; }
 
+/* ── Lý do (phần III) ── */
+.hd-reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0 22px; }
+.hd-reason { display: flex; gap: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 8px; line-height: 1.55; }
+.hd-reason-num {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+@media (max-width: 640px) { .hd-reasons { grid-template-columns: 1fr; } }
+
+/* ── Quy trình ── */
 .hd-flow { margin: 22px 0 8px; position: relative; }
 .hd-flow::before { content: ""; position: absolute; left: 15px; top: 14px; bottom: 42px;
-  width: 2px; background: rgba(0,0,0,.1); }
+  width: 2px; background: #e2e8f0; }
 .hd-step { position: relative; padding-left: 50px; margin-bottom: 24px; }
 .hd-dot { position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%;
-  background: #fff; border: 2px solid #1B4D8F; color: #1B4D8F; font-weight: 700; font-size: 14px;
+  background: #fff; border: 2px solid #2563eb; color: #2563eb; font-weight: 700; font-size: 14px;
   display: flex; align-items: center; justify-content: center; }
-.hd-step-final .hd-dot { background: #1F7A4D; border-color: #1F7A4D; color: #fff; }
+.hd-step-final .hd-dot { background: #16a34a; border-color: #16a34a; color: #fff; }
 .hd-who { font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
-  color: rgba(0,0,0,.45); display: block; }
+  color: #64748b; display: block; }
 .hd-step p { margin: 0 0 8px; }
 
-.hd-auto { border: 1px solid rgba(0,0,0,.12); border-radius: 2px; padding: 16px 18px 2px; margin: 18px 0 6px; }
+/* ── Auto box ── */
+.hd-auto { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 18px 2px; margin: 18px 0 6px; background: #f8fafc; }
 .hd-auto > b { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase;
-  color: #1F7A4D; display: block; margin-bottom: 9px; }
+  color: #16a34a; display: block; margin-bottom: 9px; }
 
+/* ── FAQ ── */
 .hd-faq .ant-collapse-header { font-weight: 600 !important; padding-left: 0 !important; }
 .hd-faq .ant-collapse-content-box p { margin: 0 0 8px; }
 
-.hd-footer { border-top: 2px solid rgba(0,0,0,.85); margin-top: 48px; padding-top: 18px;
+/* ── Footer ── */
+.hd-footer { border-top: 3px solid #2563eb; margin-top: 48px; padding-top: 18px;
   display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.hd-hotline { font-size: 18px; font-weight: 700; margin-top: 4px; }
+.hd-hotline { font-size: 18px; font-weight: 700; margin-top: 4px; color: #1e293b; }
 
 @media (max-width: 640px) {
   .hd-section { grid-template-columns: 1fr; }
   .hd-rail { text-align: left; font-size: 13px; letter-spacing: .1em; padding: 0 0 4px; }
+  .hd-toc ol { columns: 1; }
+  .hd-brand { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
 
 @media print {
-  .ant-layout-sider, .ant-layout-header, .ant-layout-footer { display: none !important; }
+  .qlvc-sidebar, .ant-layout-sider, .ant-layout-header, .ant-layout-footer { display: none !important; }
   .ant-layout-content { margin: 0 !important; overflow: visible !important; }
   .ant-layout { height: auto !important; overflow: visible !important; }
   .hd-toolbar .ant-btn { display: none !important; }
@@ -660,6 +771,7 @@ export default function HuongDanPage() {
   .hd-faq .ant-collapse-item > .ant-collapse-header .ant-collapse-arrow { display: none !important; }
   .hd-section, .hd-note, .hd-auto, .hd-step { page-break-inside: avoid; }
   .hd-body h2 { page-break-after: avoid; }
+  .hd-toc { page-break-after: avoid; }
   body { font-size: 11pt; }
 }
       `}</style>

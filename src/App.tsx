@@ -66,7 +66,19 @@ export default function App() {
   return (
     <ConfigProvider
       locale={viVN}
-      theme={{ token: { colorPrimary: '#1677ff', borderRadius: 6 } }}
+      theme={{
+        token: {
+          colorPrimary: '#2563eb',
+          borderRadius: 8,
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          colorBgLayout: '#f1f5f9',
+        },
+        components: {
+          Card: { borderRadiusLG: 12 },
+          Table: { borderRadiusLG: 8 },
+          Button: { borderRadius: 8 },
+        },
+      }}
     >
       <AntApp>
         <LopBaoVePhien />

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
-  Layout, Menu, Avatar, Dropdown, Badge, Space, Typography, Button, theme
+  Layout, Menu, Avatar, Dropdown, Badge, Space, Typography, Button, theme, Tooltip,
+  Breadcrumb,
 } from 'antd'
 import {
-  DashboardOutlined, TeamOutlined, FileTextOutlined, DollarOutlined,
+  DashboardOutlined, TeamOutlined, FileTextOutlined,
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
   AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined,
@@ -16,12 +17,27 @@ import { ROLE_LABELS } from '@/types/auth'
 const { Header, Sider, Content, Footer } = Layout
 const { Text } = Typography
 
-const APP_NAME = 'QLVC&LĐ phường Gia Viên (các CSGD)'
-const FOOTER_TEXT = `${APP_NAME} | Đơn vị: Phòng Văn hóa - Xã hội phường Gia Viên`
+const FOOTER_TEXT = 'QLVC&LĐ phường Gia Viên | Đơn vị: Phòng Văn hóa - Xã hội phường Gia Viên'
+
+const BREADCRUMB_MAP: Record<string, string> = {
+  '/dashboard': 'Tổng quan',
+  '/vien-chuc': 'Hồ sơ viên chức',
+  '/bang-tong-hop-luong': 'Bảng tổng hợp lương',
+  '/vi-tri': 'Vị trí việc làm',
+  '/de-xuat': 'Đề xuất điều chỉnh HSL - PCTN',
+  '/chuyen-cong-tac': 'Chuyển công tác',
+  '/du-bao': 'Dự báo nghỉ hưu',
+  '/bao-cao': 'Báo cáo',
+  '/admin/danh-muc': 'Danh mục hệ thống',
+  '/admin/nguoi-dung': 'Tài khoản người dùng',
+  '/admin/nhat-ky': 'Nhật ký thao tác',
+  '/huong-dan': 'Hướng dẫn sử dụng',
+  '/tai-khoan': 'Thông tin tài khoản',
+}
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
-  const { currentUser, logout, isCBTruong, scopeDonViId, hasPermission } = useAuth()
+  const { currentUser, logout, scopeDonViId, hasPermission } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -32,10 +48,9 @@ export default function AppLayout() {
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ viên chức' },
     { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
     hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
-    // Tạm ẩn nhóm "Lương & Phụ cấp" — theo dõi qua Đề xuất điều chỉnh HSL - PCTN & hồ sơ viên chức
     hasPermission('deXuat', 'read') && {
       key: '/de-xuat', icon: <FileTextOutlined />,
-      label: 'Đề xuất điều chỉnh Hệ số lương - PCTN',
+      label: 'Đề xuất điều chỉnh HSL - PCTN',
       title: 'Đề xuất điều chỉnh Hệ số lương - PCTN',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
@@ -59,6 +74,14 @@ export default function AppLayout() {
     return path.split('/').slice(0, 2).join('/') || '/dashboard'
   }
 
+  const breadcrumbTitle = useMemo(() => {
+    const path = location.pathname
+    for (const [key, label] of Object.entries(BREADCRUMB_MAP)) {
+      if (path.startsWith(key)) return label
+    }
+    return 'Tổng quan'
+  }, [location.pathname])
+
   const userMenu = {
     items: [
       { key: 'info', label: <Text type="secondary">{currentUser?.fullName}</Text>, disabled: true },
@@ -81,57 +104,111 @@ export default function AppLayout() {
         onCollapse={setCollapsed}
         trigger={null}
         width={240}
-        style={{ background: token.colorBgContainer, borderRight: `1px solid ${token.colorBorderSecondary}` }}
+        collapsedWidth={64}
+        className="qlvc-sidebar"
+        style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'auto' }}
       >
-        <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', padding: collapsed ? 0 : '0 16px', borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
-          {!collapsed ? (
-            <Space>
-              <Avatar style={{ background: token.colorPrimary }} icon={<UserOutlined />} size="small" />
-              <Text strong style={{ fontSize: 12, lineHeight: '16px' }}>QLVC&amp;LĐ Gia Viên</Text>
-            </Space>
-          ) : (
-            <Avatar style={{ background: token.colorPrimary }} icon={<UserOutlined />} size="small" />
+        {/* Logo area */}
+        <div style={{
+          height: 64, display: 'flex', alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          padding: collapsed ? 0 : '0 16px', gap: 10,
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontSize: 15, fontWeight: 700, flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          }}>
+            GV
+          </div>
+          {!collapsed && (
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, lineHeight: '18px', whiteSpace: 'nowrap' }}>
+                QLVC&amp;LĐ
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, lineHeight: '14px', whiteSpace: 'nowrap' }}>
+                Phường Gia Viên
+              </div>
+            </div>
           )}
         </div>
+
         <Menu
           mode="inline"
           selectedKeys={[getSelectedKey()]}
           defaultOpenKeys={['admin-group']}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
-          style={{ border: 'none', marginTop: 8 }}
+          style={{ marginTop: 8 }}
         />
+
+        {/* Collapse button at bottom */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          padding: '8px',
+          display: 'flex', justifyContent: 'center',
+        }}>
+          <Tooltip title={collapsed ? 'Mở rộng' : 'Thu gọn'} placement="right">
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+              style={{ color: 'rgba(255,255,255,0.65)', width: '100%' }}
+            />
+          </Tooltip>
+        </div>
       </Sider>
 
       <Layout style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Header style={{ background: token.colorBgContainer, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${token.colorBorderSecondary}`, flexShrink: 0 }}>
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
+        <Header style={{
+          background: '#fff', padding: '0 20px', display: 'flex',
+          alignItems: 'center', justifyContent: 'space-between',
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+          flexShrink: 0, height: 56,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}>
+          <Breadcrumb
+            items={[
+              { title: <DashboardOutlined style={{ fontSize: 14 }} /> },
+              { title: <span style={{ fontWeight: 500 }}>{breadcrumbTitle}</span> },
+            ]}
+            style={{ fontSize: 14 }}
           />
-          <Space>
-            <Button
-              type="text"
-              icon={<ReadOutlined />}
-              onClick={() => navigate('/huong-dan')}
-              title="Hướng dẫn sử dụng — xem và in"
-            >
-              <span className="hd-btn-label">Hướng dẫn sử dụng</span>
-            </Button>
-            <Badge count={alerts.length} size="small">
-              <Button type="text" icon={<BellOutlined />} onClick={() => navigate('/de-xuat')} />
+          <Space size={8}>
+            <Tooltip title="Hướng dẫn sử dụng">
+              <Button
+                type="text"
+                icon={<ReadOutlined />}
+                onClick={() => navigate('/huong-dan')}
+                style={{ borderRadius: 8 }}
+              >
+                <span className="hd-btn-label">Hướng dẫn</span>
+              </Button>
+            </Tooltip>
+            <Badge count={alerts.length} size="small" offset={[-2, 2]}>
+              <Button type="text" icon={<BellOutlined style={{ fontSize: 18 }} />} onClick={() => navigate('/de-xuat')} style={{ borderRadius: 8 }} />
             </Badge>
             <Dropdown menu={userMenu} placement="bottomRight">
-              <Space style={{ cursor: 'pointer' }}>
-                <Avatar size="small" icon={<UserOutlined />} style={{ background: token.colorPrimary }} />
+              <Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 8, transition: 'background 0.2s' }}>
+                <Avatar
+                  size={32}
+                  style={{
+                    background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
+                    fontSize: 13, fontWeight: 600,
+                  }}
+                >
+                  {currentUser?.fullName?.charAt(0) ?? 'U'}
+                </Avatar>
                 {currentUser && (
-                  <span style={{ fontSize: 13 }}>
-                    {currentUser.fullName}
-                    <Text type="secondary" style={{ fontSize: 11, marginLeft: 4 }}>
-                      ({ROLE_LABELS[currentUser.role]})
-                    </Text>
-                  </span>
+                  <div style={{ lineHeight: '16px' }}>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{currentUser.fullName}</div>
+                    <div style={{ fontSize: 11, color: token.colorTextSecondary }}>{ROLE_LABELS[currentUser.role]}</div>
+                  </div>
                 )}
               </Space>
             </Dropdown>
@@ -139,9 +216,16 @@ export default function AppLayout() {
         </Header>
 
         <Content style={{ margin: 16, flex: 1, overflow: 'auto', minHeight: 0 }}>
-          <Outlet />
+          <div className="qlvc-content-fade">
+            <Outlet />
+          </div>
         </Content>
-        <Footer style={{ textAlign: 'center', padding: '8px 16px', borderTop: `1px solid ${token.colorBorderSecondary}`, fontSize: 12, color: token.colorTextSecondary }}>
+        <Footer style={{
+          textAlign: 'center', padding: '8px 16px',
+          borderTop: `1px solid ${token.colorBorderSecondary}`,
+          fontSize: 12, color: token.colorTextSecondary,
+          background: '#fff',
+        }}>
           {FOOTER_TEXT}
         </Footer>
       </Layout>

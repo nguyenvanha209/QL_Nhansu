@@ -23,6 +23,8 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/dashboard': 'Tổng quan',
   '/vien-chuc': 'Hồ sơ viên chức',
   '/bang-tong-hop-luong': 'Bảng tổng hợp lương',
+  '/luong/he-so': 'Hệ số lương',
+  '/luong/phu-cap': 'Phụ cấp',
   '/vi-tri': 'Vị trí việc làm',
   '/de-xuat': 'Đề xuất điều chỉnh HSL - PCTN',
   '/chuyen-cong-tac': 'Chuyển công tác',

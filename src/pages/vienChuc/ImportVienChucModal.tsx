@@ -21,6 +21,8 @@ import {
   NGUON_KINH_PHI_LABELS,
   CHUC_VU_LABELS,
   VTVL_LABELS,
+  HINH_THUC_LUONG_LABELS,
+  laVienChucBienChe,
 } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
@@ -60,6 +62,9 @@ const COL = {
   HE_SO:           'Hệ số lương',
   MOC_LUONG:       'Mốc hưởng lương',
   NANG_TIEP:       'Ngày nâng lương tiếp theo',
+  // Trừ viên chức biên chế: được chọn nhận lương theo mức tiền thay cho bậc/hệ số
+  HINH_THUC_LUONG: 'Hình thức lương',
+  MUC_LUONG_TIEN:  'Mức lương theo tiền (đ/tháng)',
   // Phụ cấp
   PC_VK:           'PC Vượt khung (%)',
   PC_CV:           'PC Chức vụ (hệ số)',
@@ -121,6 +126,13 @@ function num(v: unknown): number | undefined {
   if (!s) return undefined
   const n = Number(s)
   return Number.isFinite(n) ? n : undefined
+}
+
+/** Đọc số tiền: chấp nhận "6.500.000", "6,500,000" hoặc số thuần */
+function tien(v: unknown): number | undefined {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined
+  const s = str(v).replace(/\D/g, '')
+  return s ? Number(s) : undefined
 }
 
 /** Giá trị phụ cấp thực dùng: bản ghi cá nhân ưu tiên, không có thì lấy mặc định của loại */
@@ -216,6 +228,7 @@ const FIELD_LABELS: Partial<Record<keyof VienChuc, string>> = {
   ngayVaoBienChe: 'Ngày vào biên chế', thoiHanHopDong: 'Thời hạn HĐ',
   nguonKinhPhi: 'Nguồn kinh phí', laDangVien: 'Đảng viên',
   trinhDoChuyenMon: 'Trình độ CM', ghiChu: 'Ghi chú',
+  hinhThucLuong: 'Hình thức lương', mucLuongTien: 'Mức lương theo tiền',
 }
 
 function displayValue(field: keyof VienChuc, val: unknown, chucDanhs: ChucDanhNgheNghiep[]): string {
@@ -228,6 +241,8 @@ function displayValue(field: keyof VienChuc, val: unknown, chucDanhs: ChucDanhNg
     case 'trangThai':    return TRANG_THAI_CONG_TAC_LABELS[val as keyof typeof TRANG_THAI_CONG_TAC_LABELS] ?? String(val)
     case 'nguonKinhPhi': return NGUON_KINH_PHI_LABELS[val as keyof typeof NGUON_KINH_PHI_LABELS] ?? String(val)
     case 'laDangVien':   return val ? 'Có' : 'Không'
+    case 'hinhThucLuong': return HINH_THUC_LUONG_LABELS[val as keyof typeof HINH_THUC_LUONG_LABELS] ?? String(val)
+    case 'mucLuongTien': return `${Number(val).toLocaleString('vi-VN')} đ`
     case 'ngaySinh': case 'ngayVaoNganh': case 'ngayVaoDonVi':
     case 'ngayVaoBienChe': case 'thoiHanHopDong': return formatDate(String(val))
     default: return String(val)
@@ -274,6 +289,8 @@ export function exportVienChucTemplate(
       [COL.HE_SO]:           s.heSo ?? '',
       [COL.MOC_LUONG]:       formatDate(s.mocLuong ?? ''),
       [COL.NANG_TIEP]:       formatDate(s.nangTiep ?? ''),
+      [COL.HINH_THUC_LUONG]: laVienChucBienChe(vc.loaiLaoDong) ? '' : HINH_THUC_LUONG_LABELS[vc.hinhThucLuong ?? 'HE_SO'],
+      [COL.MUC_LUONG_TIEN]:  vc.hinhThucLuong === 'TIEN' && vc.mucLuongTien ? vc.mucLuongTien : '',
       // Phụ cấp
       [COL.PC_VK]:           s.vk || '',
       [COL.PC_CV]:           s.cv || '',
@@ -293,7 +310,7 @@ export function exportVienChucTemplate(
     { wch: 30 }, { wch: 20 }, { wch: 14 }, { wch: 25 }, { wch: 16 },
     { wch: 24 }, { wch: 20 }, { wch: 9  }, { wch: 13 }, { wch: 13 },
     { wch: 14 }, { wch: 12 },
-    { wch: 6  }, { wch: 11 }, { wch: 15 }, { wch: 22 },
+    { wch: 6  }, { wch: 11 }, { wch: 15 }, { wch: 22 }, { wch: 24 }, { wch: 18 },
     { wch: 15 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 16 },
     { wch: 14 },
     { wch: 34 },
@@ -482,6 +499,17 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
 
           const ngTen = str(row[COL.NGUON_KINH_PHI])
           if (ngTen && inverseNguon[ngTen]) check('nguonKinhPhi', inverseNguon[ngTen])
+
+          // Hình thức lương: chỉ áp dụng cho các loại hình ngoài viên chức biên chế
+          const loaiSauNhap = (llTen && inverseLoaiLD[llTen]) || vc.loaiLaoDong
+          if (!laVienChucBienChe(loaiSauNhap as VienChuc['loaiLaoDong'])) {
+            const htl = str(row[COL.HINH_THUC_LUONG]).toLowerCase()
+            const hinhThuc = htl.includes('tiền') || htl.includes('tien') ? 'TIEN'
+              : htl.includes('hệ số') || htl.includes('he so') || htl.includes('bậc') ? 'HE_SO' : undefined
+            if (hinhThuc) check('hinhThucLuong', hinhThuc)
+            const mucTien = tien(row[COL.MUC_LUONG_TIEN])
+            if ((hinhThuc ?? vc.hinhThucLuong) === 'TIEN' && mucTien !== undefined) check('mucLuongTien', mucTien)
+          }
 
           const dvien = str(row[COL.DANG_VIEN]).toLowerCase()
           if (dvien === 'có' || dvien === 'co' || dvien === 'x') check('laDangVien', true)

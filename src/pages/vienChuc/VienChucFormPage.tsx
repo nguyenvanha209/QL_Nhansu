@@ -10,7 +10,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, HINH_THUC_LUONG_LABELS, coPhuCapThamNien } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, laVienChucBienChe, nhanLuongTheoTien } from '@/types/vienChuc'
 import { chucDanhHopLeVoiVtvl } from '@/utils/vtvlRules'
 import type { ChucVu, LoaiLaoDong, HinhThucLuong } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
@@ -199,8 +199,9 @@ export default function VienChucFormPage() {
       ngayChuyenDi: values.trangThai === 'CHUYEN_DI' ? values.ngayChuyenDi?.format('YYYY-MM-DD') : undefined,
     }
     if (formatted.loaiLaoDong !== 'VIEN_CHUC') formatted.nguonKinhPhi = undefined
-    const theoTien = formatted.loaiLaoDong !== 'VIEN_CHUC' && formatted.hinhThucLuong === 'TIEN'
-    if (formatted.loaiLaoDong === 'VIEN_CHUC') formatted.hinhThucLuong = undefined
+    // Trừ viên chức biên chế (theo ngạch, bậc), mọi loại hình được chọn lương theo mức tiền
+    const theoTien = nhanLuongTheoTien(formatted)
+    if (laVienChucBienChe(formatted.loaiLaoDong)) formatted.hinhThucLuong = undefined
     if (!theoTien) formatted.mucLuongTien = undefined
     // Lương theo tiền: không ghi bậc lương / hệ số mới
     if (theoTien) formatted.bacLuongId = undefined
@@ -218,6 +219,12 @@ export default function VienChucFormPage() {
 
     if (isEdit && vc) {
       updateVienChuc(id!, vcData, currentUser?.id, currentUser?.fullName)
+
+      // Chuyển sang lương theo mức tiền → đóng bản ghi hệ số đang áp dụng (vẫn giữ trong lịch sử lương)
+      if (theoTien) {
+        const heSoDangCo = luongState.getActiveHeSo(id)
+        if (heSoDangCo) luongState.deactivateHeSoLuong(heSoDangCo.id)
+      }
 
       const selectedBacLuong = bacLuongs.find((b) => b.id === bacLuongId)
       const currentHeSo = luongState.getActiveHeSo(id)
@@ -486,7 +493,7 @@ export default function VienChucFormPage() {
           </Text>
         ) : (
           <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
-            Loại hình hợp đồng: Mã ngạch/Hạng và Bậc lương không bắt buộc; không khai nguồn kinh phí, ngày vào biên chế.
+            Loại hình hợp đồng: Mã ngạch/Hạng và Bậc lương không bắt buộc; có thể chọn nhận lương theo mức tiền ở phần Lương & Phụ cấp. Không khai nguồn kinh phí, ngày vào biên chế.
           </Text>
         )}
 
@@ -626,6 +633,14 @@ export default function VienChucFormPage() {
             PC Thâm niên nghề (CBQL, giáo viên) vẫn giữ nguyên, hưởng song song với PC ưu đãi nhà giáo.
             PC ưu đãi nhà giáo chọn theo cấp học (NĐ 182/2026): mầm non, tiểu học 45%; THCS 40%; nhân viên 20%.
           </Text>
+          {luongTheoTien && (
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginBottom: 8 }}
+              title="Lương theo mức tiền: phụ cấp tính theo % lương chính không áp dụng (không có hệ số lương chính); phụ cấp dạng hệ số nếu có vẫn được tính."
+            />
+          )}
 
           <Form.List name="phuCaps">
             {(fields, { remove }) => (

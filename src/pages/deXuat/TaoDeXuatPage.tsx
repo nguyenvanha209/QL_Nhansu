@@ -10,7 +10,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import type { ChiTietDeXuat, LoaiDeXuat } from '@/types/deXuat'
 import { LOAI_DE_XUAT_LABELS } from '@/types/deXuat'
-import { isDangCongTac, coPhuCapThamNien } from '@/types/vienChuc'
+import { isDangCongTac, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vienChuc'
 import { soSanhVienChuc } from '@/utils/helpers'
 
 const { Title } = Typography
@@ -25,7 +25,8 @@ export default function TaoDeXuatPage() {
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v)), [allVienChucs])
+  // Người nhận lương theo mức tiền không nâng bậc/hệ số → không đưa vào đề xuất
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && !nhanLuongTheoTien(v)), [allVienChucs])
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
   const [chiTiet, setChiTiet] = useState<ChiTietDeXuat[]>([])

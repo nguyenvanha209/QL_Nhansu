@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useLuongStore } from '@/store/luongStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
-import { duocTinhSoLieu } from '@/types/vienChuc'
+import { duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
 import { getDaysUntilReview } from '@/utils/calculations'
 
 export interface SalaryAlert {
@@ -24,7 +24,10 @@ export function useSalaryAlerts(donViId?: string | null, thresholdDays = 90): Sa
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
 
   return useMemo(() => {
-    const active = heSoLuongs.filter((h) => h.isActive && duocTinhSoLieu(vienChucs.find((v) => v.id === h.vienChucId)))
+    const active = heSoLuongs.filter((h) => {
+      const vc = vienChucs.find((v) => v.id === h.vienChucId)
+      return h.isActive && duocTinhSoLieu(vc) && !nhanLuongTheoTien(vc)
+    })
     return active
       .filter((h) => {
         const days = getDaysUntilReview(h.ngayNangLuongTiepTheo)

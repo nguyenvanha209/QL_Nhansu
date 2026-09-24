@@ -135,9 +135,14 @@ export const HINH_THUC_LUONG_LABELS: Record<HinhThucLuong, string> = {
   TIEN: 'Theo mức tiền (VNĐ/tháng)',
 }
 
-/** Người lao động hợp đồng nhận lương theo mức tiền, không theo bậc/hệ số */
-export function nhanLuongTheoTien(vc: Pick<VienChuc, 'loaiLaoDong' | 'hinhThucLuong'>): boolean {
-  return vc.loaiLaoDong !== 'VIEN_CHUC' && vc.hinhThucLuong === 'TIEN'
+/** Viên chức biên chế (kể cả tập sự): lương luôn theo ngạch, bậc */
+export function laVienChucBienChe(loai?: LoaiLaoDong): boolean {
+  return loai === 'VIEN_CHUC' || loai === 'TAP_SU'
+}
+
+/** Mọi loại hình trừ viên chức biên chế đều được chọn nhận lương theo mức tiền thay vì bậc/hệ số */
+export function nhanLuongTheoTien(vc?: Pick<VienChuc, 'loaiLaoDong' | 'hinhThucLuong'>): boolean {
+  return !!vc && !laVienChucBienChe(vc.loaiLaoDong) && vc.hinhThucLuong === 'TIEN'
 }
 
 export const NGUON_KINH_PHI_LABELS: Record<NguonKinhPhi, string> = {

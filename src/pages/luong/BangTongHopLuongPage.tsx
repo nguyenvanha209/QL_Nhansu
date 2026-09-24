@@ -8,7 +8,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { CHUC_VU_LABELS, duocTinhSoLieu } from '@/types/vienChuc'
+import { CHUC_VU_LABELS, duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
 import { formatDate, matchSearch, soSanhVienChuc } from '@/utils/helpers'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { LoaiPhuCap, ChucDanhNgheNghiep } from '@/types/danhMuc'
@@ -50,6 +50,8 @@ interface RowData {
   pcUD: number
   tong1Thang: number
   tong6Thang: number
+  /** Hợp đồng nhận lương theo mức tiền (đ/tháng) — không có hệ số lương chính */
+  mucLuongTien: number
 }
 
 interface SubtotalRow {
@@ -67,11 +69,12 @@ interface SubtotalRow {
   pcUD: number
   tong1Thang: number
   tong6Thang: number
+  mucLuongTien: number
 }
 
 type DisplayRow = RowData | SubtotalRow
 
-const SUM_COLS = ['heSo', 'vkHeSo', 'tongHSLC', 'pcCV', 'pcTN', 'pcTNNG_HeSo', 'hsBaoLuu', 'pcUD', 'tong1Thang', 'tong6Thang'] as const
+const SUM_COLS = ['heSo', 'vkHeSo', 'tongHSLC', 'pcCV', 'pcTN', 'pcTNNG_HeSo', 'hsBaoLuu', 'pcUD', 'tong1Thang', 'tong6Thang', 'mucLuongTien'] as const
 
 function sumGroup(rows: RowData[]): Omit<SubtotalRow, '_type' | 'key' | 'donViTen' | 'count'> {
   const result: Record<string, number> = {}
@@ -87,7 +90,9 @@ function buildRow(
   loaiPhuCaps: LoaiPhuCap[],
   chucDanhs: ChucDanhNgheNghiep[],
 ): RowData {
-  const heSoRec = heSos.find((h) => h.vienChucId === vc.id && h.isActive)
+  // Lương theo mức tiền: không tính theo bậc, hệ số (kể cả khi còn sót bản ghi hệ số cũ)
+  const theoTien = nhanLuongTheoTien(vc)
+  const heSoRec = theoTien ? undefined : heSos.find((h) => h.vienChucId === vc.id && h.isActive)
   const mine = phuCaps.filter((p) => p.vienChucId === vc.id && p.isActive)
 
   const byMa = (ma: string) => {
@@ -150,6 +155,7 @@ function buildRow(
     pcUD: pcUD_HeSo,
     tong1Thang,
     tong6Thang: r3(tong1Thang * 6),
+    mucLuongTien: theoTien ? (vc.mucLuongTien ?? 0) : 0,
   }
 }
 
@@ -348,6 +354,17 @@ export default function BangTongHopLuongPage() {
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).tong1Thang - (b as RowData).tong1Thang,
     },
+    {
+      title: 'Lương theo mức tiền (đ/tháng)', key: 'mucLuongTien', width: 120, align: 'right' as const,
+      render: (_: any, r: DisplayRow) => {
+        const v = r.mucLuongTien
+        if (!v) return ''
+        const s = v.toLocaleString('vi-VN')
+        return r._type === 'subtotal' ? <Text strong>{s}</Text> : s
+      },
+      sorter: (a: DisplayRow, b: DisplayRow) =>
+        a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).mucLuongTien - (b as RowData).mucLuongTien,
+    },
   ]
 
   const handleExport = () => {
@@ -375,13 +392,14 @@ export default function BangTongHopLuongPage() {
       'PC ưu đãi nhà giáo': r.pcUD || '',
       'Tổng HS lương 1 tháng': r.tong1Thang,
       'Tổng HS lương 6 tháng đầu năm': r.tong6Thang,
+      'Lương theo mức tiền (đ/tháng)': r.mucLuongTien || '',
     }))
     const ws = XLSX.utils.json_to_sheet(exportRows)
     ws['!cols'] = [
       { wch: 5 }, { wch: 26 }, { wch: 13 }, { wch: 22 }, { wch: 13 },
       { wch: 6 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
       { wch: 18 }, { wch: 11 }, { wch: 13 }, { wch: 11 }, { wch: 11 },
-      { wch: 14 }, { wch: 14 }, { wch: 13 }, { wch: 14 }, { wch: 18 },
+      { wch: 14 }, { wch: 14 }, { wch: 13 }, { wch: 14 }, { wch: 18 }, { wch: 18 },
     ]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Bang TH Luong')
@@ -394,7 +412,8 @@ export default function BangTongHopLuongPage() {
         <Title level={4} style={{ margin: 0 }}>
           Bảng tổng hợp lương{' '}
           <span style={{ fontWeight: 400, fontSize: 14, color: '#666' }}>
-            ({rows.length} người — Tổng hệ số lương: <strong>{grandTotal.tong1Thang.toFixed(3)}</strong>)
+            ({rows.length} người — Tổng hệ số lương: <strong>{grandTotal.tong1Thang.toFixed(3)}</strong>
+            {grandTotal.mucLuongTien > 0 && <> — Lương theo mức tiền: <strong>{grandTotal.mucLuongTien.toLocaleString('vi-VN')} đ</strong></>})
           </span>
         </Title>
         <Button icon={<DownloadOutlined />} onClick={handleExport}>Xuất Excel</Button>
@@ -427,7 +446,7 @@ export default function BangTongHopLuongPage() {
         rowKey="key"
         size="small"
         bordered
-        scroll={{ x: 2100, y: 'calc(100vh - 280px)' }}
+        scroll={{ x: 2220, y: 'calc(100vh - 280px)' }}
         rowClassName={(r: DisplayRow) => r._type === 'subtotal' ? 'subtotal-row' : ''}
         pagination={{ pageSize: 100, showSizeChanger: true, pageSizeOptions: [50, 100, 200], showTotal: (t) => `Tổng ${rows.length} viên chức` }}
         summary={() => {
@@ -449,6 +468,7 @@ export default function BangTongHopLuongPage() {
             { noiDung: d3(grandTotal.hsBaoLuu), canPhai: true },
             { noiDung: d3(grandTotal.pcUD), canPhai: true },
             { noiDung: <span style={{ color: '#0958d9' }}>{grandTotal.tong1Thang.toFixed(3)}</span>, canPhai: true },
+            { noiDung: grandTotal.mucLuongTien ? grandTotal.mucLuongTien.toLocaleString('vi-VN') : '', canPhai: true },
           ]
           let i = 0
           return (

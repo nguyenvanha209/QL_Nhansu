@@ -216,6 +216,50 @@ function migrateGanDonViHoSoThieu() {
   }
 }
 
+// Mã chức danh cũ trước TT 01, 02/2021 (TTLT 20, 21/2015) từng bị gán sai hạng và bảng lương
+// (VD V.07.03.09 ghi "hạng III, A1" trong khi đúng là hạng IV, loại B 12 bậc). Hệ số lưu
+// trong hồ sơ vẫn giữ nguyên; chỉ sửa danh mục để chọn bậc, tính ngày nâng lương cho đúng.
+const BANG_LUONG: Record<string, { heSos: number[]; thoiGian: 2 | 3 }> = {
+  A1: { heSos: [2.34, 2.67, 3.0, 3.33, 3.66, 3.99, 4.32, 4.65, 4.98], thoiGian: 3 },
+  A0: { heSos: [2.1, 2.41, 2.72, 3.03, 3.34, 3.65, 3.96, 4.27, 4.58, 4.89], thoiGian: 3 },
+  B: { heSos: [1.86, 2.06, 2.26, 2.46, 2.66, 2.86, 3.06, 3.26, 3.46, 3.66, 3.86, 4.06], thoiGian: 2 },
+}
+const MA_CU_DUNG: { ma: string; ten: string; bangLuong: keyof typeof BANG_LUONG }[] = [
+  { ma: 'V.07.03.07', ten: 'Giáo viên tiểu học hạng II (mã cũ)', bangLuong: 'A1' },
+  { ma: 'V.07.03.08', ten: 'Giáo viên tiểu học hạng III (mã cũ)', bangLuong: 'A0' },
+  { ma: 'V.07.03.09', ten: 'Giáo viên tiểu học hạng IV (mã cũ)', bangLuong: 'B' },
+  { ma: 'V.07.02.06', ten: 'Giáo viên mầm non hạng IV (mã cũ)', bangLuong: 'B' },
+]
+function migrateMaChucDanhCu() {
+  const dm = useDanhMucStore.getState()
+  let bacLuongs = dm.bacLuongs
+  let doi = false
+  for (const dung of MA_CU_DUNG) {
+    const cd = dm.chucDanhs.find((c) => c.ma === dung.ma)
+    if (!cd) continue
+    const bang = BANG_LUONG[dung.bangLuong]
+    const bacHienTai = bacLuongs.filter((b) => b.chucDanhId === cd.id).sort((a, b) => a.bac - b.bac)
+    const bacDung = bacHienTai.length === bang.heSos.length
+      && bacHienTai.every((b, i) => b.heSo === bang.heSos[i] && b.thoiGianNangLuong === bang.thoiGian)
+    // Đã đúng bảng lương và bậc thì thôi (không ghi đè tên nếu quản trị đổi tên về sau)
+    if (cd.bangLuong === dung.bangLuong && bacDung) continue
+
+    dm.updateChucDanh(cd.id, { ten: dung.ten, bangLuong: dung.bangLuong, nhom: 'GIAO_VIEN' })
+    if (!bacDung) {
+      bacLuongs = [
+        ...bacLuongs.filter((b) => b.chucDanhId !== cd.id),
+        ...bang.heSos.map((heSo, i) => ({
+          id: `bl_${cd.id}_${i + 1}`, chucDanhId: cd.id, bac: i + 1, heSo, thoiGianNangLuong: bang.thoiGian,
+        })),
+      ]
+    }
+    doi = true
+    logAction('system', 'Hệ thống', 'UPDATE', 'ChucDanh', cd.id,
+      `Sửa mã ${dung.ma}: "${cd.ten}" (${cd.bangLuong}) → "${dung.ten}" (${dung.bangLuong}, ${bang.heSos.length} bậc)`)
+  }
+  if (doi) useDanhMucStore.getState().setBacLuongs(bacLuongs)
+}
+
 // Danh mục VTVL / Chức vụ chuyển từ hằng số cứng sang dữ liệu admin tùy biến được
 function ensureVtvlVaChucVu() {
   const { vtvls, addVtvl, chucVus, addChucVu } = useDanhMucStore.getState()
@@ -309,6 +353,7 @@ export function initSeedData() {
   migrateUuDaiTheoNd182()
   migrateTachHoSoChuyenCongTac()
   migrateGanDonViHoSoThieu()
+  migrateMaChucDanhCu()
   migrateChiTieuToDonVi()
   migrateNhatKySangKhoRieng()
 

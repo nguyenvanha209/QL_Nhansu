@@ -8,7 +8,7 @@ import {
   DashboardOutlined, TeamOutlined, FileTextOutlined,
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
-  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined,
+  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
@@ -24,6 +24,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/vien-chuc': 'Hồ sơ nhân sự',
   '/bang-tong-hop-luong': 'Bảng tổng hợp lương',
   '/luong/he-so': 'Hệ số lương',
+  '/luong/ra-soat': 'Rà soát ngạch – bậc – hệ số',
   '/luong/phu-cap': 'Phụ cấp',
   '/vi-tri': 'Vị trí việc làm',
   '/de-xuat': 'Đề xuất điều chỉnh HSL - PCTN',
@@ -49,6 +50,7 @@ export default function AppLayout() {
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
     { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
+    hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch – bậc' },
     hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
     hasPermission('deXuat', 'read') && {
       key: '/de-xuat', icon: <FileTextOutlined />,

@@ -10,6 +10,7 @@ import VienChucFormPage from '@/pages/vienChuc/VienChucFormPage'
 import VienChucDetailPage from '@/pages/vienChuc/VienChucDetailPage'
 import ViTriPage from '@/pages/viTri/ViTriPage'
 import HeSoLuongPage from '@/pages/luong/HeSoLuongPage'
+import RaSoatNgachBacPage from '@/pages/luong/RaSoatNgachBacPage'
 import PhuCapPage from '@/pages/luong/PhuCapPage'
 import BangTongHopLuongPage from '@/pages/luong/BangTongHopLuongPage'
 import DeXuatListPage from '@/pages/deXuat/DeXuatListPage'
@@ -45,6 +46,7 @@ export default function AppRouter() {
           <Route path="bang-tong-hop-luong" element={<BangTongHopLuongPage />} />
           <Route path="vi-tri" element={<ViTriPage />} />
           <Route path="luong/he-so" element={<HeSoLuongPage />} />
+          <Route path="luong/ra-soat" element={<RaSoatNgachBacPage />} />
           <Route path="luong/phu-cap" element={<PhuCapPage />} />
           <Route path="chuyen-cong-tac" element={<ChuyenCongTacPage />} />
           <Route path="de-xuat" element={<DeXuatListPage />} />

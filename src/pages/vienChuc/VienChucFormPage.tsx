@@ -599,7 +599,8 @@ export default function VienChucFormPage() {
             </Button>
           </div>
           <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
-            PC Thâm niên nghề sẽ chuyển sang PC nghề nghiệp theo NĐ 182/2026
+            PC Thâm niên nghề (CBQL, giáo viên) vẫn giữ nguyên, hưởng song song với PC ưu đãi nhà giáo.
+            PC ưu đãi nhà giáo chọn theo cấp học (NĐ 182/2026): mầm non, tiểu học 45%; THCS 40%; nhân viên 20%.
           </Text>
 
           <Form.List name="phuCaps">

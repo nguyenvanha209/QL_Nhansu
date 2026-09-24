@@ -14,9 +14,11 @@ import { toUpperName } from '@/utils/helpers'
 import type { ChucVu, VTVL } from '@/types/vienChuc'
 import { IS_BIEN_CHE } from '@/types/vienChuc'
 
+const MO_TA_THAM_NIEN = 'CBQL và giáo viên (nhân viên không hưởng): 5% khi đủ 5 năm, mỗi năm tiếp theo +1%. Vẫn giữ nguyên, hưởng song song với PC ưu đãi nhà giáo'
+
 const REQUIRED_PHU_CAPS = [
   { ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường, cộng thẳng vào tổng hệ số lương', active: true },
-  { ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: '5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026', active: true },
+  { ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: MO_TA_THAM_NIEN, active: true },
   { ma: 'PC_TRACH_NHIEM', ten: 'PC Trách nhiệm công việc', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Hệ số theo từng vị trí công việc, VD: Kế toán 0,2 — chọn và nhập hệ số thủ công', active: true },
   { ma: 'PC_THAM_NIEN_VK', ten: 'PC Thâm niên vượt khung', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 0, moTa: 'Đã xếp bậc lương cuối cùng đủ 36 tháng (loại A0-A3) hoặc 24 tháng (loại B,C): 5%, +1%/năm từ năm tiếp theo — chọn và nhập % thủ công', active: true },
 ]
@@ -42,23 +44,29 @@ const DEFAULT_CHUC_VUS = [
   { ma: 'TO_PHO_CM', ten: 'Tổ phó chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Hỗ trợ tổ trưởng chuyên môn', active: true },
 ]
 
-// PC ưu đãi nghề theo NĐ 182/2026 (thực hiện từ 01/01/2026, điều kiện bình thường):
-// GV mầm non, tiểu học 45%; GV THCS 40%; nhân viên hỗ trợ giáo dục 20%.
-// Mức 35%/30% cũ (QĐ 244/2005) giữ lại để không làm hỏng hồ sơ đang gán, chỉ đổi tên.
+// PC ưu đãi nhà giáo (PC ưu đãi theo nghề) — NĐ 182/2026, thực hiện từ 01/01/2026.
+// Theo cấp học: mầm non, tiểu học 45%; THCS 40%; nhân sự hỗ trợ giáo dục 20%.
+// PC thâm niên nghề là khoản RIÊNG, vẫn giữ nguyên — NĐ 182 không thay thế thâm niên nghề.
+// Mức 35%/30% cũ (QĐ 244/2005) giữ lại để không làm hỏng lịch sử, chỉ đổi tên.
 // Hệ số chênh lệch bảo lưu là giá trị hệ số (VD 0,33), không phải %.
+const CAN_CU_ND182 = 'NĐ 182/2026, thực hiện từ 01/01/2026'
 const PCUD_MOI = [
-  { ma: 'PCUD_45', ten: 'PC ưu đãi nghề 45%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 45, moTa: 'Giáo viên mầm non, tiểu học (điều kiện bình thường) — NĐ 182/2026, thực hiện từ 01/01/2026', active: true },
-  { ma: 'PCUD_40', ten: 'PC ưu đãi nghề 40%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 40, moTa: 'Giáo viên THCS (điều kiện bình thường) — NĐ 182/2026, thực hiện từ 01/01/2026', active: true },
-  { ma: 'PCUD_20', ten: 'PC ưu đãi nghề 20%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 20, moTa: 'Nhân viên hỗ trợ giáo dục ở trường mầm non, phổ thông — NĐ 182/2026, thực hiện từ 01/01/2026', active: true },
+  { ma: 'PCUD_45', ten: 'PC ưu đãi nhà giáo – Mầm non, Tiểu học 45%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 45, moTa: `Nhà giáo, CBQL trường mầm non, tiểu học — điều kiện bình thường. ${CAN_CU_ND182}`, active: true },
+  { ma: 'PCUD_40', ten: 'PC ưu đãi nhà giáo – THCS 40%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 40, moTa: `Nhà giáo, CBQL trường THCS — điều kiện bình thường. ${CAN_CU_ND182}`, active: true },
+  { ma: 'PCUD_20', ten: 'PC ưu đãi – Nhân sự hỗ trợ giáo dục 20%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 20, moTa: `Nhân viên (kế toán, văn thư, thư viện, y tế...) ở trường mầm non, phổ thông. ${CAN_CU_ND182}`, active: true },
   { ma: 'PC_BAO_LUU', ten: 'Hệ số chênh lệch bảo lưu', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Nhập giá trị hệ số chênh lệch được bảo lưu (VD 0,33 — không phải %), cộng thẳng vào tổng hệ số lương', active: true },
 ]
-// Tên cũ → chỉ đổi khi tên vẫn là tên cũ, để không ghi đè chỉnh sửa của quản trị
-const DOI_TEN_PHU_CAP: Record<string, { tenCu: string[]; ten: string; moTa: string }> = {
-  PCUD_35: { tenCu: ['PC Ưu đãi nghề (35%)'], ten: 'PC ưu đãi nghề 35% (mức cũ QĐ 244)', moTa: 'Mức cũ cho GV mầm non, tiểu học theo QĐ 244/2005/QĐ-TTg, áp dụng đến 31/12/2025 — nay thay bằng PCUD_45' },
-  PCUD_30: { tenCu: ['PC Ưu đãi nghề (30%)'], ten: 'PC ưu đãi nghề 30% (mức cũ QĐ 244)', moTa: 'Mức cũ cho GV THCS theo QĐ 244/2005/QĐ-TTg, áp dụng đến 31/12/2025 — nay thay bằng PCUD_40' },
-  PCUD_20: { tenCu: ['PC Ưu đãi nghề (20%)'], ten: PCUD_MOI[2].ten, moTa: PCUD_MOI[2].moTa },
-  PCUD_40: { tenCu: ['Phụ cấp ưu đãi 40%'], ten: PCUD_MOI[1].ten, moTa: PCUD_MOI[1].moTa },
-  PC_BAO_LUU: { tenCu: ['Phụ cấp chênh lệch bảo lưu'], ten: PCUD_MOI[3].ten, moTa: PCUD_MOI[3].moTa },
+const pcudMoi = (ma: string) => PCUD_MOI.find((p) => p.ma === ma)!
+// Đổi tên/mô tả chỉ khi vẫn còn tên hoặc mô tả cũ, để không ghi đè chỉnh sửa của quản trị
+const DOI_TEN_PHU_CAP: Record<string, { tenCu: string[]; moTaCu?: string[]; ten: string; moTa: string }> = {
+  PCUD_35: { tenCu: ['PC Ưu đãi nghề (35%)', 'PC ưu đãi nghề 35% (mức cũ QĐ 244)'], ten: 'PC ưu đãi nghề 35% (mức cũ QĐ 244)', moTa: 'Mức cũ cho GV mầm non, tiểu học theo QĐ 244/2005/QĐ-TTg, áp dụng đến 31/12/2025 — nay thay bằng PCUD_45' },
+  PCUD_30: { tenCu: ['PC Ưu đãi nghề (30%)', 'PC ưu đãi nghề 30% (mức cũ QĐ 244)'], ten: 'PC ưu đãi nghề 30% (mức cũ QĐ 244)', moTa: 'Mức cũ cho GV THCS theo QĐ 244/2005/QĐ-TTg, áp dụng đến 31/12/2025 — nay thay bằng PCUD_40' },
+  PCUD_45: { tenCu: ['PC ưu đãi nghề 45%'], ten: pcudMoi('PCUD_45').ten, moTa: pcudMoi('PCUD_45').moTa },
+  PCUD_40: { tenCu: ['Phụ cấp ưu đãi 40%', 'PC ưu đãi nghề 40%'], ten: pcudMoi('PCUD_40').ten, moTa: pcudMoi('PCUD_40').moTa },
+  PCUD_20: { tenCu: ['PC Ưu đãi nghề (20%)', 'PC ưu đãi nghề 20%'], ten: pcudMoi('PCUD_20').ten, moTa: pcudMoi('PCUD_20').moTa },
+  PC_BAO_LUU: { tenCu: ['Phụ cấp chênh lệch bảo lưu'], ten: pcudMoi('PC_BAO_LUU').ten, moTa: pcudMoi('PC_BAO_LUU').moTa },
+  // Mô tả cũ ghi nhầm thâm niên nghề "chuyển sang PC nghề nghiệp" → sửa lại: vẫn giữ nguyên
+  PC_THAM_NIEN: { tenCu: [], moTaCu: ['5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026'], ten: 'PC Thâm niên nghề', moTa: MO_TA_THAM_NIEN },
 }
 
 function migratePhuCapUuDaiVaBaoLuu() {
@@ -75,7 +83,7 @@ function migratePhuCapUuDaiVaBaoLuu() {
   }
   for (const [ma, doi] of Object.entries(DOI_TEN_PHU_CAP)) {
     const co = useDanhMucStore.getState().loaiPhuCaps.find((p) => p.ma === ma)
-    if (co && doi.tenCu.includes(co.ten)) updateLoaiPhuCap(co.id, { ten: doi.ten, moTa: doi.moTa })
+    if (co && (doi.tenCu.includes(co.ten) || doi.moTaCu?.includes(co.moTa ?? ''))) updateLoaiPhuCap(co.id, { ten: doi.ten, moTa: doi.moTa })
   }
 
   // Hệ số chênh lệch bảo lưu bị nhập nhầm theo % (VD 33 thay vì 0,33) → quy về hệ số
@@ -133,7 +141,7 @@ function migrateUuDaiTheoNd182() {
     const mucCu = p.giaTri > 0 ? p.giaTri : loaiCu.giaTri
     if (loaiMoi.id === loaiCu.id && mucCu === loaiMoi.giaTri) continue
     lichSu.push({
-      id: nanoid(), vienChucId: p.vienChucId, loai: 'PHU_CAP', truongThayDoi: 'PC ưu đãi nghề',
+      id: nanoid(), vienChucId: p.vienChucId, loai: 'PHU_CAP', truongThayDoi: 'PC ưu đãi nhà giáo',
       giaTriCu: `${mucCu}%`, giaTriMoi: `${loaiMoi.giaTri}% (NĐ 182/2026)`,
       ngayThayDoi: homNay, nguoiThayDoiId: 'system',
     })
@@ -381,7 +389,7 @@ export function initSeedData() {
     // PC Chức vụ — hệ số tự động theo loại trường × hạng trường × chức vụ (TT 33/2005), cộng thẳng vào tổng hệ số lương
     { id: 'pc_cv', ma: 'PC_CHUC_VU', ten: 'PC Chức vụ (TT 33/2005)', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Phụ cấp chức vụ HT/PHT/TT/TP — hệ số theo loại trường × hạng trường, cộng thẳng vào tổng hệ số lương', active: true },
     // PC Thâm niên nghề
-    { id: 'pc6', ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: '5% sau 5 năm, +1%/năm. Chuyển sang PC nghề nghiệp theo NĐ 182/2026', active: true },
+    { id: 'pc6', ma: 'PC_THAM_NIEN', ten: 'PC Thâm niên nghề', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 5, moTa: MO_TA_THAM_NIEN, active: true },
     // PC Trách nhiệm công việc — hệ số theo vị trí, chọn và nhập tay
     { id: 'pc_tn', ma: 'PC_TRACH_NHIEM', ten: 'PC Trách nhiệm công việc', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Hệ số theo từng vị trí công việc, VD: Kế toán 0,2 — chọn và nhập hệ số thủ công', active: true },
     // PC Thâm niên vượt khung — chọn và nhập tay

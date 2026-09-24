@@ -1,8 +1,8 @@
 import type { LoaiPhuCap } from '@/types/danhMuc'
 
 // Thứ tự hiển thị danh mục phụ cấp — theo đúng thứ tự cột của Bảng tổng hợp lương:
-// vượt khung → chức vụ → trách nhiệm → thâm niên nghề → chênh lệch bảo lưu → ưu đãi nghề
-// (mức NĐ 182/2026 trước, mức cũ QĐ 244/2005 xếp cuối). Loại tự thêm xếp sau cùng theo tên.
+// vượt khung → chức vụ → trách nhiệm → thâm niên nghề → chênh lệch bảo lưu → ưu đãi nhà giáo
+// (theo cấp học: MN/TH 45 → THCS 40 → nhân viên 20; mức cũ QĐ 244/2005 xếp cuối). Loại tự thêm xếp sau cùng theo tên.
 const THU_TU_MA = [
   'PC_THAM_NIEN_VK',
   'PC_CHUC_VU',

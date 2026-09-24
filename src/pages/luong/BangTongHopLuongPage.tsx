@@ -331,7 +331,7 @@ export default function BangTongHopLuongPage() {
       render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.hsBaoLuu)}</Text> : d3((r as RowData).hsBaoLuu),
     },
     {
-      title: 'Phụ cấp ưu đãi', key: 'pcUD', width: 90, align: 'right' as const,
+      title: 'PC ưu đãi nhà giáo', key: 'pcUD', width: 90, align: 'right' as const,
       render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcUD)}</Text> : d3((r as RowData).pcUD),
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcUD - (b as RowData).pcUD,
@@ -372,7 +372,7 @@ export default function BangTongHopLuongPage() {
       'PC TNNG Hệ số': r.pcTNNG_HeSo || '',
       'Mốc xét nâng TNNG': r.mocTNNG,
       'HS Chênh lệch bảo lưu': r.hsBaoLuu || '',
-      'PC Ưu đãi nghề': r.pcUD || '',
+      'PC ưu đãi nhà giáo': r.pcUD || '',
       'Tổng HS lương 1 tháng': r.tong1Thang,
       'Tổng HS lương 6 tháng đầu năm': r.tong6Thang,
     }))

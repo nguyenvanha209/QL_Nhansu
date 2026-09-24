@@ -66,7 +66,7 @@ const COL = {
   PC_TN:           'PC Trách nhiệm (hệ số)',
   PC_TNN:          'PC Thâm niên nghề (%)',
   MOC_TNN:         'Mốc thâm niên',
-  PC_UD:           'PC Ưu đãi nghề (%)',
+  PC_UD:           'PC ưu đãi nhà giáo (%)',
   HE_SO_BAO_LUU:   'Hệ số chênh lệch bảo lưu',
   GHI_CHU:         'Ghi chú',
 } as const
@@ -585,7 +585,8 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           checkPC('PC Chức vụ',      'pcCv', PC_CHUC_VU,       cur.cv,  num(row[COL.PC_CV]),  pcRecs.cv,  '')
           checkPC('PC Trách nhiệm',  'pcTn', PC_TRACH_NHIEM,   cur.tn,  num(row[COL.PC_TN]),  pcRecs.tn,  '')
           checkPC('PC Thâm niên',    'pcTnn', PC_THAM_NIEN,    cur.tnn, num(row[COL.PC_TNN]), pcRecs.tnn, '%')
-          checkPC('PC Ưu đãi',       'pcUd', PC_UU_DAI_PREFIX, cur.ud,  num(row[COL.PC_UD]),  pcRecs.ud,  '%')
+          // File mẫu cũ đặt tên cột là "PC Ưu đãi nghề (%)"
+          checkPC('PC ưu đãi nhà giáo', 'pcUd', PC_UU_DAI_PREFIX, cur.ud, num(row[COL.PC_UD] ?? row['PC Ưu đãi nghề (%)']), pcRecs.ud, '%')
 
           // Mốc thâm niên — chỉ sửa được khi đã có bản ghi PC thâm niên
           const rMocTnn = readDate(row[COL.MOC_TNN])
@@ -813,7 +814,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
                 </ol>
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   File gồm 3 nhóm: <b>hồ sơ</b>, <b>lương</b> (bậc, hệ số, hệ số chênh lệch bảo lưu, mốc hưởng) và{' '}
-                  <b>phụ cấp</b> (vượt khung, chức vụ, trách nhiệm, thâm niên, ưu đãi).
+                  <b>phụ cấp</b> (vượt khung, chức vụ, trách nhiệm, thâm niên nghề, ưu đãi nhà giáo).
                   Họ và tên xuất ra VIẾT HOA — khi nhập lại, hệ thống so sánh nội dung (không phân biệt hoa/thường).
                   Muốn <b>gỡ một phụ cấp</b>, nhập số <b>0</b> vào ô đó (để trống nghĩa là giữ nguyên).
                 </Text>

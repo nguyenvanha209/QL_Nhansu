@@ -508,13 +508,13 @@ export default function VienChucFormPage() {
                 label="Mức lương (VNĐ/tháng)"
                 rules={[{ required: true, message: 'Nhập mức lương' }]}
               >
-                <InputNumber
+                <InputNumber<number>
                   min={0}
                   step={100000}
                   style={{ width: '100%' }}
                   placeholder="VD: 5.000.000"
-                  formatter={(v) => (v == null || v === '' ? '' : Number(v).toLocaleString('vi-VN'))}
-                  parser={(v) => Number((v ?? '').replace(/\D/g, '')) as any}
+                  formatter={(v) => (v == null || String(v) === '' ? '' : Number(v).toLocaleString('vi-VN'))}
+                  parser={(v) => Number((v ?? '').replace(/\D/g, ''))}
                   suffix="đ"
                 />
               </Form.Item>

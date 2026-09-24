@@ -180,6 +180,9 @@ export default function VienChucFormPage() {
     const { ho, ten } = splitHoTen(toUpperName(hoTenFull))
     const formatted = {
       ...restValues,
+      // Tài khoản trường không thấy ô Đơn vị (ô bị ẩn nên không gửi giá trị) → luôn gán trường của tài khoản,
+      // nếu không hồ sơ mới sẽ không thuộc trường nào và không lên bảng lương, báo cáo
+      donViId: restValues.donViId ?? scopeDonViId ?? vc?.donViId,
       ho,
       ten,
       ngaySinh: values.ngaySinh?.format('YYYY-MM-DD'),

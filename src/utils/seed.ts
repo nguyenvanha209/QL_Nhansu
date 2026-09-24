@@ -198,6 +198,24 @@ function migrateTachHoSoChuyenCongTac() {
   }
 }
 
+// Hồ sơ do tài khoản trường thêm mới từng bị mất đơn vị công tác (ô Đơn vị bị ẩn nên không
+// được gửi khi lưu) → không lên bảng lương, báo cáo. Gán lại theo trường của tài khoản đã tạo.
+function migrateGanDonViHoSoThieu() {
+  const vcState = useVienChucStore.getState()
+  const thieu = vcState.vienChucs.filter((v) => !v.donViId)
+  if (!thieu.length) return
+  const nhatKys = useNhatKyStore.getState().nhatKys
+  const users = useUserStore.getState().users
+  for (const vc of thieu) {
+    const taoBoi = nhatKys.find((n) => n.action === 'CREATE' && n.entityId === vc.id)?.userId
+    const donViId = users.find((u) => u.id === taoBoi)?.donViId
+    if (!donViId) continue
+    vcState.updateVienChuc(vc.id, { donViId })
+    logAction('system', 'Hệ thống', 'UPDATE', 'VienChuc', vc.id,
+      `Gán lại đơn vị cho hồ sơ ${vc.ho} ${vc.ten} (bị thiếu do lỗi thêm mới từ tài khoản trường)`)
+  }
+}
+
 // Danh mục VTVL / Chức vụ chuyển từ hằng số cứng sang dữ liệu admin tùy biến được
 function ensureVtvlVaChucVu() {
   const { vtvls, addVtvl, chucVus, addChucVu } = useDanhMucStore.getState()
@@ -290,6 +308,7 @@ export function initSeedData() {
   migratePhuCapUuDaiVaBaoLuu()
   migrateUuDaiTheoNd182()
   migrateTachHoSoChuyenCongTac()
+  migrateGanDonViHoSoThieu()
   migrateChiTieuToDonVi()
   migrateNhatKySangKhoRieng()
 

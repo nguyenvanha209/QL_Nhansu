@@ -52,9 +52,12 @@ export default function ViTriPage() {
       const coViTriHoTro = vts.some((v) => v.loai === 'HO_TRO')
       const soDongViTri = vtsQuanLyChuyenMon.length + (coViTriHoTro ? 1 : 0)
 
+      // Chỉ viên chức biên chế (kể cả tập sự) mới tính theo nguồn kinh phí; mọi loại hợp đồng vào cột HĐ,
+      // kể cả hồ sơ hợp đồng nhập từ Excel còn ghi nguồn "Ngân sách"
+      const laBienChe = (vc: (typeof vcInDv)[number]) => vc.loaiLaoDong === 'VIEN_CHUC' || vc.loaiLaoDong === 'TAP_SU'
       const buildRow = (matched: typeof vcInDv) => {
-        const coMatNS = matched.filter((vc) => vc.nguonKinhPhi === 'NGAN_SACH').length
-        const coMatSN = matched.filter((vc) => vc.nguonKinhPhi === 'SU_NGHIEP').length
+        const coMatNS = matched.filter((vc) => laBienChe(vc) && vc.nguonKinhPhi === 'NGAN_SACH').length
+        const coMatSN = matched.filter((vc) => laBienChe(vc) && vc.nguonKinhPhi === 'SU_NGHIEP').length
         return { coMatNS, coMatSN, coMatHD: matched.length - coMatNS - coMatSN, coMatTong: matched.length }
       }
 
@@ -67,7 +70,8 @@ export default function ViTriPage() {
           matched = vcInDv.filter((vc) => vc.chucVu === 'P.HT')
         } else if (vt.loai === 'CHUYEN_MON') {
           matched = vcInDv.filter((vc) =>
-            gvChucDanhIds.includes(vc.chucDanhId) && vc.chucVu !== 'HT' && vc.chucVu !== 'P.HT'
+            (gvChucDanhIds.includes(vc.chucDanhId) || (!vc.chucDanhId && vc.vtvl === 'GIAO_VIEN'))
+            && vc.chucVu !== 'HT' && vc.chucVu !== 'P.HT'
           )
         } else {
           matched = vcInDv.filter((vc) => vt.chucDanhIds.includes(vc.chucDanhId))
@@ -90,7 +94,8 @@ export default function ViTriPage() {
       rows.push(...positionRows)
 
       if (coViTriHoTro) {
-        const matchedNv = vcInDv.filter((vc) => nvChucDanhIds.includes(vc.chucDanhId))
+        // Hợp đồng không bắt buộc mã ngạch → hồ sơ chưa có ngạch thì xếp theo VTVL Nhân viên
+        const matchedNv = vcInDv.filter((vc) => nvChucDanhIds.includes(vc.chucDanhId) || (!vc.chucDanhId && vc.vtvl === 'NHAN_VIEN'))
         const counts = buildRow(matchedNv)
         subNS += counts.coMatNS
         subSN += counts.coMatSN

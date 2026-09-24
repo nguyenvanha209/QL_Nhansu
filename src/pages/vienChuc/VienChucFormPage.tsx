@@ -77,6 +77,11 @@ export default function VienChucFormPage() {
     .filter((pc) => duocHuongPctn || pc.ma !== 'PC_THAM_NIEN')
     .map((pc) => ({ value: pc.id, label: `${pc.ma} — ${pc.ten}` }))
 
+  // Không cho chọn tập sự và HĐ NĐ 111 (đã bỏ); hồ sơ cũ đang mang loại HĐ 111 vẫn giữ được khi sửa
+  const loaiLaoDongOptions = Object.entries(LOAI_LAO_DONG_LABELS)
+    .filter(([k]) => k !== 'TAP_SU' && (k !== 'HOP_DONG_111' || vc?.loaiLaoDong === 'HOP_DONG_111'))
+    .map(([k, v]) => ({ value: k, label: v }))
+
   const vtvlOptions = vtvls.filter((v) => v.active).map((v) => ({ value: v.ma, label: v.ten }))
   const chucVuOptions = chucVus.filter((c) => c.active).map((c) => ({ value: c.ma, label: c.ten }))
 
@@ -364,7 +369,7 @@ export default function VienChucFormPage() {
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="loaiLaoDong" label="Loại hình lao động" rules={[{ required: true }]}>
               <Select
-                options={Object.entries(LOAI_LAO_DONG_LABELS).filter(([k]) => k !== 'TAP_SU').map(([k, v]) => ({ value: k, label: v }))}
+                options={loaiLaoDongOptions}
                 onChange={(v: LoaiLaoDong) => {
                   // Chuyển sang hợp đồng → gỡ các lỗi "bắt buộc" còn sót của viên chức biên chế
                   if (v !== 'VIEN_CHUC') {

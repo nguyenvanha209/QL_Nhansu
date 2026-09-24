@@ -8,6 +8,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
 import { LOAI_DON_VI_LABELS } from '@/types/donVi'
 import { getHangTruong, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
+import { sapXepLoaiPhuCap, PCUD_MUC_CU } from '@/utils/phuCapThuTu'
 import { TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 
@@ -168,20 +169,27 @@ function PhuCapTab() {
   }
 
   const cols = [
-    { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 120 },
-    { title: 'Tên phụ cấp', dataIndex: 'ten', key: 'ten' },
-    { title: 'Công thức', dataIndex: 'loaiCongThuc', key: 'ct', render: (v: string) => CONG_THUC_LABELS[v as keyof typeof CONG_THUC_LABELS] ?? v },
+    { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 170, render: (v: string) => <span style={{ whiteSpace: 'nowrap' }}>{v}</span> },
     {
-      title: 'Giá trị', dataIndex: 'giaTri', key: 'gt',
-      render: (v: number, r: any) => r.loaiCongThuc === 'TIEN_MAT' ? `${v.toLocaleString()} đ` : r.loaiCongThuc === 'HE_SO' ? `+${v}` : `${v}%`,
+      title: 'Tên phụ cấp', dataIndex: 'ten', key: 'ten',
+      render: (v: string, r: any) => PCUD_MUC_CU.has(r.ma) ? <Space size={6}>{v}<Tag>Mức cũ</Tag></Space> : v,
     },
+    { title: 'Công thức', dataIndex: 'loaiCongThuc', key: 'ct', render: (v: string) => CONG_THUC_LABELS[v as keyof typeof CONG_THUC_LABELS] ?? v ?? '—' },
+    {
+      title: 'Giá trị', dataIndex: 'giaTri', key: 'gt', width: 130,
+      render: (v: number | null, r: any) => {
+        if (!v) return <Typography.Text type="secondary">Nhập theo từng người</Typography.Text>
+        return r.loaiCongThuc === 'TIEN_MAT' ? `${v.toLocaleString()} đ` : r.loaiCongThuc === 'HE_SO' ? `+${v}` : `${v}%`
+      },
+    },
+    { title: 'Đối tượng / Căn cứ', dataIndex: 'moTa', key: 'moTa', render: (v?: string) => v ?? '—' },
     { title: '', key: 'act', render: (_: any, r: any) => <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} /> },
   ]
 
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm loại phụ cấp</Button>
-      <Table scroll={{ x: 'max-content' }} dataSource={loaiPhuCaps.filter((p) => p.active)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={sapXepLoaiPhuCap(loaiPhuCaps.filter((p) => p.active))} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa phụ cấp' : 'Thêm phụ cấp'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
@@ -189,7 +197,12 @@ function PhuCapTab() {
           <Form.Item name="loaiCongThuc" label="Công thức" rules={[{ required: true }]}>
             <Select options={Object.entries(CONG_THUC_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
           </Form.Item>
-          <Form.Item name="giaTri" label="Giá trị (% / VNĐ / hệ số)" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
+          <Form.Item
+            name="giaTri"
+            label="Giá trị (% / VNĐ / hệ số)"
+            rules={[{ required: true }]}
+            extra="Loại Hệ số nhập giá trị hệ số (VD 0,33), không nhập %. Để 0 nếu mỗi người một mức."
+          ><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
           <Form.Item name="moTa" label="Mô tả"><Input.TextArea rows={2} /></Form.Item>
         </Form>
       </Modal>

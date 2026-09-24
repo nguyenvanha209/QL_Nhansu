@@ -146,7 +146,7 @@ export default function VienChucListPage() {
           )}
           {canWrite && (
             <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vien-chuc/new')}>
-              Thêm viên chức
+              Thêm hồ sơ nhân sự
             </Button>
           )}
         </Space>

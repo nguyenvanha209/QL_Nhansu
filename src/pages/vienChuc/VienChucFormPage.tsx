@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Card, Form, Input, Select, DatePicker, Button, Row, Col,
-  Space, Typography, Divider, InputNumber, Alert, App,
+  Space, Typography, Divider, InputNumber, Alert, App, Tag,
 } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -10,12 +10,13 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, coPhuCapThamNien } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, HINH_THUC_LUONG_LABELS, coPhuCapThamNien } from '@/types/vienChuc'
 import { chucDanhHopLeVoiVtvl } from '@/utils/vtvlRules'
-import type { ChucVu, LoaiLaoDong } from '@/types/vienChuc'
+import type { ChucVu, LoaiLaoDong, HinhThucLuong } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen, toUpperName } from '@/utils/helpers'
+import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
 
 const { Title, Text } = Typography
 
@@ -27,7 +28,14 @@ function PhuCapGiaTriInput({ value, onChange, fieldName }: { value?: number; onC
   const suffix = selected?.loaiCongThuc === 'TIEN_MAT' ? 'đ' : selected?.loaiCongThuc === 'HE_SO' ? 'hệ số' : '%'
   return (
     <Space.Compact style={{ width: '100%' }}>
-      <InputNumber value={value} onChange={onChange} style={{ width: '100%' }} placeholder="Giá trị" min={0} />
+      <InputNumber
+        value={value}
+        onChange={onChange}
+        style={{ width: '100%' }}
+        placeholder={selected?.loaiCongThuc === 'HE_SO' ? 'VD 0,33' : 'Giá trị'}
+        min={0}
+        step={selected?.loaiCongThuc === 'HE_SO' ? 0.01 : 1}
+      />
       <Button disabled style={{ pointerEvents: 'none' }}>{suffix}</Button>
     </Space.Compact>
   )
@@ -65,8 +73,7 @@ export default function VienChucFormPage() {
         : `${c.ma} — ${c.ten} (không thuộc VTVL đang chọn)`,
     }))
 
-  const phuCapOptions = loaiPhuCaps
-    .filter((pc) => pc.active)
+  const phuCapOptions = sapXepLoaiPhuCap(loaiPhuCaps.filter((pc) => pc.active))
     .filter((pc) => duocHuongPctn || pc.ma !== 'PC_THAM_NIEN')
     .map((pc) => ({ value: pc.id, label: `${pc.ma} — ${pc.ten}` }))
 
@@ -124,12 +131,25 @@ export default function VienChucFormPage() {
   const watchBacLuongId = Form.useWatch('bacLuongId', form)
   const selectedBac = useMemo(() => bacLuongs.find((b) => b.id === watchBacLuongId), [watchBacLuongId])
   const watchLoaiLaoDong = Form.useWatch('loaiLaoDong', form) as LoaiLaoDong | undefined
+  // Viên chức biên chế: bắt buộc khai mã ngạch, nguồn kinh phí, ngày vào biên chế, bậc lương.
+  // Các loại hình hợp đồng: mã ngạch, bậc lương không bắt buộc; không có nguồn kinh phí / ngày biên chế.
+  const laBienChe = watchLoaiLaoDong === 'VIEN_CHUC'
+  const watchHinhThucLuong = Form.useWatch('hinhThucLuong', form) as HinhThucLuong | undefined
+  // Hợp đồng nhận lương theo mức tiền → không khai bậc lương, hệ số
+  const luongTheoTien = !laBienChe && watchHinhThucLuong === 'TIEN'
+  const nhanBienChe = (text: string) => (
+    <Space size={6}>
+      {text}
+      {laBienChe && <Tag color="blue" style={{ marginInlineEnd: 0, fontSize: 11, lineHeight: '16px' }}>VC biên chế</Tag>}
+    </Space>
+  )
 
   useEffect(() => {
     if (!vc) return
     form.setFieldsValue({
       ...vc,
       hoTenFull: `${vc.ho} ${vc.ten}`.trim(),
+      hinhThucLuong: vc.hinhThucLuong ?? 'HE_SO',
       ngaySinh: dayjs(vc.ngaySinh),
       ngayVaoNganh: dayjs(vc.ngayVaoNganh),
       ngayVaoDonVi: dayjs(vc.ngayVaoDonVi),
@@ -167,6 +187,11 @@ export default function VienChucFormPage() {
       mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
     }
     if (formatted.loaiLaoDong !== 'VIEN_CHUC') formatted.nguonKinhPhi = undefined
+    const theoTien = formatted.loaiLaoDong !== 'VIEN_CHUC' && formatted.hinhThucLuong === 'TIEN'
+    if (formatted.loaiLaoDong === 'VIEN_CHUC') formatted.hinhThucLuong = undefined
+    if (!theoTien) formatted.mucLuongTien = undefined
+    // Lương theo tiền: không ghi bậc lương / hệ số mới
+    if (theoTien) formatted.bacLuongId = undefined
     const nhomNgach = chucDanhs.find((c) => c.id === formatted.chucDanhId)?.nhom
     const huongPctn = coPhuCapThamNien(formatted.vtvl, nhomNgach)
     // Nhân viên không hưởng phụ cấp thâm niên → không giữ mốc PCTN
@@ -258,7 +283,7 @@ export default function VienChucFormPage() {
         }
       }
 
-      message.success('Thêm viên chức thành công')
+      message.success('Thêm hồ sơ nhân sự thành công')
       navigate(`/vien-chuc/${newVc.id}`)
     }
   }
@@ -270,13 +295,13 @@ export default function VienChucFormPage() {
           Quay lại
         </Button>
       </Space>
-      <Title level={4}>{isEdit ? 'Chỉnh sửa hồ sơ' : 'Thêm viên chức mới'}</Title>
+      <Title level={4}>{isEdit ? 'Chỉnh sửa hồ sơ' : 'Thêm hồ sơ nhân sự mới'}</Title>
 
       <Form
         form={form}
         layout="vertical"
         onFinish={onFinish}
-        initialValues={{ gioiTinh: 'NU', loaiLaoDong: 'VIEN_CHUC', phuCaps: [], trangThai: 'DANG_LAM_VIEC', laDangVien: false, mocHuongLuong: dayjs(), donViId: scopeDonViId ?? undefined }}
+        initialValues={{ gioiTinh: 'NU', loaiLaoDong: 'VIEN_CHUC', hinhThucLuong: 'HE_SO', phuCaps: [], trangThai: 'DANG_LAM_VIEC', laDangVien: false, mocHuongLuong: dayjs(), donViId: scopeDonViId ?? undefined }}
       >
         {/* ── Thông tin cá nhân ── */}
         <Divider titlePlacement="left">Thông tin cá nhân</Divider>
@@ -330,6 +355,19 @@ export default function VienChucFormPage() {
             </Col>
           )}
           <Col xs={24} sm={12} md={8}>
+            <Form.Item name="loaiLaoDong" label="Loại hình lao động" rules={[{ required: true }]}>
+              <Select
+                options={Object.entries(LOAI_LAO_DONG_LABELS).filter(([k]) => k !== 'TAP_SU').map(([k, v]) => ({ value: k, label: v }))}
+                onChange={(v: LoaiLaoDong) => {
+                  // Chuyển sang hợp đồng → gỡ các lỗi "bắt buộc" còn sót của viên chức biên chế
+                  if (v !== 'VIEN_CHUC') {
+                    form.setFields([{ name: 'chucDanhId', errors: [] }, { name: 'bacLuongId', errors: [] }])
+                  }
+                }}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="vtvl"
               label="VTVL (Vị trí việc làm)"
@@ -356,25 +394,25 @@ export default function VienChucFormPage() {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="chucDanhId" label="Mã ngạch/Hạng" rules={[{ required: true }]}>
+            <Form.Item
+              name="chucDanhId"
+              label={nhanBienChe('Mã ngạch/Hạng')}
+              rules={[{ required: laBienChe, message: 'Chọn mã ngạch/hạng' }]}
+            >
               <Select
                 options={chucDanhOptions}
-                placeholder="Chọn chức danh"
+                placeholder={laBienChe ? 'Chọn chức danh' : 'Không bắt buộc'}
                 showSearch
+                allowClear={!laBienChe}
                 optionFilterProp="label"
                 onChange={() => form.setFieldValue('bacLuongId', undefined)}
               />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Form.Item name="loaiLaoDong" label="Loại hình lao động" rules={[{ required: true }]}>
-              <Select options={Object.entries(LOAI_LAO_DONG_LABELS).filter(([k]) => k !== 'TAP_SU').map(([k, v]) => ({ value: k, label: v }))} />
-            </Form.Item>
-          </Col>
-          {watchLoaiLaoDong === 'VIEN_CHUC' && (
+          {laBienChe && (
             <>
               <Col xs={24} sm={12} md={8}>
-                <Form.Item name="nguonKinhPhi" label="Nguồn kinh phí" rules={[{ required: true, message: 'Chọn nguồn kinh phí' }]}>
+                <Form.Item name="nguonKinhPhi" label={nhanBienChe('Nguồn kinh phí')} rules={[{ required: true, message: 'Chọn nguồn kinh phí' }]}>
                   <Select options={Object.entries(NGUON_KINH_PHI_LABELS).map(([k, v]) => ({ value: k, label: v }))} placeholder="Chọn nguồn kinh phí" />
                 </Form.Item>
               </Col>
@@ -405,12 +443,28 @@ export default function VienChucFormPage() {
               <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Form.Item name="ngayVaoBienChe" label="Ngày vào biên chế">
-              <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-            </Form.Item>
-          </Col>
+          {laBienChe && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item
+                name="ngayVaoBienChe"
+                label={nhanBienChe('Ngày vào biên chế')}
+                rules={[{ required: true, message: 'Chọn ngày vào biên chế' }]}
+              >
+                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          )}
         </Row>
+        {laBienChe ? (
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+            Các ô gắn nhãn <Tag color="blue" style={{ fontSize: 11, lineHeight: '16px' }}>VC biên chế</Tag>
+            là thông tin bắt buộc theo quy định đối với viên chức biên chế.
+          </Text>
+        ) : (
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+            Loại hình hợp đồng: Mã ngạch/Hạng và Bậc lương không bắt buộc; không khai nguồn kinh phí, ngày vào biên chế.
+          </Text>
+        )}
 
         {/* ── Trình độ & Nhiệm vụ ── */}
         <Divider titlePlacement="left">Trình độ & Nhiệm vụ</Divider>
@@ -435,16 +489,49 @@ export default function VienChucFormPage() {
         {/* ── Lương & Phụ cấp ── */}
         <Divider titlePlacement="left">Lương & Phụ cấp</Divider>
         <Row gutter={16}>
+          {!laBienChe && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item
+                name="hinhThucLuong"
+                label="Hình thức nhận lương"
+                tooltip="Loại hình hợp đồng có thể nhận lương theo bậc/hệ số, hoặc theo một mức tiền cố định mỗi tháng"
+                rules={[{ required: true }]}
+              >
+                <Select options={Object.entries(HINH_THUC_LUONG_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
+              </Form.Item>
+            </Col>
+          )}
+          {luongTheoTien && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item
+                name="mucLuongTien"
+                label="Mức lương (VNĐ/tháng)"
+                rules={[{ required: true, message: 'Nhập mức lương' }]}
+              >
+                <InputNumber
+                  min={0}
+                  step={100000}
+                  style={{ width: '100%' }}
+                  placeholder="VD: 5.000.000"
+                  formatter={(v) => (v == null || v === '' ? '' : Number(v).toLocaleString('vi-VN'))}
+                  parser={(v) => Number((v ?? '').replace(/\D/g, '')) as any}
+                  suffix="đ"
+                />
+              </Form.Item>
+            </Col>
+          )}
+          {!luongTheoTien && (<>
           <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="bacLuongId"
-              label="Bậc lương"
-              rules={[{ required: !isEdit, message: 'Chọn bậc lương' }]}
+              label={nhanBienChe('Bậc lương')}
+              rules={[{ required: laBienChe && !isEdit, message: 'Chọn bậc lương' }]}
             >
               <Select
                 options={bacLuongOptions}
-                placeholder={watchChucDanhId ? 'Chọn bậc lương' : 'Chọn chức danh trước'}
+                placeholder={watchChucDanhId ? (laBienChe ? 'Chọn bậc lương' : 'Không bắt buộc') : 'Chọn chức danh trước'}
                 disabled={!watchChucDanhId}
+                allowClear={!laBienChe}
                 showSearch
                 optionFilterProp="label"
               />
@@ -477,6 +564,7 @@ export default function VienChucFormPage() {
               <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} placeholder="Chọn mốc hưởng lương" />
             </Form.Item>
           </Col>
+          </>)}
           {duocHuongPctn && (
             <Col xs={24} sm={12} md={8}>
               <Form.Item
@@ -546,7 +634,20 @@ export default function VienChucFormPage() {
                       </Form.Item>
                     </Col>
                     <Col flex="140px">
-                      <Form.Item {...restField} name={[name, 'giaTri']} style={{ marginBottom: 8 }}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'giaTri']}
+                        style={{ marginBottom: 8 }}
+                        rules={[{
+                          // Loại "Hệ số" (chức vụ, trách nhiệm, chênh lệch bảo lưu) nhập giá trị hệ số, không phải %
+                          validator: (_, v) => {
+                            const loai = loaiPhuCaps.find((p) => p.id === form.getFieldValue(['phuCaps', name, 'loaiPhuCapId']))
+                            return loai?.loaiCongThuc === 'HE_SO' && v >= 5
+                              ? Promise.reject(new Error(`Nhập hệ số (VD ${(v / 100).toLocaleString('vi')}), không nhập %`))
+                              : Promise.resolve()
+                          },
+                        }]}
+                      >
                         <PhuCapGiaTriInput fieldName={name} />
                       </Form.Item>
                     </Col>

@@ -21,7 +21,7 @@ const FOOTER_TEXT = 'QLVC&LĐ phường Gia Viên | Đơn vị: Phòng Văn hóa
 
 const BREADCRUMB_MAP: Record<string, string> = {
   '/dashboard': 'Tổng quan',
-  '/vien-chuc': 'Hồ sơ viên chức',
+  '/vien-chuc': 'Hồ sơ nhân sự',
   '/bang-tong-hop-luong': 'Bảng tổng hợp lương',
   '/luong/he-so': 'Hệ số lương',
   '/luong/phu-cap': 'Phụ cấp',
@@ -47,7 +47,7 @@ export default function AppLayout() {
 
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
-    hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ viên chức' },
+    hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
     { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
     hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
     hasPermission('deXuat', 'read') && {

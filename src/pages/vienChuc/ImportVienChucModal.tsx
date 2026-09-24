@@ -67,7 +67,7 @@ const COL = {
   PC_TNN:          'PC Thâm niên nghề (%)',
   MOC_TNN:         'Mốc thâm niên',
   PC_UD:           'PC Ưu đãi nghề (%)',
-  HE_SO_BAO_LUU:   'Hệ số bảo lưu',
+  HE_SO_BAO_LUU:   'Hệ số chênh lệch bảo lưu',
   GHI_CHU:         'Ghi chú',
 } as const
 
@@ -530,15 +530,15 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chưa có bản ghi lương đang áp dụng — bỏ qua cột lương`)
           }
 
-          // Hệ số bảo lưu
+          // Hệ số chênh lệch bảo lưu (file mẫu cũ đặt tên cột là "Hệ số bảo lưu")
           if (heSoRec) {
-            const baoLuuMoi = num(row[COL.HE_SO_BAO_LUU])
+            const baoLuuMoi = num(row[COL.HE_SO_BAO_LUU] ?? row['Hệ số bảo lưu'])
             if (baoLuuMoi !== undefined) {
               const baoLuuCu = cur.baoLuu ?? 0
               if (baoLuuCu !== baoLuuMoi) {
                 patchHeSo.heSoBaoLuu = baoLuuMoi > 0 ? baoLuuMoi : undefined
                 fieldChanges.push({
-                  key: 'baoLuu', nhom: 'Lương', label: 'Hệ số bảo lưu',
+                  key: 'baoLuu', nhom: 'Lương', label: 'Hệ số chênh lệch bảo lưu',
                   oldDisplay: baoLuuCu ? String(baoLuuCu) : '(không có)',
                   newDisplay: baoLuuMoi > 0 ? String(baoLuuMoi) : '(gỡ bỏ)',
                 })
@@ -812,7 +812,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
                   <li>Kéo thả hoặc chọn file đã sửa để hệ thống đối chiếu</li>
                 </ol>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  File gồm 3 nhóm: <b>hồ sơ</b>, <b>lương</b> (bậc, hệ số, hệ số bảo lưu, mốc hưởng) và{' '}
+                  File gồm 3 nhóm: <b>hồ sơ</b>, <b>lương</b> (bậc, hệ số, hệ số chênh lệch bảo lưu, mốc hưởng) và{' '}
                   <b>phụ cấp</b> (vượt khung, chức vụ, trách nhiệm, thâm niên, ưu đãi).
                   Họ và tên xuất ra VIẾT HOA — khi nhập lại, hệ thống so sánh nội dung (không phân biệt hoa/thường).
                   Muốn <b>gỡ một phụ cấp</b>, nhập số <b>0</b> vào ô đó (để trống nghĩa là giữ nguyên).

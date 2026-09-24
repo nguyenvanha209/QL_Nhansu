@@ -5,7 +5,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, IS_BIEN_CHE, coPhuCapThamNien } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, IS_BIEN_CHE, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
 import { formatDate } from '@/utils/helpers'
@@ -47,7 +47,7 @@ export default function VienChucDetailPage() {
   const heSoCols = [
     { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60 },
     { title: 'Hệ số', dataIndex: 'heSo', key: 'heSo', width: 80 },
-    { title: 'HS bảo lưu', dataIndex: 'heSoBaoLuu', key: 'baoLuu', width: 100, render: (v?: number) => v ?? '—' },
+    { title: 'HS chênh lệch bảo lưu', dataIndex: 'heSoBaoLuu', key: 'baoLuu', width: 100, render: (v?: number) => v ?? '—' },
     { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
     { title: 'Ngày nâng tiếp', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', render: (v: string) => formatDate(v) },
     { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', render: (v: string) => LY_DO_LABELS[v as keyof typeof LY_DO_LABELS] ?? v },
@@ -109,7 +109,11 @@ export default function VienChucDetailPage() {
                 {coPhuCapThamNien(vc.vtvl) && (
                   <Descriptions.Item label="Mốc hưởng PCTN">{vc.mocHuongPctn ? formatDate(vc.mocHuongPctn) : '—'}</Descriptions.Item>
                 )}
-                {activeHeSo && <>
+                {nhanLuongTheoTien(vc) && <>
+                  <Descriptions.Item label="Hình thức nhận lương">{HINH_THUC_LUONG_LABELS.TIEN}</Descriptions.Item>
+                  <Descriptions.Item label="Mức lương">{vc.mucLuongTien != null ? `${vc.mucLuongTien.toLocaleString('vi-VN')} đ/tháng` : '—'}</Descriptions.Item>
+                </>}
+                {activeHeSo && !nhanLuongTheoTien(vc) && <>
                   <Descriptions.Item label="Bậc lương hiện tại">Bậc {activeHeSo.bac} — Hệ số {activeHeSo.heSo}</Descriptions.Item>
                   <Descriptions.Item label="Ngày nâng lương tiếp theo">
                     <Text type={new Date(activeHeSo.ngayNangLuongTiepTheo) < new Date() ? 'danger' : undefined}>

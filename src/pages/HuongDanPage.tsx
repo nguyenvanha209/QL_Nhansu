@@ -201,7 +201,7 @@ export default function HuongDanPage() {
       >
         <h3>Cách mở và sửa một hồ sơ</h3>
         <ol>
-          <li>Bấm mục <b>Hồ sơ viên chức</b> trên thanh điều hướng bên trái.</li>
+          <li>Bấm mục <b>Hồ sơ nhân sự</b> trên thanh điều hướng bên trái.</li>
           <li>Bấm vào <b>họ tên</b> viên chức để mở trang chi tiết.</li>
           <li>Bấm nút <b>Chỉnh sửa</b>, cập nhật thông tin rồi <b>Lưu</b>.</li>
         </ol>
@@ -571,7 +571,7 @@ export default function HuongDanPage() {
             <thead><tr><th style={{ width: 250 }}>Menu</th><th>Dùng để làm gì</th></tr></thead>
             <tbody>
               <tr><td><b>Tổng quan</b></td><td>Số liệu nhanh về nhân sự, cơ cấu vị trí việc làm, biểu đồ theo trường và số phiếu đề xuất đang xử lý. Thẻ "Sắp nâng lương" hiện số viên chức cần lập phiếu trong 90 ngày tới.</td></tr>
-              <tr><td><b>Hồ sơ viên chức</b></td><td>Danh sách và chi tiết từng người, kèm lịch sử biến động lương – phụ cấp. Xuất được ra Excel.</td></tr>
+              <tr><td><b>Hồ sơ nhân sự</b></td><td>Danh sách và chi tiết từng người, kèm lịch sử biến động lương – phụ cấp. Xuất được ra Excel.</td></tr>
               <tr><td><b>Bảng tổng hợp lương</b></td><td>Bảng lương theo mẫu quen thuộc, có dòng cộng của từng trường và dòng tổng cuối bảng. Bấm <b>Xuất Excel</b> để lấy file đối chiếu.</td></tr>
               <tr><td><b>Đề xuất điều chỉnh HSL – PCTN</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
               <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
@@ -582,7 +582,7 @@ export default function HuongDanPage() {
         </div>
         <Paragraph>
           Ở các bảng danh sách, bấm vào <b>tiêu đề cột</b> để sắp xếp tăng hoặc giảm dần. Riêng trang
-          <b> Hồ sơ viên chức</b> có thêm bộ lọc theo đơn vị, loại hình lao động và trạng thái công tác.
+          <b> Hồ sơ nhân sự</b> có thêm bộ lọc theo đơn vị, loại hình lao động và trạng thái công tác.
         </Paragraph>
         <Paragraph>
           Thanh điều hướng bên trái có thể thu gọn thành biểu tượng bằng nút ở cuối thanh, giúp mở rộng vùng hiển thị trên màn hình nhỏ.
@@ -605,7 +605,7 @@ export default function HuongDanPage() {
               children: (
                 <>
                   <p><b>Nếu chuyển từ một trường khác trong phường:</b> không tự khai lại. Trường có người chuyển đi lập phiếu ở menu <b>Chuyển công tác</b>; sau khi Quản trị duyệt, hồ sơ tự sang trường mình kèm nguyên ngạch, bậc, hệ số và phụ cấp. Việc của trường tiếp nhận chỉ là bấm <b>Tiếp nhận</b> và phân công vị trí.</p>
-                  <p><b>Nếu chuyển từ ngoài phường hoặc tuyển mới:</b> vào <b>Hồ sơ viên chức</b> → <b>Thêm viên chức</b>, khai đầy đủ kèm bậc và hệ số lương đang hưởng theo quyết định. Đặt <b>Trạng thái công tác</b> là <i>Chuyển đến</i>.</p>
+                  <p><b>Nếu chuyển từ ngoài phường hoặc tuyển mới:</b> vào <b>Hồ sơ nhân sự</b> → <b>Thêm hồ sơ nhân sự</b>, khai đầy đủ kèm bậc và hệ số lương đang hưởng theo quyết định. Đặt <b>Trạng thái công tác</b> là <i>Chuyển đến</i>.</p>
                 </>
               ),
             },

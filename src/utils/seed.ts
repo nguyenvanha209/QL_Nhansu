@@ -1,4 +1,7 @@
 import dayjs from 'dayjs'
+import { nanoid } from 'nanoid'
+import { logAction } from '@/utils/auditLogger'
+import { PCUD_MUC_CU } from '@/utils/phuCapThuTu'
 import type { BacLuong } from '@/types/danhMuc'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -38,6 +41,127 @@ const DEFAULT_CHUC_VUS = [
   { ma: 'TO_TRUONG_CM', ten: 'Tổ trưởng chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Phụ trách 1 tổ chuyên môn theo cơ cấu tổ chức nhà trường', active: true },
   { ma: 'TO_PHO_CM', ten: 'Tổ phó chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Hỗ trợ tổ trưởng chuyên môn', active: true },
 ]
+
+// PC ưu đãi nghề theo NĐ 182/2026 (thực hiện từ 01/01/2026, điều kiện bình thường):
+// GV mầm non, tiểu học 45%; GV THCS 40%; nhân viên hỗ trợ giáo dục 20%.
+// Mức 35%/30% cũ (QĐ 244/2005) giữ lại để không làm hỏng hồ sơ đang gán, chỉ đổi tên.
+// Hệ số chênh lệch bảo lưu là giá trị hệ số (VD 0,33), không phải %.
+const PCUD_MOI = [
+  { ma: 'PCUD_45', ten: 'PC ưu đãi nghề 45%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 45, moTa: 'Giáo viên mầm non, tiểu học (điều kiện bình thường) — NĐ 182/2026, thực hiện từ 01/01/2026', active: true },
+  { ma: 'PCUD_40', ten: 'PC ưu đãi nghề 40%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 40, moTa: 'Giáo viên THCS (điều kiện bình thường) — NĐ 182/2026, thực hiện từ 01/01/2026', active: true },
+  { ma: 'PCUD_20', ten: 'PC ưu đãi nghề 20%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 20, moTa: 'Nhân viên hỗ trợ giáo dục ở trường mầm non, phổ thông — NĐ 182/2026, thực hiện từ 01/01/2026', active: true },
+  { ma: 'PC_BAO_LUU', ten: 'Hệ số chênh lệch bảo lưu', loaiCongThuc: 'HE_SO' as const, giaTri: 0, moTa: 'Nhập giá trị hệ số chênh lệch được bảo lưu (VD 0,33 — không phải %), cộng thẳng vào tổng hệ số lương', active: true },
+]
+// Tên cũ → chỉ đổi khi tên vẫn là tên cũ, để không ghi đè chỉnh sửa của quản trị
+const DOI_TEN_PHU_CAP: Record<string, { tenCu: string[]; ten: string; moTa: string }> = {
+  PCUD_35: { tenCu: ['PC Ưu đãi nghề (35%)'], ten: 'PC ưu đãi nghề 35% (mức cũ QĐ 244)', moTa: 'Mức cũ cho GV mầm non, tiểu học theo QĐ 244/2005/QĐ-TTg, áp dụng đến 31/12/2025 — nay thay bằng PCUD_45' },
+  PCUD_30: { tenCu: ['PC Ưu đãi nghề (30%)'], ten: 'PC ưu đãi nghề 30% (mức cũ QĐ 244)', moTa: 'Mức cũ cho GV THCS theo QĐ 244/2005/QĐ-TTg, áp dụng đến 31/12/2025 — nay thay bằng PCUD_40' },
+  PCUD_20: { tenCu: ['PC Ưu đãi nghề (20%)'], ten: PCUD_MOI[2].ten, moTa: PCUD_MOI[2].moTa },
+  PCUD_40: { tenCu: ['Phụ cấp ưu đãi 40%'], ten: PCUD_MOI[1].ten, moTa: PCUD_MOI[1].moTa },
+  PC_BAO_LUU: { tenCu: ['Phụ cấp chênh lệch bảo lưu'], ten: PCUD_MOI[3].ten, moTa: PCUD_MOI[3].moTa },
+}
+
+function migratePhuCapUuDaiVaBaoLuu() {
+  const { loaiPhuCaps, addLoaiPhuCap, updateLoaiPhuCap } = useDanhMucStore.getState()
+  const theoMa = new Map(loaiPhuCaps.map((p) => [p.ma, p]))
+  for (const pc of PCUD_MOI) {
+    const co = theoMa.get(pc.ma)
+    if (!co) { addLoaiPhuCap(pc); continue }
+    // PCUD_40 nhập từ bảng lương thiếu công thức và giá trị → bổ sung
+    const patch: Record<string, unknown> = {}
+    if (!co.loaiCongThuc || (pc.ma === 'PC_BAO_LUU' && co.loaiCongThuc !== 'HE_SO')) patch.loaiCongThuc = pc.loaiCongThuc
+    if (co.giaTri == null) patch.giaTri = pc.giaTri
+    if (Object.keys(patch).length) updateLoaiPhuCap(co.id, patch)
+  }
+  for (const [ma, doi] of Object.entries(DOI_TEN_PHU_CAP)) {
+    const co = useDanhMucStore.getState().loaiPhuCaps.find((p) => p.ma === ma)
+    if (co && doi.tenCu.includes(co.ten)) updateLoaiPhuCap(co.id, { ten: doi.ten, moTa: doi.moTa })
+  }
+
+  // Hệ số chênh lệch bảo lưu bị nhập nhầm theo % (VD 33 thay vì 0,33) → quy về hệ số
+  const baoLuu = useDanhMucStore.getState().loaiPhuCaps.find((p) => p.ma === 'PC_BAO_LUU')
+  const lg = useLuongStore.getState()
+  const laNhamPhanTram = (v?: number) => v != null && v >= 5
+  if (baoLuu && lg.phuCapVienChucs.some((p) => p.loaiPhuCapId === baoLuu.id && laNhamPhanTram(p.giaTri))) {
+    lg.setPhuCapVienChucs(lg.phuCapVienChucs.map((p) =>
+      p.loaiPhuCapId === baoLuu.id && laNhamPhanTram(p.giaTri) ? { ...p, giaTri: p.giaTri / 100 } : p))
+  }
+  if (lg.heSoLuongs.some((h) => laNhamPhanTram(h.heSoBaoLuu))) {
+    lg.setHeSoLuongs(lg.heSoLuongs.map((h) =>
+      laNhamPhanTram(h.heSoBaoLuu) ? { ...h, heSoBaoLuu: h.heSoBaoLuu! / 100 } : h))
+  }
+}
+
+// Chuyển hàng loạt PC ưu đãi nghề sang mức NĐ 182/2026 (hiệu lực 01/01/2026):
+// GV, CBQL mầm non/tiểu học 45%; GV, CBQL THCS 40%; nhân viên 20%.
+// - Bản ghi hiệu lực trước 01/01/2026 lệch mức: đóng lại, mở bản ghi mới từ 01/01/2026.
+// - Bản ghi hiệu lực từ 2026 mà vẫn gán mức cũ QĐ 244 (35/30%): sai ngay từ đầu → sửa tại chỗ.
+// Bản ghi mới hiệu lực từ 2026 với mức NĐ 182 không bị xét lại → chỉnh tay về sau không bị chạy đè.
+const NGAY_HL_ND182 = '2026-01-01'
+function migrateUuDaiTheoNd182() {
+  const dm = useDanhMucStore.getState()
+  const vcs = useVienChucStore.getState().vienChucs
+  const lg = useLuongStore.getState()
+  const loaiTheoMa = new Map(dm.loaiPhuCaps.map((p) => [p.ma, p]))
+  const loaiUd = new Map(dm.loaiPhuCaps.filter((p) => p.ma.startsWith('PCUD')).map((p) => [p.id, p]))
+  const vcTheoId = new Map(vcs.map((v) => [v.id, v]))
+  const dvTheoId = new Map(dm.donVis.map((d) => [d.id, d]))
+  const nhomNgach = new Map(dm.chucDanhs.map((c) => [c.id, c.nhom]))
+
+  const mucDung = (vcId: string): string | undefined => {
+    const vc = vcTheoId.get(vcId)
+    if (!vc) return
+    const laNhanVien = vc.vtvl ? vc.vtvl === 'NHAN_VIEN' : nhomNgach.get(vc.chucDanhId) === 'NHAN_VIEN'
+    if (laNhanVien) return 'PCUD_20'
+    const loaiTruong = dvTheoId.get(vc.donViId)?.loai
+    if (loaiTruong === 'MAM_NON' || loaiTruong === 'TIEU_HOC') return 'PCUD_45'
+    if (loaiTruong === 'THCS') return 'PCUD_40'
+  }
+
+  const homNay = dayjs().format('YYYY-MM-DD')
+  const moi: typeof lg.phuCapVienChucs = []
+  const lichSu: typeof lg.lichSuBienDongs = []
+  const dong = new Set<string>()
+  const suaTaiCho = new Map<string, { loaiPhuCapId: string; giaTri: number; ghiChu: string }>()
+  for (const p of lg.phuCapVienChucs) {
+    const loaiCu = loaiUd.get(p.loaiPhuCapId)
+    if (!p.isActive || !loaiCu) continue
+    const tu2026 = p.ngayHieuLuc >= NGAY_HL_ND182
+    if (tu2026 && !PCUD_MUC_CU.has(loaiCu.ma)) continue
+    const loaiMoi = loaiTheoMa.get(mucDung(p.vienChucId) ?? '')
+    if (!loaiMoi) continue
+    const mucCu = p.giaTri > 0 ? p.giaTri : loaiCu.giaTri
+    if (loaiMoi.id === loaiCu.id && mucCu === loaiMoi.giaTri) continue
+    lichSu.push({
+      id: nanoid(), vienChucId: p.vienChucId, loai: 'PHU_CAP', truongThayDoi: 'PC ưu đãi nghề',
+      giaTriCu: `${mucCu}%`, giaTriMoi: `${loaiMoi.giaTri}% (NĐ 182/2026)`,
+      ngayThayDoi: homNay, nguoiThayDoiId: 'system',
+    })
+    if (tu2026) {
+      suaTaiCho.set(p.id, { loaiPhuCapId: loaiMoi.id, giaTri: loaiMoi.giaTri, ghiChu: 'Sửa mức PC ưu đãi nghề theo NĐ 182/2026' })
+      continue
+    }
+    dong.add(p.id)
+    moi.push({
+      id: nanoid(), vienChucId: p.vienChucId, loaiPhuCapId: loaiMoi.id, giaTri: loaiMoi.giaTri,
+      ngayHieuLuc: NGAY_HL_ND182, ghiChu: 'Chuyển mức PC ưu đãi nghề theo NĐ 182/2026',
+      isActive: true, createdAt: new Date().toISOString(), createdBy: 'system',
+    })
+  }
+  if (!lichSu.length) return
+
+  lg.setPhuCapVienChucs([
+    ...lg.phuCapVienChucs.map((p) => {
+      if (dong.has(p.id)) return { ...p, isActive: false, ngayHetHan: '2025-12-31' }
+      const sua = suaTaiCho.get(p.id)
+      return sua ? { ...p, ...sua } : p
+    }),
+    ...moi,
+  ])
+  lg.setLichSuBienDongs([...lg.lichSuBienDongs, ...lichSu])
+  logAction('system', 'Hệ thống', 'UPDATE', 'PhuCap', undefined,
+    `Chuyển ${lichSu.length} hồ sơ sang mức PC ưu đãi nghề NĐ 182/2026 (hiệu lực 01/01/2026)`)
+}
 
 // Danh mục VTVL / Chức vụ chuyển từ hằng số cứng sang dữ liệu admin tùy biến được
 function ensureVtvlVaChucVu() {
@@ -128,6 +252,8 @@ export function initSeedData() {
   ensureVtvlVaChucVu()
   migrateHoTenInHoa()
   migratePhuCapChucVuFormula()
+  migratePhuCapUuDaiVaBaoLuu()
+  migrateUuDaiTheoNd182()
   migrateChiTieuToDonVi()
   migrateNhatKySangKhoRieng()
 

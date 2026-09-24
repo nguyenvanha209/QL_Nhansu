@@ -48,6 +48,10 @@ export interface VienChuc {
   ngayHetTapSu?: string
   ngayVaoBienChe?: string
   thoiHanHopDong?: string
+  /** Chỉ loại hình hợp đồng: nhận lương theo bậc/hệ số (mặc định) hay theo mức tiền cố định */
+  hinhThucLuong?: HinhThucLuong
+  /** Mức lương theo tiền (VNĐ/tháng) — khi hinhThucLuong = 'TIEN' */
+  mucLuongTien?: number
   heSoLuongHienTaiId: string
   active: boolean
   ghiChu?: string
@@ -109,6 +113,18 @@ export function coPhuCapThamNien(vtvl?: VTVL, nhomChucDanh?: 'GIAO_VIEN' | 'NHAN
 
 export function isDangCongTac(vc: Pick<VienChuc, 'trangThai'>): boolean {
   return !vc.trangThai || vc.trangThai === 'DANG_LAM_VIEC' || vc.trangThai === 'CHUYEN_DEN'
+}
+
+export type HinhThucLuong = 'HE_SO' | 'TIEN'
+
+export const HINH_THUC_LUONG_LABELS: Record<HinhThucLuong, string> = {
+  HE_SO: 'Theo bậc lương, hệ số',
+  TIEN: 'Theo mức tiền (VNĐ/tháng)',
+}
+
+/** Người lao động hợp đồng nhận lương theo mức tiền, không theo bậc/hệ số */
+export function nhanLuongTheoTien(vc: Pick<VienChuc, 'loaiLaoDong' | 'hinhThucLuong'>): boolean {
+  return vc.loaiLaoDong !== 'VIEN_CHUC' && vc.hinhThucLuong === 'TIEN'
 }
 
 export const NGUON_KINH_PHI_LABELS: Record<NguonKinhPhi, string> = {

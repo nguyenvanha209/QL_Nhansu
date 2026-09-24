@@ -48,6 +48,11 @@ export interface VienChuc {
   ngayHetTapSu?: string
   ngayVaoBienChe?: string
   thoiHanHopDong?: string
+  /** Ngày chuyển đi (chuyển trong phường qua phiếu, hoặc chuyển ra ngoài tỉnh/phường khai tay) */
+  ngayChuyenDi?: string
+  /** Chuyển trong phường: hồ sơ ở trường đi ↔ hồ sơ ở trường đến */
+  chuyenSangHoSoId?: string
+  chuyenTuHoSoId?: string
   /** Chỉ loại hình hợp đồng: nhận lương theo bậc/hệ số (mặc định) hay theo mức tiền cố định */
   hinhThucLuong?: HinhThucLuong
   /** Mức lương theo tiền (VNĐ/tháng) — khi hinhThucLuong = 'TIEN' */
@@ -113,6 +118,14 @@ export function coPhuCapThamNien(vtvl?: VTVL, nhomChucDanh?: 'GIAO_VIEN' | 'NHAN
 
 export function isDangCongTac(vc: Pick<VienChuc, 'trangThai'>): boolean {
   return !vc.trangThai || vc.trangThai === 'DANG_LAM_VIEC' || vc.trangThai === 'CHUYEN_DEN'
+}
+
+/**
+ * Hồ sơ được tính vào bảng lương, báo cáo số liệu thực tế: chưa xoá và đang công tác.
+ * Chuyển đi / Nghỉ hưu / Thôi việc vẫn giữ hồ sơ để tra cứu nhưng không tính.
+ */
+export function duocTinhSoLieu(vc?: Pick<VienChuc, 'active' | 'trangThai'>): boolean {
+  return !!vc && vc.active && isDangCongTac(vc)
 }
 
 export type HinhThucLuong = 'HE_SO' | 'TIEN'

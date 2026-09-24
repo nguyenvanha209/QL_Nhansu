@@ -47,6 +47,77 @@ const genMa = () => `CCT-${new Date().getFullYear()}-${String(_counter++).padSta
 const tenDonVi = (id: string) =>
   useDanhMucStore.getState().donVis.find((d) => d.id === id)?.ten ?? id
 
+/**
+ * Chuyển công tác trong phường: giữ hồ sơ ở trường đi với trạng thái Chuyển đi (không tính
+ * lương/báo cáo nhưng vẫn tra cứu được), tạo hồ sơ mới ở trường đến mang theo hệ số lương
+ * và phụ cấp đang hưởng. Trả về id hồ sơ mới.
+ */
+export function tachHoSoChuyenCongTac(
+  dx: Pick<DeXuatChuyenCongTac, 'id' | 'vienChucId' | 'donViDiId' | 'donViDenId' | 'ngayChuyen'>,
+  actorId: string,
+  actorName: string,
+  ngayVaoDonVi = dx.ngayChuyen,
+): string | undefined {
+  const vcState = useVienChucStore.getState()
+  const cu = vcState.getById(dx.vienChucId)
+  if (!cu) return
+
+  const { id: _id, ma: _ma, createdAt: _c, updatedAt: _u, ...duLieu } = cu
+  const moi = vcState.addVienChuc(
+    {
+      ...duLieu,
+      donViId: dx.donViDenId,
+      trangThai: 'CHUYEN_DEN',
+      viTriViecLamId: undefined,
+      ngayVaoDonVi,
+      ngayChuyenDi: undefined,
+      chuyenSangHoSoId: undefined,
+      chuyenTuHoSoId: cu.id,
+      active: true,
+    },
+    actorId,
+    actorName,
+  )
+
+  // Mang theo hệ số lương, phụ cấp đang hưởng sang hồ sơ mới; bản ghi ở hồ sơ cũ giữ nguyên
+  // để trường đi còn tra được mức lương tại thời điểm chuyển đi.
+  const lg = useLuongStore.getState()
+  const taoLuc = new Date().toISOString()
+  const heSoCu = lg.heSoLuongs.filter((h) => h.vienChucId === cu.id && h.isActive)
+  const idHeSoMoi = new Map(heSoCu.map((h) => [h.id, nanoid()]))
+  const heSoMoi = heSoCu.map((h) => ({ ...h, id: idHeSoMoi.get(h.id)!, vienChucId: moi.id, createdAt: taoLuc }))
+  const pcMoi = lg.phuCapVienChucs
+    .filter((p) => p.vienChucId === cu.id && p.isActive)
+    .map((p) => ({ ...p, id: nanoid(), vienChucId: moi.id, createdAt: taoLuc }))
+  lg.setHeSoLuongs([...lg.heSoLuongs, ...heSoMoi])
+  lg.setPhuCapVienChucs([...lg.phuCapVienChucs, ...pcMoi])
+
+  vcState.updateVienChuc(
+    moi.id,
+    { heSoLuongHienTaiId: idHeSoMoi.get(cu.heSoLuongHienTaiId) ?? heSoMoi[0]?.id ?? '' },
+    actorId,
+    actorName,
+  )
+  vcState.updateVienChuc(
+    cu.id,
+    { trangThai: 'CHUYEN_DI', ngayChuyenDi: dx.ngayChuyen, chuyenSangHoSoId: moi.id },
+    actorId,
+    actorName,
+  )
+
+  lg.addLichSuBienDong({
+    vienChucId: cu.id, loai: 'TRANG_THAI', truongThayDoi: 'Chuyển đi',
+    giaTriCu: `Đang làm việc tại ${tenDonVi(dx.donViDiId)}`, giaTriMoi: `Chuyển sang ${tenDonVi(dx.donViDenId)}`,
+    ngayThayDoi: dx.ngayChuyen, nguoiThayDoiId: actorId, deXuatId: dx.id,
+  })
+  lg.addLichSuBienDong({
+    vienChucId: moi.id, loai: 'DON_VI', truongThayDoi: 'Đơn vị công tác',
+    giaTriCu: tenDonVi(dx.donViDiId), giaTriMoi: tenDonVi(dx.donViDenId),
+    ngayThayDoi: dx.ngayChuyen, nguoiThayDoiId: actorId, deXuatId: dx.id,
+  })
+  return moi.id
+}
+
 export const useChuyenCongTacStore = create<ChuyenCongTacState>()(
   persist(
     (set, get) => ({
@@ -106,36 +177,19 @@ export const useChuyenCongTacStore = create<ChuyenCongTacState>()(
         })
       },
 
-      // Duyệt: chuyển hồ sơ sang đơn vị mới, giữ nguyên ngạch/bậc/hệ số/phụ cấp.
-      // Vị trí việc làm cũ gắn với trường cũ nên phải bỏ, chờ trường đến phân công lại.
+      // Duyệt: tách hồ sơ — trường đi giữ hồ sơ cũ (Chuyển đi), trường đến có hồ sơ mới
+      // (Chuyển đến) mang theo ngạch/bậc/hệ số/phụ cấp. Vị trí việc làm cũ gắn với trường cũ
+      // nên hồ sơ mới để trống, chờ trường đến phân công khi tiếp nhận.
       duyet: (id, ghiChu, actorId, actorName) => {
         const dx = get().getById(id)
         if (!dx || dx.trangThai !== 'CHO_DUYET') return
 
-        const { getById: getVC, updateVienChuc } = useVienChucStore.getState()
-        const vc = getVC(dx.vienChucId)
-        if (!vc) return
-
-        updateVienChuc(
-          dx.vienChucId,
-          { donViId: dx.donViDenId, trangThai: 'CHUYEN_DEN', viTriViecLamId: undefined },
-          actorId,
-          actorName,
-        )
-
-        const { addLichSuBienDong, addNhatKy } = useLuongStore.getState()
-        addLichSuBienDong({
-          vienChucId: dx.vienChucId,
-          loai: 'DON_VI',
-          truongThayDoi: 'Đơn vị công tác',
-          giaTriCu: tenDonVi(dx.donViDiId),
-          giaTriMoi: tenDonVi(dx.donViDenId),
-          ngayThayDoi: dx.ngayChuyen,
-          nguoiThayDoiId: actorId,
-          deXuatId: id,
-        })
+        const vienChucMoiId = tachHoSoChuyenCongTac(dx, actorId, actorName)
+        if (!vienChucMoiId) return
+        const { addNhatKy } = useLuongStore.getState()
 
         get().capNhat(id, {
+          vienChucMoiId,
           trangThai: 'DA_DUYET',
           nguoiDuyetId: actorId,
           ngayDuyet: today(),
@@ -169,11 +223,12 @@ export const useChuyenCongTacStore = create<ChuyenCongTacState>()(
       // Trường đến phân công vị trí và ghi nhận thời điểm về đơn vị
       tiepNhan: (id, data, actorId, actorName) => {
         const dx = get().getById(id)
-        if (!dx || dx.trangThai !== 'DA_DUYET') return
+        // Chỉ tiếp nhận phiếu đã duyệt và đã có hồ sơ ở trường đến
+        if (!dx || dx.trangThai !== 'DA_DUYET' || !dx.vienChucMoiId) return
 
         const { updateVienChuc } = useVienChucStore.getState()
         updateVienChuc(
-          dx.vienChucId,
+          dx.vienChucMoiId,
           {
             vtvl: data.vtvl,
             chucVu: data.chucVu,
@@ -187,7 +242,7 @@ export const useChuyenCongTacStore = create<ChuyenCongTacState>()(
 
         const { addLichSuBienDong, addNhatKy } = useLuongStore.getState()
         addLichSuBienDong({
-          vienChucId: dx.vienChucId,
+          vienChucId: dx.vienChucMoiId,
           loai: 'TRANG_THAI',
           truongThayDoi: 'Tiếp nhận về đơn vị',
           giaTriCu: 'Chuyển đến',

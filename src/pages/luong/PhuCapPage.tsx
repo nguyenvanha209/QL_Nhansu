@@ -5,6 +5,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
+import { duocTinhSoLieu } from '@/types/vienChuc'
 import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
 
 const { Title } = Typography
@@ -22,7 +23,7 @@ export default function PhuCapPage() {
 
   const data = useMemo(() => {
     return phuCapVienChucs
-      .filter((p) => p.isActive)
+      .filter((p) => p.isActive && duocTinhSoLieu(vienChucs.find((v) => v.id === p.vienChucId)))
       .map((p) => {
         const vc = vienChucs.find((v) => v.id === p.vienChucId)
         const dv = donVis.find((d) => d.id === vc?.donViId)

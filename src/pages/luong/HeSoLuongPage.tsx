@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { getDaysUntilReview, getReviewUrgencyColor } from '@/utils/calculations'
 import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
+import { duocTinhSoLieu } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
 
 const { Title, Text } = Typography
@@ -27,7 +28,7 @@ export default function HeSoLuongPage() {
 
   const data = useMemo(() => {
     return heSoLuongs
-      .filter((h) => h.isActive)
+      .filter((h) => h.isActive && duocTinhSoLieu(vienChucs.find((v) => v.id === h.vienChucId)))
       .map((h) => {
         const vc = vienChucs.find((v) => v.id === h.vienChucId)
         const dv = donVis.find((d) => d.id === vc?.donViId)

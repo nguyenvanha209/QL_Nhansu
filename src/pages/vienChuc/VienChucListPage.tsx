@@ -6,7 +6,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
-import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, isDangCongTac } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import ImportVienChucModal, { ExportExcelButton } from './ImportVienChucModal'
 
@@ -19,6 +19,8 @@ const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
 }
 
 const { Title } = Typography
+const LOC_DANG_CONG_TAC = '__DANG_CONG_TAC'
+const LOC_TAT_CA = '__TAT_CA'
 
 export default function VienChucListPage() {
   const { message } = App.useApp()
@@ -37,14 +39,16 @@ export default function VienChucListPage() {
   const [search, setSearch] = useState('')
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const [filterLoai, setFilterLoai] = useState<string | undefined>()
-  const [filterTrangThai, setFilterTrangThai] = useState<string | undefined>()
+  // Mặc định chỉ hiện người đang công tác; hồ sơ Chuyển đi / Nghỉ hưu / Thôi việc xem qua bộ lọc
+  const [filterTrangThai, setFilterTrangThai] = useState<string>(LOC_DANG_CONG_TAC)
   const [importOpen, setImportOpen] = useState(false)
 
   const data = useMemo(() => {
     let list = allVienChucs.filter((v) => v.active && (!scopeDonViId || v.donViId === scopeDonViId))
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
     if (filterLoai) list = list.filter((v) => v.loaiLaoDong === filterLoai)
-    if (filterTrangThai) list = list.filter((v) => (v.trangThai ?? 'DANG_LAM_VIEC') === filterTrangThai)
+    if (filterTrangThai === LOC_DANG_CONG_TAC) list = list.filter(isDangCongTac)
+    else if (filterTrangThai !== LOC_TAT_CA) list = list.filter((v) => (v.trangThai ?? 'DANG_LAM_VIEC') === filterTrangThai)
     if (search) list = list.filter((v) => matchSearch(`${v.ho} ${v.ten} ${v.ma}`, search))
     // Thứ tự chuẩn: CBQL → Giáo viên → Nhân viên
     const nhomCua = (v: (typeof list)[number]) => chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom
@@ -181,11 +185,14 @@ export default function VienChucListPage() {
         />
         <Select
           placeholder="Trạng thái"
-          style={{ width: 160 }}
+          style={{ width: 200 }}
           value={filterTrangThai}
           onChange={setFilterTrangThai}
-          allowClear
-          options={Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+          options={[
+            { value: LOC_DANG_CONG_TAC, label: 'Đang công tác' },
+            ...Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v })),
+            { value: LOC_TAT_CA, label: 'Tất cả trạng thái' },
+          ]}
         />
       </Space>
 

@@ -8,7 +8,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { CHUC_VU_LABELS } from '@/types/vienChuc'
+import { CHUC_VU_LABELS, duocTinhSoLieu } from '@/types/vienChuc'
 import { formatDate, matchSearch, soSanhVienChuc } from '@/utils/helpers'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { LoaiPhuCap, ChucDanhNgheNghiep } from '@/types/danhMuc'
@@ -178,7 +178,7 @@ export default function BangTongHopLuongPage() {
   const [search, setSearch] = useState('')
 
   const rows = useMemo<RowData[]>(() => {
-    let list = allVC.filter((v) => v.active)
+    let list = allVC.filter(duocTinhSoLieu)
     if (scopeDonViId) list = list.filter((v) => v.donViId === scopeDonViId)
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
     if (search) list = list.filter((v) => matchSearch(`${v.ho} ${v.ten}`, search))

@@ -44,6 +44,19 @@ export default function VienChucDetailPage() {
   const chucDanh = chucDanhs.find((c) => c.id === vc.chucDanhId)
   const activeHeSo = heSoHistory.find((h) => h.isActive)
 
+  // Chuyển công tác trong phường: liên kết giữa hồ sơ ở trường đi và trường đến
+  const hoSoLienKet = (hoSoId: string | undefined, huong: 'sang' | 'từ') => {
+    const kia = hoSoId ? getById(hoSoId) : undefined
+    if (!kia) return null
+    const tenTruong = donVis.find((d) => d.id === kia.donViId)?.ten ?? kia.donViId
+    const coTheXem = !scopeDonViId || kia.donViId === scopeDonViId
+    return (
+      <span>
+        {' '}— {huong} {coTheXem ? <a onClick={() => navigate(`/vien-chuc/${kia.id}`)}>{tenTruong}</a> : tenTruong}
+      </span>
+    )
+  }
+
   const heSoCols = [
     { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60 },
     { title: 'Hệ số', dataIndex: 'heSo', key: 'heSo', width: 80 },
@@ -96,6 +109,15 @@ export default function VienChucDetailPage() {
                 <Descriptions.Item label="Đơn vị">{donVi?.ten ?? vc.donViId}</Descriptions.Item>
                 <Descriptions.Item label="Ngạch/hạng">{chucDanh?.ten ?? vc.chucDanhId}</Descriptions.Item>
                 <Descriptions.Item label="Loại hình">{LOAI_LAO_DONG_LABELS[vc.loaiLaoDong]}</Descriptions.Item>
+                {vc.trangThai === 'CHUYEN_DI' && (
+                  <Descriptions.Item label="Chuyển đi">
+                    {vc.ngayChuyenDi ? formatDate(vc.ngayChuyenDi) : '—'}
+                    {hoSoLienKet(vc.chuyenSangHoSoId, 'sang')}
+                  </Descriptions.Item>
+                )}
+                {vc.chuyenTuHoSoId && (
+                  <Descriptions.Item label="Chuyển đến từ">{hoSoLienKet(vc.chuyenTuHoSoId, 'từ')}</Descriptions.Item>
+                )}
                 {IS_BIEN_CHE[vc.loaiLaoDong] && (
                   <Descriptions.Item label="Nguồn kinh phí">{vc.nguonKinhPhi ? NGUON_KINH_PHI_LABELS[vc.nguonKinhPhi] : '—'}</Descriptions.Item>
                 )}

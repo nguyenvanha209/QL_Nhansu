@@ -11,7 +11,10 @@ export interface DeXuatChuyenCongTac {
   id: string
   ma: string
 
+  /** Hồ sơ ở trường đi — sau khi duyệt giữ lại với trạng thái Chuyển đi */
   vienChucId: string
+  /** Hồ sơ mới tạo ở trường đến khi duyệt (mang theo lương, phụ cấp) */
+  vienChucMoiId?: string
   /** Lưu lại tên tại thời điểm đề nghị để hiển thị ổn định trong lịch sử */
   hoTenSnapshot: string
   donViDiId: string

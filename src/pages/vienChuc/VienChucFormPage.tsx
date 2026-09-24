@@ -134,6 +134,7 @@ export default function VienChucFormPage() {
   // Viên chức biên chế: bắt buộc khai mã ngạch, nguồn kinh phí, ngày vào biên chế, bậc lương.
   // Các loại hình hợp đồng: mã ngạch, bậc lương không bắt buộc; không có nguồn kinh phí / ngày biên chế.
   const laBienChe = watchLoaiLaoDong === 'VIEN_CHUC'
+  const watchTrangThai = Form.useWatch('trangThai', form) as string | undefined
   const watchHinhThucLuong = Form.useWatch('hinhThucLuong', form) as HinhThucLuong | undefined
   // Hợp đồng nhận lương theo mức tiền → không khai bậc lương, hệ số
   const luongTheoTien = !laBienChe && watchHinhThucLuong === 'TIEN'
@@ -150,12 +151,14 @@ export default function VienChucFormPage() {
       ...vc,
       hoTenFull: `${vc.ho} ${vc.ten}`.trim(),
       hinhThucLuong: vc.hinhThucLuong ?? 'HE_SO',
+      trangThai: vc.trangThai ?? 'DANG_LAM_VIEC',
       ngaySinh: dayjs(vc.ngaySinh),
       ngayVaoNganh: dayjs(vc.ngayVaoNganh),
       ngayVaoDonVi: dayjs(vc.ngayVaoDonVi),
       ngayHetTapSu: vc.ngayHetTapSu ? dayjs(vc.ngayHetTapSu) : undefined,
       ngayVaoBienChe: vc.ngayVaoBienChe ? dayjs(vc.ngayVaoBienChe) : undefined,
       mocHuongPctn: vc.mocHuongPctn ? dayjs(vc.mocHuongPctn) : undefined,
+      ngayChuyenDi: vc.ngayChuyenDi ? dayjs(vc.ngayChuyenDi) : undefined,
     })
     const heSo = luongState.getActiveHeSo(id!)
     if (heSo) {
@@ -185,6 +188,7 @@ export default function VienChucFormPage() {
       ngayHetTapSu: values.ngayHetTapSu?.format('YYYY-MM-DD'),
       ngayVaoBienChe: values.ngayVaoBienChe?.format('YYYY-MM-DD'),
       mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
+      ngayChuyenDi: values.trangThai === 'CHUYEN_DI' ? values.ngayChuyenDi?.format('YYYY-MM-DD') : undefined,
     }
     if (formatted.loaiLaoDong !== 'VIEN_CHUC') formatted.nguonKinhPhi = undefined
     const theoTien = formatted.loaiLaoDong !== 'VIEN_CHUC' && formatted.hinhThucLuong === 'TIEN'
@@ -416,12 +420,24 @@ export default function VienChucFormPage() {
                   <Select options={Object.entries(NGUON_KINH_PHI_LABELS).map(([k, v]) => ({ value: k, label: v }))} placeholder="Chọn nguồn kinh phí" />
                 </Form.Item>
               </Col>
-              <Col xs={24} sm={12} md={8}>
-                <Form.Item name="trangThai" label="Trạng thái công tác" rules={[{ required: true }]}>
-                  <Select options={Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
-                </Form.Item>
-              </Col>
             </>
+          )}
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item
+              name="trangThai"
+              label="Trạng thái công tác"
+              rules={[{ required: true }]}
+              tooltip="Chuyển đi, Nghỉ hưu, Thôi việc: hồ sơ vẫn được giữ để tra cứu nhưng không tính vào bảng lương và báo cáo số liệu. Chuyển trong phường thì làm phiếu Chuyển công tác; chuyển ra ngoài tỉnh/phường thì đặt trạng thái Chuyển đi tại đây."
+            >
+              <Select options={Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
+            </Form.Item>
+          </Col>
+          {watchTrangThai === 'CHUYEN_DI' && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item name="ngayChuyenDi" label="Ngày chuyển đi" rules={[{ required: true, message: 'Chọn ngày chuyển đi' }]}>
+                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
           )}
           {pccvInfo && (
             <Col xs={24}>

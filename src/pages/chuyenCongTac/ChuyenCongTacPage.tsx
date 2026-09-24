@@ -151,7 +151,7 @@ export default function ChuyenCongTacPage() {
   }
 
   const moTiepNhan = (r: DeXuatChuyenCongTac) => {
-    const vc = allVienChucs.find((x) => x.id === r.vienChucId)
+    const vc = allVienChucs.find((x) => x.id === (r.vienChucMoiId ?? r.vienChucId))
     formNhan.setFieldsValue({
       vtvl: vc?.vtvl,
       chucVu: vc?.chucVu,
@@ -164,6 +164,10 @@ export default function ChuyenCongTacPage() {
   const onTiepNhan = async () => {
     const v = await formNhan.validateFields()
     if (!nhanItem || !currentUser) return
+    if (!nhanItem.vienChucMoiId) {
+      message.error('Phiếu chưa được duyệt đúng quy trình nên chưa có hồ sơ ở trường đến — liên hệ Quản trị')
+      return
+    }
     store.tiepNhan(nhanItem.id, {
       vtvl: v.vtvl,
       chucVu: v.chucVu || undefined,

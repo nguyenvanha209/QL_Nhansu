@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { logAction } from '@/utils/auditLogger'
 import { PCUD_MUC_CU } from '@/utils/phuCapThuTu'
+import { useChuyenCongTacStore, tachHoSoChuyenCongTac } from '@/store/chuyenCongTacStore'
 import type { BacLuong } from '@/types/danhMuc'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -171,6 +172,32 @@ function migrateUuDaiTheoNd182() {
     `Chuyển ${lichSu.length} hồ sơ sang mức PC ưu đãi nghề NĐ 182/2026 (hiệu lực 01/01/2026)`)
 }
 
+// Phiếu chuyển công tác đã duyệt/hoàn tất nhưng hồ sơ chưa từng sang trường đến (phiếu cũ,
+// hoặc bị tiếp nhận khi chưa qua bước duyệt) → tách hồ sơ theo quy trình mới: trường đi giữ
+// hồ sơ Chuyển đi, trường đến có hồ sơ mới mang theo lương, phụ cấp và thông tin tiếp nhận.
+function migrateTachHoSoChuyenCongTac() {
+  const cct = useChuyenCongTacStore.getState()
+  for (const dx of cct.deXuats) {
+    if (dx.vienChucMoiId || (dx.trangThai !== 'DA_DUYET' && dx.trangThai !== 'HOAN_TAT')) continue
+    const vc = useVienChucStore.getState().getById(dx.vienChucId)
+    if (!vc || vc.donViId !== dx.donViDiId) continue
+
+    const moiId = tachHoSoChuyenCongTac(dx, 'system', 'Hệ thống', dx.ngayVaoDonViMoi ?? dx.ngayChuyen)
+    if (!moiId) continue
+    if (dx.trangThai === 'HOAN_TAT') {
+      useVienChucStore.getState().updateVienChuc(moiId, {
+        trangThai: 'DANG_LAM_VIEC',
+        ...(dx.vtvlMoi && { vtvl: dx.vtvlMoi }),
+        ...(dx.chucVuMoi && { chucVu: dx.chucVuMoi }),
+        ...(dx.viTriViecLamMoiId && { viTriViecLamId: dx.viTriViecLamMoiId }),
+      })
+    }
+    cct.capNhat(dx.id, { vienChucMoiId: moiId })
+    logAction('system', 'Hệ thống', 'UPDATE', 'ChuyenCongTac', dx.id,
+      `Tách hồ sơ theo phiếu ${dx.ma}: ${dx.hoTenSnapshot} — giữ hồ sơ Chuyển đi ở trường đi, tạo hồ sơ ở trường đến`)
+  }
+}
+
 // Danh mục VTVL / Chức vụ chuyển từ hằng số cứng sang dữ liệu admin tùy biến được
 function ensureVtvlVaChucVu() {
   const { vtvls, addVtvl, chucVus, addChucVu } = useDanhMucStore.getState()
@@ -262,6 +289,7 @@ export function initSeedData() {
   migratePhuCapChucVuFormula()
   migratePhuCapUuDaiVaBaoLuu()
   migrateUuDaiTheoNd182()
+  migrateTachHoSoChuyenCongTac()
   migrateChiTieuToDonVi()
   migrateNhatKySangKhoRieng()
 

@@ -8,7 +8,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { CHUC_VU_LABELS, duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
+import { CHUC_VU_LABELS, LOAI_LAO_DONG_OPTIONS, duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
 import { formatDate, matchSearch, soSanhVienChuc } from '@/utils/helpers'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { LoaiPhuCap, ChucDanhNgheNghiep } from '@/types/danhMuc'
@@ -182,11 +182,13 @@ export default function BangTongHopLuongPage() {
     return (id: string) => m.get(id) ?? id
   }, [donVis])
   const [search, setSearch] = useState('')
+  const [filterLoai, setFilterLoai] = useState<string | undefined>()
 
   const rows = useMemo<RowData[]>(() => {
     let list = allVC.filter(duocTinhSoLieu)
     if (scopeDonViId) list = list.filter((v) => v.donViId === scopeDonViId)
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
+    if (filterLoai) list = list.filter((v) => v.loaiLaoDong === filterLoai)
     if (search) list = list.filter((v) => matchSearch(`${v.ho} ${v.ten}`, search))
     const dvMap = new Map(donVis.map((d) => [d.id, d]))
     // Trong mỗi trường, xếp theo thứ tự chuẩn: CBQL → Giáo viên → Nhân viên
@@ -202,7 +204,7 @@ export default function BangTongHopLuongPage() {
       return theoVtvl(a, b)
     })
     return list.map((vc, i) => buildRow(i + 1, vc, heSos, phuCaps, loaiPhuCaps, chucDanhs))
-  }, [allVC, donVis, scopeDonViId, filterDonVi, search, heSos, phuCaps, loaiPhuCaps, chucDanhs])
+  }, [allVC, donVis, scopeDonViId, filterDonVi, filterLoai, search, heSos, phuCaps, loaiPhuCaps, chucDanhs])
 
   // Chèn subtotal rows khi xem tất cả trường (không filter, không search)
   const displayRows = useMemo<DisplayRow[]>(() => {
@@ -438,6 +440,14 @@ export default function BangTongHopLuongPage() {
             options={donVis.map((d) => ({ value: d.id, label: d.ten }))}
           />
         )}
+        <Select
+          placeholder="Loại hình lao động"
+          style={{ width: 220 }}
+          value={filterLoai}
+          onChange={setFilterLoai}
+          allowClear
+          options={LOAI_LAO_DONG_OPTIONS}
+        />
       </Space>
 
       <Table

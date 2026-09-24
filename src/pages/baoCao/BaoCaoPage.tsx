@@ -9,7 +9,7 @@ import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { exportToExcel } from '@/utils/exportExcel'
 import { exportToPdf } from '@/utils/exportPdf'
 import { formatDate } from '@/utils/helpers'
-import { LOAI_LAO_DONG_LABELS, isDangCongTac } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_OPTIONS, isDangCongTac, nhanLuongTheoTien } from '@/types/vienChuc'
 
 const { Title } = Typography
 
@@ -17,6 +17,7 @@ export default function BaoCaoPage() {
   const { message } = App.useApp()
   const { scopeDonViId } = useAuth()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  const [filterLoai, setFilterLoai] = useState<string | undefined>()
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
   const allDonVis = useDanhMucStore((s) => s.donVis)
@@ -30,16 +31,21 @@ export default function BaoCaoPage() {
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
   const salaryAlerts = useSalaryAlerts(scopeDonViId, 90)
 
-  const filtered = useMemo(() => {
-    if (filterDonVi) return vienChucs.filter((v) => v.donViId === filterDonVi)
-    return vienChucs
-  }, [vienChucs, filterDonVi])
+  const filtered = useMemo(() => vienChucs.filter((v) =>
+    (!filterDonVi || v.donViId === filterDonVi) && (!filterLoai || v.loaiLaoDong === filterLoai),
+  ), [vienChucs, filterDonVi, filterLoai])
 
   const enriched = useMemo(() => filtered.map((vc) => {
     const dv = donVis.find((d) => d.id === vc.donViId)
     const cd = chucDanhs.find((c) => c.id === vc.chucDanhId)
-    const hsl = heSoLuongs.find((h) => h.vienChucId === vc.id && h.isActive)
-    return { ...vc, donViTen: dv?.ten ?? '', chucDanhTen: cd?.ten ?? '', bac: hsl?.bac ?? 0, heSo: hsl?.heSo ?? 0, ngayNangTiep: hsl?.ngayNangLuongTiepTheo ?? '' }
+    // Lương theo mức tiền: không có bậc/hệ số, hiện số tiền
+    const theoTien = nhanLuongTheoTien(vc)
+    const hsl = theoTien ? undefined : heSoLuongs.find((h) => h.vienChucId === vc.id && h.isActive)
+    return {
+      ...vc, donViTen: dv?.ten ?? '', chucDanhTen: cd?.ten ?? '',
+      bac: hsl?.bac ?? '', heSo: hsl?.heSo ?? '', ngayNangTiep: hsl?.ngayNangLuongTiepTheo ?? '',
+      luongTien: theoTien ? (vc.mucLuongTien ?? 0) : 0,
+    }
   }), [filtered, donVis, chucDanhs, heSoLuongs])
 
   const vcCols = [
@@ -52,6 +58,7 @@ export default function BaoCaoPage() {
     { title: 'Loại HĐ', dataIndex: 'loaiLaoDong', key: 'll', render: (v: string) => LOAI_LAO_DONG_LABELS[v as keyof typeof LOAI_LAO_DONG_LABELS] ?? v },
     { title: 'Bậc', dataIndex: 'bac', key: 'bac' },
     { title: 'Hệ số', dataIndex: 'heSo', key: 'hs' },
+    { title: 'Lương theo mức tiền', dataIndex: 'luongTien', key: 'lt', render: (v: number) => (v ? `${v.toLocaleString('vi-VN')} đ` : '') },
     { title: 'Ngày nâng tiếp', dataIndex: 'ngayNangTiep', key: 'nnt', render: (v: string) => formatDate(v) },
     { title: 'Ngày vào ngành', dataIndex: 'ngayVaoNganh', key: 'nvn', render: (v: string) => formatDate(v) },
   ]
@@ -66,7 +73,7 @@ export default function BaoCaoPage() {
   ]
 
   const exportVCExcel = () => {
-    const rows = enriched.map((r) => ({ 'Mã VC': r.ma, 'Họ tên': `${r.ho} ${r.ten}`, 'Ngày sinh': formatDate(r.ngaySinh), 'Giới tính': r.gioiTinh === 'NAM' ? 'Nam' : 'Nữ', 'Đơn vị': r.donViTen, 'Chức danh': r.chucDanhTen, 'Loại HĐ': LOAI_LAO_DONG_LABELS[r.loaiLaoDong as keyof typeof LOAI_LAO_DONG_LABELS] ?? r.loaiLaoDong, 'Bậc': r.bac, 'Hệ số': r.heSo, 'Ngày nâng tiếp': formatDate(r.ngayNangTiep) }))
+    const rows = enriched.map((r) => ({ 'Mã VC': r.ma, 'Họ tên': `${r.ho} ${r.ten}`, 'Ngày sinh': formatDate(r.ngaySinh), 'Giới tính': r.gioiTinh === 'NAM' ? 'Nam' : 'Nữ', 'Đơn vị': r.donViTen, 'Chức danh': r.chucDanhTen, 'Loại HĐ': LOAI_LAO_DONG_LABELS[r.loaiLaoDong as keyof typeof LOAI_LAO_DONG_LABELS] ?? r.loaiLaoDong, 'Bậc': r.bac, 'Hệ số': r.heSo, 'Lương theo mức tiền (đ)': r.luongTien || '', 'Ngày nâng tiếp': formatDate(r.ngayNangTiep) }))
     exportToExcel(rows, 'BaoCao_VienChuc', 'Viên chức')
   }
 
@@ -102,6 +109,7 @@ export default function BaoCaoPage() {
         {!scopeDonViId && (
           <Select placeholder="Lọc theo đơn vị" style={{ width: 220 }} value={filterDonVi} onChange={setFilterDonVi} allowClear options={donVis.map((d) => ({ value: d.id, label: d.ten }))} />
         )}
+        <Select placeholder="Loại hình lao động" style={{ width: 220 }} value={filterLoai} onChange={setFilterLoai} allowClear options={LOAI_LAO_DONG_OPTIONS} />
       </Space>
 
       <Tabs items={[

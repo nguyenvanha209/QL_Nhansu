@@ -22,6 +22,7 @@ import {
   CHUC_VU_LABELS,
   VTVL_LABELS,
   HINH_THUC_LUONG_LABELS,
+  LOAI_LAO_DONG_DANG_DUNG,
   laVienChucBienChe,
 } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
@@ -490,7 +491,10 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           const llTen = str(row[COL.LOAI_LAO_DONG])
           if (llTen) {
             const ll = inverseLoaiLD[llTen]
-            if (ll) check('loaiLaoDong', ll)
+            // Loại hình đã bỏ (HĐ NĐ 111, tập sự) không được đặt mới qua Excel; hồ sơ đang mang sẵn thì giữ nguyên
+            if (ll && !LOAI_LAO_DONG_DANG_DUNG.includes(ll as VienChuc['loaiLaoDong']) && ll !== vc.loaiLaoDong)
+              warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): loại lao động "${llTen}" không còn sử dụng — giữ nguyên loại cũ`)
+            else if (ll) check('loaiLaoDong', ll)
             else warns.push(`Dòng ${i + 2}: loại lao động "${llTen}" không nhận dạng được`)
           }
 

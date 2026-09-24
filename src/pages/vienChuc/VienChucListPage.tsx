@@ -6,7 +6,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
-import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, isDangCongTac } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_OPTIONS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, isDangCongTac } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import ImportVienChucModal, { ExportExcelButton } from './ImportVienChucModal'
 
@@ -181,7 +181,7 @@ export default function VienChucListPage() {
           value={filterLoai}
           onChange={setFilterLoai}
           allowClear
-          options={Object.entries(LOAI_LAO_DONG_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+          options={LOAI_LAO_DONG_OPTIONS}
         />
         <Select
           placeholder="Trạng thái"

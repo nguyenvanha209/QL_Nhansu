@@ -10,7 +10,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, laVienChucBienChe, nhanLuongTheoTien } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_DANG_DUNG, LOAI_LAO_DONG_OPTIONS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, laVienChucBienChe, nhanLuongTheoTien } from '@/types/vienChuc'
 import { chucDanhHopLeVoiVtvl } from '@/utils/vtvlRules'
 import type { ChucVu, LoaiLaoDong, HinhThucLuong } from '@/types/vienChuc'
 import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
@@ -77,10 +77,10 @@ export default function VienChucFormPage() {
     .filter((pc) => duocHuongPctn || pc.ma !== 'PC_THAM_NIEN')
     .map((pc) => ({ value: pc.id, label: `${pc.ma} — ${pc.ten}` }))
 
-  // Không cho chọn tập sự và HĐ NĐ 111 (đã bỏ); hồ sơ cũ đang mang loại HĐ 111 vẫn giữ được khi sửa
-  const loaiLaoDongOptions = Object.entries(LOAI_LAO_DONG_LABELS)
-    .filter(([k]) => k !== 'TAP_SU' && (k !== 'HOP_DONG_111' || vc?.loaiLaoDong === 'HOP_DONG_111'))
-    .map(([k, v]) => ({ value: k, label: v }))
+  // Chỉ các loại hình đang dùng; hồ sơ cũ mang loại đã bỏ (HĐ 111, tập sự) vẫn hiện đúng khi sửa
+  const loaiLaoDongOptions = vc && !LOAI_LAO_DONG_DANG_DUNG.includes(vc.loaiLaoDong)
+    ? [...LOAI_LAO_DONG_OPTIONS, { value: vc.loaiLaoDong, label: LOAI_LAO_DONG_LABELS[vc.loaiLaoDong] }]
+    : LOAI_LAO_DONG_OPTIONS
 
   const vtvlOptions = vtvls.filter((v) => v.active).map((v) => ({ value: v.ma, label: v.ten }))
   const chucVuOptions = chucVus.filter((c) => c.active).map((c) => ({ value: c.ma, label: c.ten }))

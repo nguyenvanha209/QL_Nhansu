@@ -75,6 +75,15 @@ export const LOAI_LAO_DONG_LABELS: Record<LoaiLaoDong, string> = {
   KHAC: 'Loại khác',
 }
 
+/**
+ * Loại hình đang dùng — cho ô chọn ở form và các ô lọc. Bỏ HĐ NĐ 111 (đã thay bằng NĐ 235/2026)
+ * và tập sự (không khai riêng). Nhãn đầy đủ vẫn giữ trong LOAI_LAO_DONG_LABELS để hiển thị hồ sơ cũ.
+ */
+export const LOAI_LAO_DONG_DANG_DUNG: LoaiLaoDong[] = [
+  'VIEN_CHUC', 'HOP_DONG_XDT', 'HOP_DONG_235', 'HOP_DONG_TRUONG', 'THINH_GIANG', 'KHAC',
+]
+export const LOAI_LAO_DONG_OPTIONS = LOAI_LAO_DONG_DANG_DUNG.map((k) => ({ value: k, label: LOAI_LAO_DONG_LABELS[k] }))
+
 export const CHUC_VU_LABELS: Record<string, string> = {
   HT: 'Hiệu trưởng',
   'P.HT': 'Phó Hiệu trưởng',

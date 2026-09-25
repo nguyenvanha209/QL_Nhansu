@@ -95,7 +95,10 @@ function buildRow(
 ): RowData {
   // Lương theo mức tiền: không tính theo bậc, hệ số (kể cả khi còn sót bản ghi hệ số cũ)
   const theoTien = nhanLuongTheoTien(vc)
-  const heSoRec = theoTien ? undefined : heSos.find((h) => h.vienChucId === vc.id && h.isActive)
+  // Ưu tiên bản ghi hồ sơ đang trỏ tới; phòng khi có bản ghi trùng do đồng bộ (trang Rà soát sẽ báo)
+  const heSoRec = theoTien ? undefined
+    : heSos.find((h) => h.id === vc.heSoLuongHienTaiId && h.isActive && h.vienChucId === vc.id)
+      ?? heSos.find((h) => h.vienChucId === vc.id && h.isActive)
   const mine = phuCaps.filter((p) => p.vienChucId === vc.id && p.isActive)
 
   const byMa = (ma: string) => {

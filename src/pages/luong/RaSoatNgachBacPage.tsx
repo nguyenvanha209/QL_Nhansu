@@ -14,7 +14,7 @@ import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LAB
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'PCCV_KHONG_CHUC_VU' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PCCV_KHONG_CHUC_VU' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -22,6 +22,7 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   BAC_VUOT: { ten: 'Bậc vượt bảng lương', mau: 'volcano' },
   HE_SO_LECH: { ten: 'Hệ số không khớp bảng', mau: 'orange' },
   NGACH_KHAC: { ten: 'Lương ghi theo mã khác', mau: 'gold' },
+  NHIEU_BAN_GHI_LUONG: { ten: 'Nhiều bản ghi lương đang áp dụng', mau: 'red' },
   PCCV_KHONG_CHUC_VU: { ten: 'Có PC chức vụ nhưng không có chức vụ', mau: 'magenta' },
   CHUC_VU_LECH_VTVL: { ten: 'Chức vụ lệch vị trí việc làm', mau: 'magenta' },
   BL_PCCV_SAP_HET: { ten: 'Sắp hết bảo lưu PC chức vụ', mau: 'geekblue' },
@@ -99,7 +100,8 @@ export default function RaSoatNgachBacPage() {
     for (const vc of list) {
       const hoTen = `${vc.ho} ${vc.ten}`.trim()
       const cd = cdTheoId.get(vc.chucDanhId)
-      const hs = heSoLuongs.find((h) => h.vienChucId === vc.id && h.isActive)
+      const dsHs = heSoLuongs.filter((h) => h.vienChucId === vc.id && h.isActive)
+      const hs = dsHs.find((h) => h.id === vc.heSoLuongHienTaiId) ?? dsHs[0]
       const bang = (cd ? bacTheoCd.get(cd.id) ?? [] : []).slice().sort((a, b) => a.bac - b.bac)
       const bienChe = laVienChucBienChe(vc.loaiLaoDong)
       const loi: LoaiLech[] = []
@@ -133,6 +135,10 @@ export default function RaSoatNgachBacPage() {
       if (vc.vtvl === 'NHAN_VIEN' && !vc.congViec) {
         loi.push('THIEU_CONG_VIEC')
         chiTiet.push('Nhân viên chưa chọn công việc cụ thể (kế toán, bảo vệ, cấp dưỡng…) — cần để chia nhóm trên Tổng quan')
+      }
+      if (dsHs.length > 1) {
+        loi.push('NHIEU_BAN_GHI_LUONG')
+        chiTiet.push(`Có ${dsHs.length} bản ghi lương cùng đang áp dụng (${dsHs.map((h) => `bậc ${h.bac} – ${h.heSo}`).join('; ')}) — giữ một bản đúng theo quyết định, liên hệ quản trị để gỡ bản thừa`)
       }
       // Lương theo mức tiền: không có ngạch, bậc, hệ số để đối chiếu — chỉ kiểm tra tên, công việc
       const theoTien = nhanLuongTheoTien(vc)

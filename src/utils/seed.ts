@@ -298,6 +298,105 @@ function migrateDienCongViecNhanVien() {
     `Tự điền "Công việc cụ thể" cho ${canDien.length} nhân viên theo nhiệm vụ chính / chức danh`)
 }
 
+// Ngạch văn thư (TT 02/2021/TT-BNV): 02.006 Văn thư viên chính (A2.1), 02.007 Văn thư viên (A1),
+// 02.008 Văn thư viên trung cấp (B). Trước đây nhập nhầm: V.02.008 / V.2.008 ghi "Giáo viên âm nhạc/mỹ thuật"
+// bảng A1, V.02.007 ghi "Chuyên viên", và một mã tự đặt "VT – Văn thư" (bảng B). Hệ số của người đang
+// hưởng vốn khớp ngạch văn thư → chỉ sửa danh mục, gộp VT và V.2.008 vào 02.008, hệ số giữ nguyên.
+function migrateNgachVanThu() {
+  const dm = useDanhMucStore.getState()
+  const theoMa = (ma: string) => useDanhMucStore.getState().chucDanhs.find((c) => c.ma === ma)
+  const moTaMa = new Map(dm.chucDanhs.map((c) => [c.id, `${c.ma} ${c.ten}`]))
+  let bacLuongs = dm.bacLuongs
+  const datBang = (cdId: string, bang: keyof typeof BANG_LUONG) => {
+    const b = BANG_LUONG[bang]
+    bacLuongs = [
+      ...bacLuongs.filter((x) => x.chucDanhId !== cdId),
+      ...b.heSos.map((heSo, i) => ({ id: `bl_${cdId}_${i + 1}`, chucDanhId: cdId, bac: i + 1, heSo, thoiGianNangLuong: b.thoiGian })),
+    ]
+  }
+  let doi = false
+
+  const v02008 = theoMa('V.02.008')
+  if (v02008) {
+    dm.updateChucDanh(v02008.id, { ma: '02.008', ten: 'Văn thư viên trung cấp', nhom: 'NHAN_VIEN', bangLuong: 'B' })
+    datBang(v02008.id, 'B')
+    doi = true
+  }
+  const v02007 = theoMa('V.02.007')
+  if (v02007) {
+    dm.updateChucDanh(v02007.id, { ma: '02.007', ten: 'Văn thư viên', nhom: 'NHAN_VIEN', bangLuong: 'A1' })
+    datBang(v02007.id, 'A1')
+    doi = true
+  }
+  if (!theoMa('02.006')) {
+    const cd = dm.addChucDanh({ ma: '02.006', ten: 'Văn thư viên chính', nhom: 'NHAN_VIEN', bangLuong: 'A2.1', active: true })
+    datBang(cd.id, 'A2.1')
+    doi = true
+  }
+  if (doi) useDanhMucStore.getState().setBacLuongs(bacLuongs)
+
+  // Gộp VT và V.2.008 vào 02.008: hồ sơ, bản ghi lương, vị trí việc làm → rồi ẩn mã cũ
+  const dich = theoMa('02.008')
+  if (!dich) return
+  const gop = useDanhMucStore.getState().chucDanhs.filter((c) => (c.ma === 'VT' || c.ma === 'V.2.008') && c.id !== dich.id)
+  if (!gop.length) return
+  const idCu = new Set(gop.map((c) => c.id))
+  const vcState = useVienChucStore.getState()
+  const lg = useLuongStore.getState()
+  const doiNguoi = vcState.vienChucs.filter((v) => idCu.has(v.chucDanhId))
+  if (doiNguoi.length) {
+    vcState.setVienChucs(vcState.vienChucs.map((v) => (idCu.has(v.chucDanhId) ? { ...v, chucDanhId: dich.id } : v)))
+    const homNay = dayjs().format('YYYY-MM-DD')
+    lg.setLichSuBienDongs([
+      ...lg.lichSuBienDongs,
+      ...doiNguoi.map((v) => ({
+        id: nanoid(), vienChucId: v.id, loai: 'CHUC_DANH' as const, truongThayDoi: 'Mã ngạch',
+        giaTriCu: moTaMa.get(v.chucDanhId) ?? v.chucDanhId, giaTriMoi: '02.008 Văn thư viên trung cấp (sửa mã nhập nhầm, hệ số giữ nguyên)',
+        ngayThayDoi: homNay, nguoiThayDoiId: 'system',
+      })),
+    ])
+  }
+  if (lg.heSoLuongs.some((h) => idCu.has(h.chucDanhId))) {
+    useLuongStore.getState().setHeSoLuongs(useLuongStore.getState().heSoLuongs.map((h) => (idCu.has(h.chucDanhId) ? { ...h, chucDanhId: dich.id } : h)))
+  }
+  const dmNow = useDanhMucStore.getState()
+  if (dmNow.viTriViecLams.some((v) => v.chucDanhIds.some((i) => idCu.has(i)))) {
+    dmNow.setViTriViecLams(dmNow.viTriViecLams.map((v) => (v.chucDanhIds.some((i) => idCu.has(i))
+      ? { ...v, chucDanhIds: [...new Set(v.chucDanhIds.map((i) => (idCu.has(i) ? dich.id : i)))] }
+      : v)))
+  }
+  for (const c of gop) if (c.active) dmNow.updateChucDanh(c.id, { active: false })
+  logAction('system', 'Hệ thống', 'UPDATE', 'ChucDanh', dich.id,
+    `Sửa ngạch văn thư: V.02.008 → 02.008 Văn thư viên trung cấp (B), V.02.007 → 02.007 Văn thư viên (A1); gộp ${gop.map((c) => c.ma).join(', ')} vào 02.008 (${doiNguoi.length} hồ sơ)`)
+}
+
+// Một người chỉ được có một bản ghi lương đang áp dụng. Bản ghi trùng (thường do đồng bộ giữa các máy
+// ghi đè nhau) mà cùng bậc, cùng hệ số thì giữ bản tạo sau cùng — đó là lần sửa mới nhất của trường —
+// và tắt các bản còn lại. Trùng mà khác bậc/hệ số thì không tự đoán; trang Rà soát sẽ báo để trường xử lý.
+function migrateGopBanGhiLuongTrung() {
+  const lg = useLuongStore.getState()
+  const theoNguoi = new Map<string, typeof lg.heSoLuongs>()
+  for (const h of lg.heSoLuongs) {
+    if (!h.isActive) continue
+    theoNguoi.set(h.vienChucId, [...(theoNguoi.get(h.vienChucId) ?? []), h])
+  }
+  const tat = new Set<string>()
+  const giu = new Map<string, string>()
+  for (const [vcId, ds] of theoNguoi) {
+    if (ds.length < 2) continue
+    if (!ds.every((h) => h.bac === ds[0].bac && Math.abs(h.heSo - ds[0].heSo) < 0.001)) continue
+    const moiNhat = [...ds].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))[0]
+    giu.set(vcId, moiNhat.id)
+    for (const h of ds) if (h.id !== moiNhat.id) tat.add(h.id)
+  }
+  if (!tat.size) return
+  lg.setHeSoLuongs(lg.heSoLuongs.map((h) => (tat.has(h.id) ? { ...h, isActive: false } : h)))
+  const vcState = useVienChucStore.getState()
+  vcState.setVienChucs(vcState.vienChucs.map((v) => (giu.has(v.id) ? { ...v, heSoLuongHienTaiId: giu.get(v.id)! } : v)))
+  logAction('system', 'Hệ thống', 'UPDATE', 'HeSoLuong', undefined,
+    `Gộp bản ghi lương trùng: ${giu.size} hồ sơ có nhiều bản ghi đang áp dụng (cùng bậc, hệ số) — giữ bản mới nhất`)
+}
+
 // Chức vụ phải dùng mã ngắn HT / P.HT / TTCM / TPCM — bảng hệ số PCCV (TT 33/2005) chỉ nhận các mã này.
 // Bộ mã dài cũ (HIEU_TRUONG…) chọn vào sẽ không có phụ cấp chức vụ → chuyển hồ sơ sang mã ngắn và ẩn bộ mã dài.
 const MA_CHUC_VU_CU: Record<string, string> = {
@@ -420,6 +519,8 @@ export function initSeedData() {
   migrateChucDanhTheoQuyDinh()
   migrateDienCongViecNhanVien()
   migrateMaChucVuTrung()
+  migrateNgachVanThu()
+  migrateGopBanGhiLuongTrung()
   migrateChiTieuToDonVi()
   migrateNhatKySangKhoRieng()
 

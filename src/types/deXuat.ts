@@ -111,28 +111,36 @@ export const LOAI_DE_XUAT_LABELS: Record<LoaiDeXuat, string> = {
  * Hai loại theo niên hạn chọn người theo thời gian, không cần minh chứng;
  * ba loại còn lại phải nêu rõ cũ → mới (ngạch, bậc, hệ số, mốc hưởng) và đính kèm minh chứng.
  */
-export const NGHIEP_VU_LOAI: Record<LoaiDeXuat, { chonNguoi: string; dieuChinh: string; minhChung?: string }> = {
+export const NGHIEP_VU_LOAI: Record<LoaiDeXuat, { chonNguoi: string; dieuChinh: string; minhChung?: string; tomTat: string; minhChungNgan?: string }> = {
   NANG_BAC: {
     chonNguoi: 'Theo niên hạn: chọn năm, đợt 6 tháng; bảng gợi ý liệt kê người đến hạn nâng bậc trong đợt.',
     dieuChinh: 'Giữ ngạch; lên 1 bậc theo bảng lương, hệ số tự điền; mốc hưởng mới = ngày đến hạn. Người ở bậc cuối không nâng bậc — xét phụ cấp thâm niên vượt khung.',
+    tomTat: 'Chọn theo đợt 6 tháng; +1 bậc, mốc = ngày đến hạn',
   },
   PHU_CAP_THAM_NIEN: {
     chonNguoi: 'Theo niên hạn: bảng gợi ý liệt kê CBQL, giáo viên đến ngày kỷ niệm mốc hưởng PCTN trong đợt.',
     dieuChinh: 'PCTN mới = mức cũ + 1% (chưa hưởng thì 5%); mốc hưởng mới = ngày kỷ niệm. Nhân viên không hưởng PCTN.',
+    tomTat: 'Chọn theo ngày kỷ niệm mốc PCTN; +1%/năm',
   },
   NANG_TRUOC_HAN: {
     chonNguoi: 'Chọn từng người có thành tích được xét nâng trước hạn.',
     dieuChinh: 'Giữ ngạch; lên 1 bậc; mốc hưởng mới sớm hơn ngày đến hạn, tối đa 12 tháng.',
     minhChung: 'Quyết định công nhận thành tích / khen thưởng, biên bản xét nâng lương trước hạn.',
+    tomTat: '+1 bậc; mốc sớm hơn hạn tối đa 12 tháng',
+    minhChungNgan: 'QĐ khen thưởng, biên bản xét',
   },
   CHUYEN_NGACH: {
     chonNguoi: 'Chọn người được bổ nhiệm ngạch / chức danh nghề nghiệp mới.',
     dieuChinh: 'Chọn ngạch mới; hệ thống xếp vào bậc có hệ số bằng hoặc cao hơn gần nhất (chọn lại được); mốc hưởng mới = ngày bổ nhiệm theo quyết định.',
     minhChung: 'Quyết định bổ nhiệm, chuyển ngạch / thay đổi chức danh nghề nghiệp.',
+    tomTat: 'Chọn ngạch mới; xếp bậc có hệ số bằng/cao hơn gần nhất',
+    minhChungNgan: 'QĐ bổ nhiệm ngạch',
   },
   DIEU_CHINH: {
     chonNguoi: 'Chọn người cần điều chỉnh do sai sót xếp lương hoặc theo văn bản của cấp có thẩm quyền.',
     dieuChinh: 'Sửa được ngạch, bậc, hệ số, mốc hưởng cho đúng văn bản; hệ số lệch bảng lương sẽ có cảnh báo để người duyệt lưu ý.',
     minhChung: 'Quyết định / văn bản làm căn cứ điều chỉnh.',
+    tomTat: 'Sửa ngạch, bậc, hệ số, mốc hưởng theo văn bản',
+    minhChungNgan: 'Văn bản căn cứ',
   },
 }

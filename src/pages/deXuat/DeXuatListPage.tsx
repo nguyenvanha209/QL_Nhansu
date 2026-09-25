@@ -75,24 +75,21 @@ export default function DeXuatListPage() {
           label: <b>Hướng dẫn lập đề xuất</b>,
           children: (
             <div style={{ fontSize: 13.5 }}>
-              <ol style={{ margin: '0 0 10px', paddingLeft: 18, lineHeight: 1.7 }}>
-                <li>Bấm <b>Tạo đề xuất</b>, nhập tiêu đề, chọn <b>loại đề xuất</b>. Một phiếu gộp được nhiều người cùng đợt.</li>
-                <li><b>Thêm người</b> theo nghiệp vụ của từng loại (bảng dưới), kiểm tra cột <b>Nội dung điều chỉnh (cũ → mới)</b>: ngạch – bậc – hệ số – mốc hưởng.</li>
-                <li>Loại có minh chứng: đính kèm file (PDF/JPG/PNG, tối đa 3 MB mỗi file) — minh chứng chung của phiếu và minh chứng riêng từng người.</li>
-                <li><b>Lưu bản nháp</b> để sửa tiếp, hoặc <b>Lưu &amp; Nộp</b> trình Hiệu trưởng → Phòng VH-XH thẩm định → Lãnh đạo phê duyệt. Phê duyệt xong hệ thống tự ghi vào hồ sơ.</li>
-                <li>Phiếu bị <Tag color="orange" style={{ marginInlineEnd: 0 }}>Yêu cầu bổ sung</Tag>: mở phiếu → <b>Sửa &amp; trình lại</b>.</li>
+              <ol style={{ margin: '0 0 8px', paddingLeft: 18, lineHeight: 1.65 }}>
+                <li><b>Tạo đề xuất</b> → chọn loại → thêm người (một phiếu gộp nhiều người cùng đợt).</li>
+                <li>Kiểm tra cột <b>Nội dung điều chỉnh (cũ → mới)</b>: ngạch – bậc – hệ số – mốc hưởng; đính kèm minh chứng nếu loại bắt buộc (tối đa 3 MB/file).</li>
+                <li><b>Lưu &amp; Nộp</b> → Hiệu trưởng → VH-XH → Lãnh đạo; phê duyệt xong tự ghi vào hồ sơ. Bị <i>Yêu cầu bổ sung</i> thì <b>Sửa &amp; trình lại</b>.</li>
               </ol>
               <table className="dx-hd-table">
-                <thead><tr><th style={{ width: 190 }}>Loại đề xuất</th><th>Chọn người</th><th>Nội dung điều chỉnh</th><th style={{ width: 210 }}>Minh chứng</th></tr></thead>
+                <thead><tr><th style={{ width: 200 }}>Loại</th><th>Nghiệp vụ</th><th style={{ width: 230 }}>Minh chứng</th></tr></thead>
                 <tbody>
                   {(Object.keys(NGHIEP_VU_LOAI) as LoaiDeXuat[]).map((k) => (
                     <tr key={k}>
                       <td><b>{LOAI_DE_XUAT_LABELS[k]}</b></td>
-                      <td>{NGHIEP_VU_LOAI[k].chonNguoi}</td>
-                      <td>{NGHIEP_VU_LOAI[k].dieuChinh}</td>
-                      <td>{NGHIEP_VU_LOAI[k].minhChung
-                        ? <><Text type="danger" strong>Bắt buộc:</Text> {NGHIEP_VU_LOAI[k].minhChung}</>
-                        : <Text type="secondary">Không cần (theo niên hạn)</Text>}</td>
+                      <td>{NGHIEP_VU_LOAI[k].tomTat}</td>
+                      <td>{NGHIEP_VU_LOAI[k].minhChungNgan
+                        ? <><Text type="danger" strong>Bắt buộc:</Text> {NGHIEP_VU_LOAI[k].minhChungNgan}</>
+                        : <Text type="secondary">Không cần</Text>}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -14,6 +14,7 @@ import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS } from '@/types/deXuat'
 import { isDangCongTac } from '@/types/vienChuc'
 import { NHOM_VI_TRI, NHOM_LOAI_HINH, nhomViTri, nhomLoaiHinh } from '@/utils/nhomViTri'
+import { dangBaoLuuPccv, soNgayConBaoLuu } from '@/utils/baoLuuPccv'
 import type { NhomViTri, NhomLoaiHinh } from '@/utils/nhomViTri'
 
 const { Title, Text } = Typography
@@ -88,6 +89,15 @@ export default function DashboardPage() {
       return row
     }).filter((d) => (d.total as number) > 0)
   }, [donVis, nhanSu, capHoc])
+
+  // Đang bảo lưu PC chức vụ do sắp xếp — sắp hết hạn lên trước
+  const dsBaoLuu = useMemo(() => vienChucs
+    .filter((v) => dangBaoLuuPccv(v))
+    .map((v) => ({
+      id: v.id, hoTen: `${v.ho} ${v.ten}`, donViTen: allDonVis.find((d) => d.id === v.donViId)?.ten ?? '',
+      heSo: v.baoLuuPccv!.heSo, denNgay: v.baoLuuPccv!.denNgay, conNgay: soNgayConBaoLuu(v) ?? 0,
+    }))
+    .sort((a, b) => a.denNgay.localeCompare(b.denNgay)), [vienChucs, allDonVis])
 
   const statusCounts = useMemo(() => {
     const statuses = ['CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET', 'CHO_PHE_DUYET', 'DA_PHE_DUYET', 'TU_CHOI'] as const
@@ -261,6 +271,33 @@ export default function DashboardPage() {
           </Card>
         </Col>
       </Row>
+
+      {dsBaoLuu.length > 0 && (
+        <Card
+          title={<>Bảo lưu phụ cấp chức vụ (sắp xếp tổ chức) <Tag color="gold">{dsBaoLuu.length}</Tag></>}
+          size="small" className="chart-card" style={{ marginTop: 12 }}
+        >
+          <Table<(typeof dsBaoLuu)[number]>
+            size="small"
+            rowKey="id"
+            pagination={false}
+            scroll={{ x: 'max-content' }}
+            dataSource={dsBaoLuu.slice(0, 8)}
+            onRow={(r) => ({ onClick: () => navigate(`/vien-chuc/${r.id}`), style: { cursor: 'pointer' } })}
+            columns={[
+              { title: 'Họ và tên', dataIndex: 'hoTen', key: 'ht' },
+              { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', responsive: ['md'] },
+              { title: 'Hệ số bảo lưu', dataIndex: 'heSo', key: 'hs', align: 'right' },
+              {
+                title: 'Hết bảo lưu', dataIndex: 'denNgay', key: 'den',
+                render: (v: string, r) => (
+                  <Text style={{ color: r.conNgay <= 60 ? '#dc2626' : undefined }}>{formatDate(v)} (còn {r.conNgay} ngày)</Text>
+                ),
+              },
+            ]}
+          />
+        </Card>
+      )}
 
       <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
         <Col xs={24} lg={10}>

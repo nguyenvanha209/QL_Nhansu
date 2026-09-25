@@ -40,10 +40,10 @@ const DEFAULT_VTVLS = [
 ]
 
 const DEFAULT_CHUC_VUS = [
-  { ma: 'HIEU_TRUONG', ten: 'Hiệu trưởng', apDung: 'Mầm non, Tiểu học, THCS', canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)', moTa: 'Quản lý, điều hành toàn bộ hoạt động nhà trường', active: true },
-  { ma: 'PHO_HIEU_TRUONG', ten: 'Phó Hiệu trưởng', apDung: 'Mầm non, Tiểu học, THCS', canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)', moTa: 'Số lượng theo hạng trường và quy mô lớp/học sinh', active: true },
-  { ma: 'TO_TRUONG_CM', ten: 'Tổ trưởng chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Phụ trách 1 tổ chuyên môn theo cơ cấu tổ chức nhà trường', active: true },
-  { ma: 'TO_PHO_CM', ten: 'Tổ phó chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Hỗ trợ tổ trưởng chuyên môn', active: true },
+  { ma: 'HT', ten: 'Hiệu trưởng', apDung: 'Mầm non, Tiểu học, THCS', canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)', moTa: 'Quản lý, điều hành toàn bộ hoạt động nhà trường', active: true },
+  { ma: 'P.HT', ten: 'Phó Hiệu trưởng', apDung: 'Mầm non, Tiểu học, THCS', canCu: 'TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)', moTa: 'Số lượng theo hạng trường và quy mô lớp/học sinh', active: true },
+  { ma: 'TTCM', ten: 'Tổ trưởng chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Phụ trách 1 tổ chuyên môn theo cơ cấu tổ chức nhà trường', active: true },
+  { ma: 'TPCM', ten: 'Tổ phó chuyên môn', apDung: 'Tiểu học, THCS (trường có tổ chuyên môn)', canCu: 'TT 20/2023/TT-BGDĐT', moTa: 'Hỗ trợ tổ trưởng chuyên môn', active: true },
 ]
 
 // PC ưu đãi nhà giáo (PC ưu đãi theo nghề) — NĐ 182/2026, thực hiện từ 01/01/2026.
@@ -298,6 +298,32 @@ function migrateDienCongViecNhanVien() {
     `Tự điền "Công việc cụ thể" cho ${canDien.length} nhân viên theo nhiệm vụ chính / chức danh`)
 }
 
+// Chức vụ phải dùng mã ngắn HT / P.HT / TTCM / TPCM — bảng hệ số PCCV (TT 33/2005) chỉ nhận các mã này.
+// Bộ mã dài cũ (HIEU_TRUONG…) chọn vào sẽ không có phụ cấp chức vụ → chuyển hồ sơ sang mã ngắn và ẩn bộ mã dài.
+const MA_CHUC_VU_CU: Record<string, string> = {
+  HIEU_TRUONG: 'HT', PHO_HIEU_TRUONG: 'P.HT', TO_TRUONG_CM: 'TTCM', TO_PHO_CM: 'TPCM',
+}
+function migrateMaChucVuTrung() {
+  const vcState = useVienChucStore.getState()
+  const canDoi = vcState.vienChucs.filter((v) =>
+    (v.chucVu && MA_CHUC_VU_CU[v.chucVu]) || (v.baoLuuPccv && MA_CHUC_VU_CU[v.baoLuuPccv.chucVuCu]))
+  if (canDoi.length) {
+    vcState.setVienChucs(vcState.vienChucs.map((v) => {
+      const moi = { ...v }
+      if (v.chucVu && MA_CHUC_VU_CU[v.chucVu]) moi.chucVu = MA_CHUC_VU_CU[v.chucVu]
+      if (v.baoLuuPccv && MA_CHUC_VU_CU[v.baoLuuPccv.chucVuCu])
+        moi.baoLuuPccv = { ...v.baoLuuPccv, chucVuCu: MA_CHUC_VU_CU[v.baoLuuPccv.chucVuCu] }
+      return moi
+    }))
+    logAction('system', 'Hệ thống', 'UPDATE', 'VienChuc', undefined,
+      `Chuyển ${canDoi.length} hồ sơ từ mã chức vụ dài (HIEU_TRUONG…) sang mã chuẩn HT / P.HT / TTCM / TPCM`)
+  }
+  const dm = useDanhMucStore.getState()
+  for (const cv of dm.chucVus) {
+    if (cv.active && MA_CHUC_VU_CU[cv.ma]) dm.updateChucVu(cv.id, { active: false })
+  }
+}
+
 // Danh mục VTVL / Chức vụ chuyển từ hằng số cứng sang dữ liệu admin tùy biến được
 function ensureVtvlVaChucVu() {
   const { vtvls, addVtvl, chucVus, addChucVu } = useDanhMucStore.getState()
@@ -393,6 +419,7 @@ export function initSeedData() {
   migrateGanDonViHoSoThieu()
   migrateChucDanhTheoQuyDinh()
   migrateDienCongViecNhanVien()
+  migrateMaChucVuTrung()
   migrateChiTieuToDonVi()
   migrateNhatKySangKhoRieng()
 
@@ -585,8 +612,8 @@ export function initSeedData() {
       const ngaySinh = `${byear}-${String((i % 12) + 1).padStart(2, '0')}-15`
       const ngayVaoNganh = `${byear + 22}-09-01`
 
-      const chucVu = i === 0 ? 'HIEU_TRUONG' : i === 1 ? 'PHO_HIEU_TRUONG' : i === 4 ? 'TO_TRUONG_CM' : undefined
-      const vtvl: VTVL = isNv ? 'NHAN_VIEN' : (chucVu === 'HIEU_TRUONG' || chucVu === 'PHO_HIEU_TRUONG') ? 'CBQL' : 'GIAO_VIEN'
+      const chucVu = i === 0 ? 'HT' : i === 1 ? 'P.HT' : i === 4 ? 'TTCM' : undefined
+      const vtvl: VTVL = isNv ? 'NHAN_VIEN' : (chucVu === 'HT' || chucVu === 'P.HT') ? 'CBQL' : 'GIAO_VIEN'
       const vc: any = {
         id: vcId,
         ma: `VC${String(di * 10 + i + 1).padStart(5, '0')}`,

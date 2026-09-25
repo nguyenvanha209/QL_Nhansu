@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Card, Form, Input, Select, DatePicker, Button, Row, Col,
-  Space, Typography, Divider, InputNumber, Alert, App, Tag,
+  Space, Typography, Divider, InputNumber, Alert, App, Tag, Switch,
 } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -18,6 +18,8 @@ import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen, toUpperName } from '@/utils/helpers'
 import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
 import { CONG_VIEC, NHOM_VI_TRI } from '@/utils/nhomViTri'
+import { tinhNgayHetBaoLuu } from '@/utils/baoLuuPccv'
+import { formatDate } from '@/utils/helpers'
 
 const { Title, Text } = Typography
 
@@ -106,6 +108,34 @@ export default function VienChucFormPage() {
     return { hang, heSo, loai: dv.loai }
   }, [watchDonViId, watchChucVu, donVis])
 
+  // ── Bảo lưu phụ cấp chức vụ khi sắp xếp (NĐ 178/2024, NĐ 67/2025) ──
+  const pcChucVuId = loaiPhuCaps.find((p) => p.ma === 'PC_CHUC_VU')?.id
+  // Hệ số PCCV đang hưởng theo chức vụ cũ, lấy lúc mở hồ sơ (trước khi sửa)
+  const pccvDangHuong = useMemo(
+    () => (isEdit && pcChucVuId ? luongState.getActivePhuCaps(id!).find((p) => p.loaiPhuCapId === pcChucVuId)?.giaTri ?? 0 : 0),
+    [isEdit, id, pcChucVuId],
+  )
+  const pccvTheoChucVuMoi = watchChucVu ? (pccvInfo?.heSo ?? 0) : 0
+  const doiChucVu = isEdit && (vc?.chucVu ?? '') !== (watchChucVu ?? '')
+  const giamPccv = doiChucVu && pccvDangHuong > pccvTheoChucVuMoi
+  const hienBaoLuu = giamPccv || !!vc?.baoLuuPccv
+  const watchBlBat = Form.useWatch('blBat', form) as boolean | undefined
+  const watchBlNgayQd = Form.useWatch('blNgayQd', form)
+  const watchBlHetHan = Form.useWatch('blHetHan', form)
+  const blDenNgay = watchBlNgayQd && watchBlHetHan
+    ? tinhNgayHetBaoLuu(watchBlNgayQd.format('YYYY-MM-DD'), watchBlHetHan.format('YYYY-MM-DD'))
+    : undefined
+  const tenChucVu = (ma?: string) => (ma ? chucVus.find((c) => c.ma === ma)?.ten ?? ma : 'Không')
+
+  // Bỏ hẳn chức vụ → gỡ dòng PC chức vụ (trước đây dòng này bị bỏ quên, hưởng mãi không hết).
+  // Nếu được bảo lưu thì phần bảo lưu nằm riêng ở mục Bảo lưu PCCV.
+  useEffect(() => {
+    if (!isEdit || !vc?.chucVu || watchChucVu || !pcChucVuId) return
+    const current: any[] = form.getFieldValue('phuCaps') || []
+    if (!current.some((pc) => pc?.loaiPhuCapId === pcChucVuId)) return
+    form.setFieldValue('phuCaps', current.filter((pc) => pc?.loaiPhuCapId !== pcChucVuId))
+  }, [watchChucVu, pcChucVuId])
+
   useEffect(() => {
     if (!pccvInfo || pccvInfo.heSo <= 0) return
     const pcChucVu = loaiPhuCaps.find((p) => p.ma === 'PC_CHUC_VU')
@@ -165,6 +195,10 @@ export default function VienChucFormPage() {
       ngayVaoBienChe: vc.ngayVaoBienChe ? dayjs(vc.ngayVaoBienChe) : undefined,
       mocHuongPctn: vc.mocHuongPctn ? dayjs(vc.mocHuongPctn) : undefined,
       ngayChuyenDi: vc.ngayChuyenDi ? dayjs(vc.ngayChuyenDi) : undefined,
+      blBat: !!vc.baoLuuPccv,
+      blSoQd: vc.baoLuuPccv?.soQuyetDinh,
+      blNgayQd: vc.baoLuuPccv ? dayjs(vc.baoLuuPccv.ngayQuyetDinh) : undefined,
+      blHetHan: vc.baoLuuPccv ? dayjs(vc.baoLuuPccv.ngayHetHanBoNhiem) : undefined,
     })
     const heSo = luongState.getActiveHeSo(id!)
     if (heSo) {
@@ -182,7 +216,18 @@ export default function VienChucFormPage() {
   }, [vc])
 
   const onFinish = (values: any) => {
-    const { hoTenFull, mocHuongLuong, ...restValues } = values
+    const { hoTenFull, mocHuongLuong, blBat, blSoQd, blNgayQd, blHetHan, ...restValues } = values
+    // Bảo lưu PCCV: giữ mức và chức vụ cũ đã ghi (nếu có), bảo lưu mới thì lấy mức đang hưởng trước khi đổi
+    const baoLuuPccv = blBat && blNgayQd && blHetHan
+      ? {
+          chucVuCu: vc?.baoLuuPccv?.chucVuCu ?? vc?.chucVu ?? '',
+          heSo: vc?.baoLuuPccv?.heSo ?? pccvDangHuong,
+          soQuyetDinh: String(blSoQd ?? '').trim(),
+          ngayQuyetDinh: blNgayQd.format('YYYY-MM-DD'),
+          ngayHetHanBoNhiem: blHetHan.format('YYYY-MM-DD'),
+          denNgay: tinhNgayHetBaoLuu(blNgayQd.format('YYYY-MM-DD'), blHetHan.format('YYYY-MM-DD')),
+        }
+      : undefined
     const { ho, ten } = splitHoTen(toUpperName(hoTenFull))
     const formatted = {
       ...restValues,
@@ -198,6 +243,7 @@ export default function VienChucFormPage() {
       ngayVaoBienChe: values.ngayVaoBienChe?.format('YYYY-MM-DD'),
       mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
       ngayChuyenDi: values.trangThai === 'CHUYEN_DI' ? values.ngayChuyenDi?.format('YYYY-MM-DD') : undefined,
+      baoLuuPccv,
     }
     if (formatted.loaiLaoDong !== 'VIEN_CHUC') formatted.nguonKinhPhi = undefined
     // Trừ viên chức biên chế (theo ngạch, bậc), mọi loại hình được chọn lương theo mức tiền
@@ -221,6 +267,22 @@ export default function VienChucFormPage() {
 
     if (isEdit && vc) {
       updateVienChuc(id!, vcData, currentUser?.id, currentUser?.fullName)
+
+      // Ghi lịch sử khi bắt đầu, thay đổi hoặc bỏ bảo lưu PCCV
+      const blCu = vc.baoLuuPccv
+      if (JSON.stringify(blCu ?? null) !== JSON.stringify(baoLuuPccv ?? null)) {
+        luongState.addLichSuBienDong({
+          vienChucId: id!,
+          loai: 'PHU_CAP',
+          truongThayDoi: 'Bảo lưu phụ cấp chức vụ',
+          giaTriCu: blCu ? `${tenChucVu(blCu.chucVuCu)} ${blCu.heSo} đến ${formatDate(blCu.denNgay)}` : 'Không',
+          giaTriMoi: baoLuuPccv
+            ? `${tenChucVu(baoLuuPccv.chucVuCu)} ${baoLuuPccv.heSo} đến ${formatDate(baoLuuPccv.denNgay)} (QĐ ${baoLuuPccv.soQuyetDinh})`
+            : 'Không bảo lưu',
+          ngayThayDoi: baoLuuPccv?.ngayQuyetDinh ?? dayjs().format('YYYY-MM-DD'),
+          nguoiThayDoiId: currentUser?.id ?? 'system',
+        })
+      }
 
       // Chuyển sang lương theo mức tiền → đóng bản ghi hệ số đang áp dụng (vẫn giữ trong lịch sử lương)
       if (theoTien) {
@@ -474,6 +536,60 @@ export default function VienChucFormPage() {
               <Form.Item name="ngayChuyenDi" label="Ngày chuyển đi" rules={[{ required: true, message: 'Chọn ngày chuyển đi' }]}>
                 <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
               </Form.Item>
+            </Col>
+          )}
+          {hienBaoLuu && (
+            <Col xs={24}>
+              <div style={{ border: '1px solid #fcd34d', background: '#fffbeb', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
+                <Space align="center" style={{ marginBottom: watchBlBat ? 10 : 0 }} wrap>
+                  <Form.Item name="blBat" valuePropName="checked" noStyle>
+                    <Switch size="small" />
+                  </Form.Item>
+                  <Text strong>Bảo lưu phụ cấp chức vụ do sắp xếp tổ chức bộ máy</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {vc?.baoLuuPccv
+                      ? `Đang ghi: ${tenChucVu(vc.baoLuuPccv.chucVuCu)} — hệ số ${vc.baoLuuPccv.heSo}`
+                      : `${tenChucVu(vc?.chucVu)} (hệ số ${pccvDangHuong}) → ${tenChucVu(watchChucVu)} (hệ số ${pccvTheoChucVuMoi})`}
+                  </Text>
+                </Space>
+                {watchBlBat && (
+                  <Row gutter={16}>
+                    <Col xs={24} sm={8}>
+                      <Form.Item name="blSoQd" label="Số quyết định sắp xếp / bổ nhiệm mới" rules={[{ required: true, message: 'Nhập số quyết định' }]}>
+                        <Input placeholder="VD: 123/QĐ-UBND" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                      <Form.Item name="blNgayQd" label="Ngày quyết định (bắt đầu bảo lưu)" rules={[{ required: true, message: 'Chọn ngày' }]}>
+                        <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                      <Form.Item
+                        name="blHetHan"
+                        label="Ngày hết hạn bổ nhiệm chức vụ cũ"
+                        tooltip="Theo quyết định bổ nhiệm chức vụ cũ"
+                        rules={[{ required: true, message: 'Chọn ngày' }]}
+                      >
+                        <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24}>
+                      <Text style={{ fontSize: 12.5 }}>
+                        {blDenNgay
+                          ? <>Được hưởng nguyên PCCV cũ <b>đến hết {formatDate(blDenNgay)}</b>; sau đó hệ thống tự chuyển về mức theo chức vụ hiện tại.</>
+                          : 'Nhập đủ hai ngày để hệ thống tính ngày hết bảo lưu.'}
+                        <Text type="secondary" style={{ fontSize: 12 }}> Thời hạn còn lại dưới 6 tháng thì được bảo lưu 6 tháng (NĐ 178/2024, NĐ 67/2025).</Text>
+                      </Text>
+                    </Col>
+                  </Row>
+                )}
+                {!watchBlBat && giamPccv && (
+                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 6 }}>
+                    Phụ cấp chức vụ đang giảm. Bật mục này nếu việc thôi giữ / hạ chức vụ là do sắp xếp tổ chức bộ máy.
+                  </Text>
+                )}
+              </div>
             </Col>
           )}
           {pccvInfo && (

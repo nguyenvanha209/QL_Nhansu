@@ -18,6 +18,19 @@ export type TrangThaiCongTac = 'DANG_LAM_VIEC' | 'CHUYEN_DEN' | 'CHUYEN_DI' | 'N
 
 export type NguonKinhPhi = 'NGAN_SACH' | 'SU_NGHIEP'
 
+export interface BaoLuuPccv {
+  /** Chức vụ trước khi sắp xếp và hệ số PCCV đang hưởng lúc đó */
+  chucVuCu: string
+  heSo: number
+  soQuyetDinh: string
+  /** Ngày quyết định sắp xếp / bổ nhiệm chức vụ mới — bắt đầu bảo lưu */
+  ngayQuyetDinh: string
+  /** Ngày hết thời hạn bổ nhiệm chức vụ cũ (theo quyết định bổ nhiệm cũ) */
+  ngayHetHanBoNhiem: string
+  /** Ngày cuối được hưởng bảo lưu (tối thiểu 6 tháng) */
+  denNgay: string
+}
+
 export type CongViecNhanVien =
   | 'KE_TOAN' | 'VAN_THU' | 'THU_QUY' | 'THU_VIEN' | 'THIET_BI' | 'GIAO_VU' | 'Y_TE' | 'TU_VAN' | 'HO_TRO_KT'
   | 'BAO_VE' | 'LAO_CONG'
@@ -61,6 +74,8 @@ export interface VienChuc {
   /** Chuyển trong phường: hồ sơ ở trường đi ↔ hồ sơ ở trường đến */
   chuyenSangHoSoId?: string
   chuyenTuHoSoId?: string
+  /** Bảo lưu phụ cấp chức vụ do sắp xếp tổ chức bộ máy (NĐ 178/2024, NĐ 67/2025) */
+  baoLuuPccv?: BaoLuuPccv
   /** Chỉ loại hình hợp đồng: nhận lương theo bậc/hệ số (mặc định) hay theo mức tiền cố định */
   hinhThucLuong?: HinhThucLuong
   /** Mức lương theo tiền (VNĐ/tháng) — khi hinhThucLuong = 'TIEN' */

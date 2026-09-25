@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Table, Card, Select, Input, Space, Typography, Button } from 'antd'
+import { Table, Card, Select, Input, Space, Typography, Button, Tag, Tooltip } from 'antd'
 import { SearchOutlined, DownloadOutlined } from '@ant-design/icons'
 import * as XLSX from 'xlsx'
 import dayjs from 'dayjs'
@@ -10,6 +10,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import { CHUC_VU_LABELS, LOAI_LAO_DONG_OPTIONS, duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
 import { formatDate, matchSearch, soSanhVienChuc } from '@/utils/helpers'
+import { pccvThucHuong, dangBaoLuuPccv } from '@/utils/baoLuuPccv'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { LoaiPhuCap, ChucDanhNgheNghiep } from '@/types/danhMuc'
 import type { VienChuc } from '@/types/vienChuc'
@@ -42,6 +43,8 @@ interface RowData {
   tongHSLC: number
   thoiDiem: string
   pcCV: number
+  /** Đang hưởng PCCV bảo lưu (sắp xếp tổ chức) — ngày hết bảo lưu */
+  pcCvBaoLuuDen?: string
   pcTN: number
   pcTNNG_Pct: number
   pcTNNG_HeSo: number
@@ -108,7 +111,11 @@ function buildRow(
   const udVal = udRec ? (udRec.giaTri > 0 ? udRec.giaTri : udLoai?.giaTri ?? 0) : 0
 
   const { val: vkPct } = byMa(PC_VK_MA)
-  const { val: cvCoeff } = byMa(PC_CV_MA)
+  // PCCV thực hưởng: mức bảo lưu (sắp xếp tổ chức) nếu còn hạn, không thì theo chức vụ hiện tại.
+  // Nền tính PC thâm niên, ưu đãi dùng luôn mức thực hưởng này.
+  const { val: cvTheoChucVu } = byMa(PC_CV_MA)
+  const cvCoeff = pccvThucHuong(vc, cvTheoChucVu)
+  const cvBaoLuu = dangBaoLuuPccv(vc) && cvCoeff > cvTheoChucVu
   const { val: tnCoeff } = byMa(PC_TN_MA)
   const { val: tnnPct, rec: tnnRec } = byMa(PC_TNN_MA)
 
@@ -147,6 +154,7 @@ function buildRow(
     tongHSLC,
     thoiDiem: heSoRec ? formatDate(heSoRec.ngayHieuLuc) : '',
     pcCV: cvCoeff,
+    pcCvBaoLuuDen: cvBaoLuu ? vc.baoLuuPccv!.denNgay : undefined,
     pcTN: tnCoeff,
     pcTNNG_Pct: tnnPct,
     pcTNNG_HeSo,
@@ -309,7 +317,13 @@ export default function BangTongHopLuongPage() {
     },
     {
       title: 'Phụ cấp chức vụ', key: 'pcCV', width: 85, align: 'right' as const,
-      render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcCV)}</Text> : d3((r as RowData).pcCV),
+      render: (_: any, r: DisplayRow) => {
+        if (r._type === 'subtotal') return <Text strong>{d3(r.pcCV)}</Text>
+        const den = (r as RowData).pcCvBaoLuuDen
+        return den
+          ? <Tooltip title={`Bảo lưu PCCV (sắp xếp tổ chức) đến ${formatDate(den)}`}><span>{d3(r.pcCV)} <Tag color="gold" style={{ fontSize: 10, lineHeight: '14px', padding: '0 3px', marginInlineEnd: 0 }}>BL</Tag></span></Tooltip>
+          : d3((r as RowData).pcCV)
+      },
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcCV - (b as RowData).pcCV,
     },
@@ -386,6 +400,7 @@ export default function BangTongHopLuongPage() {
       'Tổng HS lương chính': r.tongHSLC,
       'Thời điểm tính nâng bậc / TNVK': r.thoiDiem,
       'PC Chức vụ': r.pcCV || '',
+      'Bảo lưu PCCV đến': r.pcCvBaoLuuDen ? formatDate(r.pcCvBaoLuuDen) : '',
       'PC Trách nhiệm': r.pcTN || '',
       'PC TNNG (%)': r.pcTNNG_Pct || '',
       'PC TNNG Hệ số': r.pcTNNG_HeSo || '',

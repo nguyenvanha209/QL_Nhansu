@@ -6,14 +6,15 @@ import { useLuongStore } from '@/store/luongStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { matchSearch, soSanhVienChuc } from '@/utils/helpers'
+import { matchSearch, soSanhVienChuc, formatDate } from '@/utils/helpers'
+import { dangBaoLuuPccv, soNgayConBaoLuu } from '@/utils/baoLuuPccv'
 import { exportToExcel } from '@/utils/exportExcel'
 import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'PCCV_KHONG_CHUC_VU' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -21,6 +22,8 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   BAC_VUOT: { ten: 'Bậc vượt bảng lương', mau: 'volcano' },
   HE_SO_LECH: { ten: 'Hệ số không khớp bảng', mau: 'orange' },
   NGACH_KHAC: { ten: 'Lương ghi theo mã khác', mau: 'gold' },
+  PCCV_KHONG_CHUC_VU: { ten: 'Có PC chức vụ nhưng không có chức vụ', mau: 'magenta' },
+  BL_PCCV_SAP_HET: { ten: 'Sắp hết bảo lưu PC chức vụ', mau: 'geekblue' },
   THIEU_CONG_VIEC: { ten: 'Chưa chọn công việc cụ thể', mau: 'cyan' },
   TEN_LOI_FONT: { ten: 'Tên lỗi font (TCVN3)', mau: 'purple' },
 }
@@ -57,6 +60,8 @@ export default function RaSoatNgachBacPage() {
 
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
+  const phuCaps = useLuongStore((s) => s.phuCapVienChucs)
+  const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
@@ -65,6 +70,7 @@ export default function RaSoatNgachBacPage() {
 
   const rows = useMemo<DongRaSoat[]>(() => {
     const cdTheoId = new Map(chucDanhs.map((c) => [c.id, c]))
+    const pcChucVuId = loaiPhuCaps.find((p) => p.ma === 'PC_CHUC_VU')?.id
     const bacTheoCd = new Map<string, { bac: number; heSo: number }[]>()
     for (const b of bacLuongs) {
       const ds = bacTheoCd.get(b.chucDanhId) ?? []
@@ -102,6 +108,17 @@ export default function RaSoatNgachBacPage() {
       if (KY_TU_TCVN3.test(hoTen)) {
         loi.push('TEN_LOI_FONT')
         chiTiet.push('Họ tên còn ký tự bảng mã TCVN3, cần gõ lại bằng Unicode')
+      }
+      // Có dòng PC chức vụ mà hồ sơ không ghi chức vụ và không có bảo lưu còn hạn → dễ là hưởng sót sau khi thôi chức vụ
+      const pccv = pcChucVuId ? phuCaps.find((p) => p.vienChucId === vc.id && p.isActive && p.loaiPhuCapId === pcChucVuId) : undefined
+      if (pccv && pccv.giaTri > 0 && !vc.chucVu && !dangBaoLuuPccv(vc)) {
+        loi.push('PCCV_KHONG_CHUC_VU')
+        chiTiet.push(`Đang hưởng PC chức vụ ${pccv.giaTri} nhưng hồ sơ không ghi chức vụ — khai chức vụ (tổ trưởng, tổ phó…) hoặc gỡ phụ cấp nếu đã thôi chức vụ`)
+      }
+      const conNgay = soNgayConBaoLuu(vc)
+      if (conNgay !== undefined && conNgay >= 0 && conNgay <= 60) {
+        loi.push('BL_PCCV_SAP_HET')
+        chiTiet.push(`Bảo lưu PC chức vụ hết ngày ${formatDate(vc.baoLuuPccv!.denNgay)} (còn ${conNgay} ngày) — sau đó tự về mức theo chức vụ hiện tại`)
       }
       if (vc.vtvl === 'NHAN_VIEN' && !vc.congViec) {
         loi.push('THIEU_CONG_VIEC')
@@ -160,7 +177,7 @@ export default function RaSoatNgachBacPage() {
       })
     }
     return ketQua
-  }, [vienChucs, heSoLuongs, chucDanhs, bacLuongs, scopeDonViId, tenDonVi])
+  }, [vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, chucDanhs, bacLuongs, scopeDonViId, tenDonVi])
 
   const data = useMemo(() => rows.filter((r) =>
     (!filterDonVi || r.donViId === filterDonVi)

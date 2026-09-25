@@ -5,11 +5,12 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, IS_BIEN_CHE, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vienChuc'
+import { CHUC_VU_LABELS, LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, IS_BIEN_CHE, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
 import { formatDate } from '@/utils/helpers'
 import { CONG_VIEC_LABELS } from '@/utils/nhomViTri'
+import { dangBaoLuuPccv } from '@/utils/baoLuuPccv'
 
 const { Title, Text } = Typography
 
@@ -114,6 +115,13 @@ export default function VienChucDetailPage() {
                   <Descriptions.Item label="Chuyển đi">
                     {vc.ngayChuyenDi ? formatDate(vc.ngayChuyenDi) : '—'}
                     {hoSoLienKet(vc.chuyenSangHoSoId, 'sang')}
+                  </Descriptions.Item>
+                )}
+                {vc.baoLuuPccv && (
+                  <Descriptions.Item label="Bảo lưu PC chức vụ">
+                    {CHUC_VU_LABELS[vc.baoLuuPccv.chucVuCu] ?? vc.baoLuuPccv.chucVuCu} — hệ số {vc.baoLuuPccv.heSo}, đến {formatDate(vc.baoLuuPccv.denNgay)}{' '}
+                    {dangBaoLuuPccv(vc) ? <Tag color="gold">Đang bảo lưu</Tag> : <Tag>Đã hết</Tag>}
+                    <br /><Text type="secondary" style={{ fontSize: 12 }}>QĐ {vc.baoLuuPccv.soQuyetDinh} ngày {formatDate(vc.baoLuuPccv.ngayQuyetDinh)}</Text>
                   </Descriptions.Item>
                 )}
                 {vc.chuyenTuHoSoId && (

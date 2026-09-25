@@ -402,7 +402,17 @@ export default function HuongDanPage() {
             <thead><tr><th style={{ width: 220 }}>Khoản</th><th>Cách tính, ghi chú</th></tr></thead>
             <tbody>
               <tr><td><b>PC thâm niên vượt khung</b></td><td>% lương chính. Hưởng khi đã ở bậc cuối của bảng đủ 36 tháng (loại A) hoặc 24 tháng (loại B, C): 5%, mỗi năm sau +1%.</td></tr>
-              <tr><td><b>PC chức vụ</b></td><td>Hệ số, tự tính theo loại trường × hạng trường × chức vụ (TT 33/2005) khi khai chức vụ trong hồ sơ.</td></tr>
+              <tr><td><b>PC chức vụ</b></td><td>Hệ số, tự tính theo loại trường × hạng trường × chức vụ (TT 33/2005) khi khai chức vụ trong hồ sơ. Bỏ chức vụ thì dòng phụ cấp này tự được gỡ.</td></tr>
+              <tr>
+                <td><b>Bảo lưu PC chức vụ</b><br /><Text type="secondary" style={{ fontSize: 12.5 }}>NĐ 178/2024, NĐ 67/2025</Text></td>
+                <td>
+                  Hiệu trưởng xuống Phó hiệu trưởng, Phó hiệu trưởng xuống giáo viên <b>do sắp xếp tổ chức bộ máy</b>: hưởng
+                  <b> nguyên mức PC chức vụ cũ</b> đến hết thời hạn bổ nhiệm chức vụ cũ; còn dưới 6 tháng thì được 6 tháng.
+                  Cách khai: sửa hồ sơ, đổi chức vụ — hệ thống hiện khung vàng <i>Bảo lưu phụ cấp chức vụ</i>; bật lên, nhập số, ngày quyết định
+                  và ngày hết hạn bổ nhiệm cũ. Hệ thống tự tính ngày hết bảo lưu, áp mức cũ trên Bảng tổng hợp lương (nhãn <Tag color="gold" style={{ fontSize: 10 }}>BL</Tag>),
+                  dùng mức này làm nền tính PC thâm niên, ưu đãi, và <b>tự chuyển về mức mới khi hết hạn</b>.
+                </td>
+              </tr>
               <tr><td><b>PC trách nhiệm công việc</b></td><td>Hệ số theo vị trí, VD kế toán 0,2 — nhập theo quyết định.</td></tr>
               <tr><td><b>PC thâm niên nhà giáo</b></td><td>% lương chính, chỉ <b>CBQL và giáo viên</b>: 5% khi đủ 5 năm, mỗi năm +1%. <b>Vẫn giữ nguyên</b>, hưởng song song với PC ưu đãi nhà giáo.</td></tr>
               <tr><td><b>Hệ số chênh lệch bảo lưu</b></td><td>Nhập <b>giá trị hệ số</b> (VD <i>0,33</i>), <b>không nhập %</b>. Nhập từ 5 trở lên hệ thống sẽ báo lỗi. Cộng thẳng vào tổng hệ số lương.</td></tr>
@@ -677,6 +687,8 @@ export default function HuongDanPage() {
               <tr><td><Tag color="volcano">Bậc vượt bảng lương</Tag></td><td>Bậc lớn hơn số bậc của bảng lương mã đó.</td><td>Kiểm tra lại mã ngạch — thường là mã đang gán sai bảng.</td></tr>
               <tr><td><Tag color="red">Chưa có mã ngạch</Tag></td><td>Viên chức biên chế chưa khai mã ngạch/hạng.</td><td>Sửa hồ sơ, chọn mã ngạch/hạng.</td></tr>
               <tr><td><Tag color="red">Chưa có bậc, hệ số</Tag></td><td>Hồ sơ chưa có lương đang hưởng.</td><td>Viên chức: khai bậc lương. Hợp đồng lương khoán: chọn <i>Theo mức tiền</i> và nhập số tiền.</td></tr>
+              <tr><td><Tag color="magenta">Có PC chức vụ nhưng không có chức vụ</Tag></td><td>Đang hưởng PC chức vụ mà hồ sơ không ghi chức vụ, không có bảo lưu.</td><td>Khai chức vụ (tổ trưởng, tổ phó…); nếu đã thôi chức vụ do sắp xếp thì khai bảo lưu, không thì gỡ phụ cấp.</td></tr>
+              <tr><td><Tag color="geekblue">Sắp hết bảo lưu PC chức vụ</Tag></td><td>Còn 60 ngày trở xuống là hết bảo lưu.</td><td>Chỉ để biết trước — hết hạn hệ thống tự chuyển mức, không cần sửa.</td></tr>
               <tr><td><Tag color="cyan">Chưa chọn công việc cụ thể</Tag></td><td>Nhân viên chưa chọn công việc (kế toán, bảo vệ, cấp dưỡng…).</td><td>Sửa hồ sơ, chọn <b>Công việc cụ thể</b>.</td></tr>
               <tr><td><Tag color="gold">Lương ghi theo mã khác</Tag></td><td>Bản ghi lương gắn mã ngạch khác mã đang ghi trong hồ sơ.</td><td>Xác định mã đúng, sửa lại mã ngạch trong hồ sơ.</td></tr>
               <tr><td><Tag color="purple">Tên lỗi font (TCVN3)</Tag></td><td>Họ tên còn ký tự bảng mã cũ, VD <i>NGUYÔN THÞ</i>.</td><td>Gõ lại họ tên bằng Unicode.</td></tr>
@@ -765,6 +777,10 @@ export default function HuongDanPage() {
             {
               key: '2f', label: 'Hệ số chênh lệch bảo lưu nhập là 33 hay 0,33?',
               children: <p>Nhập <b>0,33</b> — đây là giá trị hệ số, không phải %. Hệ thống báo lỗi nếu nhập từ 5 trở lên vào một khoản phụ cấp loại hệ số.</p>,
+            },
+            {
+              key: '2h', label: 'Hiệu trưởng sau sắp xếp làm Phó hiệu trưởng thì phụ cấp chức vụ tính thế nào?',
+              children: <p>Được bảo lưu nguyên mức PC chức vụ hiệu trưởng đến hết thời hạn bổ nhiệm hiệu trưởng (tối thiểu 6 tháng). Sửa hồ sơ, đổi chức vụ sang Phó hiệu trưởng, bật <b>Bảo lưu phụ cấp chức vụ</b> và nhập quyết định. Không sửa tay dòng PC chức vụ — hệ thống tự áp mức bảo lưu và tự hết hạn. Danh sách người đang bảo lưu hiện trên trang Tổng quan.</p>,
             },
             {
               key: '2g', label: 'Mã chức danh có chữ "(mã cũ)" là gì?',

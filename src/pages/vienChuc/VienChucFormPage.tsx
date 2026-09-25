@@ -23,6 +23,9 @@ import { formatDate } from '@/utils/helpers'
 
 const { Title, Text } = Typography
 
+const KHONG_CHUC_VU = ''
+const CHUC_VU_QUAN_LY = ['HT', 'P.HT']
+
 function PhuCapGiaTriInput({ value, onChange, fieldName }: { value?: number; onChange?: (v: number | null) => void; fieldName: number }) {
   const form = Form.useFormInstance()
   const loaiPhuCapId = Form.useWatch(['phuCaps', fieldName, 'loaiPhuCapId'], form)
@@ -86,7 +89,11 @@ export default function VienChucFormPage() {
     : LOAI_LAO_DONG_OPTIONS
 
   const vtvlOptions = vtvls.filter((v) => v.active).map((v) => ({ value: v.ma, label: v.ten }))
-  const chucVuOptions = chucVus.filter((c) => c.active).map((c) => ({ value: c.ma, label: c.ten }))
+  // Có lựa chọn rõ ràng "Không giữ chức vụ" — trước đây chỉ bỏ được bằng nút ✕ nhỏ, khó thấy khi chuyển Phó HT về giáo viên
+  const chucVuOptions = [
+    { value: KHONG_CHUC_VU, label: 'Không giữ chức vụ (giáo viên, nhân viên)' },
+    ...chucVus.filter((c) => c.active).map((c) => ({ value: c.ma, label: c.ten })),
+  ]
 
   const watchChucDanhId = Form.useWatch('chucDanhId', form)
   const bacLuongOptions = useMemo(() => {
@@ -257,6 +264,7 @@ export default function VienChucFormPage() {
     // Nhân viên không hưởng phụ cấp thâm niên → không giữ mốc PCTN
     if (!huongPctn) formatted.mocHuongPctn = undefined
     if (formatted.vtvl !== 'NHAN_VIEN') formatted.congViec = undefined
+    if (formatted.chucVu === KHONG_CHUC_VU) formatted.chucVu = undefined
     const { bacLuongId, phuCaps: phuCapsRaw, ...vcData } = formatted
     // Chốt chặn cuối: không ghi PC thâm niên cho vị trí không được hưởng
     const pcThamNienId = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')?.id
@@ -472,8 +480,26 @@ export default function VienChucFormPage() {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item name="chucVu" label="Chức vụ">
-              <Select options={chucVuOptions} placeholder="Không (giáo viên/nhân viên)" allowClear />
+            <Form.Item
+              name="chucVu"
+              label="Chức vụ"
+              tooltip="Phó hiệu trưởng về làm giáo viên: chọn &quot;Không giữ chức vụ&quot;. Nếu do sắp xếp tổ chức bộ máy thì bật Bảo lưu phụ cấp chức vụ ở khung vàng bên dưới."
+            >
+              <Select
+                options={chucVuOptions}
+                placeholder="Không giữ chức vụ (giáo viên, nhân viên)"
+                onChange={(v: string) => {
+                  // Đồng bộ Vị trí việc làm với chức vụ quản lý
+                  const vtvl = form.getFieldValue('vtvl')
+                  if (CHUC_VU_QUAN_LY.includes(v) && vtvl !== 'CBQL') {
+                    form.setFieldValue('vtvl', 'CBQL')
+                    message.info('Đã chuyển Vị trí việc làm sang Cán bộ quản lý')
+                  } else if (!CHUC_VU_QUAN_LY.includes(v) && vtvl === 'CBQL') {
+                    form.setFieldValue('vtvl', 'GIAO_VIEN')
+                    message.info('Không còn chức vụ quản lý — đã chuyển Vị trí việc làm sang Giáo viên, kiểm tra lại nếu cần')
+                  }
+                }}
+              />
             </Form.Item>
           </Col>
           {watchVtvl === 'NHAN_VIEN' && (

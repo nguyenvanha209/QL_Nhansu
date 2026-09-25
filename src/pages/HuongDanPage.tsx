@@ -408,7 +408,7 @@ export default function HuongDanPage() {
                 <td>
                   Hiệu trưởng xuống Phó hiệu trưởng, Phó hiệu trưởng xuống giáo viên <b>do sắp xếp tổ chức bộ máy</b>: hưởng
                   <b> nguyên mức PC chức vụ cũ</b> đến hết thời hạn bổ nhiệm chức vụ cũ; còn dưới 6 tháng thì được 6 tháng.
-                  Cách khai: sửa hồ sơ, đổi chức vụ — hệ thống hiện khung vàng <i>Bảo lưu phụ cấp chức vụ</i>; bật lên, nhập số, ngày quyết định
+                  Cách khai: sửa hồ sơ, đổi chức vụ (Phó HT về giáo viên thì chọn <i>Không giữ chức vụ</i>) — hệ thống hiện khung vàng <i>Bảo lưu phụ cấp chức vụ</i>; bật lên, nhập số, ngày quyết định
                   và ngày hết hạn bổ nhiệm cũ. Hệ thống tự tính ngày hết bảo lưu, áp mức cũ trên Bảng tổng hợp lương (nhãn <Tag color="gold" style={{ fontSize: 10 }}>BL</Tag>),
                   dùng mức này làm nền tính PC thâm niên, ưu đãi, và <b>tự chuyển về mức mới khi hết hạn</b>.
                 </td>
@@ -688,6 +688,7 @@ export default function HuongDanPage() {
               <tr><td><Tag color="red">Chưa có mã ngạch</Tag></td><td>Viên chức biên chế chưa khai mã ngạch/hạng.</td><td>Sửa hồ sơ, chọn mã ngạch/hạng.</td></tr>
               <tr><td><Tag color="red">Chưa có bậc, hệ số</Tag></td><td>Hồ sơ chưa có lương đang hưởng.</td><td>Viên chức: khai bậc lương. Hợp đồng lương khoán: chọn <i>Theo mức tiền</i> và nhập số tiền.</td></tr>
               <tr><td><Tag color="magenta">Có PC chức vụ nhưng không có chức vụ</Tag></td><td>Đang hưởng PC chức vụ mà hồ sơ không ghi chức vụ, không có bảo lưu.</td><td>Khai chức vụ (tổ trưởng, tổ phó…); nếu đã thôi chức vụ do sắp xếp thì khai bảo lưu, không thì gỡ phụ cấp.</td></tr>
+              <tr><td><Tag color="magenta">Chức vụ lệch vị trí việc làm</Tag></td><td>Còn chức vụ Hiệu trưởng / Phó HT nhưng vị trí việc làm không phải CBQL (hoặc ngược lại) — thường là Phó HT đã về làm giáo viên nhưng chưa bỏ chức vụ.</td><td>Sửa hồ sơ, ô Chức vụ chọn <i>Không giữ chức vụ</i>; nếu do sắp xếp thì bật bảo lưu PC chức vụ.</td></tr>
               <tr><td><Tag color="geekblue">Sắp hết bảo lưu PC chức vụ</Tag></td><td>Còn 60 ngày trở xuống là hết bảo lưu.</td><td>Chỉ để biết trước — hết hạn hệ thống tự chuyển mức, không cần sửa.</td></tr>
               <tr><td><Tag color="cyan">Chưa chọn công việc cụ thể</Tag></td><td>Nhân viên chưa chọn công việc (kế toán, bảo vệ, cấp dưỡng…).</td><td>Sửa hồ sơ, chọn <b>Công việc cụ thể</b>.</td></tr>
               <tr><td><Tag color="gold">Lương ghi theo mã khác</Tag></td><td>Bản ghi lương gắn mã ngạch khác mã đang ghi trong hồ sơ.</td><td>Xác định mã đúng, sửa lại mã ngạch trong hồ sơ.</td></tr>
@@ -780,7 +781,7 @@ export default function HuongDanPage() {
             },
             {
               key: '2h', label: 'Hiệu trưởng sau sắp xếp làm Phó hiệu trưởng thì phụ cấp chức vụ tính thế nào?',
-              children: <p>Được bảo lưu nguyên mức PC chức vụ hiệu trưởng đến hết thời hạn bổ nhiệm hiệu trưởng (tối thiểu 6 tháng). Sửa hồ sơ, đổi chức vụ sang Phó hiệu trưởng, bật <b>Bảo lưu phụ cấp chức vụ</b> và nhập quyết định. Không sửa tay dòng PC chức vụ — hệ thống tự áp mức bảo lưu và tự hết hạn. Danh sách người đang bảo lưu hiện trên trang Tổng quan.</p>,
+              children: <p>Được bảo lưu nguyên mức PC chức vụ hiệu trưởng đến hết thời hạn bổ nhiệm hiệu trưởng (tối thiểu 6 tháng). Sửa hồ sơ, đổi chức vụ sang Phó hiệu trưởng (Phó HT về giáo viên thì chọn <b>Không giữ chức vụ</b> — Vị trí việc làm tự chuyển sang Giáo viên), bật <b>Bảo lưu phụ cấp chức vụ</b> và nhập quyết định. Không sửa tay dòng PC chức vụ — hệ thống tự áp mức bảo lưu và tự hết hạn. Danh sách người đang bảo lưu hiện trên trang Tổng quan.</p>,
             },
             {
               key: '2g', label: 'Mã chức danh có chữ "(mã cũ)" là gì?',

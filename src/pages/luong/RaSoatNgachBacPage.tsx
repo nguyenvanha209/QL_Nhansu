@@ -14,7 +14,7 @@ import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LAB
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'PCCV_KHONG_CHUC_VU' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'PCCV_KHONG_CHUC_VU' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -23,6 +23,7 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   HE_SO_LECH: { ten: 'Hệ số không khớp bảng', mau: 'orange' },
   NGACH_KHAC: { ten: 'Lương ghi theo mã khác', mau: 'gold' },
   PCCV_KHONG_CHUC_VU: { ten: 'Có PC chức vụ nhưng không có chức vụ', mau: 'magenta' },
+  CHUC_VU_LECH_VTVL: { ten: 'Chức vụ lệch vị trí việc làm', mau: 'magenta' },
   BL_PCCV_SAP_HET: { ten: 'Sắp hết bảo lưu PC chức vụ', mau: 'geekblue' },
   THIEU_CONG_VIEC: { ten: 'Chưa chọn công việc cụ thể', mau: 'cyan' },
   TEN_LOI_FONT: { ten: 'Tên lỗi font (TCVN3)', mau: 'purple' },
@@ -114,6 +115,15 @@ export default function RaSoatNgachBacPage() {
       if (pccv && pccv.giaTri > 0 && !vc.chucVu && !dangBaoLuuPccv(vc)) {
         loi.push('PCCV_KHONG_CHUC_VU')
         chiTiet.push(`Đang hưởng PC chức vụ ${pccv.giaTri} nhưng hồ sơ không ghi chức vụ — khai chức vụ (tổ trưởng, tổ phó…) hoặc gỡ phụ cấp nếu đã thôi chức vụ`)
+      }
+      // VD Phó HT đã về làm giáo viên (VTVL Giáo viên) nhưng còn giữ chức vụ P.HT → vẫn hưởng PCCV Phó HT
+      const laChucVuQuanLy = vc.chucVu === 'HT' || vc.chucVu === 'P.HT'
+      if (laChucVuQuanLy && vc.vtvl && vc.vtvl !== 'CBQL') {
+        loi.push('CHUC_VU_LECH_VTVL')
+        chiTiet.push(`Chức vụ ${vc.chucVu === 'HT' ? 'Hiệu trưởng' : 'Phó hiệu trưởng'} nhưng vị trí việc làm không phải CBQL — nếu đã về làm giáo viên thì chọn "Không giữ chức vụ" (bật bảo lưu PCCV nếu do sắp xếp)`)
+      } else if (!laChucVuQuanLy && vc.vtvl === 'CBQL') {
+        loi.push('CHUC_VU_LECH_VTVL')
+        chiTiet.push('Vị trí việc làm CBQL nhưng không có chức vụ Hiệu trưởng / Phó hiệu trưởng')
       }
       const conNgay = soNgayConBaoLuu(vc)
       if (conNgay !== undefined && conNgay >= 0 && conNgay <= 60) {

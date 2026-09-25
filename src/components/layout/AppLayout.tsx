@@ -112,33 +112,26 @@ export default function AppLayout() {
         className="qlvc-sidebar"
         style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'auto' }}
       >
-        {/* Logo area */}
-        <div style={{
-          height: 64, display: 'flex', alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          padding: collapsed ? 0 : '0 16px', gap: 10,
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'rgba(255,255,255,0.2)',
-            backdropFilter: 'blur(8px)',
+        {/* Logo phường — hiện ở mọi trang (thanh menu dùng chung) */}
+        <div
+          onClick={() => navigate('/dashboard')}
+          title="Quản lý nhân sự lao động tiền lương — Phường Gia Viên"
+          style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 15, fontWeight: 700, flexShrink: 0,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          }}>
-            GV
-          </div>
-          {!collapsed && (
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, lineHeight: '18px', whiteSpace: 'nowrap' }}>
-                QLVC&amp;LĐ
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, lineHeight: '14px', whiteSpace: 'nowrap' }}>
-                Phường Gia Viên
-              </div>
-            </div>
-          )}
+            padding: collapsed ? '12px 0' : '16px 0 14px', cursor: 'pointer',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          <img
+            src={`${import.meta.env.BASE_URL}${collapsed ? 'apple-touch-icon.png' : 'logo-phuong.png'}`}
+            alt="Logo Phường Gia Viên"
+            width={collapsed ? 40 : 120}
+            height={collapsed ? 40 : 120}
+            style={{
+              display: 'block', borderRadius: '50%', background: '#fff', padding: collapsed ? 1 : 3,
+              boxShadow: '0 4px 16px rgba(15,23,42,0.3)', transition: 'width .2s, height .2s',
+            }}
+          />
         </div>
 
         <Menu

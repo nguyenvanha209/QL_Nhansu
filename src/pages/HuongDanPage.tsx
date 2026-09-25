@@ -797,7 +797,7 @@ export default function HuongDanPage() {
             },
             {
               key: '2h', label: 'Hiệu trưởng sau sắp xếp làm Phó hiệu trưởng thì phụ cấp chức vụ tính thế nào?',
-              children: <p>Được bảo lưu nguyên mức PC chức vụ hiệu trưởng đến hết thời hạn bổ nhiệm hiệu trưởng (tối thiểu 6 tháng). Sửa hồ sơ, đổi chức vụ sang Phó hiệu trưởng (Phó HT về giáo viên thì chọn <b>Không giữ chức vụ</b> — Vị trí việc làm tự chuyển sang Giáo viên), bật <b>Bảo lưu phụ cấp chức vụ</b> và nhập quyết định. Không sửa tay dòng PC chức vụ — hệ thống tự áp mức bảo lưu và tự hết hạn. Danh sách người đang bảo lưu hiện trên trang Tổng quan.</p>,
+              children: <p>Được bảo lưu nguyên mức PC chức vụ hiệu trưởng đến hết thời hạn bổ nhiệm hiệu trưởng (tối thiểu 6 tháng). Sửa hồ sơ, đổi chức vụ sang Phó hiệu trưởng (Phó HT về giáo viên thì chọn <b>Không giữ chức vụ</b> — Vị trí việc làm tự chuyển sang Giáo viên), bật <b>Bảo lưu phụ cấp chức vụ</b> và nhập quyết định. Không sửa tay dòng PC chức vụ — hệ thống tự áp mức bảo lưu và tự hết hạn. Xem trạng thái bảo lưu ở trang chi tiết hồ sơ và cột PC chức vụ (nhãn BL) trên Bảng tổng hợp lương; người sắp hết bảo lưu (còn 60 ngày trở xuống) hiện ở trang Rà soát ngạch – bậc.</p>,
             },
             {
               key: '2g', label: 'Mã chức danh có chữ "(mã cũ)" là gì?',

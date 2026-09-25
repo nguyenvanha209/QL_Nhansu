@@ -382,7 +382,7 @@ function TrangThaiTab() {
       <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
         <Descriptions.Item label="Căn cứ">
           Trạng thái công tác phản ánh vòng đời làm việc của viên chức. Chỉ người có trạng thái "Đang làm việc" hoặc "Chuyển đến" được tính vào số liệu
-          Tổng quan, chỉ tiêu Vị trí việc làm, Báo cáo, Dự báo nghỉ hưu và danh sách chọn ở Đề xuất điều chỉnh Hệ số lương - PCTN.
+          Tổng quan, chỉ tiêu Vị trí việc làm, Báo cáo, Dự báo nghỉ hưu và danh sách chọn ở Đề xuất điều chỉnh hệ số lương - phụ cấp.
         </Descriptions.Item>
       </Descriptions>
       <Table scroll={{ x: 'max-content' }} dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />

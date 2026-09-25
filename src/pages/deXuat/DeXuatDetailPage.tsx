@@ -1,13 +1,15 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, Steps, Button, Table, Tag, Descriptions, Modal, Input, Select, Space, Typography, Result, Divider, App } from 'antd'
-import { ArrowLeftOutlined, CheckOutlined, CloseOutlined, SyncOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, CheckOutlined, CloseOutlined, SyncOutlined, EditOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate } from '@/utils/helpers'
-import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS } from '@/types/deXuat'
+import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG } from '@/types/deXuat'
+import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
+import { DanhSachMinhChung } from '@/components/MinhChungField'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -16,7 +18,7 @@ export default function DeXuatDetailPage() {
   const { message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { currentUser, isVHXH, isLanhDao, laQuanTri, isHieuTruong } = useAuth()
+  const { currentUser, isVHXH, isLanhDao, laQuanTri, isHieuTruong, scopeDonViId } = useAuth()
   const getById = useDeXuatStore((s) => s.getById)
   const { submitDeXuat, duyetHieuTruong, xetDuyetDeXuat, pheDuyetDeXuat } = useDeXuatStore.getState()
   const donVis = useDanhMucStore((s) => s.donVis)
@@ -34,6 +36,8 @@ export default function DeXuatDetailPage() {
   const donVi = donVis.find((d) => d.id === dx.donViId)
 
   const laPctn = dx.loai === 'PHU_CAP_THAM_NIEN'
+  // Loại theo niên hạn không dùng minh chứng; phiếu cũ đã lỡ đính kèm thì vẫn hiện
+  const coMinhChung = LOAI_CAN_MINH_CHUNG.includes(dx.loai) || !!dx.minhChung?.length || dx.chiTiet.some((c) => c.minhChung?.length)
 
   const ketQuaLabel = (kq?: string) => kq === 'DONG_Y' ? 'Đồng ý' : kq === 'PHE_DUYET' ? 'Phê duyệt' : kq === 'TU_CHOI' ? 'Từ chối' : kq === 'YEU_CAU_BO_SUNG' ? 'Yêu cầu bổ sung' : ''
 
@@ -51,7 +55,8 @@ export default function DeXuatDetailPage() {
     : 4
 
   const colVienChuc = { title: 'Viên chức', key: 'vc', render: (_: any, r: any) => { const vc = vienChucs.find((v) => v.id === r.vienChucId); return vc ? `${vc.ho} ${vc.ten}` : r.vienChucId } }
-  const colLyDo = { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', ellipsis: true }
+  const colLyDo = { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', width: 200 }
+  const colMinhChung = { title: 'Minh chứng riêng', key: 'mc', width: 180, render: (_: any, r: any) => <DanhSachMinhChung compact value={r.minhChung} /> }
 
   const detailCols = laPctn
     ? [
@@ -63,14 +68,31 @@ export default function DeXuatDetailPage() {
       ]
     : [
         colVienChuc,
-        { title: 'CD cũ', key: 'cdc', render: (_: any, r: any) => chucDanhs.find((c) => c.id === r.chucDanhCuId)?.ten ?? r.chucDanhCuId },
-        { title: 'Bậc cũ → mới', key: 'bac', render: (_: any, r: any) => `${r.bacCu} (${r.heSoCu}) → ${r.bacMoi} (${r.heSoMoi})` },
-        { title: 'CD mới', key: 'cdm', render: (_: any, r: any) => chucDanhs.find((c) => c.id === r.chucDanhMoiId)?.ten ?? r.chucDanhMoiId },
-        { title: 'Mốc hưởng lương', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
+        {
+          title: 'Hiện tại', key: 'cu', width: 200,
+          render: (_: any, r: any) => {
+            const cd = chucDanhs.find((c) => c.id === r.chucDanhCuId)
+            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten}>{cd?.ma ?? r.chucDanhCuId}</Text> <Text type="secondary">({cd?.bangLuong})</Text><br />Bậc {r.bacCu} — {Number(r.heSoCu).toFixed(2)}{r.ngayHieuLucCu && <><br /><Text type="secondary" style={{ fontSize: 12 }}>từ {formatDate(r.ngayHieuLucCu)}</Text></>}</div>
+          },
+        },
+        {
+          title: 'Đề nghị', key: 'moi', width: 220,
+          render: (_: any, r: any) => {
+            const cd = chucDanhs.find((c) => c.id === r.chucDanhMoiId)
+            const doiNgach = r.chucDanhMoiId !== r.chucDanhCuId
+            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten} type={doiNgach ? 'warning' : undefined}>{cd?.ma ?? r.chucDanhMoiId}</Text> <Text type="secondary">({cd?.bangLuong})</Text>{doiNgach && <Tag color="orange" style={{ marginLeft: 4 }}>Chuyển ngạch</Tag>}<br /><b>Bậc {r.bacMoi} — {Number(r.heSoMoi).toFixed(2)}</b></div>
+          },
+        },
+        { title: 'Mốc hưởng mới', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 120, render: (v: string) => formatDate(v) },
+        { title: 'Nội dung điều chỉnh (cũ → mới)', key: 'noi_dung', width: 300, render: (_: any, r: any) => <NoiDungDieuChinh r={r} chucDanhs={chucDanhs} /> },
         colLyDo,
+        ...(coMinhChung ? [colMinhChung] : []),
       ]
 
   const canSubmit = dx.trangThai === 'NHAP' && dx.nguoiDeXuatId === currentUser?.id
+  // Bản nháp và phiếu bị yêu cầu bổ sung: trường lập phiếu mở lại để sửa, rồi trình lại
+  const canSua = (dx.trangThai === 'NHAP' || dx.trangThai === 'YEU_CAU_BO_SUNG')
+    && (dx.nguoiDeXuatId === currentUser?.id || laQuanTri || (!!scopeDonViId && dx.donViId === scopeDonViId))
   const canDuyetHT = (isHieuTruong || laQuanTri) && dx.trangThai === 'CHO_HIEU_TRUONG_DUYET'
   const canXetDuyet = (isVHXH || laQuanTri) && dx.trangThai === 'CHO_XET_DUYET'
   const canPheDuyet = (isLanhDao || laQuanTri) && dx.trangThai === 'CHO_PHE_DUYET'
@@ -133,13 +155,15 @@ export default function DeXuatDetailPage() {
           {dx.ghiChuDuyetHT && <Descriptions.Item label="Ý kiến Hiệu trưởng" span={2}>{dx.ghiChuDuyetHT}</Descriptions.Item>}
           {dx.ghiChuXetDuyet && <Descriptions.Item label="Ý kiến VH-XH" span={2}>{dx.ghiChuXetDuyet}</Descriptions.Item>}
           {dx.ghiChuPheDuyet && <Descriptions.Item label="Ý kiến lãnh đạo" span={2}>{dx.ghiChuPheDuyet}</Descriptions.Item>}
+          {coMinhChung && <Descriptions.Item label="Minh chứng của phiếu" span={2}><DanhSachMinhChung value={dx.minhChung} /></Descriptions.Item>}
         </Descriptions>
 
         <Title level={5}>Chi tiết đề xuất ({dx.chiTiet.length} viên chức)</Title>
-        <Table dataSource={dx.chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: 700 }} />
+        <Table dataSource={dx.chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: 1450 }} />
 
         <Divider />
         <Space wrap>
+          {canSua && <Button icon={<EditOutlined />} onClick={() => navigate(`/de-xuat/${dx.id}/edit`)}>{dx.trangThai === 'YEU_CAU_BO_SUNG' ? 'Sửa & trình lại' : 'Sửa phiếu'}</Button>}
           {canSubmit && <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('submit')}>Trình Hiệu trưởng duyệt</Button>}
           {canDuyetHT && <>
             <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('ht_approve')}>Duyệt — chuyển VH-XH</Button>

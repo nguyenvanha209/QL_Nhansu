@@ -52,6 +52,7 @@ export default function AppRouter() {
           <Route path="de-xuat" element={<DeXuatListPage />} />
           <Route path="de-xuat/new" element={<TaoDeXuatPage />} />
           <Route path="de-xuat/:id" element={<DeXuatDetailPage />} />
+          <Route path="de-xuat/:id/edit" element={<TaoDeXuatPage />} />
           <Route path="du-bao" element={<DuBaoNghiHuuPage />} />
           <Route path="bao-cao" element={<BaoCaoPage />} />
           <Route path="admin/danh-muc" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><DanhMucPage /></RoleGuard>} />

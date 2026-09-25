@@ -873,7 +873,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
               <Text style={{ fontSize: 13 }}>
                 Công cụ này <b>sửa trực tiếp</b> bản ghi lương đang áp dụng — dùng để đính chính
                 dữ liệu nhập sai. Việc <b>nâng bậc lương</b> phải thực hiện qua chức năng
-                “Đề xuất điều chỉnh Hệ số lương – PCTN” để giữ đúng lịch sử.
+                “Đề xuất điều chỉnh hệ số lương - phụ cấp” để giữ đúng lịch sử.
               </Text>
             }
           />

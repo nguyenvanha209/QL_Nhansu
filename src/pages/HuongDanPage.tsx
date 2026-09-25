@@ -538,7 +538,7 @@ export default function HuongDanPage() {
       <Section
         so="V"
         tieuDe="Hướng dẫn lập phiếu đề xuất"
-        moTa="Vào menu Đề xuất điều chỉnh Hệ số lương – PCTN trên thanh điều hướng, bấm nút tạo phiếu mới. Một phiếu có thể gồm nhiều viên chức cùng đợt, không cần lập riêng từng người."
+        moTa="Vào menu Đề xuất điều chỉnh hệ số lương - phụ cấp trên thanh điều hướng. Trang đầu có sẵn Hướng dẫn lập đề xuất và bảng nghiệp vụ từng loại; bấm Tạo đề xuất để lập phiếu. Một phiếu có thể gồm nhiều viên chức cùng đợt."
       >
         <h3>Phần thông tin chung</h3>
         <div className="hd-tw">
@@ -547,7 +547,7 @@ export default function HuongDanPage() {
             <tbody>
               <tr><td><b>Tiêu đề</b> <i className="hd-req">*</i></td><td>Ghi rõ đợt và trường. Ví dụ: <i>Nâng bậc lương 6 tháng đầu năm 2026 – THCS An Đà</i>.</td></tr>
               <tr><td><b>Đơn vị</b> <i className="hd-req">*</i></td><td>Hệ thống điền sẵn trường của bạn.</td></tr>
-              <tr><td><b>Loại đề xuất</b> <i className="hd-req">*</i></td><td>Nâng bậc thường xuyên · Nâng bậc trước hạn · Điều chỉnh lương · Chuyển ngạch/chức danh · Phụ cấp thâm niên.</td></tr>
+              <tr><td><b>Loại đề xuất</b> <i className="hd-req">*</i></td><td>Nâng bậc lương thường xuyên · Nâng phụ cấp thâm niên (hai loại theo niên hạn, không cần minh chứng) · Nâng bậc lương trước thời hạn · Chuyển ngạch/chức danh · Điều chỉnh hệ số lương - phụ cấp (ba loại bắt buộc minh chứng).</td></tr>
               <tr><td><b>Ghi chú</b></td><td>Căn cứ pháp lý, số văn bản, hoặc giải trình cho trường hợp đặc biệt.</td></tr>
             </tbody>
           </table>
@@ -562,12 +562,28 @@ export default function HuongDanPage() {
           <li>Chọn <b>năm</b> và <b>đợt</b> cần xét.</li>
           <li>Tích chọn những viên chức đủ điều kiện trong bảng gợi ý.</li>
           <li>Bấm <b>Thêm đã chọn</b> — hệ thống tự điền bậc mới, hệ số mới và mốc hưởng lương theo bảng lương của ngạch.</li>
-          <li>Kiểm tra lại từng dòng. Cột <b>Bậc mới</b>, <b>Hệ số mới</b> và <b>Mốc hưởng lương</b> đều sửa được nếu trường hợp cụ thể khác gợi ý.</li>
+          <li>Kiểm tra lại từng dòng: cột <b>Hiện tại</b> ghi mã ngạch, bậc, hệ số và mốc hưởng đang có; <b>Bậc mới</b> chọn trong bảng lương của ngạch (hệ số tự điền, không gõ tay); <b>Mốc hưởng mới</b> sửa được; cột <b>Nâng bậc kế tiếp</b> cho biết ngày dự kiến (loại A +3 năm, loại B, C +2 năm).</li>
+          <li>Người đã ở <b>bậc cuối</b> không chọn được vào phiếu nâng bậc (có nhãn <i>Bậc cuối — xét vượt khung</i>).</li>
         </ol>
         <Paragraph>
           Với trường hợp không nằm trong gợi ý (nâng trước hạn do thành tích, điều chỉnh sai sót…),
           chọn trực tiếp viên chức ở ô tìm kiếm phía trên bảng chi tiết.
         </Paragraph>
+
+        <h3>Chuyển ngạch, điều chỉnh lương</h3>
+        <ul>
+          <li><b>Chuyển ngạch/chức danh</b>: chọn <b>Ngạch mới</b> ở từng dòng — hệ thống xếp vào bậc có hệ số bằng hoặc cao hơn gần nhất, có thể chọn lại bậc.</li>
+          <li><b>Điều chỉnh hệ số lương - phụ cấp</b>: sửa được ngạch, bậc, hệ số, mốc hưởng theo văn bản; hệ số lệch bảng lương có dấu cảnh báo để người duyệt lưu ý.</li>
+          <li><b>Nâng bậc lương trước thời hạn</b>: mốc hưởng mới phải sớm hơn ngày đến hạn, tối đa 12 tháng — hệ thống kiểm tra khi lưu.</li>
+          <li>Cột <b>Nội dung điều chỉnh (cũ → mới)</b> tóm tắt ngạch – bậc – hệ số – mốc hưởng của từng người; thông số không đổi ghi <i>giữ nguyên</i>.</li>
+        </ul>
+
+        <h3>Minh chứng đính kèm</h3>
+        <ul>
+          <li><b>Minh chứng của phiếu</b> (quyết định, biên bản xét, danh sách…) đính kèm ở ô phía trên; giấy tờ riêng từng người (VD giấy khen) ở cột <b>Minh chứng riêng</b>.</li>
+          <li>Nhận <b>PDF, JPG, PNG, tối đa 3 MB mỗi file</b>. Ảnh chụp tự được nén. PDF scan nên để đen trắng hoặc xám, 150–200 dpi để không vượt 3 MB.</li>
+          <li><b>Bắt buộc có minh chứng</b> khi trình phiếu <i>Nâng bậc lương trước thời hạn</i>, <i>Chuyển ngạch/chức danh</i>, <i>Điều chỉnh hệ số lương - phụ cấp</i>. Hai loại theo niên hạn (nâng bậc thường xuyên, nâng PCTN) không có ô minh chứng. Người duyệt bấm tên file để xem hoặc tải về.</li>
+        </ul>
 
         <h3>5.2 — Phiếu phụ cấp thâm niên nhà giáo</h3>
         <Paragraph>
@@ -595,7 +611,7 @@ export default function HuongDanPage() {
             <tbody>
               <tr>
                 <td><b>Lưu bản nháp</b></td>
-                <td>Phiếu ở trạng thái <Tag>Bản nháp</Tag>, chỉ mình bạn thấy. Sửa tiếp lúc nào cũng được; khi xong mở phiếu và bấm <b>Trình Hiệu trưởng duyệt</b>.</td>
+                <td>Phiếu ở trạng thái <Tag>Bản nháp</Tag>. Mở phiếu, bấm <b>Sửa phiếu</b> để sửa tiếp lúc nào cũng được; khi xong bấm <b>Trình Hiệu trưởng duyệt</b>.</td>
               </tr>
               <tr>
                 <td><b>Lưu &amp; Nộp ngay</b></td>
@@ -604,7 +620,7 @@ export default function HuongDanPage() {
             </tbody>
           </table>
         </div>
-        <Paragraph>Kiểm tra kỹ trước khi nộp: phiếu đã trình thì không sửa được nữa, phải chờ người duyệt trả lại.</Paragraph>
+        <Paragraph>Kiểm tra kỹ trước khi nộp: phiếu đã trình thì không sửa được nữa. Nếu người duyệt bấm <i>Yêu cầu bổ sung</i>, mở phiếu, bấm <b>Sửa &amp; trình lại</b>, sửa rồi bấm <b>Lưu &amp; Trình lại</b>.</Paragraph>
       </Section>
 
       {/* ── VI ── */}
@@ -725,7 +741,7 @@ export default function HuongDanPage() {
               <tr><td><b>Hồ sơ nhân sự</b></td><td>Danh sách và chi tiết từng người, kèm lịch sử biến động lương – phụ cấp. Xuất/nhập Excel (có cột Hình thức lương, Mức lương theo tiền).</td></tr>
               <tr><td><b>Bảng tổng hợp lương</b></td><td>Bảng lương theo mẫu quen thuộc, có dòng cộng của từng trường và dòng tổng cuối bảng; lọc theo loại hình lao động; cột riêng cho người nhận lương theo mức tiền. Chỉ tính người đang công tác. Bấm <b>Xuất Excel</b> để lấy file đối chiếu.</td></tr>
               <tr><td><b>Rà soát ngạch – bậc</b></td><td>Danh sách hồ sơ lệch mã ngạch, bậc, hệ số cần trường xử lý (mục VII).</td></tr>
-              <tr><td><b>Đề xuất điều chỉnh HSL – PCTN</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
+              <tr><td><b>Đề xuất điều chỉnh hệ số lương - phụ cấp</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
               <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
               <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu (theo Nghị định 135/2020) để chủ động bố trí nhân sự.</td></tr>
               <tr><td><b>Báo cáo</b></td><td>Các biểu tổng hợp phục vụ báo cáo cấp trên, lọc theo đơn vị và loại hình lao động.</td></tr>
@@ -754,7 +770,7 @@ export default function HuongDanPage() {
               children: (
                 <>
                   <p>Trước hết mở trang <b>Rà soát ngạch – bậc</b>: nếu người đó có trong danh sách, cột Gợi ý thường chỉ ra ngay nguyên nhân (sai mã ngạch hoặc sai bậc) — sửa mã ngạch/bậc theo quyết định.</p>
-                  <p>Nếu là mức lương thực sự thay đổi, không sửa trực tiếp mà lập phiếu đề xuất loại <b>Điều chỉnh lương</b>, ghi rõ số liệu đúng và căn cứ trong phần Ghi chú. Sai lệch ở nhiều hồ sơ thì liên hệ số hỗ trợ.</p>
+                  <p>Nếu là mức lương thực sự thay đổi, không sửa trực tiếp mà lập phiếu đề xuất loại <b>Điều chỉnh hệ số lương - phụ cấp</b> (kèm minh chứng), ghi rõ số liệu đúng và căn cứ trong phần Ghi chú. Sai lệch ở nhiều hồ sơ thì liên hệ số hỗ trợ.</p>
                 </>
               ),
             },
@@ -797,7 +813,7 @@ export default function HuongDanPage() {
             },
             {
               key: '3', label: 'Đã trình phiếu nhưng phát hiện nhầm số liệu?',
-              children: <p>Liên hệ Hiệu trưởng để bấm <b>Yêu cầu bổ sung</b>. Phiếu sẽ quay lại để bạn sửa và trình lại, không cần lập phiếu mới.</p>,
+              children: <p>Liên hệ Hiệu trưởng để bấm <b>Yêu cầu bổ sung</b>. Phiếu quay lại trạng thái <i>Yêu cầu bổ sung</i>; mở phiếu, bấm <b>Sửa &amp; trình lại</b>, sửa rồi <b>Lưu &amp; Trình lại</b> — không cần lập phiếu mới.</p>,
             },
             {
               key: '4', label: 'Một phiếu có thể gồm bao nhiêu viên chức?',

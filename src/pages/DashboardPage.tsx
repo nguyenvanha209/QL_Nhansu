@@ -301,7 +301,7 @@ export default function DashboardPage() {
 
       <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
         <Col xs={24} lg={10}>
-          <Card title="Trạng thái đề xuất điều chỉnh HSL - PCTN" size="small" className="chart-card">
+          <Card title="Trạng thái đề xuất điều chỉnh hệ số lương - phụ cấp" size="small" className="chart-card">
             <Space orientation="vertical" style={{ width: '100%' }}>
               {statusCounts.map(({ status, count }) => (
                 <div key={status} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>

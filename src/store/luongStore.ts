@@ -50,11 +50,11 @@ export const useLuongStore = create<LuongState>()(
       },
       updateHeSoLuong: (id, patch) =>
         set((s) => ({
-          heSoLuongs: s.heSoLuongs.map((h) => (h.id === id ? { ...h, ...patch } : h)),
+          heSoLuongs: s.heSoLuongs.map((h) => (h.id === id ? { ...h, ...patch, updatedAt: now() } : h)),
         })),
       deactivateHeSoLuong: (id) =>
         set((s) => ({
-          heSoLuongs: s.heSoLuongs.map((h) => (h.id === id ? { ...h, isActive: false } : h)),
+          heSoLuongs: s.heSoLuongs.map((h) => (h.id === id ? { ...h, isActive: false, updatedAt: now() } : h)),
         })),
       getActiveHeSo: (vienChucId) =>
         get().heSoLuongs.find((h) => h.vienChucId === vienChucId && h.isActive),
@@ -71,12 +71,12 @@ export const useLuongStore = create<LuongState>()(
       },
       updatePhuCap: (id, patch) =>
         set((s) => ({
-          phuCapVienChucs: s.phuCapVienChucs.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+          phuCapVienChucs: s.phuCapVienChucs.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: now() } : p)),
         })),
       deactivatePhuCap: (id) =>
         set((s) => ({
           phuCapVienChucs: s.phuCapVienChucs.map((p) =>
-            p.id === id ? { ...p, isActive: false, ngayHetHan: now().slice(0, 10) } : p
+            p.id === id ? { ...p, isActive: false, ngayHetHan: now().slice(0, 10), updatedAt: now() } : p
           ),
         })),
       getActivePhuCaps: (vienChucId) =>

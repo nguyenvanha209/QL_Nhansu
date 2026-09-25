@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Form, Input, Button, Typography, Alert, Divider, Tag, Table } from 'antd'
-import { UserOutlined, LockOutlined, PhoneOutlined, SafetyOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -121,36 +121,19 @@ export default function LoginPage() {
         {/* Hero panel bên trái */}
         <div className="login-hero" style={{ flex: '0 0 400px', minHeight: '100vh' }}>
           <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: 18,
-              background: 'rgba(255,255,255,0.2)',
-              backdropFilter: 'blur(12px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 24px', fontSize: 28, fontWeight: 700,
-              boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
-            }}>
-              GV
-            </div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.3 }}>
-              Hệ thống Quản lý<br />Viên chức &amp; Lao động
-            </h1>
-            <p style={{ fontSize: 14, opacity: 0.75, margin: '0 0 32px', lineHeight: 1.6 }}>
-              UBND Phường Gia Viên<br />
-              Các cơ sở giáo dục trực thuộc
-            </p>
-            <div style={{
-              display: 'flex', gap: 16, justifyContent: 'center',
-              fontSize: 13, opacity: 0.6,
-            }}>
-              <div style={{ textAlign: 'center' }}>
-                <SafetyOutlined style={{ fontSize: 20, marginBottom: 4, display: 'block' }} />
-                Bảo mật
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <UserOutlined style={{ fontSize: 20, marginBottom: 4, display: 'block' }} />
-                Phân quyền
-              </div>
-            </div>
+            {/* Logo đặc trưng của phần mềm */}
+            <img
+              src={`${import.meta.env.BASE_URL}logo-phuong.png`}
+              alt="Quản lý nhân sự lao động tiền lương — Phường Gia Viên"
+              width={300}
+              height={300}
+              style={{
+                display: 'block', width: 300, maxWidth: '80%', height: 'auto', aspectRatio: '1 / 1',
+                margin: '0 auto', borderRadius: '50%',
+                background: '#fff', padding: 6,
+                boxShadow: '0 10px 40px rgba(15,23,42,0.28), 0 0 0 4px rgba(255,255,255,0.18)',
+              }}
+            />
           </div>
         </div>
 
@@ -160,10 +143,7 @@ export default function LoginPage() {
           padding: '40px 48px', overflow: 'auto',
         }}>
           <div style={{ width: '100%', maxWidth: 520 }}>
-            <div style={{ marginBottom: 28 }}>
-              <Title level={3} style={{ margin: '0 0 4px', fontWeight: 600 }}>Đăng nhập</Title>
-              <Text type="secondary" style={{ fontSize: 14 }}>Nhập tài khoản đã được cấp để truy cập hệ thống</Text>
-            </div>
+            <Title level={3} style={{ margin: '0 0 24px', fontWeight: 600 }}>Đăng nhập</Title>
 
             {error && <Alert type="error" title={error} showIcon style={{ marginBottom: 16, borderRadius: 8 }} />}
 

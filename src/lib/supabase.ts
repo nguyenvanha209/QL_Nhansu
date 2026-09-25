@@ -51,12 +51,10 @@ const SO_LAN_THU_LAI = 3
 const laMangCoId = (v: unknown): v is { id: string }[] =>
   Array.isArray(v) && v.every((x) => x && typeof x === 'object' && typeof (x as { id?: unknown }).id === 'string')
 
-// Gộp hai mảng theo id: giữ bản ghi của máy chủ mà máy này chưa biết, đồng thời
-// ưu tiên bản ghi máy này vừa sửa. Nhờ vậy hai người sửa hai hồ sơ khác nhau
-// không còn đè lên nhau.
-function tronTheoId(mayChu: { id: string }[], cucBo: { id: string }[]) {
-  const ra = new Map(mayChu.map((x) => [x.id, x]))
-  for (const x of cucBo) ra.set(x.id, x)
+// Gộp hai mảng theo id (bản sau thắng) — chỉ dùng khi ghép các mảnh của CÙNG một bản máy chủ lại
+function tronTheoId(truoc: { id: string }[], sau: { id: string }[]) {
+  const ra = new Map(truoc.map((x) => [x.id, x]))
+  for (const x of sau) ra.set(x.id, x)
   return [...ra.values()]
 }
 
@@ -87,22 +85,145 @@ function timDaXoa(truoc: string | null, sau: string): DaXoa {
   }
 }
 
-function tronTrangThai(mayChu: KhoiTrangThai, cucBo: KhoiTrangThai, daXoa: DaXoa = {}): KhoiTrangThai {
-  if (!mayChu?.state || !cucBo?.state) return cucBo
-  const state: Record<string, unknown> = { ...mayChu.state }
+// ───────────────────────────────────────────────────────────────────────────
+// Hợp nhất 3 chiều
+//
+// Trước đây khi xung đột, MỌI bản ghi có ở máy này đều đè lên máy chủ — kể cả
+// bản ghi máy này không hề sửa. Máy mở từ sáng (Admin, lãnh đạo) chỉ cần lưu một
+// thao tác bất kỳ là trả lại dữ liệu buổi sáng cho những hồ sơ Kế toán vừa sửa
+// (đã xảy ra: hồ sơ quay về mã ngạch cũ, bản ghi lương cũ bật lại → 2 bản ghi).
+//
+// Nay mỗi máy nhớ "bản gốc" — nội dung từng bản ghi lúc đọc được từ máy chủ.
+// So 3 bản (gốc / máy chủ / máy này) cho từng bản ghi:
+//   - máy này không sửa        → lấy bản máy chủ
+//   - chỉ máy này sửa           → lấy bản máy này
+//   - cả hai cùng sửa (hiếm)    → lấy bản có thời điểm sửa mới hơn, và báo người dùng
+// ───────────────────────────────────────────────────────────────────────────
 
-  for (const [k, vCucBo] of Object.entries(cucBo.state)) {
+type BanGoc = { mang: Map<string, Map<string, string>>; khac: Map<string, string> }
+const banGoc = new Map<string, BanGoc>()
+
+function layBanGoc(kho: string): BanGoc {
+  let g = banGoc.get(kho)
+  if (!g) {
+    g = { mang: new Map(), khac: new Map() }
+    banGoc.set(kho, g)
+  }
+  return g
+}
+
+/** Ghi nhận nội dung đã khớp với máy chủ làm bản gốc. thayToanBo = true khi đó là toàn bộ kho. */
+export function ghiNhanBanGoc(kho: string, state: Record<string, unknown> | undefined, thayToanBo = false) {
+  if (!state) return
+  const g = layBanGoc(kho)
+  if (thayToanBo) {
+    g.mang.clear()
+    g.khac.clear()
+  }
+  for (const [k, v] of Object.entries(state)) {
+    if (laMangCoId(v)) {
+      let m = g.mang.get(k)
+      if (!m) g.mang.set(k, (m = new Map()))
+      for (const bg of v) m.set(bg.id, JSON.stringify(bg))
+    } else {
+      g.khac.set(k, JSON.stringify(v))
+    }
+  }
+}
+
+function boBanGoc(kho: string, daXoa: DaXoa) {
+  const g = banGoc.get(kho)
+  if (!g) return
+  for (const [k, ids] of Object.entries(daXoa)) for (const id of ids) g.mang.get(k)?.delete(id)
+}
+
+// Thời điểm sửa của một bản ghi để phân định khi hai máy cùng sửa
+const thoiDiemSua = (bg: Record<string, unknown>) =>
+  String(bg.updatedAt ?? bg.createdAt ?? bg.thoiGian ?? '')
+
+type BaoXungDot = (ds: { kho: string; soBanGhi: number }[]) => void
+let baoXungDot: BaoXungDot | null = null
+export function dangKyBaoXungDotBanGhi(fn: BaoXungDot) {
+  baoXungDot = fn
+}
+
+/**
+ * Hợp nhất 3 chiều bản máy chủ với bản máy này.
+ * idsConLaiTaiMay: id đang có trong TOÀN BỘ kho ở máy này — với kho chia mảnh, bản ghi vắng
+ * mặt trong mảnh này nhưng còn ở mảnh khác là đã chuyển mảnh (VD đổi trường), không phải bị xoá.
+ */
+export function hopNhat3Chieu(
+  kho: string,
+  mayChu: KhoiTrangThai,
+  cucBo: KhoiTrangThai,
+  daXoa: DaXoa = {},
+  idsConLaiTaiMay?: Map<string, Set<string>>,
+): { khoi: KhoiTrangThai; soXungDot: number } {
+  if (!mayChu?.state || !cucBo?.state) return { khoi: cucBo, soXungDot: 0 }
+  const g = layBanGoc(kho)
+  const state: Record<string, unknown> = { ...mayChu.state }
+  let soXungDot = 0
+
+  const tenCacMang = new Set([...Object.keys(mayChu.state), ...Object.keys(cucBo.state)])
+  for (const k of tenCacMang) {
     const vMayChu = mayChu.state[k]
-    // Chỉ trộn được những mảng bản ghi có id. Còn lại lấy theo máy này, vì đó
-    // là ý định của người vừa thao tác.
+    const vCucBo = cucBo.state[k]
+
     if (!laMangCoId(vCucBo) || !laMangCoId(vMayChu)) {
-      state[k] = vCucBo
+      // Giá trị đơn (không phải mảng bản ghi): máy này chưa đổi thì theo máy chủ
+      if (vCucBo === undefined) continue
+      const goc = g.khac.get(k)
+      state[k] = goc !== undefined && JSON.stringify(vCucBo) === goc && vMayChu !== undefined ? vMayChu : vCucBo
       continue
     }
+
+    const gocMang = g.mang.get(k) ?? new Map<string, string>()
     const boXoa = new Set(daXoa[k] ?? [])
-    state[k] = tronTheoId(vMayChu.filter((x) => !boXoa.has(x.id)), vCucBo)
+    const conLai = idsConLaiTaiMay?.get(k)
+    const theoIdMayChu = new Map(vMayChu.map((x) => [x.id, x]))
+    const theoIdCucBo = new Map(vCucBo.map((x) => [x.id, x]))
+    const ra: { id: string }[] = []
+
+    for (const id of new Set([...theoIdMayChu.keys(), ...theoIdCucBo.keys()])) {
+      const sv = theoIdMayChu.get(id)
+      const lc = theoIdCucBo.get(id)
+      const goc = gocMang.get(id)
+
+      if (!lc) {
+        if (!sv) continue
+        if (boXoa.has(id)) continue // máy này vừa xoá có chủ đích
+        if (conLai?.has(id)) continue // đã chuyển sang mảnh khác ở máy này
+        // Máy này không có: bản mới của người khác → giữ. Máy này từng có (bản gốc)
+        // mà nay không còn và máy chủ vẫn y như gốc → máy này đã xoá → bỏ.
+        if (goc !== undefined && JSON.stringify(sv) === goc) continue
+        ra.push(sv)
+        continue
+      }
+      if (!sv) {
+        // Máy chủ không có: máy này tạo mới → giữ. Có trong bản gốc tức người khác
+        // đã xoá: máy này không sửa gì thì tôn trọng việc xoá, có sửa thì giữ lại.
+        if (goc !== undefined && JSON.stringify(lc) === goc) continue
+        ra.push(lc)
+        continue
+      }
+
+      const jLc = JSON.stringify(lc)
+      const jSv = JSON.stringify(sv)
+      if (jLc === jSv) { ra.push(sv); continue }
+      if (goc === undefined) {
+        // Không có bản gốc (chưa từng đọc được) → không biết ai sửa: lấy bản sửa sau
+        ra.push(thoiDiemSua(lc as Record<string, unknown>) >= thoiDiemSua(sv as Record<string, unknown>) ? lc : sv)
+        continue
+      }
+      if (jLc === goc) { ra.push(sv); continue } // máy này không sửa
+      if (jSv === goc) { ra.push(lc); continue } // chỉ máy này sửa
+      // Cả hai cùng sửa một bản ghi
+      soXungDot++
+      ra.push(thoiDiemSua(lc as Record<string, unknown>) >= thoiDiemSua(sv as Record<string, unknown>) ? lc : sv)
+    }
+    state[k] = ra
   }
-  return { ...cucBo, state }
+  return { khoi: { ...cucBo, state }, soXungDot }
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -213,14 +334,68 @@ export function datCoDangDongBo(bat: boolean) {
 // Mỗi key ghi tuần tự, tránh hai lệnh ghi cùng key chạy song song rồi tự xung
 // đột với chính mình.
 const hangCho = new Map<string, Promise<void>>()
+let soLenhDangGhi = 0
 
 function xepHangGhi(name: string, value: string, daXoa: DaXoa) {
   const truoc = hangCho.get(name) ?? Promise.resolve()
   const viec = laKhoChia(name)
     ? () => ghiTheoManh(name, value, daXoa)
     : () => ghiLenMayChu(name, value, 0, daXoa)
-  const tiep = truoc.then(viec).catch(() => {})
+  soLenhDangGhi++
+  const tiep = truoc.then(viec).catch(() => {}).finally(() => { soLenhDangGhi-- })
   hangCho.set(name, tiep)
+}
+
+/** Chờ mọi lệnh ghi đang xếp hàng xong */
+export async function choGhiXong() {
+  while (soLenhDangGhi > 0) await Promise.all([...hangCho.values()])
+}
+
+// id đang có trong toàn bộ kho ở máy này (để nhận ra bản ghi chuyển mảnh, không phải bị xoá)
+function idsToanKhoTaiMay(ten: string): Map<string, Set<string>> {
+  const ra = new Map<string, Set<string>>()
+  try {
+    const state = (JSON.parse(localStorage.getItem(ten) ?? '{}') as KhoiTrangThai).state ?? {}
+    for (const [k, v] of Object.entries(state)) if (laMangCoId(v)) ra.set(k, new Set(v.map((x) => x.id)))
+  } catch { /* bỏ qua */ }
+  return ra
+}
+
+// Đưa nội dung một mảnh (đã khớp máy chủ) vào kho gộp ở máy này rồi nạp lại store.
+// Trước đây sau khi hợp nhất một mảnh, phần mềm lưu nhầm vào khoá mảnh trong
+// localStorage nên store vẫn giữ bản cũ — lần ghi sau lại xung đột.
+async function apDungManhVaoKho(ten: string, manh: string, noiDung: KhoiTrangThai) {
+  const chiaTheo = cauHinhChia.get(ten)
+  if (!chiaTheo) return
+  let khoi: KhoiTrangThai
+  try {
+    khoi = JSON.parse(localStorage.getItem(ten) ?? '{}') as KhoiTrangThai
+  } catch {
+    return
+  }
+  const state: Record<string, unknown> = { ...(khoi.state ?? {}) }
+  for (const [k, v] of Object.entries(noiDung.state ?? {})) {
+    if (!laMangCoId(v)) {
+      if (manh === KHOA_GOC) state[k] = v
+      continue
+    }
+    const idsMoi = new Set(v.map((x) => x.id))
+    const cu = laMangCoId(state[k]) ? (state[k] as { id: string }[]) : []
+    state[k] = [
+      ...cu.filter((bg) => !idsMoi.has(bg.id) && (chiaTheo(bg as Record<string, unknown>, k) || KHOA_GOC) !== manh),
+      ...v,
+    ]
+  }
+  const moi = { ...khoi, state }
+  dangDongBo = true
+  try {
+    localStorage.setItem(ten, JSON.stringify(moi))
+    await napLai?.(ten)
+  } finally {
+    dangDongBo = false
+  }
+  const json = chiaTrangThai(ten, moi).get(manh)
+  if (json) manhDaGhi.set(khoaManh(ten, manh), JSON.stringify(json))
 }
 
 // Chia khối thành từng mảnh rồi chỉ ghi những mảnh thực sự đổi.
@@ -307,6 +482,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
       return
     }
     ghiNhanPhienBan(name, data?.[0]?.updated_at ?? null)
+    ghiNhanBanGoc(tachKhoa(name).ten, (parsed as KhoiTrangThai).state)
     return
   }
 
@@ -324,8 +500,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
 
   if (!data || data.length === 0) {
     // Máy chủ đã đổi sau lần đọc gần nhất. Không ghi đè, nhưng cũng không bỏ
-    // cuộc: tải bản mới, trộn theo từng bản ghi rồi ghi lại. Hai người sửa hai
-    // hồ sơ khác nhau sẽ cùng giữ được thay đổi của mình.
+    // cuộc: tải bản mới, hợp nhất 3 chiều theo từng bản ghi rồi ghi lại.
     if (lanThu >= SO_LAN_THU_LAI) {
       console.warn(`[Supabase] "${name}": hợp nhất ${SO_LAN_THU_LAI} lần vẫn xung đột, dừng lại để khỏi ghi đè.`)
       xuLyXungDot?.(name)
@@ -340,18 +515,166 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
     }
 
     ghiNhanPhienBan(name, banMayChu.updated_at)
-    const hopNhat = tronTrangThai(banMayChu.value, parsed as KhoiTrangThai, daXoa)
-    console.info(`[Supabase] "${name}": máy chủ đã thay đổi — đã hợp nhất và ghi lại (lần ${lanThu + 1}).`)
+    const { ten, manh } = tachKhoa(name)
+    const { khoi: hopNhat, soXungDot } = hopNhat3Chieu(
+      ten, banMayChu.value, parsed as KhoiTrangThai, daXoa, manh ? idsToanKhoTaiMay(ten) : undefined,
+    )
+    console.info(`[Supabase] "${name}": máy chủ đã thay đổi — đã hợp nhất 3 chiều và ghi lại (lần ${lanThu + 1})${soXungDot ? `, ${soXungDot} bản ghi cùng bị sửa` : ''}.`)
+    if (soXungDot) baoXungDot?.([{ kho: ten, soBanGhi: soXungDot }])
 
     await ghiLenMayChu(name, JSON.stringify(hopNhat), lanThu + 1, daXoa)
 
     // Nạp lại để bộ nhớ tại máy khớp với nội dung vừa ghi lên máy chủ
-    localStorage.setItem(name, JSON.stringify(hopNhat))
-    await napLai?.(name)
+    if (manh) {
+      await apDungManhVaoKho(ten, manh, hopNhat)
+    } else {
+      dangDongBo = true
+      try {
+        localStorage.setItem(name, JSON.stringify(hopNhat))
+        await napLai?.(name)
+      } finally {
+        dangDongBo = false
+      }
+    }
     return
   }
 
   ghiNhanPhienBan(name, data[0].updated_at)
+  // Ghi thành công: nội dung vừa ghi chính là bản trên máy chủ → làm bản gốc mới
+  const { ten } = tachKhoa(name)
+  ghiNhanBanGoc(ten, (parsed as KhoiTrangThai).state)
+  boBanGoc(ten, daXoa)
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Làm mới từ máy chủ
+//
+// Trước đây mỗi máy chỉ đọc máy chủ lúc mở trang: tab mở từ sáng giữ dữ liệu
+// buổi sáng cả ngày. Nay cứ 60 giây (và khi quay lại tab, khi đăng nhập lại,
+// trước thao tác quan trọng) kiểm tra phiên bản từng ô — chỉ vài trăm byte.
+// Ô nào đổi thì tải về, hợp nhất 3 chiều với bản đang có ở máy (giữ nguyên
+// phần máy này đang sửa dở) rồi nạp lại store.
+// ───────────────────────────────────────────────────────────────────────────
+
+let dangLamMoi: Promise<number> | null = null
+
+/** Trả về số ô đã tải mới. Bỏ qua lượt này nếu máy đang ghi dở. */
+export function lamMoiTuMayChu(): Promise<number> {
+  if (!supabase) return Promise.resolve(0)
+  if (dangLamMoi) return dangLamMoi
+  dangLamMoi = (async () => {
+    try {
+      if (soLenhDangGhi > 0 || dangDongBo) return 0
+      const { data: dsPhienBan, error } = await supabase.from('app_state').select('key, updated_at')
+      if (error || !dsPhienBan) return 0
+      const doi = dsPhienBan
+        .filter((r) => r.key !== 'ql-auth' && r.updated_at !== phienBanMayChu.get(r.key))
+        // Ô cũ chưa chia của kho đã chia: để lần mở trang sau gộp, không tải từng lượt
+        .filter((r) => !laKhoChia(r.key) || r.key.includes(NGAN_CACH))
+        .map((r) => r.key as string)
+      if (!doi.length) return 0
+
+      const { data: dsMoi, error: e2 } = await supabase.from('app_state').select('key, value, updated_at').in('key', doi)
+      if (e2 || !dsMoi) return 0
+      // Người dùng vừa thao tác trong lúc tải → để lượt sau, tránh chen ngang lệnh ghi
+      if (soLenhDangGhi > 0) return 0
+
+      const khoCanNap = new Set<string>()
+      let tongXungDot = 0
+      for (const row of dsMoi) {
+        const { ten, manh } = tachKhoa(row.key)
+        const mayChu = row.value as KhoiTrangThai
+        let cucBo: KhoiTrangThai
+        try {
+          const toanKho = JSON.parse(localStorage.getItem(ten) ?? 'null') as KhoiTrangThai | null
+          if (!toanKho) continue
+          cucBo = manh ? (chiaTrangThai(ten, toanKho).get(manh) ?? { ...toanKho, state: {} }) : toanKho
+        } catch {
+          continue
+        }
+        const { khoi, soXungDot } = hopNhat3Chieu(ten, mayChu, cucBo, {}, manh ? idsToanKhoTaiMay(ten) : undefined)
+        tongXungDot += soXungDot
+        ghiNhanPhienBan(row.key, row.updated_at)
+        ghiNhanBanGoc(ten, mayChu.state)
+        if (manh) {
+          await apDungManhVaoKho(ten, manh, khoi)
+        } else {
+          dangDongBo = true
+          try {
+            localStorage.setItem(ten, JSON.stringify(khoi))
+          } finally {
+            dangDongBo = false
+          }
+          khoCanNap.add(ten)
+        }
+      }
+      for (const ten of khoCanNap) {
+        dangDongBo = true
+        try {
+          await napLai?.(ten)
+        } finally {
+          dangDongBo = false
+        }
+      }
+      if (tongXungDot) baoXungDot?.([{ kho: 'nhiều kho', soBanGhi: tongXungDot }])
+      return dsMoi.length
+    } catch (e) {
+      console.warn('[Supabase] Làm mới không thành công —', e)
+      return 0
+    } finally {
+      dangLamMoi = null
+    }
+  })()
+  return dangLamMoi
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Nhận thay đổi tức thì (Supabase Realtime)
+//
+// Kế toán vừa thêm hồ sơ thì máy chủ báo ngay cho các máy đang mở (Admin, lãnh
+// đạo) để tự làm mới — không phải chờ tới lượt kiểm tra định kỳ. Cần bật
+// Realtime cho bảng app_state (tools/sql/03-bat-realtime.sql); chưa bật thì
+// vẫn còn kiểm tra định kỳ 30 giây.
+// ───────────────────────────────────────────────────────────────────────────
+
+export function batNhanThayDoiTucThi(): () => void {
+  if (!supabase) return () => {}
+  let hen: number | undefined
+  const kenh = supabase
+    .channel('app_state_thay_doi')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_state' }, (p) => {
+      const key = (p.new as { key?: string } | null)?.key ?? (p.old as { key?: string } | null)?.key
+      const moi = (p.new as { updated_at?: string } | null)?.updated_at
+      // Thay đổi do chính máy này ghi thì đã có phiên bản khớp → bỏ qua
+      if (key && moi && phienBanMayChu.get(key) === moi) return
+      window.clearTimeout(hen)
+      hen = window.setTimeout(() => { lamMoiTuMayChu() }, 800) // gom nhiều mảnh ghi liền nhau
+    })
+    .subscribe()
+  return () => {
+    window.clearTimeout(hen)
+    supabase?.removeChannel(kenh)
+  }
+}
+
+/** Ghi nhận nội dung từng mảnh đang có trên máy chủ để lần ghi sau chỉ ghi mảnh thực sự đổi */
+export function ghiNhanManhDaCo(ten: string) {
+  if (!laKhoChia(ten)) return
+  try {
+    const khoi = JSON.parse(localStorage.getItem(ten) ?? 'null') as KhoiTrangThai | null
+    if (!khoi) return
+    for (const [manh, nd] of chiaTrangThai(ten, khoi)) manhDaGhi.set(khoaManh(ten, manh), JSON.stringify(nd))
+  } catch { /* bỏ qua */ }
+}
+
+/** Làm mới ngay trước thao tác quan trọng: chờ ghi xong, tải bản mới (tối đa 6 giây). */
+export async function lamMoiNgay(): Promise<void> {
+  if (!supabase) return
+  const cho = (async () => {
+    await choGhiXong()
+    await lamMoiTuMayChu()
+  })()
+  await Promise.race([cho, new Promise((r) => setTimeout(r, 6000))])
 }
 
 // Đọc luôn từ localStorage nên giao diện hiện tức thì, không chờ mạng.

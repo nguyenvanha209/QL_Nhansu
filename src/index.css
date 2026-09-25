@@ -101,6 +101,9 @@ body {
   position: relative;
   overflow: hidden;
 }
+/* Màn hình rộng: cột logo cố định đúng chiều cao màn hình, cột đăng nhập cuộn riêng */
+.login-layout { height: 100vh; }
+.login-form-col { overflow-y: auto; }
 .login-hero::before {
   content: '';
   position: absolute;
@@ -109,7 +112,7 @@ body {
               radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 40%);
 }
 @media (max-width: 768px) {
-  .login-layout { flex-direction: column !important; }
+  .login-layout { flex-direction: column !important; height: auto; }
   .login-hero { padding: 32px 24px; min-height: auto !important; }
   .login-form-col { padding: 24px 20px !important; }
 }

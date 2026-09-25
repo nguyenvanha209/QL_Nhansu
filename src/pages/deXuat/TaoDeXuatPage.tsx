@@ -14,6 +14,7 @@ import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import { isDangCongTac, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vienChuc'
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
 import MinhChungField from '@/components/MinhChungField'
+import { lamMoiNgay } from '@/lib/supabase'
 import type { MinhChung } from '@/lib/minhChung'
 
 const { Title, Text } = Typography
@@ -255,6 +256,7 @@ export default function TaoDeXuatPage() {
 
   const onFinish = async (values: any, submitNow = false) => {
     if (!currentUser) return
+    await lamMoiNgay()
     const loi = kiemTra(values.loai, submitNow)
     if (loi.length) {
       modal.warning({ title: 'Chưa lưu được phiếu', content: <ul style={{ paddingLeft: 18, margin: 0 }}>{loi.slice(0, 8).map((l) => <li key={l}>{l}</li>)}</ul> })

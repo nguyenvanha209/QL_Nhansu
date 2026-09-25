@@ -19,6 +19,7 @@ import { splitHoTen, toUpperName } from '@/utils/helpers'
 import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
 import { CONG_VIEC, NHOM_VI_TRI } from '@/utils/nhomViTri'
 import { tinhNgayHetBaoLuu } from '@/utils/baoLuuPccv'
+import { lamMoiNgay } from '@/lib/supabase'
 import { formatDate } from '@/utils/helpers'
 
 const { Title, Text } = Typography
@@ -222,7 +223,9 @@ export default function VienChucFormPage() {
     }
   }, [vc])
 
-  const onFinish = (values: any) => {
+  const onFinish = async (values: any) => {
+    // Tải bản mới nhất trước khi ghi hồ sơ, lương, phụ cấp — tránh đè sửa đổi của người khác
+    await lamMoiNgay()
     const { hoTenFull, mocHuongLuong, blBat, blSoQd, blNgayQd, blHetHan, ...restValues } = values
     // Bảo lưu PCCV: giữ mức và chức vụ cũ đã ghi (nếu có), bảo lưu mới thì lấy mức đang hưởng trước khi đổi
     const baoLuuPccv = blBat && blNgayQd && blHetHan

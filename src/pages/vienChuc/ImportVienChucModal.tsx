@@ -29,6 +29,7 @@ import type { VienChuc } from '@/types/vienChuc'
 import { CONG_VIEC, CONG_VIEC_LABELS, doanCongViec } from '@/utils/nhomViTri'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { ChucDanhNgheNghiep, LoaiPhuCap } from '@/types/danhMuc'
+import { lamMoiNgay } from '@/lib/supabase'
 import type { DonVi } from '@/types/donVi'
 
 const { Text, Title } = Typography
@@ -685,7 +686,8 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
 
   // ── Áp dụng ───────────────────────────────────────────────────────────────
 
-  const handleApply = () => {
+  const handleApply = async () => {
+    await lamMoiNgay()
     const actorId   = currentUser?.id ?? 'system'
     const actorName = currentUser?.fullName ?? 'Hệ thống'
     const selected  = changes.filter((r) => r.selected)

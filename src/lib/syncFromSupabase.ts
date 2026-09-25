@@ -1,5 +1,5 @@
 import {
-  supabase, ghiNhanPhienBan, datCoDangDongBo, dangKyNapLai,
+  supabase, ghiNhanPhienBan, ghiNhanBanGoc, ghiNhanManhDaCo, datCoDangDongBo, dangKyNapLai,
   dangKyChiaKho, laKhoChia, tachKhoa, gopCacManh, KHOA_GOC,
 } from './supabase'
 import type { KhoiTrangThai } from './supabase'
@@ -58,6 +58,17 @@ dangKyNapLai(async (key) => {
   }
 })
 
+// Hai tab trên cùng máy dùng chung localStorage nhưng mỗi tab giữ store riêng trong
+// bộ nhớ. Tab kia vừa lưu → tab này nạp lại, nếu không lần lưu sau của tab này sẽ
+// ghi bản cũ của nó đè lên cả localStorage lẫn máy chủ.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (!e.key || !KHO_THEO_KHOA[e.key]) return
+    datCoDangDongBo(true)
+    Promise.resolve(KHO_THEO_KHOA[e.key].persist.rehydrate()).finally(() => datCoDangDongBo(false))
+  })
+}
+
 export type SyncResult =
   | 'loaded' // đã kéo được dữ liệu từ máy chủ
   | 'empty' // kết nối được nhưng máy chủ chưa có dữ liệu (lần chạy đầu tiên)
@@ -103,11 +114,19 @@ export async function syncFromSupabase(): Promise<SyncResult> {
           continue
         }
         localStorage.setItem(row.key, JSON.stringify(row.value))
+        // Bản gốc để hợp nhất 3 chiều: nội dung đúng như máy chủ lúc đọc
+        ghiNhanBanGoc(row.key, (row.value as KhoiTrangThai)?.state, true)
       }
 
       for (const [ten, manhList] of theoKho) {
         const gop = gopCacManh(manhList)
-        if (gop) localStorage.setItem(ten, JSON.stringify(gop))
+        if (gop) {
+          localStorage.setItem(ten, JSON.stringify(gop))
+          ghiNhanBanGoc(ten, gop.state, true)
+          // Mảnh đã khớp máy chủ → lần ghi sau chỉ ghi mảnh đổi, không ghi lại cả 12 mảnh
+          // (ghi thừa làm mọi máy khác phải tải lại toàn bộ)
+          ghiNhanManhDaCo(ten)
+        }
       }
 
       await Promise.all(STORES.map((s) => s.persist.rehydrate()))

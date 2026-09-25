@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
+import { lamMoiNgay } from '@/lib/supabase'
 import { DanhSachMinhChung } from '@/components/MinhChungField'
 
 const { Title, Text } = Typography
@@ -97,10 +98,12 @@ export default function DeXuatDetailPage() {
   const canXetDuyet = (isVHXH || laQuanTri) && dx.trangThai === 'CHO_XET_DUYET'
   const canPheDuyet = (isLanhDao || laQuanTri) && dx.trangThai === 'CHO_PHE_DUYET'
 
-  const handleAction = () => {
+  const handleAction = async () => {
     if (!currentUser) return
     setLoading(true)
     try {
+      // Phê duyệt ghi thẳng vào lương, hồ sơ: tải bản mới nhất trước để không đè sửa đổi của người khác
+      await lamMoiNgay()
       if (modalAction === 'submit') {
         submitDeXuat(id!, currentUser.id, currentUser.fullName)
         message.success('Đã trình đề xuất lên Hiệu trưởng')

@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { formatDate, soSanhVienChuc } from '@/utils/helpers'
 import { isDangCongTac, VTVL_LABELS, CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { DeXuatChuyenCongTac } from '@/types/chuyenCongTac'
+import { lamMoiNgay } from '@/lib/supabase'
 import { TRANG_THAI_CCT_LABELS, TRANG_THAI_CCT_COLORS } from '@/types/chuyenCongTac'
 
 const { Title, Text } = Typography
@@ -129,7 +130,9 @@ export default function ChuyenCongTacPage() {
       ),
       okText: 'Duyệt chuyển',
       cancelText: 'Hủy',
-      onOk: () => {
+      onOk: async () => {
+        // Tải bản mới nhất trước khi tách hồ sơ, để không ghi đè sửa đổi của người khác
+        await lamMoiNgay()
         store.duyet(r.id, ghiChu, currentUser!.id, currentUser!.fullName)
         message.success(`Đã duyệt. Hồ sơ ${r.hoTenSnapshot} đã chuyển sang ${dvMap.get(r.donViDenId)}`)
       },
@@ -142,8 +145,9 @@ export default function ChuyenCongTacPage() {
       title: `Từ chối đề nghị — ${r.hoTenSnapshot}`,
       content: <Input.TextArea rows={3} placeholder="Lý do từ chối" onChange={(e) => { ghiChu = e.target.value }} style={{ marginTop: 10 }} />,
       okText: 'Từ chối', okButtonProps: { danger: true }, cancelText: 'Hủy',
-      onOk: () => {
+      onOk: async () => {
         if (!ghiChu.trim()) { message.error('Nhập lý do từ chối'); return Promise.reject() }
+        await lamMoiNgay()
         store.tuChoi(r.id, ghiChu, currentUser!.id, currentUser!.fullName)
         message.success('Đã từ chối đề nghị')
       },
@@ -164,7 +168,8 @@ export default function ChuyenCongTacPage() {
   const onTiepNhan = async () => {
     const v = await formNhan.validateFields()
     if (!nhanItem || !currentUser) return
-    if (!nhanItem.vienChucMoiId) {
+    await lamMoiNgay()
+    if (!(store.getById(nhanItem.id)?.vienChucMoiId ?? nhanItem.vienChucMoiId)) {
       message.error('Phiếu chưa được duyệt đúng quy trình nên chưa có hồ sơ ở trường đến — liên hệ Quản trị')
       return
     }

@@ -390,7 +390,8 @@ function migrateGopBanGhiLuongTrung() {
     for (const h of ds) if (h.id !== moiNhat.id) tat.add(h.id)
   }
   if (!tat.size) return
-  lg.setHeSoLuongs(lg.heSoLuongs.map((h) => (tat.has(h.id) ? { ...h, isActive: false } : h)))
+  const luc = new Date().toISOString()
+  lg.setHeSoLuongs(lg.heSoLuongs.map((h) => (tat.has(h.id) ? { ...h, isActive: false, updatedAt: luc } : h)))
   const vcState = useVienChucStore.getState()
   vcState.setVienChucs(vcState.vienChucs.map((v) => (giu.has(v.id) ? { ...v, heSoLuongHienTaiId: giu.get(v.id)! } : v)))
   logAction('system', 'Hệ thống', 'UPDATE', 'HeSoLuong', undefined,

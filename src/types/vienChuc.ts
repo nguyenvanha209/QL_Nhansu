@@ -18,6 +18,12 @@ export type TrangThaiCongTac = 'DANG_LAM_VIEC' | 'CHUYEN_DEN' | 'CHUYEN_DI' | 'N
 
 export type NguonKinhPhi = 'NGAN_SACH' | 'SU_NGHIEP'
 
+export type CongViecNhanVien =
+  | 'KE_TOAN' | 'VAN_THU' | 'THU_QUY' | 'THU_VIEN' | 'THIET_BI' | 'GIAO_VU' | 'Y_TE' | 'TU_VAN' | 'HO_TRO_KT'
+  | 'BAO_VE' | 'LAO_CONG'
+  | 'NAU_AN'
+  | 'KHAC'
+
 export interface VienChuc {
   id: string
   ma: string
@@ -35,6 +41,8 @@ export interface VienChuc {
   chucVu?: ChucVu
   viTriViecLamId?: string
   vtvl?: VTVL
+  /** Công việc cụ thể của nhân viên (VTVL Nhân viên) — căn cứ chia nhóm hỗ trợ / phục vụ / nuôi dưỡng */
+  congViec?: CongViecNhanVien
   trangThai?: TrangThaiCongTac
   nguonKinhPhi?: NguonKinhPhi
   trinhDoChuyenMon?: string

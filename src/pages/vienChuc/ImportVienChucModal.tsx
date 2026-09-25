@@ -26,6 +26,7 @@ import {
   laVienChucBienChe,
 } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
+import { CONG_VIEC, CONG_VIEC_LABELS, doanCongViec } from '@/utils/nhomViTri'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { ChucDanhNgheNghiep, LoaiPhuCap } from '@/types/danhMuc'
 import type { DonVi } from '@/types/donVi'
@@ -49,6 +50,7 @@ const COL = {
   CHUC_DANH:       'Chức danh nghề nghiệp',
   CHUC_VU:         'Chức vụ',
   VTVL:            'VTVL',
+  CONG_VIEC:       'Công việc cụ thể',
   LOAI_LAO_DONG:   'Loại lao động',
   TRANG_THAI:      'Trạng thái',
   NGUON_KINH_PHI:  'Nguồn kinh phí',
@@ -228,7 +230,7 @@ const FIELD_LABELS: Partial<Record<keyof VienChuc, string>> = {
   ngayVaoNganh: 'Ngày vào ngành', ngayVaoDonVi: 'Ngày vào đơn vị',
   ngayVaoBienChe: 'Ngày vào biên chế', thoiHanHopDong: 'Thời hạn HĐ',
   nguonKinhPhi: 'Nguồn kinh phí', laDangVien: 'Đảng viên',
-  trinhDoChuyenMon: 'Trình độ CM', ghiChu: 'Ghi chú',
+  trinhDoChuyenMon: 'Trình độ CM', ghiChu: 'Ghi chú', congViec: 'Công việc cụ thể',
   hinhThucLuong: 'Hình thức lương', mucLuongTien: 'Mức lương theo tiền',
 }
 
@@ -242,6 +244,7 @@ function displayValue(field: keyof VienChuc, val: unknown, chucDanhs: ChucDanhNg
     case 'trangThai':    return TRANG_THAI_CONG_TAC_LABELS[val as keyof typeof TRANG_THAI_CONG_TAC_LABELS] ?? String(val)
     case 'nguonKinhPhi': return NGUON_KINH_PHI_LABELS[val as keyof typeof NGUON_KINH_PHI_LABELS] ?? String(val)
     case 'laDangVien':   return val ? 'Có' : 'Không'
+    case 'congViec':     return CONG_VIEC_LABELS[val as keyof typeof CONG_VIEC_LABELS] ?? String(val)
     case 'hinhThucLuong': return HINH_THUC_LUONG_LABELS[val as keyof typeof HINH_THUC_LUONG_LABELS] ?? String(val)
     case 'mucLuongTien': return `${Number(val).toLocaleString('vi-VN')} đ`
     case 'ngaySinh': case 'ngayVaoNganh': case 'ngayVaoDonVi':
@@ -276,6 +279,7 @@ export function exportVienChucTemplate(
       [COL.CHUC_DANH]:       chucDanhs.find((c) => c.id === vc.chucDanhId)?.ten ?? '',
       [COL.CHUC_VU]:         vc.chucVu ? (CHUC_VU_LABELS[vc.chucVu as keyof typeof CHUC_VU_LABELS] ?? vc.chucVu) : '',
       [COL.VTVL]:            vc.vtvl ? (VTVL_LABELS[vc.vtvl as keyof typeof VTVL_LABELS] ?? vc.vtvl) : '',
+      [COL.CONG_VIEC]:       vc.congViec ? CONG_VIEC_LABELS[vc.congViec] : '',
       [COL.LOAI_LAO_DONG]:   LOAI_LAO_DONG_LABELS[vc.loaiLaoDong] ?? vc.loaiLaoDong,
       [COL.TRANG_THAI]:      vc.trangThai ? (TRANG_THAI_CONG_TAC_LABELS[vc.trangThai] ?? vc.trangThai) : 'Đang làm việc',
       [COL.NGUON_KINH_PHI]:  vc.nguonKinhPhi ? (NGUON_KINH_PHI_LABELS[vc.nguonKinhPhi] ?? '') : '',
@@ -308,7 +312,7 @@ export function exportVienChucTemplate(
   ws['!cols'] = [
     { wch: 24 }, { wch: 11 }, { wch: 24 }, { wch: 26 }, { wch: 12 },
     { wch: 9  }, { wch: 14 }, { wch: 13 }, { wch: 22 }, { wch: 28 },
-    { wch: 30 }, { wch: 20 }, { wch: 14 }, { wch: 25 }, { wch: 16 },
+    { wch: 30 }, { wch: 20 }, { wch: 14 }, { wch: 22 }, { wch: 25 }, { wch: 16 },
     { wch: 24 }, { wch: 20 }, { wch: 9  }, { wch: 13 }, { wch: 13 },
     { wch: 14 }, { wch: 12 },
     { wch: 6  }, { wch: 11 }, { wch: 15 }, { wch: 22 }, { wch: 24 }, { wch: 18 },
@@ -487,6 +491,13 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
 
           const cvTen = str(row[COL.CHUC_VU]);  if (cvTen) check('chucVu', inverseChucVu[cvTen] ?? cvTen)
           const vtTen = str(row[COL.VTVL]);     if (vtTen) check('vtvl', inverseVtvl[vtTen] ?? vtTen)
+          // Công việc cụ thể (nhân viên): khớp đúng tên trong danh sách, không khớp thì đoán theo từ khoá
+          const congViecTen = str(row[COL.CONG_VIEC])
+          if (congViecTen) {
+            const cvMa = CONG_VIEC.find((c) => c.ten.toLowerCase() === congViecTen.toLowerCase())?.key ?? doanCongViec(congViecTen)
+            if (cvMa) check('congViec', cvMa)
+            else warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): công việc "${congViecTen}" không nhận dạng được`)
+          }
 
           const llTen = str(row[COL.LOAI_LAO_DONG])
           if (llTen) {

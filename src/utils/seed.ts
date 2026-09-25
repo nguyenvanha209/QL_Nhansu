@@ -2,8 +2,9 @@ import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { logAction } from '@/utils/auditLogger'
 import { PCUD_MUC_CU } from '@/utils/phuCapThuTu'
+import { doanCongViec } from '@/utils/nhomViTri'
 import { useChuyenCongTacStore, tachHoSoChuyenCongTac } from '@/store/chuyenCongTacStore'
-import type { BacLuong } from '@/types/danhMuc'
+import type { BacLuong, NhomChucDanh } from '@/types/danhMuc'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
@@ -216,35 +217,54 @@ function migrateGanDonViHoSoThieu() {
   }
 }
 
-// Mã chức danh cũ trước TT 01, 02/2021 (TTLT 20, 21/2015) từng bị gán sai hạng và bảng lương
-// (VD V.07.03.09 ghi "hạng III, A1" trong khi đúng là hạng IV, loại B 12 bậc). Hệ số lưu
-// trong hồ sơ vẫn giữ nguyên; chỉ sửa danh mục để chọn bậc, tính ngày nâng lương cho đúng.
+// Chức danh cần đúng hạng và bảng lương theo quy định. Hệ số lưu trong hồ sơ vẫn giữ nguyên;
+// chỉ sửa/bổ sung danh mục để chọn bậc, tính ngày nâng lương và rà soát lệch cho đúng.
+// - Mã cũ trước TT 01, 02/2021 (TTLT 20, 21/2015) từng bị gán sai hạng, bảng lương
+//   (VD V.07.03.09 ghi "hạng III, A1" trong khi đúng là hạng IV, loại B 12 bậc).
+// - V.07.07.21 là Giáo vụ (loại A0), trước đây ghi nhầm "Nhân viên hành chính trường học" loại B.
+// - Tư vấn học sinh (tư vấn tâm lý học đường) theo TT 11/2024/TT-BGDĐT: chưa có trong danh mục.
 const BANG_LUONG: Record<string, { heSos: number[]; thoiGian: 2 | 3 }> = {
+  'A2.1': { heSos: [4.4, 4.74, 5.08, 5.42, 5.76, 6.1, 6.44, 6.78], thoiGian: 3 },
+  'A2.2': { heSos: [4.0, 4.34, 4.68, 5.02, 5.36, 5.7, 6.04, 6.38], thoiGian: 3 },
   A1: { heSos: [2.34, 2.67, 3.0, 3.33, 3.66, 3.99, 4.32, 4.65, 4.98], thoiGian: 3 },
   A0: { heSos: [2.1, 2.41, 2.72, 3.03, 3.34, 3.65, 3.96, 4.27, 4.58, 4.89], thoiGian: 3 },
   B: { heSos: [1.86, 2.06, 2.26, 2.46, 2.66, 2.86, 3.06, 3.26, 3.46, 3.66, 3.86, 4.06], thoiGian: 2 },
 }
-const MA_CU_DUNG: { ma: string; ten: string; bangLuong: keyof typeof BANG_LUONG }[] = [
-  { ma: 'V.07.03.07', ten: 'Giáo viên tiểu học hạng II (mã cũ)', bangLuong: 'A1' },
-  { ma: 'V.07.03.08', ten: 'Giáo viên tiểu học hạng III (mã cũ)', bangLuong: 'A0' },
-  { ma: 'V.07.03.09', ten: 'Giáo viên tiểu học hạng IV (mã cũ)', bangLuong: 'B' },
-  { ma: 'V.07.02.06', ten: 'Giáo viên mầm non hạng IV (mã cũ)', bangLuong: 'B' },
+const CHUC_DANH_DUNG: { ma: string; ten: string; nhom: NhomChucDanh; bangLuong: keyof typeof BANG_LUONG }[] = [
+  { ma: 'V.07.03.07', ten: 'Giáo viên tiểu học hạng II (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'A1' },
+  { ma: 'V.07.03.08', ten: 'Giáo viên tiểu học hạng III (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'A0' },
+  { ma: 'V.07.03.09', ten: 'Giáo viên tiểu học hạng IV (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'B' },
+  { ma: 'V.07.02.06', ten: 'Giáo viên mầm non hạng IV (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'B' },
+  { ma: 'V.07.07.21', ten: 'Giáo vụ', nhom: 'NHAN_VIEN', bangLuong: 'A0' },
+  { ma: 'V.07.07.24', ten: 'Tư vấn học sinh (tư vấn tâm lý học đường) hạng III', nhom: 'NHAN_VIEN', bangLuong: 'A1' },
+  { ma: 'V.07.07.23', ten: 'Tư vấn học sinh (tư vấn tâm lý học đường) hạng II', nhom: 'NHAN_VIEN', bangLuong: 'A2.2' },
+  { ma: 'V.07.07.22', ten: 'Tư vấn học sinh (tư vấn tâm lý học đường) hạng I', nhom: 'NHAN_VIEN', bangLuong: 'A2.1' },
 ]
-function migrateMaChucDanhCu() {
+function migrateChucDanhTheoQuyDinh() {
   const dm = useDanhMucStore.getState()
   let bacLuongs = dm.bacLuongs
   let doi = false
-  for (const dung of MA_CU_DUNG) {
-    const cd = dm.chucDanhs.find((c) => c.ma === dung.ma)
-    if (!cd) continue
+  for (const dung of CHUC_DANH_DUNG) {
+    let cd = useDanhMucStore.getState().chucDanhs.find((c) => c.ma === dung.ma)
     const bang = BANG_LUONG[dung.bangLuong]
+    // Chức danh chưa có (VD tư vấn học sinh) → bổ sung kèm bảng bậc
+    if (!cd) {
+      cd = dm.addChucDanh({ ma: dung.ma, ten: dung.ten, nhom: dung.nhom, bangLuong: dung.bangLuong, active: true })
+      bacLuongs = [...bacLuongs, ...bang.heSos.map((heSo, i) => ({
+        id: `bl_${cd!.id}_${i + 1}`, chucDanhId: cd!.id, bac: i + 1, heSo, thoiGianNangLuong: bang.thoiGian,
+      }))]
+      doi = true
+      logAction('system', 'Hệ thống', 'CREATE', 'ChucDanh', cd.id,
+        `Bổ sung chức danh ${dung.ma} — ${dung.ten} (${dung.bangLuong}, ${bang.heSos.length} bậc)`)
+      continue
+    }
     const bacHienTai = bacLuongs.filter((b) => b.chucDanhId === cd.id).sort((a, b) => a.bac - b.bac)
     const bacDung = bacHienTai.length === bang.heSos.length
       && bacHienTai.every((b, i) => b.heSo === bang.heSos[i] && b.thoiGianNangLuong === bang.thoiGian)
     // Đã đúng bảng lương và bậc thì thôi (không ghi đè tên nếu quản trị đổi tên về sau)
     if (cd.bangLuong === dung.bangLuong && bacDung) continue
 
-    dm.updateChucDanh(cd.id, { ten: dung.ten, bangLuong: dung.bangLuong, nhom: 'GIAO_VIEN' })
+    dm.updateChucDanh(cd.id, { ten: dung.ten, bangLuong: dung.bangLuong, nhom: dung.nhom })
     if (!bacDung) {
       bacLuongs = [
         ...bacLuongs.filter((b) => b.chucDanhId !== cd.id),
@@ -258,6 +278,24 @@ function migrateMaChucDanhCu() {
       `Sửa mã ${dung.ma}: "${cd.ten}" (${cd.bangLuong}) → "${dung.ten}" (${dung.bangLuong}, ${bang.heSos.length} bậc)`)
   }
   if (doi) useDanhMucStore.getState().setBacLuongs(bacLuongs)
+}
+
+// Tự điền trước "Công việc cụ thể" cho nhân viên từ nhiệm vụ chính / tên chức danh.
+// Chỉ điền ô đang trống; không đoán chắc thì để trống — trang Rà soát sẽ nhắc trường chọn.
+function migrateDienCongViecNhanVien() {
+  const vcState = useVienChucStore.getState()
+  const cdTheoId = new Map(useDanhMucStore.getState().chucDanhs.map((c) => [c.id, c]))
+  const laNhanVien = (v: (typeof vcState.vienChucs)[number]) =>
+    v.vtvl ? v.vtvl === 'NHAN_VIEN' : cdTheoId.get(v.chucDanhId)?.nhom === 'NHAN_VIEN'
+  const canDien = vcState.vienChucs
+    .filter((v) => !v.congViec && laNhanVien(v))
+    .map((v) => ({ id: v.id, congViec: doanCongViec(v.nhiemVuChinh, cdTheoId.get(v.chucDanhId)?.ten) }))
+    .filter((x) => x.congViec)
+  if (!canDien.length) return
+  const theoId = new Map(canDien.map((x) => [x.id, x.congViec]))
+  vcState.setVienChucs(vcState.vienChucs.map((v) => (theoId.has(v.id) ? { ...v, congViec: theoId.get(v.id) } : v)))
+  logAction('system', 'Hệ thống', 'UPDATE', 'VienChuc', undefined,
+    `Tự điền "Công việc cụ thể" cho ${canDien.length} nhân viên theo nhiệm vụ chính / chức danh`)
 }
 
 // Danh mục VTVL / Chức vụ chuyển từ hằng số cứng sang dữ liệu admin tùy biến được
@@ -353,7 +391,8 @@ export function initSeedData() {
   migrateUuDaiTheoNd182()
   migrateTachHoSoChuyenCongTac()
   migrateGanDonViHoSoThieu()
-  migrateMaChucDanhCu()
+  migrateChucDanhTheoQuyDinh()
+  migrateDienCongViecNhanVien()
   migrateChiTieuToDonVi()
   migrateNhatKySangKhoRieng()
 

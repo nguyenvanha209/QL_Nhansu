@@ -17,6 +17,7 @@ import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/
 import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen, toUpperName } from '@/utils/helpers'
 import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
+import { CONG_VIEC, NHOM_VI_TRI } from '@/utils/nhomViTri'
 
 const { Title, Text } = Typography
 
@@ -209,6 +210,7 @@ export default function VienChucFormPage() {
     const huongPctn = coPhuCapThamNien(formatted.vtvl, nhomNgach)
     // Nhân viên không hưởng phụ cấp thâm niên → không giữ mốc PCTN
     if (!huongPctn) formatted.mocHuongPctn = undefined
+    if (formatted.vtvl !== 'NHAN_VIEN') formatted.congViec = undefined
     const { bacLuongId, phuCaps: phuCapsRaw, ...vcData } = formatted
     // Chốt chặn cuối: không ghi PC thâm niên cho vị trí không được hưởng
     const pcThamNienId = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')?.id
@@ -412,6 +414,26 @@ export default function VienChucFormPage() {
               <Select options={chucVuOptions} placeholder="Không (giáo viên/nhân viên)" allowClear />
             </Form.Item>
           </Col>
+          {watchVtvl === 'NHAN_VIEN' && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item
+                name="congViec"
+                label="Công việc cụ thể"
+                rules={[{ required: true, message: 'Chọn công việc cụ thể' }]}
+                tooltip="Căn cứ chia nhóm Nhân viên chuyên môn – hỗ trợ / phục vụ / nuôi dưỡng trên trang Tổng quan"
+              >
+                <Select
+                  placeholder="Chọn công việc"
+                  showSearch
+                  optionFilterProp="label"
+                  options={NHOM_VI_TRI.filter((n) => n.key.startsWith('NV_')).map((n) => ({
+                    label: n.ten,
+                    options: CONG_VIEC.filter((c) => c.nhom === n.key).map((c) => ({ value: c.key, label: c.ten })),
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+          )}
           <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="chucDanhId"

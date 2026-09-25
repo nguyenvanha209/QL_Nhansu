@@ -9,6 +9,7 @@ import { LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KI
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
 import { formatDate } from '@/utils/helpers'
+import { CONG_VIEC_LABELS } from '@/utils/nhomViTri'
 
 const { Title, Text } = Typography
 
@@ -122,6 +123,9 @@ export default function VienChucDetailPage() {
                   <Descriptions.Item label="Nguồn kinh phí">{vc.nguonKinhPhi ? NGUON_KINH_PHI_LABELS[vc.nguonKinhPhi] : '—'}</Descriptions.Item>
                 )}
                 <Descriptions.Item label="VTVL">{vc.vtvl ? (vtvls.find((x) => x.ma === vc.vtvl)?.ten ?? VTVL_LABELS[vc.vtvl] ?? vc.vtvl) : '—'}</Descriptions.Item>
+                {vc.vtvl === 'NHAN_VIEN' && (
+                  <Descriptions.Item label="Công việc cụ thể">{vc.congViec ? CONG_VIEC_LABELS[vc.congViec] : <Text type="warning">Chưa chọn</Text>}</Descriptions.Item>
+                )}
                 <Descriptions.Item label="Đảng viên">{vc.laDangVien ? 'Có' : 'Không'}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào ngành">{formatDate(vc.ngayVaoNganh)}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào đơn vị">{formatDate(vc.ngayVaoDonVi)}</Descriptions.Item>

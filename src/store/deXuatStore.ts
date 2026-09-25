@@ -16,6 +16,19 @@ const nguoiThaoTac = () => {
   return { id: u?.id ?? 'system', name: u?.fullName ?? 'Hệ thống' }
 }
 
+/**
+ * Thời gian nâng bậc theo bảng lương của chức danh (NĐ 204/2004): loại A 3 năm, loại B, C 2 năm —
+ * không theo số bậc. Ở bậc cuối, đây cũng là mốc xét PC thâm niên vượt khung (36 / 24 tháng).
+ */
+function thoiGianNangBac(chucDanhId: string, bac: number): 2 | 3 {
+  const { bacLuongs, chucDanhs } = useDanhMucStore.getState()
+  const bang = bacLuongs.filter((b) => b.chucDanhId === chucDanhId)
+  const theoBac = bang.find((b) => b.bac === bac) ?? bang[0]
+  if (theoBac) return theoBac.thoiGianNangLuong
+  const bangLuong = chucDanhs.find((c) => c.id === chucDanhId)?.bangLuong ?? ''
+  return /^[BC]/.test(bangLuong) ? 2 : 3
+}
+
 const TRANG_THAI_LABELS: Record<string, string> = {
   NHAP: 'Nháp',
   CHO_HIEU_TRUONG: 'Chờ hiệu trưởng duyệt',
@@ -230,7 +243,7 @@ export const useDeXuatStore = create<DeXuatState>()(
             const cur = getActiveHeSo(ct.vienChucId)
             if (cur) deactivateHeSoLuong(cur.id)
 
-            const thoiGian = ct.bacMoi <= 8 ? (2 as const) : (3 as const)
+            const thoiGian = thoiGianNangBac(ct.chucDanhMoiId, ct.bacMoi)
             const ngayTiepTheo = new Date(ct.ngayHieuLuc)
             ngayTiepTheo.setFullYear(ngayTiepTheo.getFullYear() + thoiGian)
 

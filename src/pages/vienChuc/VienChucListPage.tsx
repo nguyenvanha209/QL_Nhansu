@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Table, Button, Input, Select, Space, Tag, Typography, Card, Tooltip, Popconfirm, App } from 'antd'
 import { PlusOutlined, SearchOutlined, EditOutlined, EyeOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -9,6 +9,7 @@ import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
 import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_OPTIONS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, isDangCongTac } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import ImportVienChucModal, { ExportExcelButton } from './ImportVienChucModal'
+import { NHOM_VI_TRI, NHOM_LOAI_HINH, nhomViTri, nhomLoaiHinh } from '@/utils/nhomViTri'
 
 const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
   DANG_LAM_VIEC: 'green',
@@ -42,6 +43,12 @@ export default function VienChucListPage() {
   // Mặc định chỉ hiện người đang công tác; hồ sơ Chuyển đi / Nghỉ hưu / Thôi việc xem qua bộ lọc
   const [filterTrangThai, setFilterTrangThai] = useState<string>(LOC_DANG_CONG_TAC)
   const [importOpen, setImportOpen] = useState(false)
+  // Bộ lọc mở từ Bảng cơ cấu trên Tổng quan: ?nhom=…&loaiHinh=…&capHoc=…
+  const [searchParams, setSearchParams] = useSearchParams()
+  const locNhom = searchParams.get('nhom')
+  const locLoaiHinh = searchParams.get('loaiHinh')
+  const locCapHoc = searchParams.get('capHoc')
+  const loaiTruong = useMemo(() => new Map(allDonVis.map((d) => [d.id, d.loai])), [allDonVis])
 
   const data = useMemo(() => {
     let list = allVienChucs.filter((v) => v.active && (!scopeDonViId || v.donViId === scopeDonViId))
@@ -49,11 +56,14 @@ export default function VienChucListPage() {
     if (filterLoai) list = list.filter((v) => v.loaiLaoDong === filterLoai)
     if (filterTrangThai === LOC_DANG_CONG_TAC) list = list.filter(isDangCongTac)
     else if (filterTrangThai !== LOC_TAT_CA) list = list.filter((v) => (v.trangThai ?? 'DANG_LAM_VIEC') === filterTrangThai)
+    if (locCapHoc) list = list.filter((v) => loaiTruong.get(v.donViId) === locCapHoc)
+    if (locLoaiHinh) list = list.filter((v) => nhomLoaiHinh(v.loaiLaoDong) === locLoaiHinh)
+    if (locNhom) list = list.filter((v) => nhomViTri(v, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom) === locNhom)
     if (search) list = list.filter((v) => matchSearch(`${v.ho} ${v.ten} ${v.ma}`, search))
     // Thứ tự chuẩn: CBQL → Giáo viên → Nhân viên
     const nhomCua = (v: (typeof list)[number]) => chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom
     return [...list].sort(soSanhVienChuc(nhomCua))
-  }, [allVienChucs, scopeDonViId, filterDonVi, filterLoai, filterTrangThai, search, chucDanhs])
+  }, [allVienChucs, scopeDonViId, filterDonVi, filterLoai, filterTrangThai, search, chucDanhs, locNhom, locLoaiHinh, locCapHoc, loaiTruong])
 
   const canWrite = hasPermission('vienChuc', 'write')
 
@@ -156,6 +166,15 @@ export default function VienChucListPage() {
         </Space>
       </div>
 
+      {(locNhom || locLoaiHinh || locCapHoc) && (
+        <Space wrap style={{ marginBottom: 12 }}>
+          <Typography.Text type="secondary">Lọc từ Tổng quan:</Typography.Text>
+          {locNhom && <Tag color="blue">{NHOM_VI_TRI.find((n) => n.key === locNhom)?.ten ?? locNhom}</Tag>}
+          {locLoaiHinh && <Tag color="cyan">{NHOM_LOAI_HINH.find((n) => n.key === locLoaiHinh)?.ten ?? locLoaiHinh}</Tag>}
+          {locCapHoc && <Tag>{({ MAM_NON: 'Mầm non', TIEU_HOC: 'Tiểu học', THCS: 'THCS' } as Record<string, string>)[locCapHoc] ?? locCapHoc}</Tag>}
+          <Button size="small" type="link" onClick={() => setSearchParams({})}>Bỏ lọc</Button>
+        </Space>
+      )}
       <Space wrap style={{ marginBottom: 16 }}>
         <Input
           prefix={<SearchOutlined />}

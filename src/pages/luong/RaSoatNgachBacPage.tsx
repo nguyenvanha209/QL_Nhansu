@@ -13,7 +13,7 @@ import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LAB
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -21,6 +21,7 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   BAC_VUOT: { ten: 'Bậc vượt bảng lương', mau: 'volcano' },
   HE_SO_LECH: { ten: 'Hệ số không khớp bảng', mau: 'orange' },
   NGACH_KHAC: { ten: 'Lương ghi theo mã khác', mau: 'gold' },
+  THIEU_CONG_VIEC: { ten: 'Chưa chọn công việc cụ thể', mau: 'cyan' },
   TEN_LOI_FONT: { ten: 'Tên lỗi font (TCVN3)', mau: 'purple' },
 }
 
@@ -81,7 +82,7 @@ export default function RaSoatNgachBacPage() {
       }
     }
 
-    let list = vienChucs.filter((v) => duocTinhSoLieu(v) && !nhanLuongTheoTien(v))
+    let list = vienChucs.filter((v) => duocTinhSoLieu(v))
     if (scopeDonViId) list = list.filter((v) => v.donViId === scopeDonViId)
     const nhomCua = (v: (typeof list)[number]) => cdTheoId.get(v.chucDanhId)?.nhom
     list = [...list].sort((a, b) =>
@@ -102,11 +103,19 @@ export default function RaSoatNgachBacPage() {
         loi.push('TEN_LOI_FONT')
         chiTiet.push('Họ tên còn ký tự bảng mã TCVN3, cần gõ lại bằng Unicode')
       }
+      if (vc.vtvl === 'NHAN_VIEN' && !vc.congViec) {
+        loi.push('THIEU_CONG_VIEC')
+        chiTiet.push('Nhân viên chưa chọn công việc cụ thể (kế toán, bảo vệ, cấp dưỡng…) — cần để chia nhóm trên Tổng quan')
+      }
+      // Lương theo mức tiền: không có ngạch, bậc, hệ số để đối chiếu — chỉ kiểm tra tên, công việc
+      const theoTien = nhanLuongTheoTien(vc)
       if (!cd && bienChe) {
         loi.push('THIEU_NGACH')
         chiTiet.push('Viên chức biên chế chưa có mã ngạch/hạng')
       }
-      if (!hs) {
+      if (theoTien) {
+        // bỏ qua kiểm tra lương
+      } else if (!hs) {
         // Người lương theo mức tiền đã loại ở trên → ai còn lại mà chưa có bậc, hệ số đều chưa khai lương
         loi.push('THIEU_LUONG')
         chiTiet.push(bienChe ? 'Chưa có bậc, hệ số lương đang hưởng' : 'Hợp đồng chưa khai lương (bậc/hệ số hoặc mức tiền)')
@@ -238,7 +247,7 @@ export default function RaSoatNgachBacPage() {
         type="info"
         showIcon
         style={{ marginBottom: 12 }}
-        title="Danh sách hồ sơ đang công tác có mã ngạch, bậc, hệ số không khớp danh mục bảng lương. Hệ thống không tự sửa — trường kiểm tra quyết định xếp lương rồi vào hồ sơ để sửa mã ngạch hoặc bậc cho đúng. Người nhận lương theo mức tiền không thuộc diện rà soát."
+        title="Danh sách hồ sơ đang công tác có mã ngạch, bậc, hệ số không khớp danh mục bảng lương. Hệ thống không tự sửa — trường kiểm tra quyết định xếp lương rồi vào hồ sơ để sửa mã ngạch hoặc bậc cho đúng. Người nhận lương theo mức tiền chỉ được kiểm tra họ tên và công việc cụ thể."
       />
       <Space wrap style={{ marginBottom: 12 }}>
         {(Object.keys(LECH_LABELS) as LoaiLech[]).filter((l) => demTheoLoi[l]).map((l) => (

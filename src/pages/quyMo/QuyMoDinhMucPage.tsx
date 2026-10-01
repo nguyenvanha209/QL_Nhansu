@@ -505,12 +505,12 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
         )}
         {cap === 'MAM_NON' && (
           <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <Text>Số điểm trường (kể cả điểm chính và các phân hiệu):</Text>
+            <Text>Số phân hiệu (điểm trường):</Text>
             {coTheSua
               ? <InputNumber value={nhap.soDiemTruong} min={1} max={20} precision={0} placeholder="1" onChange={(v) => setNhap((q) => ({ ...q, soDiemTruong: v ?? undefined }))} style={{ width: 88 }} />
               : <Text strong>{nhap.soDiemTruong ?? 1}</Text>}
             <Text type="secondary" style={{ fontSize: 12 }}>
-              Căn cứ chỉ tiêu nhân viên thư viện: 01 người/điểm trường, tối đa 03. Để trống tính là 01 điểm trường.
+              Căn cứ chỉ tiêu nhân viên thư viện: 01 người/phân hiệu, tối đa 03. Để trống tính là 01.
             </Text>
           </div>
         )}

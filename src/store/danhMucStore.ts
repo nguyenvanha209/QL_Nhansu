@@ -12,11 +12,14 @@ import type {
   ChucVuDanhMuc,
 } from '@/types/danhMuc'
 import type { DonVi } from '@/types/donVi'
-import type { QuyMoTruong } from '@/types/quyMo'
+import type { QuyMoTruong, QuyMoLichSu } from '@/types/quyMo'
+import { layNoiDung, giongNhau } from '@/utils/quyMoLichSu'
 
 interface DanhMucState {
   donVis: DonVi[]
   quyMoTruongs: QuyMoTruong[]
+  /** Mỗi lần lưu quy mô để lại một bản, giữ tối đa SO_BAN_LICH_SU_QUY_MO bản gần nhất cho mỗi trường và năm học */
+  quyMoLichSu: QuyMoLichSu[]
   chucDanhs: ChucDanhNgheNghiep[]
   viTriViecLams: ViTriViecLam[]
   bacLuongs: BacLuong[]
@@ -66,11 +69,14 @@ interface DanhMucState {
 
 const now = () => new Date().toISOString()
 
+const SO_BAN_LICH_SU_QUY_MO = 30
+
 export const useDanhMucStore = create<DanhMucState>()(
   persist(
     (set, get) => ({
       donVis: [],
       quyMoTruongs: [],
+      quyMoLichSu: [],
       chucDanhs: [],
       viTriViecLams: [],
       bacLuongs: [],
@@ -93,7 +99,30 @@ export const useDanhMucStore = create<DanhMucState>()(
           const cu = s.quyMoTruongs.find((q) => q.id === qm.id)
           const t = now()
           const ban: QuyMoTruong = { ...qm, createdAt: cu?.createdAt ?? t, updatedAt: t }
-          return { quyMoTruongs: cu ? s.quyMoTruongs.map((q) => (q.id === qm.id ? ban : q)) : [...s.quyMoTruongs, ban] }
+          const quyMoTruongs = cu ? s.quyMoTruongs.map((q) => (q.id === qm.id ? ban : q)) : [...s.quyMoTruongs, ban]
+
+          // Lịch sử: lần đầu có lịch sử thì lưu cả bản đang có làm mốc, rồi bản vừa lưu (bỏ qua nếu y hệt bản trước)
+          const lichSuCu = s.quyMoLichSu ?? []
+          const cuaBan = lichSuCu.filter((l) => l.quyMoId === qm.id).sort((a, b) => a.thoiGian.localeCompare(b.thoiGian))
+          const moi: QuyMoLichSu[] = []
+          if (cu && !cuaBan.length) {
+            moi.push({
+              id: nanoid(), quyMoId: qm.id, donViId: qm.donViId, namHoc: qm.namHoc, thoiGian: cu.updatedAt || t,
+              nguoiId: cu.nguoiCapNhatId, nguoiTen: cu.nguoiCapNhat, noiDung: layNoiDung(cu), ghiChuBan: 'Bản có sẵn trước khi có lịch sử',
+            })
+          }
+          const noiDungMoi = layNoiDung(ban)
+          const truoc = moi.at(-1)?.noiDung ?? cuaBan.at(-1)?.noiDung
+          if (!truoc || !giongNhau(truoc, noiDungMoi)) {
+            moi.push({
+              id: nanoid(), quyMoId: qm.id, donViId: qm.donViId, namHoc: qm.namHoc, thoiGian: t,
+              nguoiId: qm.nguoiCapNhatId, nguoiTen: qm.nguoiCapNhat, noiDung: noiDungMoi,
+            })
+          }
+          if (!moi.length) return { quyMoTruongs }
+          const giu = new Set([...cuaBan, ...moi].sort((a, b) => b.thoiGian.localeCompare(a.thoiGian)).slice(0, SO_BAN_LICH_SU_QUY_MO).map((l) => l.id))
+          const quyMoLichSu = [...lichSuCu, ...moi].filter((l) => l.quyMoId !== qm.id || giu.has(l.id))
+          return { quyMoTruongs, quyMoLichSu }
         }),
 
       setChucDanhs: (v) => set({ chucDanhs: v }),

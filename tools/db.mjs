@@ -5,7 +5,7 @@
 //   node tools/db.mjs backup                     Tải toàn bộ về file .json
 //   node tools/db.mjs restore <file.json>        Khôi phục từ file backup
 //   node tools/db.mjs find <key> <truong> <gtri> Tìm bản ghi trong mảng
-//   node tools/db.mjs set <key> <duong.dan> <gt> Sửa 1 giá trị  (cần --apply)
+//   node tools/db.mjs set <key> <duong.dan> <gt> Sửa 1 giá trị  (cần --apply; có kiểm tra phiên bản)
 //   node tools/db.mjs del <key>                  Xoá 1 key      (cần --apply)
 //
 // Mặc định chỉ XEM TRƯỚC. Thêm --apply mới ghi thật.
@@ -13,6 +13,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { docKho, ghiKhoNeuChuaDoi } from './ghi-an-toan.mjs'
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const BACKUP_DIR = path.join(ROOT, 'tools', 'backups')
@@ -123,9 +124,7 @@ switch (cmd) {
   case 'set': {
     const [key, duongDan, giaTriMoi] = args
     if (giaTriMoi === undefined) return console.error('Dùng: node tools/db.mjs set ql-users state.users.0.active false')
-    const rows = await sb('GET', `app_state?key=eq.${key}&select=value`)
-    if (!rows.length) return console.error(`Không có key "${key}"`)
-    const value = rows[0].value
+    const { value, updated_at: phienBanDoc } = await docKho(key)
 
     const phan = duongDan.split('.')
     const cuoi = phan.pop()
@@ -142,7 +141,10 @@ switch (cmd) {
 
     await saoLuu(`truoc-set-${key}`)
     cha[cuoi] = moi
-    await sb('PATCH', `app_state?key=eq.${key}`, { value, updated_at: new Date().toISOString() })
+    // Chỉ ghi nếu trong lúc này không ai khác vừa lưu - tránh đè mất dữ liệu người dùng
+    if (!(await ghiKhoNeuChuaDoi(key, value, phienBanDoc))) {
+      return console.error('Có người vừa lưu dữ liệu này trong lúc sửa - chưa ghi gì. Chạy lại lệnh.')
+    }
     console.log('\n✓ Đã ghi. Xoá localStorage trình duyệt rồi tải lại trang.')
     break
   }

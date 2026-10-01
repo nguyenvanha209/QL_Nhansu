@@ -48,6 +48,63 @@ export function dangKyNapLai(fn: NapLai) {
 
 const SO_LAN_THU_LAI = 3
 
+// ───────────────────────────────────────────────────────────────────────────
+// Trạng thái ghi lên máy chủ
+//
+// Trước đây lệnh ghi lỗi (mất mạng, máy chủ từ chối) chỉ ghi dòng console rồi bỏ.
+// Người dùng thấy "đã lưu" trong khi dữ liệu chỉ nằm ở máy mình - tắt máy hoặc xoá
+// bộ nhớ trình duyệt là mất. Nay mọi lỗi ghi được nhớ lại, tự thử lại vài lần và
+// hiện trên giao diện (xem components/layout/ChiBaoDongBo).
+// ───────────────────────────────────────────────────────────────────────────
+
+export interface TrangThaiGhi {
+  /** Số lệnh ghi đang chạy hoặc xếp hàng */
+  dangGhi: number
+  /** Các khoá ghi lỗi, chưa thành công */
+  loi: { khoa: string; thongBao: string }[]
+  /** Thời điểm (ms) ghi thành công gần nhất */
+  lanThanhCongCuoi: number | null
+}
+
+const loiGhi = new Map<string, string>()
+let lanThanhCongCuoi: number | null = null
+let trangThaiGhi: TrangThaiGhi = { dangGhi: 0, loi: [], lanThanhCongCuoi: null }
+const nguoiNgheTrangThai = new Set<() => void>()
+
+export const layTrangThaiGhi = () => trangThaiGhi
+
+export function ngheTrangThaiGhi(fn: () => void) {
+  nguoiNgheTrangThai.add(fn)
+  return () => { nguoiNgheTrangThai.delete(fn) }
+}
+
+function capNhatTrangThaiGhi() {
+  trangThaiGhi = {
+    dangGhi: soLenhDangGhi,
+    loi: [...loiGhi].map(([khoa, thongBao]) => ({ khoa, thongBao })),
+    lanThanhCongCuoi,
+  }
+  nguoiNgheTrangThai.forEach((fn) => fn())
+}
+
+function baoLoiGhi(khoa: string, thongBao: string) {
+  loiGhi.set(khoa, thongBao)
+  capNhatTrangThaiGhi()
+}
+
+function baoGhiThanhCong(khoa: string) {
+  loiGhi.delete(khoa)
+  lanThanhCongCuoi = Date.now()
+  capNhatTrangThaiGhi()
+}
+
+/** Chờ ghi xong rồi cho biết có khoá nào còn lỗi không (dùng sau các thao tác quan trọng) */
+export async function choGhiXongVaKiemTra(): Promise<'ok' | 'loi' | 'khongCoMayChu'> {
+  if (!supabase) return 'khongCoMayChu'
+  await choGhiXong()
+  return layTrangThaiGhi().loi.length ? 'loi' : 'ok'
+}
+
 const laMangCoId = (v: unknown): v is { id: string }[] =>
   Array.isArray(v) && v.every((x) => x && typeof x === 'object' && typeof (x as { id?: unknown }).id === 'string')
 
@@ -336,14 +393,59 @@ export function datCoDangDongBo(bat: boolean) {
 const hangCho = new Map<string, Promise<void>>()
 let soLenhDangGhi = 0
 
-function xepHangGhi(name: string, value: string, daXoa: DaXoa) {
+// Bản mới nhất chưa ghi được của từng khoá (để thử lại). Id đã xoá được cộng dồn,
+// nếu không lần thử lại sẽ làm bản ghi vừa xoá sống lại.
+const choGhiLai = new Map<string, { value: string; daXoa: DaXoa }>()
+const henThuLai = new Map<string, number>()
+const CACH_THU_LAI_MS = [5_000, 15_000, 30_000, 60_000, 120_000]
+
+function gopDaXoa(a: DaXoa, b: DaXoa): DaXoa {
+  const ra: DaXoa = { ...a }
+  for (const [k, ids] of Object.entries(b)) ra[k] = [...new Set([...(ra[k] ?? []), ...ids])]
+  return ra
+}
+
+function xepViecGhi(name: string, value: string, daXoa: DaXoa, lanThuLai: number) {
   const truoc = hangCho.get(name) ?? Promise.resolve()
-  const viec = laKhoChia(name)
-    ? () => ghiTheoManh(name, value, daXoa)
-    : () => ghiLenMayChu(name, value, 0, daXoa)
+  const viec = async () => {
+    const ok = laKhoChia(name)
+      ? await ghiTheoManh(name, value, daXoa)
+      : await ghiLenMayChu(name, value, 0, daXoa)
+    const conMoiHon = choGhiLai.get(name)?.value !== value
+    if (ok) {
+      if (!conMoiHon) choGhiLai.delete(name)
+      return
+    }
+    // Lệnh mới hơn đã xếp hàng thì tự nó sẽ thử; chỉ hẹn lại khi đây vẫn là bản mới nhất
+    if (conMoiHon || lanThuLai >= CACH_THU_LAI_MS.length) return
+    const hen = window.setTimeout(() => {
+      henThuLai.delete(name)
+      const c = choGhiLai.get(name)
+      if (!c) return
+      // Thử lại bằng nội dung MỚI NHẤT đang có ở máy, không phải bản chụp lúc lỗi: trong khoảng chờ,
+      // máy có thể đã tải và hợp nhất dữ liệu của người khác - đẩy lại bản chụp cũ sẽ đè mất phần đó.
+      const hienTai = localStorage.getItem(name) ?? c.value
+      choGhiLai.set(name, { value: hienTai, daXoa: c.daXoa })
+      xepViecGhi(name, hienTai, c.daXoa, lanThuLai + 1)
+    }, CACH_THU_LAI_MS[lanThuLai])
+    henThuLai.set(name, hen)
+  }
   soLenhDangGhi++
-  const tiep = truoc.then(viec).catch(() => {}).finally(() => { soLenhDangGhi-- })
+  capNhatTrangThaiGhi()
+  const tiep = truoc.then(viec).catch((e) => {
+    console.warn('[Supabase] Lệnh ghi lỗi không lường trước -', name, e)
+    baoLoiGhi(name, 'Lỗi không xác định khi ghi')
+  }).finally(() => { soLenhDangGhi--; capNhatTrangThaiGhi() })
   hangCho.set(name, tiep)
+}
+
+function xepHangGhi(name: string, value: string, daXoa: DaXoa) {
+  window.clearTimeout(henThuLai.get(name))
+  henThuLai.delete(name)
+  const cu = choGhiLai.get(name)
+  const daXoaGop = cu ? gopDaXoa(cu.daXoa, daXoa) : daXoa
+  choGhiLai.set(name, { value, daXoa: daXoaGop })
+  xepViecGhi(name, value, daXoaGop, 0)
 }
 
 /** Chờ mọi lệnh ghi đang xếp hàng xong */
@@ -399,24 +501,29 @@ async function apDungManhVaoKho(ten: string, manh: string, noiDung: KhoiTrangTha
 }
 
 // Chia khối thành từng mảnh rồi chỉ ghi những mảnh thực sự đổi.
-async function ghiTheoManh(name: string, value: string, daXoa: DaXoa): Promise<void> {
+async function ghiTheoManh(name: string, value: string, daXoa: DaXoa): Promise<boolean> {
   let khoi: KhoiTrangThai
   try {
     khoi = JSON.parse(value) as KhoiTrangThai
   } catch {
     console.error('[Supabase] Bỏ qua lệnh ghi: dữ liệu không phải JSON hợp lệ -', name)
-    return
+    return true
   }
 
   const cacManh = chiaTrangThai(name, khoi)
   let soGhi = 0
+  let tatCaOk = true
 
   for (const [manh, noiDung] of cacManh) {
     const khoa = khoaManh(name, manh)
     const json = JSON.stringify(noiDung)
     if (manhDaGhi.get(khoa) === json) continue // mảnh không đổi, khỏi ghi
 
-    await ghiLenMayChu(khoa, json, 0, daXoa)
+    // Mảnh ghi lỗi thì KHÔNG đánh dấu đã ghi - nếu không, các lần sau sẽ bỏ qua mảnh này mãi mãi
+    if (!(await ghiLenMayChu(khoa, json, 0, daXoa))) {
+      tatCaOk = false
+      continue
+    }
     manhDaGhi.set(khoa, json)
     soGhi++
   }
@@ -426,7 +533,8 @@ async function ghiTheoManh(name: string, value: string, daXoa: DaXoa): Promise<v
     console.info(`[Supabase] "${name}": ghi ${soGhi}/${cacManh.size} mảnh (khối gộp ${kb} KB)`)
   }
 
-  await donODangCu(name)
+  if (tatCaOk) await donODangCu(name)
+  return tatCaOk
 }
 
 // Ô cũ chưa chia vẫn giữ nguyên toàn bộ dữ liệu. Để nguyên thì mỗi lần đồng bộ
@@ -449,15 +557,16 @@ async function donODangCu(name: string) {
   console.info(`[Supabase] Đã dọn ô cũ "${name}" sau khi chia thành từng mảnh.`)
 }
 
-async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXoa = {}): Promise<void> {
-  if (!supabase) return
+/** true = đã ghi (hoặc không có gì để ghi); false = chưa lưu được lên máy chủ */
+async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXoa = {}): Promise<boolean> {
+  if (!supabase) return true
 
   let parsed: unknown
   try {
     parsed = JSON.parse(value)
   } catch {
     console.error('[Supabase] Bỏ qua lệnh ghi: dữ liệu không phải JSON hợp lệ -', name)
-    return
+    return true
   }
 
   const banDaBiet = phienBanMayChu.get(name)
@@ -475,15 +584,18 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
       // Mã 23505 = trùng khoá chính: bản ghi đã tồn tại mà máy này chưa đọc.
       if (error.code === '23505') {
         console.warn(`[Supabase] "${name}" đã có trên máy chủ nhưng máy này chưa đọc - tải lại thay vì ghi đè.`)
+        // Không báo lỗi đỏ: máy sẽ tải bản máy chủ, hợp nhất rồi tự ghi lại ở lần thử kế tiếp
         xuLyXungDot?.(name)
       } else {
         console.warn('[Supabase] Lỗi khi tạo bản ghi', name, '-', error.message)
+        baoLoiGhi(name, error.message)
       }
-      return
+      return false
     }
     ghiNhanPhienBan(name, data?.[0]?.updated_at ?? null)
     ghiNhanBanGoc(tachKhoa(name).ten, (parsed as KhoiTrangThai).state)
-    return
+    baoGhiThanhCong(name)
+    return true
   }
 
   const { data, error } = await supabase
@@ -495,7 +607,8 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
 
   if (error) {
     console.warn('[Supabase] Lỗi khi ghi', name, '-', error.message)
-    return
+    baoLoiGhi(name, error.message)
+    return false
   }
 
   if (!data || data.length === 0) {
@@ -503,15 +616,17 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
     // cuộc: tải bản mới, hợp nhất 3 chiều theo từng bản ghi rồi ghi lại.
     if (lanThu >= SO_LAN_THU_LAI) {
       console.warn(`[Supabase] "${name}": hợp nhất ${SO_LAN_THU_LAI} lần vẫn xung đột, dừng lại để khỏi ghi đè.`)
+      baoLoiGhi(name, 'Nhiều người cùng sửa, chưa ghi được')
       xuLyXungDot?.(name)
-      return
+      return false
     }
 
     const banMayChu = await layBanMayChu(name)
     if (!banMayChu) {
       console.warn(`[Supabase] "${name}": xung đột nhưng không đọc lại được máy chủ.`)
+      baoLoiGhi(name, 'Không đọc lại được máy chủ')
       xuLyXungDot?.(name)
-      return
+      return false
     }
 
     ghiNhanPhienBan(name, banMayChu.updated_at)
@@ -522,7 +637,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
     console.info(`[Supabase] "${name}": máy chủ đã thay đổi - đã hợp nhất 3 chiều và ghi lại (lần ${lanThu + 1})${soXungDot ? `, ${soXungDot} bản ghi cùng bị sửa` : ''}.`)
     if (soXungDot) baoXungDot?.([{ kho: ten, soBanGhi: soXungDot }])
 
-    await ghiLenMayChu(name, JSON.stringify(hopNhat), lanThu + 1, daXoa)
+    const okHopNhat = await ghiLenMayChu(name, JSON.stringify(hopNhat), lanThu + 1, daXoa)
 
     // Nạp lại để bộ nhớ tại máy khớp với nội dung vừa ghi lên máy chủ
     if (manh) {
@@ -536,7 +651,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
         dangDongBo = false
       }
     }
-    return
+    return okHopNhat
   }
 
   ghiNhanPhienBan(name, data[0].updated_at)
@@ -544,6 +659,8 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
   const { ten } = tachKhoa(name)
   ghiNhanBanGoc(ten, (parsed as KhoiTrangThai).state)
   boBanGoc(ten, daXoa)
+  baoGhiThanhCong(name)
+  return true
 }
 
 // ───────────────────────────────────────────────────────────────────────────

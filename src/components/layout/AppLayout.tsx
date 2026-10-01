@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { ROLE_LABELS } from '@/types/auth'
+import ChiBaoDongBo from './ChiBaoDongBo'
 
 const { Header, Sider, Content, Footer } = Layout
 const { Text } = Typography
@@ -179,6 +180,7 @@ export default function AppLayout() {
             style={{ fontSize: 14 }}
           />
           <Space size={8}>
+            <ChiBaoDongBo />
             <Tooltip title="Hướng dẫn sử dụng">
               <Button
                 type="text"

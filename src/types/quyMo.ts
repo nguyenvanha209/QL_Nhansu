@@ -6,6 +6,24 @@ export interface QuyMoKhoi {
   soHocSinh2Buoi?: number
 }
 
+/** Phần người dùng khai báo của một bản quy mô */
+export type NoiDungQuyMo = Pick<QuyMoTruong, 'khoi' | 'khoiDayTinThem' | 'dinhMucNhapTay' | 'kiemNhiemNhapTay' | 'soDiemTruong' | 'ghiChu'>
+
+/** Một lần lưu quy mô: giữ nguyên nội dung để xem lại, so sánh và khôi phục khi dữ liệu bị mất hoặc ghi nhầm */
+export interface QuyMoLichSu {
+  id: string
+  /** id của bản quy mô (`${donViId}__${namHoc}`) */
+  quyMoId: string
+  donViId: string
+  namHoc: string
+  thoiGian: string
+  nguoiId?: string
+  nguoiTen?: string
+  noiDung: NoiDungQuyMo
+  /** VD "Bản có sẵn trước khi có lịch sử" */
+  ghiChuBan?: string
+}
+
 /** Quy mô trường lớp của một trường trong một năm học - trường tự khai báo */
 export interface QuyMoTruong {
   /** `${donViId}__${namHoc}`: cố định để hai máy cùng khai báo không sinh hai bản ghi */

@@ -344,6 +344,13 @@ function migrateNgachVanThu() {
   const vcState = useVienChucStore.getState()
   const lg = useLuongStore.getState()
   const doiNguoi = vcState.vienChucs.filter((v) => idCu.has(v.chucDanhId))
+  // Đã gộp xong từ trước (mã cũ chỉ còn nằm đó dưới dạng ẩn) thì dừng, không ghi nhật ký nữa -
+  // trước đây mỗi lần ai đó mở phần mềm lại thêm một dòng "Sửa ngạch văn thư" vào nhật ký chung.
+  const conViecCanLam = doiNguoi.length > 0
+    || gop.some((c) => c.active)
+    || lg.heSoLuongs.some((h) => idCu.has(h.chucDanhId))
+    || useDanhMucStore.getState().viTriViecLams.some((v) => v.chucDanhIds.some((i) => idCu.has(i)))
+  if (!conViecCanLam) return
   if (doiNguoi.length) {
     vcState.setVienChucs(vcState.vienChucs.map((v) => (idCu.has(v.chucDanhId) ? { ...v, chucDanhId: dich.id } : v)))
     const homNay = dayjs().format('YYYY-MM-DD')

@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import {
   Card, Typography, Select, Table, Tag, Tabs, InputNumber, Button, Space, Alert, App, Input,
-  Statistic, Row, Col, Tooltip, Empty, Segmented, Badge, Checkbox,
+  Statistic, Row, Col, Tooltip, Empty, Segmented, Badge, Checkbox, Drawer,
 } from 'antd'
 import {
-  SaveOutlined, DownloadOutlined, ArrowLeftOutlined, BulbOutlined, SearchOutlined, UndoOutlined,
+  SaveOutlined, DownloadOutlined, ArrowLeftOutlined, BulbOutlined, SearchOutlined, UndoOutlined, HistoryOutlined,
 } from '@ant-design/icons'
 import * as XLSX from 'xlsx'
 import { useAuth } from '@/hooks/useAuth'
@@ -14,7 +14,9 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { duocTinhSoLieu } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
 import type { DonVi } from '@/types/donVi'
-import type { QuyMoTruong } from '@/types/quyMo'
+import type { QuyMoTruong, QuyMoLichSu, NoiDungQuyMo } from '@/types/quyMo'
+import { layNoiDung, soSanhNoiDung, tomTatNoiDung } from '@/utils/quyMoLichSu'
+import { choGhiXongVaKiemTra } from '@/lib/supabase'
 import { HANG_TRUONG_LABELS, getHangTruong } from '@/utils/hangTruong'
 import { logAction } from '@/utils/auditLogger'
 import { exportToExcel } from '@/utils/exportExcel'
@@ -281,6 +283,12 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
   const coTheSua = hasPermission('quyMo', 'write') && dungTruong
   const coTheSuaMon = hasPermission('vienChuc', 'write') && dungTruong
 
+  const tatCaLichSu = useDanhMucStore((s) => s.quyMoLichSu)
+  const lichSu = useMemo(
+    () => (tatCaLichSu ?? []).filter((l) => l.quyMoId === id).sort((a, b) => b.thoiGian.localeCompare(a.thoiGian)),
+    [tatCaLichSu, id],
+  )
+  const [moLichSu, setMoLichSu] = useState(false)
   const [goc, setGoc] = useState(quyMoDaLuu)
   const [nhap, setNhap] = useState<QuyMoTruong>(() => quyMoDaLuu ?? quyMoTrong(donVi.id, namHoc))
   const daDoi = vanTay(nhap, cap) !== vanTay(quyMoDaLuu, cap)
@@ -330,6 +338,13 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
       return { ...q, kiemNhiemNhapTay: k, dinhMucNhapTay: t }
     })
 
+  /** Nạp một bản trong lịch sử vào form; chỉ có hiệu lực khi người dùng bấm "Lưu quy mô" */
+  const nap = (nd: NoiDungQuyMo) => {
+    setNhap((q) => ({ ...q, ...layNoiDung(nd), khoiDayTinThem: nd.khoiDayTinThem, dinhMucNhapTay: nd.dinhMucNhapTay, kiemNhiemNhapTay: nd.kiemNhiemNhapTay, soDiemTruong: nd.soDiemTruong, ghiChu: nd.ghiChu }))
+    setMoLichSu(false)
+    message.info('Đã nạp bản này vào form. Kiểm tra lại rồi bấm "Lưu quy mô" để áp dụng.')
+  }
+
   const luu = () => {
     if (!currentUser) return
     const { tongLop, tongHS } = tongQuyMo(nhap, cap)
@@ -337,7 +352,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
     const hangCu = donVi.soLop ? getHangTruong(cap, donVi.soLop) : undefined
     const capNhatSoLop = hienHanh && tongLop > 0 && tongLop !== donVi.soLop
 
-    const thucHien = () => {
+    const thucHien = async () => {
       const khoi: QuyMoTruong['khoi'] = {}
       for (const k of KHOI[cap]) {
         const o = nhap.khoi[k.ma]
@@ -370,7 +385,16 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
         moTa: `Khai báo quy mô năm học ${namHoc} - ${donVi.ten}: ${tongLop} lớp, ${tongHS} học sinh`
           + (capNhatSoLop ? `; số lớp xếp hạng ${donVi.soLop ?? 'chưa có'} → ${tongLop}` : ''),
       })
-      message.success(capNhatSoLop ? 'Đã lưu quy mô và cập nhật số lớp xếp hạng trường' : 'Đã lưu quy mô trường lớp')
+      // Chỉ báo "đã lưu" khi dữ liệu thực sự đã lên máy chủ; lỗi mạng thì nói rõ để người dùng không tắt máy
+      const kq = await choGhiXongVaKiemTra()
+      if (kq === 'loi') {
+        message.warning({
+          content: 'Đã lưu trên máy này nhưng CHƯA lên được máy chủ. Hệ thống đang tự thử lại - hãy kiểm tra mạng và không đóng trang.',
+          duration: 10,
+        })
+      } else {
+        message.success(capNhatSoLop ? 'Đã lưu quy mô lên máy chủ và cập nhật số lớp xếp hạng trường' : 'Đã lưu quy mô lên máy chủ')
+      }
     }
 
     if (capNhatSoLop && hangCu && hangCu !== hangMoi) {
@@ -415,6 +439,9 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
             : <Tag color="warning">Chưa khai báo năm học {namHoc}</Tag>}
         </Space>
         <Space wrap>
+          <Badge count={lichSu.length} size="small" color="#64748b" offset={[-4, 2]}>
+            <Button icon={<HistoryOutlined />} onClick={() => setMoLichSu(true)}>Lịch sử khai báo</Button>
+          </Badge>
           <Button icon={<DownloadOutlined />} onClick={() => xuatExcelTruong(donVi, namHoc, cap, nhap, kq)} disabled={!kq.tongLop}>
             Xuất Excel
           </Button>
@@ -430,7 +457,74 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
       </div>
       {daDoi && <Alert type="warning" showIcon style={{ marginBottom: 8 }} title="Có thay đổi chưa lưu - số liệu định mức đang tính theo bản đang nhập" />}
       <Tabs items={items} />
+      <LichSuQuyMoDrawer open={moLichSu} onClose={() => setMoLichSu(false)} lichSu={lichSu} cap={cap} coTheSua={coTheSua} onNap={nap} />
     </>
+  )
+}
+
+// ───────────────────────────── Lịch sử khai báo quy mô ─────────────────────────────
+
+function LichSuQuyMoDrawer({ open, onClose, lichSu, cap, coTheSua, onNap }: {
+  open: boolean; onClose: () => void; lichSu: QuyMoLichSu[]; cap: CapHoc; coTheSua: boolean; onNap: (nd: NoiDungQuyMo) => void
+}) {
+  // lichSu đã sắp mới nhất trước; bản liền trước của dòng i là dòng i + 1
+  return (
+    <Drawer title="Lịch sử khai báo quy mô" size={760} open={open} onClose={onClose}>
+      <Alert
+        type="info"
+        showIcon
+        style={{ marginBottom: 12 }}
+        title="Mỗi lần bấm Lưu quy mô để lại một bản (tối đa 30 bản gần nhất)."
+        description='Bản nào khai nhầm hoặc bị mất số liệu, bấm "Nạp vào form" để lấy lại rồi kiểm tra và Lưu quy mô.'
+      />
+      {lichSu.length === 0 ? (
+        <Empty description="Chưa có lịch sử. Bản đầu tiên sẽ xuất hiện sau lần lưu tiếp theo." />
+      ) : (
+        <Table<QuyMoLichSu>
+          size="small"
+          bordered
+          rowKey="id"
+          pagination={false}
+          dataSource={lichSu}
+          columns={[
+            {
+              title: 'Thời điểm', key: 'tg', width: 140,
+              render: (_, l, i) => (
+                <Space orientation="vertical" size={0}>
+                  <Text>{formatDatetime(l.thoiGian)}</Text>
+                  {i === 0 && <Tag color="blue" style={{ marginTop: 2 }}>Bản hiện tại</Tag>}
+                  {l.ghiChuBan && <Text type="secondary" style={{ fontSize: 11 }}>{l.ghiChuBan}</Text>}
+                </Space>
+              ),
+            },
+            { title: 'Người lưu', key: 'ng', width: 140, render: (_, l) => l.nguoiTen ?? '-' },
+            {
+              title: 'Nội dung', key: 'nd',
+              render: (_, l, i) => {
+                const doi = soSanhNoiDung(lichSu[i + 1]?.noiDung, l.noiDung, cap)
+                return (
+                  <Space orientation="vertical" size={2}>
+                    <Text strong>{tomTatNoiDung(l.noiDung, cap)}</Text>
+                    {doi.length > 0 && (
+                      <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: '#64748b' }}>
+                        {doi.slice(0, 8).map((d) => <li key={d}>{d}</li>)}
+                        {doi.length > 8 && <li>và {doi.length - 8} thay đổi khác</li>}
+                      </ul>
+                    )}
+                  </Space>
+                )
+              },
+            },
+            {
+              title: '', key: 'ac', width: 120, align: 'center',
+              render: (_, l, i) => coTheSua && i > 0
+                ? <Button size="small" onClick={() => onNap(l.noiDung)}>Nạp vào form</Button>
+                : null,
+            },
+          ]}
+        />
+      )}
+    </Drawer>
   )
 }
 
@@ -567,8 +661,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
 
 type DongBang =
   | (DongDinhMuc & { key: string; loai: 'dong'; stt: number })
-  | { key: string; loai: 'nhom'; ten: string }
-  | (TongNhom & { key: string; loai: 'tong' })
+  | { key: string; loai: 'nhom'; ten: string; tong?: TongNhom }
 
 const SO_LA_MA = ['I', 'II', 'III', 'IV']
 
@@ -584,16 +677,15 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
   for (const n of NHOM_DINH_MUC) {
     const ds = kq.dong.filter((d) => d.nhom === n.key)
     if (!ds.length) continue
-    data.push({ key: `nhom-${n.key}`, loai: 'nhom', ten: n.ten })
+    // Số cộng của nhóm nằm ngay trên dòng tiêu đề nhóm, không có dòng tổng riêng
+    data.push({ key: `nhom-${n.key}`, loai: 'nhom', ten: n.ten, tong: kq.tongNhom.find((x) => x.nhom === n.key) })
     ds.forEach((d, i) => data.push({ ...d, key: d.ma, loai: 'dong', stt: i + 1 }))
-    const t = kq.tongNhom.find((x) => x.nhom === n.key)
-    if (t) data.push({ ...t, key: `tong-${n.key}`, loai: 'tong' })
   }
 
-  const SO_COT = 10
-  const an = (r: DongBang) => (r.loai === 'nhom' ? { colSpan: 0 } : {})
   const laDong = (r: DongBang): r is Extract<DongBang, { loai: 'dong' }> => r.loai === 'dong'
-  const laTong = (r: DongBang): r is Extract<DongBang, { loai: 'tong' }> => r.loai === 'tong'
+  const tongCua = (r: DongBang) => (r.loai === 'nhom' ? r.tong : undefined)
+  /** Ô số cộng nằm trên dòng tiêu đề nhóm */
+  const so = (n: React.ReactNode) => <Text strong>{n}</Text>
   const soNhom = (nhom: string) => SO_LA_MA[NHOM_DINH_MUC.findIndex((n) => n.key === nhom)] ?? ''
   const tt = kq.toanTruong
   const nhomIV = kq.tongNhom.find((t) => !t.apDungDinhMuc)
@@ -627,41 +719,43 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
         pagination={false}
         dataSource={data}
         scroll={{ x: 1100 }}
-        rowClassName={(r) => (r.loai === 'nhom' ? 'dm-nhom' : r.loai === 'tong' ? 'dm-tong' : '')}
+        rowClassName={(r) => (r.loai === 'nhom' ? 'dm-nhom' : '')}
         columns={[
           {
             title: 'STT', key: 'stt', width: 50, align: 'center',
-            onCell: (r) => (r.loai === 'nhom' ? { colSpan: SO_COT, style: { textAlign: 'left' } } : r.loai === 'tong' ? { colSpan: 2 } : {}),
-            render: (_, r) => (r.loai === 'nhom'
-              ? <Text strong style={{ color: '#1e3a8a' }}>{r.ten}</Text>
-              : r.loai === 'tong' ? <Text strong>Cộng nhóm {soNhom(r.nhom)}</Text> : r.stt),
-          },
-          {
-            title: 'Vị trí việc làm', key: 'ten', width: 250, onCell: (r) => (r.loai === 'nhom' || r.loai === 'tong' ? { colSpan: 0 } : {}),
-            render: (_, r) => laDong(r) && (r.dongPhu ? <Text type="warning">{r.ten}</Text> : r.ten),
-          },
-          {
-            title: 'Căn cứ tính', key: 'cc', width: 260, onCell: an,
+            // Dòng tiêu đề nhóm gộp 3 cột đầu (STT, Vị trí, Căn cứ) để ghi tên nhóm; các cột số bên phải ghi số cộng
+            onCell: (r) => (r.loai === 'nhom' ? { colSpan: 3, style: { textAlign: 'left' } } : {}),
             render: (_, r) => {
-              if (laTong(r)) {
-                if (!r.apDungDinhMuc) return <Text type="secondary" style={{ fontSize: 12 }}>Không so sánh định mức</Text>
-                return r.coMatNgoai > 0
-                  ? <Text type="secondary" style={{ fontSize: 12 }}>{r.coMatNgoai} người ở vị trí chưa có định mức - không đưa vào so sánh</Text>
-                  : null
-              }
-              return laDong(r) && <Text type="secondary" style={{ fontSize: 12 }}>{r.canCu}</Text>
+              if (r.loai !== 'nhom') return r.stt
+              const t = r.tong
+              return (
+                <Space size={8} wrap>
+                  <Text strong style={{ color: '#1e3a8a' }}>{r.ten}</Text>
+                  {t && !t.apDungDinhMuc && <Text type="secondary" style={{ fontSize: 12, fontWeight: 400 }}>(chỉ đếm số có mặt, không so với định mức)</Text>}
+                  {t && t.coMatNgoai > 0 && <Text type="secondary" style={{ fontSize: 12, fontWeight: 400 }}>({t.coMatNgoai} người ở vị trí chưa có định mức, không đưa vào so sánh)</Text>}
+                </Space>
+              )
             },
           },
           {
-            title: 'Định mức theo quy định', key: 'dmt', width: 95, align: 'center', onCell: an,
+            title: 'Vị trí việc làm', key: 'ten', width: 250, onCell: (r) => (r.loai === 'nhom' ? { colSpan: 0 } : {}),
+            render: (_, r) => laDong(r) && (r.dongPhu ? <Text type="warning">{r.ten}</Text> : r.ten),
+          },
+          {
+            title: 'Căn cứ tính', key: 'cc', width: 260, onCell: (r) => (r.loai === 'nhom' ? { colSpan: 0 } : {}),
+            render: (_, r) => laDong(r) && <Text type="secondary" style={{ fontSize: 12 }}>{r.canCu}</Text>,
+          },
+          {
+            title: 'Định mức theo quy định', key: 'dmt', width: 95, align: 'center',
             render: (_, r) => {
-              if (laTong(r)) return r.apDungDinhMuc ? <Text strong>{fmt(r.dinhMucTinh)}</Text> : null
+              const t = tongCua(r)
+              if (t) return t.apDungDinhMuc ? so(fmt(t.dinhMucTinh)) : null
               return laDong(r) && (r.nhom === 'PHUC_VU' ? <Text type="secondary" style={{ fontSize: 12 }}>Không áp dụng</Text> : fmt(r.dinhMucTinh))
             },
           },
           {
             title: <Tooltip title="Trường nhập khi có căn cứ riêng (VD điểm trường lẻ, học sinh khuyết tật). Để trống thì dùng định mức theo quy định.">Điều chỉnh</Tooltip>,
-            key: 'tay', width: 100, align: 'center', onCell: an,
+            key: 'tay', width: 100, align: 'center',
             render: (_, r) => {
               if (!laDong(r) || r.nhom === 'PHUC_VU' || r.dongPhu) return null
               if (r.phanBoKiem) {
@@ -689,22 +783,26 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
             },
           },
           {
-            title: 'Định mức áp dụng', key: 'dm', width: 90, align: 'center', onCell: an,
-            render: (_, r) => laTong(r) ? (r.apDungDinhMuc ? <Text strong>{fmt(r.dinhMuc)}</Text> : null) : laDong(r) && r.nhom !== 'PHUC_VU' && (
+            title: 'Định mức áp dụng', key: 'dm', width: 90, align: 'center',
+            render: (_, r) => tongCua(r) ? (tongCua(r)!.apDungDinhMuc ? so(fmt(tongCua(r)!.dinhMuc)) : null) : laDong(r) && r.nhom !== 'PHUC_VU' && (
               <Text strong>{fmt(r.dinhMuc)}{(r.dinhMucNhapTay != null || (r.phanBoKiem && kq.phanBoKiem?.dong.find((d) => d.ma === r.ma)?.nhapTay != null)) && <Tag color="purple" style={{ marginInlineStart: 4, fontSize: 10, lineHeight: '14px', padding: '0 3px' }}>tay</Tag>}</Text>
             ),
           },
           {
             title: 'Có mặt',
             children: [
-              { title: 'Viên chức', key: 'vc', width: 75, align: 'center', onCell: an, render: (_, r) => laTong(r) ? <Text strong>{r.coMatVC}</Text> : laDong(r) && (r.coMatVC || '') },
-              { title: 'Hợp đồng', key: 'hd', width: 75, align: 'center', onCell: an, render: (_, r) => laTong(r) ? <Text strong>{r.coMatHD}</Text> : laDong(r) && (r.coMatHD || '') },
-              { title: 'Tổng', key: 'cm', width: 65, align: 'center', onCell: an, render: (_, r) => (laTong(r) || laDong(r)) && <Text strong>{r.coMat}</Text> },
+              { title: 'Viên chức', key: 'vc', width: 75, align: 'center', render: (_, r) => (tongCua(r) ? so(tongCua(r)!.coMatVC) : laDong(r) && (r.coMatVC || '')) },
+              { title: 'Hợp đồng', key: 'hd', width: 75, align: 'center', render: (_, r) => (tongCua(r) ? so(tongCua(r)!.coMatHD) : laDong(r) && (r.coMatHD || '')) },
+              { title: 'Tổng', key: 'cm', width: 65, align: 'center', render: (_, r) => (tongCua(r) ? so(tongCua(r)!.coMat) : laDong(r) && <Text strong>{r.coMat}</Text>) },
             ],
           },
           {
-            title: 'Thừa (+) / Thiếu (−)', key: 'cl', width: 95, align: 'center', onCell: an,
-            render: (_, r) => (laTong(r) || laDong(r)) && (r.nhom === 'PHUC_VU' ? null : <ChenhLech v={r.chenhLech} />),
+            title: 'Thừa (+) / Thiếu (-)', key: 'cl', width: 95, align: 'center',
+            render: (_, r) => {
+              const t = tongCua(r)
+              if (t) return t.apDungDinhMuc ? <ChenhLech v={t.chenhLech} /> : null
+              return laDong(r) && (r.nhom === 'PHUC_VU' ? null : <ChenhLech v={r.chenhLech} />)
+            },
           },
         ]}
         summary={() => (
@@ -746,7 +844,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
         nhân viên theo "Công việc cụ thể". Viên chức gồm biên chế và tập sự; còn lại tính là hợp đồng.
         {daDoi && ' Số liệu đang tính theo bản chưa lưu.'}
       </Text>
-      <style>{'.dm-nhom > td { background: #eff6ff !important; } .dm-tong > td { background: #f1f5f9 !important; border-bottom: 2px solid #cbd5e1 !important; }'}</style>
+      <style>{'.dm-nhom > td { background: #eff6ff !important; }'}</style>
     </>
   )
 }
@@ -1060,19 +1158,17 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
   for (const n of NHOM_DINH_MUC) {
     const ds = kq.dong.filter((d) => d.nhom === n.key)
     if (!ds.length) continue
-    aoa.push(['', n.ten])
+    const t = kq.tongNhom.find((x) => x.nhom === n.key)
+    aoa.push([
+      '', n.ten,
+      !t ? '' : !t.apDungDinhMuc ? 'Chỉ đếm số có mặt, không so với định mức' : t.coMatNgoai ? `${t.coMatNgoai} người ở vị trí chưa có định mức, không đưa vào so sánh` : '',
+      t?.apDungDinhMuc ? lamTron1(t.dinhMuc) : '', t?.coMatVC ?? '', t?.coMatHD ?? '', t?.coMat ?? '',
+      t?.chenhLech == null ? '' : lamTron1(t.chenhLech),
+    ])
     ds.forEach((d, i) => aoa.push([
       i + 1, d.ten, d.canCu, d.nhom === 'PHUC_VU' ? 'Không áp dụng' : so(d.dinhMuc),
       d.coMatVC, d.coMatHD, d.coMat, d.nhom === 'PHUC_VU' ? '' : so(d.chenhLech),
     ]))
-    const t = kq.tongNhom.find((x) => x.nhom === n.key)
-    if (t) {
-      aoa.push([
-        '', `Cộng nhóm ${SO_LA_MA[NHOM_DINH_MUC.indexOf(n)]}`,
-        !t.apDungDinhMuc ? 'Không so sánh định mức' : t.coMatNgoai ? `${t.coMatNgoai} người ở vị trí chưa có định mức - không so sánh` : '',
-        t.apDungDinhMuc ? lamTron1(t.dinhMuc) : '', t.coMatVC, t.coMatHD, t.coMat, t.chenhLech == null ? '' : lamTron1(t.chenhLech),
-      ])
-    }
   }
   const coDm = kq.tongNhom.filter((t) => t.apDungDinhMuc)
   aoa.push(['', 'Tổng toàn trường - nhóm I-III (so với định mức)', '', lamTron1(kq.tongDinhMuc),

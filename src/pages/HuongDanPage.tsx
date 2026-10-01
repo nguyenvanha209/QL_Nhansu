@@ -332,6 +332,9 @@ export default function HuongDanPage() {
           <li>Với nhân viên: kiểm tra <b>Công việc cụ thể</b> (kế toán, văn thư, thư viện, thiết bị, giáo vụ, y tế, tư vấn học sinh, bảo vệ, lao công, cấp dưỡng…). Hệ thống đã tự điền trước theo nhiệm vụ chính — sửa lại nếu chưa đúng. Ô này quyết định người đó thuộc nhóm <i>chuyên môn – hỗ trợ</i>, <i>phục vụ</i> hay <i>nuôi dưỡng</i> trên trang Tổng quan.</li>
           <li>Rà soát <b>Trạng thái công tác</b>: người đã chuyển ra ngoài phường, nghỉ hưu hoặc thôi việc phải đổi trạng thái, <i>không xóa hồ sơ</i> (xem mục VI).</li>
           <li>Với người hợp đồng: chọn đúng <b>Hình thức nhận lương</b>; lương khoán theo tháng thì chọn <i>Theo mức tiền</i> và nhập số tiền.</li>
+          <li>Kiểm tra <b>Mốc hưởng lương</b> đúng ngày trên quyết định xếp lương. Ô <b>Ngày nâng lương tiếp theo</b> ngay bên cạnh do hệ thống tự tính
+            (mốc + 3 năm với ngạch từ cao đẳng trở lên, + 2 năm với ngạch trung cấp trở xuống) — sửa mốc rồi bấm Lưu là ngày nâng lương được tính lại
+            và ghi vào lịch sử biến động.</li>
           <li>Mở trang <b>Rà soát ngạch – bậc</b> và xử lý hết các hồ sơ trường mình còn trong danh sách (xem mục VII).</li>
           <li>Đối chiếu <b>Bảng tổng hợp lương</b> trên hệ thống với bảng lương giấy tháng 6/2026 — báo lại nếu có sai lệch.</li>
         </ol>
@@ -693,7 +696,7 @@ export default function HuongDanPage() {
       <Section
         so="VII"
         tieuDe="Rà soát ngạch – bậc – hệ số"
-        moTa="Menu Rà soát ngạch – bậc (ngay dưới Bảng tổng hợp lương) liệt kê những hồ sơ đang công tác có mã ngạch, bậc, hệ số chưa khớp danh mục bảng lương. Hệ thống không tự sửa — trường đối chiếu quyết định xếp lương rồi vào hồ sơ để sửa."
+        moTa="Menu Rà soát ngạch – bậc (ngay dưới Bảng tổng hợp lương) liệt kê những hồ sơ đang công tác có mã ngạch, bậc, hệ số chưa khớp danh mục bảng lương, mốc hoặc ngày nâng lương sai, phụ cấp ghi trùng. Hệ thống không tự sửa — trường đối chiếu quyết định xếp lương rồi vào hồ sơ để sửa."
       >
         <div className="hd-tw">
           <table className="hd-table">
@@ -702,6 +705,8 @@ export default function HuongDanPage() {
               <tr><td><Tag color="orange">Hệ số không khớp bảng</Tag></td><td>Hệ số đang ghi khác hệ số của bậc đó trong bảng lương của mã ngạch.</td><td>Xem cột <b>Gợi ý</b>: nếu hệ số khớp bảng/bậc khác thì thường là <b>sai mã ngạch</b> hoặc <b>sai bậc</b> — sửa theo quyết định.</td></tr>
               <tr><td><Tag color="volcano">Bậc vượt bảng lương</Tag></td><td>Bậc lớn hơn số bậc của bảng lương mã đó.</td><td>Kiểm tra lại mã ngạch — thường là mã đang gán sai bảng.</td></tr>
               <tr><td><Tag color="red">Chưa có mã ngạch</Tag></td><td>Viên chức biên chế chưa khai mã ngạch/hạng.</td><td>Sửa hồ sơ, chọn mã ngạch/hạng.</td></tr>
+              <tr><td><Tag color="red">Phụ cấp ghi trùng</Tag></td><td>Cùng một loại phụ cấp có từ hai bản đang hưởng (thường do hai máy cùng sửa một hồ sơ).</td><td>Mở hồ sơ, kiểm tra đúng mức theo quyết định rồi bấm <b>Lưu</b> — bản thừa được đóng lại.</td></tr>
+              <tr><td><Tag color="orange">Mốc / ngày nâng lương sai</Tag></td><td>Mốc hưởng lương trống hoặc sai năm (VD năm 0205), hoặc ngày nâng lương tiếp theo không bằng mốc + thời gian giữ bậc (3 năm loại A, 2 năm loại B, C). Người ở bậc cuối không bị kiểm tra.</td><td>Mở hồ sơ, nhập đúng <b>Mốc hưởng lương</b> theo quyết định rồi <b>Lưu</b> — ngày nâng lương tự tính lại. Trường hợp bị kéo dài thời gian nâng lương do kỷ luật thì báo Phòng VH-XH.</td></tr>
               <tr><td><Tag color="red">Chưa có bậc, hệ số</Tag></td><td>Hồ sơ chưa có lương đang hưởng.</td><td>Viên chức: khai bậc lương. Hợp đồng lương khoán: chọn <i>Theo mức tiền</i> và nhập số tiền.</td></tr>
               <tr><td><Tag color="magenta">Có PC chức vụ nhưng không có chức vụ</Tag></td><td>Đang hưởng PC chức vụ mà hồ sơ không ghi chức vụ, không có bảo lưu.</td><td>Khai chức vụ (tổ trưởng, tổ phó…); nếu đã thôi chức vụ do sắp xếp thì khai bảo lưu, không thì gỡ phụ cấp.</td></tr>
               <tr><td><Tag color="magenta">Chức vụ lệch vị trí việc làm</Tag></td><td>Còn chức vụ Hiệu trưởng / Phó HT nhưng vị trí việc làm không phải CBQL (hoặc ngược lại) — thường là Phó HT đã về làm giáo viên nhưng chưa bỏ chức vụ.</td><td>Sửa hồ sơ, ô Chức vụ chọn <i>Không giữ chức vụ</i>; nếu do sắp xếp thì bật bảo lưu PC chức vụ.</td></tr>
@@ -743,12 +748,26 @@ export default function HuongDanPage() {
               <tr><td><b>Rà soát ngạch – bậc</b></td><td>Danh sách hồ sơ lệch mã ngạch, bậc, hệ số cần trường xử lý (mục VII).</td></tr>
               <tr><td><b>Đề xuất điều chỉnh hệ số lương - phụ cấp</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
               <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
-              <tr><td><b>Quy mô & định mức</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức.</td></tr>
+              <tr><td><b>Quy mô & định mức</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức; kế toán tính 01 người/trường.</td></tr>
               <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu (theo Nghị định 135/2020) để chủ động bố trí nhân sự.</td></tr>
               <tr><td><b>Báo cáo</b></td><td>Các biểu tổng hợp phục vụ báo cáo cấp trên, lọc theo đơn vị và loại hình lao động.</td></tr>
             </tbody>
           </table>
         </div>
+        <Paragraph strong style={{ marginTop: 16 }}>Trường THCS — phân bổ giáo viên kiêm nhiệm theo môn</Paragraph>
+        <Paragraph>
+          Định mức giáo viên THCS gồm phần <b>đứng lớp</b> từng môn (số tiết/tuần ÷ 19) và phần <b>kiêm nhiệm</b>
+          (dạy kiêm GDĐP, HĐTN-HN, chủ nhiệm 4 tiết/lớp, kiêm nhiệm khác). Phần kiêm nhiệm do trường phân bổ cho các môn
+          ở bảng <b>Phân bổ giáo viên kiêm nhiệm theo môn</b> (thẻ Định mức &amp; cơ cấu lao động):
+        </Paragraph>
+        <ul>
+          <li>Cột <b>Gợi ý</b>: hệ thống chia phần kiêm nhiệm theo tỷ lệ giờ đứng lớp của từng môn.</li>
+          <li>Cột <b>Trường điều chỉnh</b>: nhập số giáo viên kiêm nhiệm thực tế bố trí cho môn đó. Môn để trống tự nhận phần còn lại theo cùng tỷ lệ, nên tổng luôn cân.</li>
+          <li><b>Kế toán soát tổng</b> ở hai ô <i>Cần phân bổ</i> và <i>Đã phân bổ</i>: nhãn <Tag color="success">Khớp tổng</Tag> là đạt;
+            nhãn đỏ <i>Còn thiếu</i> / <i>Vượt</i> nghĩa là số trường điều chỉnh chưa khớp — sửa lại, hoặc để trống bớt môn cho hệ thống tự cân đối.
+            Nút <b>Dùng toàn bộ gợi ý</b> bỏ mọi điều chỉnh.</li>
+          <li>Bấm <b>Lưu quy mô</b> để ghi. Trang tổng hợp toàn phường gắn nhãn đỏ cho trường có phân bổ lệch; file Excel có thêm phần phân bổ này.</li>
+        </ul>
         <Paragraph>
           Ở các bảng danh sách, bấm vào <b>tiêu đề cột</b> để sắp xếp tăng hoặc giảm dần. Trang
           <b> Hồ sơ nhân sự</b> có bộ lọc theo đơn vị, loại hình lao động và trạng thái công tác (mặc định: đang công tác).

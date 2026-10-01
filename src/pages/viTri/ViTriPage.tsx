@@ -172,7 +172,7 @@ export default function ViTriPage() {
         },
         {
           title: 'Cô nuôi MN', dataIndex: 'chiTieuCoNuoi', key: 'ctcn', width: 90, align: 'center' as const,
-          render: (v: number, r: any) => r.rowType === 'subtotal' ? (v > 0 ? <Text strong>{v}</Text> : <Text type="secondary">—</Text>) : '',
+          render: (v: number, r: any) => r.rowType === 'subtotal' ? (v > 0 ? <Text strong>{v}</Text> : <Text type="secondary">-</Text>) : '',
         },
         {
           title: 'Hợp đồng', dataIndex: 'chiTieuHD', key: 'cthd', width: 90, align: 'center' as const,
@@ -282,10 +282,10 @@ export default function ViTriPage() {
 
       <Modal open={!!editing} title={`Giao chỉ tiêu: ${editing?.donViTen}`} onCancel={() => setEditing(null)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
-          <Form.Item name="chiTieuBienCheNganSach" label="Biên chế — Hưởng lương ngân sách" rules={[{ required: true }]}>
+          <Form.Item name="chiTieuBienCheNganSach" label="Biên chế - Hưởng lương ngân sách" rules={[{ required: true }]}>
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="chiTieuBienCheSuNghiep" label="Biên chế — Nguồn thu sự nghiệp" rules={[{ required: true }]}>
+          <Form.Item name="chiTieuBienCheSuNghiep" label="Biên chế - Nguồn thu sự nghiệp" rules={[{ required: true }]}>
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
           {editing?.donViLoai === 'MAM_NON' && (

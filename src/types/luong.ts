@@ -14,7 +14,7 @@ export interface HeSoLuong {
   deXuatId?: string
   isActive: boolean
   createdAt: string
-  /** Lần sửa gần nhất — phân định khi hai máy cùng sửa một bản ghi */
+  /** Lần sửa gần nhất - phân định khi hai máy cùng sửa một bản ghi */
   updatedAt?: string
   createdBy: string
 }
@@ -30,7 +30,7 @@ export interface PhuCapVienChuc {
   ghiChu?: string
   isActive: boolean
   createdAt: string
-  /** Lần sửa gần nhất — phân định khi hai máy cùng sửa một bản ghi */
+  /** Lần sửa gần nhất - phân định khi hai máy cùng sửa một bản ghi */
   updatedAt?: string
   createdBy: string
 }

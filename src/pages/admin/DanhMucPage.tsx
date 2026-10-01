@@ -70,11 +70,11 @@ function DonViTab() {
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 80 },
     { title: 'Tên trường', dataIndex: 'ten', key: 'ten' },
     { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 90, render: (v: string) => LOAI_DON_VI_LABELS[v as keyof typeof LOAI_DON_VI_LABELS] ?? v },
-    { title: 'Số lớp', dataIndex: 'soLop', key: 'sl', width: 75, align: 'center' as const, render: (v: number) => v ?? '—' },
+    { title: 'Số lớp', dataIndex: 'soLop', key: 'sl', width: 75, align: 'center' as const, render: (v: number) => v ?? '-' },
     {
       title: 'Hạng trường', key: 'hang', width: 95, align: 'center' as const,
       render: (_: any, r: any) => {
-        if (!r.soLop || r.loai === 'OTHER') return '—'
+        if (!r.soLop || r.loai === 'OTHER') return '-'
         const hang = getHangTruong(r.loai, r.soLop)
         return <Tag color={hang === 1 ? 'gold' : hang === 2 ? 'blue' : 'default'}>{HANG_TRUONG_LABELS[hang]}</Tag>
       },
@@ -174,7 +174,7 @@ function PhuCapTab() {
       title: 'Tên phụ cấp', dataIndex: 'ten', key: 'ten',
       render: (v: string, r: any) => PCUD_MUC_CU.has(r.ma) ? <Space size={6}>{v}<Tag>Mức cũ</Tag></Space> : v,
     },
-    { title: 'Công thức', dataIndex: 'loaiCongThuc', key: 'ct', render: (v: string) => CONG_THUC_LABELS[v as keyof typeof CONG_THUC_LABELS] ?? v ?? '—' },
+    { title: 'Công thức', dataIndex: 'loaiCongThuc', key: 'ct', render: (v: string) => CONG_THUC_LABELS[v as keyof typeof CONG_THUC_LABELS] ?? v ?? '-' },
     {
       title: 'Giá trị', dataIndex: 'giaTri', key: 'gt', width: 130,
       render: (v: number | null, r: any) => {
@@ -182,7 +182,7 @@ function PhuCapTab() {
         return r.loaiCongThuc === 'TIEN_MAT' ? `${v.toLocaleString()} đ` : r.loaiCongThuc === 'HE_SO' ? `+${v}` : `${v}%`
       },
     },
-    { title: 'Đối tượng / Căn cứ', dataIndex: 'moTa', key: 'moTa', render: (v?: string) => v ?? '—' },
+    { title: 'Đối tượng / Căn cứ', dataIndex: 'moTa', key: 'moTa', render: (v?: string) => v ?? '-' },
     { title: '', key: 'act', render: (_: any, r: any) => <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} /> },
   ]
 
@@ -262,9 +262,9 @@ function ChucVuTab() {
   const cols = [
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 150 },
     { title: 'Chức vụ', dataIndex: 'ten', key: 'ten', width: 170 },
-    { title: 'Áp dụng cho', dataIndex: 'apDung', key: 'apDung', width: 200, render: (v: string) => v ?? '—' },
-    { title: 'Căn cứ pháp lý', dataIndex: 'canCu', key: 'canCu', ellipsis: true, render: (v: string) => v ?? '—' },
-    { title: 'Ghi chú', dataIndex: 'moTa', key: 'moTa', ellipsis: true, render: (v: string) => v ?? '—' },
+    { title: 'Áp dụng cho', dataIndex: 'apDung', key: 'apDung', width: 200, render: (v: string) => v ?? '-' },
+    { title: 'Căn cứ pháp lý', dataIndex: 'canCu', key: 'canCu', ellipsis: true, render: (v: string) => v ?? '-' },
+    { title: 'Ghi chú', dataIndex: 'moTa', key: 'moTa', ellipsis: true, render: (v: string) => v ?? '-' },
     {
       title: '', key: 'act', width: 80,
       render: (_: any, r: any) => (
@@ -319,7 +319,7 @@ function VtvlTab() {
   const cols = [
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 150 },
     { title: 'VTVL', dataIndex: 'ten', key: 'ten', width: 200 },
-    { title: 'Mô tả', dataIndex: 'moTa', key: 'moTa', render: (v: string) => v ?? '—' },
+    { title: 'Mô tả', dataIndex: 'moTa', key: 'moTa', render: (v: string) => v ?? '-' },
     {
       title: '', key: 'act', width: 80,
       render: (_: any, r: any) => (

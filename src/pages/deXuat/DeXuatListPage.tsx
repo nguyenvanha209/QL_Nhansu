@@ -65,7 +65,7 @@ export default function DeXuatListPage() {
         )}
       </div>
 
-      {/* Hướng dẫn ngắn — đặt ngay trang đầu để người lập phiếu đọc trước khi tạo */}
+      {/* Hướng dẫn ngắn - đặt ngay trang đầu để người lập phiếu đọc trước khi tạo */}
       <Collapse
         size="small"
         defaultActiveKey={canCreate ? ['hd'] : []}
@@ -77,7 +77,7 @@ export default function DeXuatListPage() {
             <div style={{ fontSize: 13.5 }}>
               <ol style={{ margin: '0 0 8px', paddingLeft: 18, lineHeight: 1.65 }}>
                 <li><b>Tạo đề xuất</b> → chọn loại → thêm người (một phiếu gộp nhiều người cùng đợt).</li>
-                <li>Kiểm tra cột <b>Nội dung điều chỉnh (cũ → mới)</b>: ngạch – bậc – hệ số – mốc hưởng; đính kèm minh chứng nếu loại bắt buộc (tối đa 3 MB/file).</li>
+                <li>Kiểm tra cột <b>Nội dung điều chỉnh (cũ → mới)</b>: ngạch - bậc - hệ số - mốc hưởng; đính kèm minh chứng nếu loại bắt buộc (tối đa 3 MB/file).</li>
                 <li><b>Lưu &amp; Nộp</b> → Hiệu trưởng → VH-XH → Lãnh đạo; phê duyệt xong tự ghi vào hồ sơ. Bị <i>Yêu cầu bổ sung</i> thì <b>Sửa &amp; trình lại</b>.</li>
               </ol>
               <table className="dx-hd-table">

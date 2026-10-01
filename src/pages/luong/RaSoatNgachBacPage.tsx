@@ -34,7 +34,7 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   TEN_LOI_FONT: { ten: 'Tên lỗi font (TCVN3)', mau: 'purple' },
 }
 
-// Ký tự bảng mã TCVN3 hiển thị sai trong Unicode (VD "NGUYÔN THÞ LUYªN") — tên tiếng Việt không bao giờ có
+// Ký tự bảng mã TCVN3 hiển thị sai trong Unicode (VD "NGUYÔN THÞ LUYªN") - tên tiếng Việt không bao giờ có
 const KY_TU_TCVN3 = /[¡-¿×Þ÷þ]/
 
 interface DongRaSoat {
@@ -136,20 +136,20 @@ export default function RaSoatNgachBacPage() {
         chiTiet.push(
           `${loaiPhuCaps.find((l) => l.id === a[0].loaiPhuCapId)?.ten ?? 'Phụ cấp'} có ${a.length} bản đang hưởng: `
           + a.map((p) => `${mucPc(p)} từ ${formatDate(p.ngayHieuLuc)}`).join('; ')
-          + ` — bảng lương đang dùng ${mucPc(dung)}. Mở hồ sơ, kiểm tra đúng mức rồi Lưu để đóng bản còn lại`,
+          + ` - bảng lương đang dùng ${mucPc(dung)}. Mở hồ sơ, kiểm tra đúng mức rồi Lưu để đóng bản còn lại`,
         )
       }
       // Có dòng PC chức vụ mà hồ sơ không ghi chức vụ và không có bảo lưu còn hạn → dễ là hưởng sót sau khi thôi chức vụ
       const pccv = pcChucVuId ? phuCaps.find((p) => p.vienChucId === vc.id && p.isActive && p.loaiPhuCapId === pcChucVuId) : undefined
       if (pccv && pccv.giaTri > 0 && !vc.chucVu && !dangBaoLuuPccv(vc)) {
         loi.push('PCCV_KHONG_CHUC_VU')
-        chiTiet.push(`Đang hưởng PC chức vụ ${pccv.giaTri} nhưng hồ sơ không ghi chức vụ — khai chức vụ (tổ trưởng, tổ phó…) hoặc gỡ phụ cấp nếu đã thôi chức vụ`)
+        chiTiet.push(`Đang hưởng PC chức vụ ${pccv.giaTri} nhưng hồ sơ không ghi chức vụ - khai chức vụ (tổ trưởng, tổ phó…) hoặc gỡ phụ cấp nếu đã thôi chức vụ`)
       }
       // VD Phó HT đã về làm giáo viên (VTVL Giáo viên) nhưng còn giữ chức vụ P.HT → vẫn hưởng PCCV Phó HT
       const laChucVuQuanLy = vc.chucVu === 'HT' || vc.chucVu === 'P.HT'
       if (laChucVuQuanLy && vc.vtvl && vc.vtvl !== 'CBQL') {
         loi.push('CHUC_VU_LECH_VTVL')
-        chiTiet.push(`Chức vụ ${vc.chucVu === 'HT' ? 'Hiệu trưởng' : 'Phó hiệu trưởng'} nhưng vị trí việc làm không phải CBQL — nếu đã về làm giáo viên thì chọn "Không giữ chức vụ" (bật bảo lưu PCCV nếu do sắp xếp)`)
+        chiTiet.push(`Chức vụ ${vc.chucVu === 'HT' ? 'Hiệu trưởng' : 'Phó hiệu trưởng'} nhưng vị trí việc làm không phải CBQL - nếu đã về làm giáo viên thì chọn "Không giữ chức vụ" (bật bảo lưu PCCV nếu do sắp xếp)`)
       } else if (!laChucVuQuanLy && vc.vtvl === 'CBQL') {
         loi.push('CHUC_VU_LECH_VTVL')
         chiTiet.push('Vị trí việc làm CBQL nhưng không có chức vụ Hiệu trưởng / Phó hiệu trưởng')
@@ -157,17 +157,17 @@ export default function RaSoatNgachBacPage() {
       const conNgay = soNgayConBaoLuu(vc)
       if (conNgay !== undefined && conNgay >= 0 && conNgay <= 60) {
         loi.push('BL_PCCV_SAP_HET')
-        chiTiet.push(`Bảo lưu PC chức vụ hết ngày ${formatDate(vc.baoLuuPccv!.denNgay)} (còn ${conNgay} ngày) — sau đó tự về mức theo chức vụ hiện tại`)
+        chiTiet.push(`Bảo lưu PC chức vụ hết ngày ${formatDate(vc.baoLuuPccv!.denNgay)} (còn ${conNgay} ngày) - sau đó tự về mức theo chức vụ hiện tại`)
       }
       if (vc.vtvl === 'NHAN_VIEN' && !vc.congViec) {
         loi.push('THIEU_CONG_VIEC')
-        chiTiet.push('Nhân viên chưa chọn công việc cụ thể (kế toán, bảo vệ, cấp dưỡng…) — cần để chia nhóm trên Tổng quan')
+        chiTiet.push('Nhân viên chưa chọn công việc cụ thể (kế toán, bảo vệ, cấp dưỡng…) - cần để chia nhóm trên Tổng quan')
       }
       if (dsHs.length > 1) {
         loi.push('NHIEU_BAN_GHI_LUONG')
-        chiTiet.push(`Có ${dsHs.length} bản ghi lương cùng đang áp dụng (${dsHs.map((h) => `bậc ${h.bac} – ${h.heSo}`).join('; ')}) — giữ một bản đúng theo quyết định, liên hệ quản trị để gỡ bản thừa`)
+        chiTiet.push(`Có ${dsHs.length} bản ghi lương cùng đang áp dụng (${dsHs.map((h) => `bậc ${h.bac} - ${h.heSo}`).join('; ')}) - giữ một bản đúng theo quyết định, liên hệ quản trị để gỡ bản thừa`)
       }
-      // Lương theo mức tiền: không có ngạch, bậc, hệ số để đối chiếu — chỉ kiểm tra tên, công việc
+      // Lương theo mức tiền: không có ngạch, bậc, hệ số để đối chiếu - chỉ kiểm tra tên, công việc
       const theoTien = nhanLuongTheoTien(vc)
       if (!cd && bienChe) {
         loi.push('THIEU_NGACH')
@@ -201,12 +201,12 @@ export default function RaSoatNgachBacPage() {
         const cdLuong = hs.chucDanhId ?? cd?.id
         if (!ngayHopLe(hs.ngayHieuLuc)) {
           loi.push('NANG_LUONG_LECH')
-          chiTiet.push(`Mốc hưởng lương ${hs.ngayHieuLuc ? `"${formatDate(hs.ngayHieuLuc) || hs.ngayHieuLuc}" sai năm` : 'chưa có'} — nhập lại mốc trong hồ sơ để tính ngày nâng lương`)
+          chiTiet.push(`Mốc hưởng lương ${hs.ngayHieuLuc ? `"${formatDate(hs.ngayHieuLuc) || hs.ngayHieuLuc}" sai năm` : 'chưa có'} - nhập lại mốc trong hồ sơ để tính ngày nâng lương`)
         } else if (!laBacCuoi(cdLuong, hs.bac, bacLuongs)) {
           const dung = tinhNgayNangTiep(hs.ngayHieuLuc, cdLuong, hs.bac, bacLuongs, chucDanhs)
           if (dung && dung !== hs.ngayNangLuongTiepTheo) {
             loi.push('NANG_LUONG_LECH')
-            chiTiet.push(`Mốc hưởng ${formatDate(hs.ngayHieuLuc)}, ngày nâng lương tiếp đang ghi ${formatDate(hs.ngayNangLuongTiepTheo) || '(trống)'} — đúng phải là ${formatDate(dung)}. Mở hồ sơ, bấm Lưu để tính lại`)
+            chiTiet.push(`Mốc hưởng ${formatDate(hs.ngayHieuLuc)}, ngày nâng lương tiếp đang ghi ${formatDate(hs.ngayNangLuongTiepTheo) || '(trống)'} - đúng phải là ${formatDate(dung)}. Mở hồ sơ, bấm Lưu để tính lại`)
           }
         }
       }
@@ -314,14 +314,14 @@ export default function RaSoatNgachBacPage() {
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <Title level={4} style={{ margin: 0 }}>Rà soát ngạch – bậc – hệ số ({data.length})</Title>
+        <Title level={4} style={{ margin: 0 }}>Rà soát ngạch - bậc - hệ số ({data.length})</Title>
         <Button icon={<FileExcelOutlined />} onClick={xuatExcel} disabled={!data.length}>Xuất Excel</Button>
       </div>
       <Alert
         type="info"
         showIcon
         style={{ marginBottom: 12 }}
-        title="Danh sách hồ sơ đang công tác có mã ngạch, bậc, hệ số không khớp danh mục bảng lương. Hệ thống không tự sửa — trường kiểm tra quyết định xếp lương rồi vào hồ sơ để sửa mã ngạch hoặc bậc cho đúng. Người nhận lương theo mức tiền chỉ được kiểm tra họ tên và công việc cụ thể."
+        title="Danh sách hồ sơ đang công tác có mã ngạch, bậc, hệ số không khớp danh mục bảng lương. Hệ thống không tự sửa - trường kiểm tra quyết định xếp lương rồi vào hồ sơ để sửa mã ngạch hoặc bậc cho đúng. Người nhận lương theo mức tiền chỉ được kiểm tra họ tên và công việc cụ thể."
       />
       <Space wrap style={{ marginBottom: 12 }}>
         {(Object.keys(LECH_LABELS) as LoaiLech[]).filter((l) => demTheoLoi[l]).map((l) => (

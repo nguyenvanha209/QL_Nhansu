@@ -20,7 +20,7 @@ import { logAction } from '@/utils/auditLogger'
 import { exportToExcel } from '@/utils/exportExcel'
 import { formatDatetime } from '@/utils/helpers'
 import {
-  type CapHoc, type DongDinhMuc, type KetQuaDinhMuc, type DongPhanBoKiem,
+  type CapHoc, type DongDinhMuc, type KetQuaDinhMuc, type DongPhanBoKiem, type TongNhom,
   laCapHoc, TEN_CAP, THU_TU_CAP, KHOI, NHOM_DINH_MUC, MON_GIANG_DAY, CO_HAI_BUOI, KHOI_TIN_TU_CHON,
   namHocHienHanh, dsNamHoc, idQuyMo, tinhDinhMuc, tongQuyMo, goiYMonDay, tenMonDay, fmt, lamTron1, nhomNguoi,
 } from '@/utils/dinhMuc'
@@ -56,7 +56,7 @@ function vanTay(q: QuyMoTruong | undefined, cap: CapHoc): string {
 }
 
 function ChenhLech({ v }: { v: number | null }) {
-  if (v == null) return <Text type="secondary">—</Text>
+  if (v == null) return <Text type="secondary">-</Text>
   const r = lamTron1(v)
   if (r === 0) return <Tag color="success" style={{ marginInlineEnd: 0 }}>Đủ</Tag>
   return (
@@ -175,7 +175,7 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
     'Thừa(+)/thiếu(-) toàn trường': r.kq ? lamTron1(r.kq.coMatCoDinhMuc - r.kq.tongDinhMuc) : '',
     'Giáo viên chưa phân môn': r.kq?.chuaPhanMon ?? '',
     'Kiêm nhiệm THCS (cần / đã phân bổ)': r.kq?.phanBoKiem ? `${lamTron1(r.kq.phanBoKiem.tong)} / ${lamTron1(r.kq.phanBoKiem.daPhanBo)}${r.kq.phanBoKiem.khop ? '' : ' (lệch)'}` : '',
-    'Cập nhật': r.qm ? `${formatDatetime(r.qm.updatedAt)} — ${r.qm.nguoiCapNhat ?? ''}` : 'Chưa khai báo',
+    'Cập nhật': r.qm ? `${formatDatetime(r.qm.updatedAt)} - ${r.qm.nguoiCapNhat ?? ''}` : 'Chưa khai báo',
   })), `Dinh-muc-toan-phuong-${namHoc}`, 'Tổng hợp')
 
   return (
@@ -202,24 +202,24 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
             title: 'Trường', key: 'ten', width: 200,
             render: (_: unknown, r: (typeof rows)[number]) => <Button type="link" style={{ padding: 0, height: 'auto', whiteSpace: 'normal', textAlign: 'left' }} onClick={() => onChon(r.dv.id)}>{r.dv.ten}</Button>,
           },
-          { title: 'Số lớp', key: 'lop', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.tongLop ?? '—' },
-          { title: 'Học sinh', key: 'hs', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? r.kq.tongHS.toLocaleString('vi-VN') : '—' },
-          { title: 'BQ HS/lớp', key: 'bq', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.binhQuan) : '—' },
-          { title: 'Hạng', key: 'hang', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <Tag color="blue">{HANG_TRUONG_LABELS[r.kq.hang]}</Tag> : '—' },
+          { title: 'Số lớp', key: 'lop', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.tongLop ?? '-' },
+          { title: 'Học sinh', key: 'hs', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? r.kq.tongHS.toLocaleString('vi-VN') : '-' },
+          { title: 'BQ HS/lớp', key: 'bq', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.binhQuan) : '-' },
+          { title: 'Hạng', key: 'hang', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <Tag color="blue">{HANG_TRUONG_LABELS[r.kq.hang]}</Tag> : '-' },
           {
             title: 'Giáo viên',
             children: [
-              { title: 'Định mức', key: 'gvdm', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.gvDinhMuc) : '—' },
-              { title: 'Có mặt', key: 'gvcm', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.gvCoMat ?? '—' },
-              { title: 'Thừa/thiếu', key: 'gvcl', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <ChenhLech v={r.kq.gvCoMat - r.kq.gvDinhMuc} /> : '—' },
+              { title: 'Định mức', key: 'gvdm', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.gvDinhMuc) : '-' },
+              { title: 'Có mặt', key: 'gvcm', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.gvCoMat ?? '-' },
+              { title: 'Thừa/thiếu', key: 'gvcl', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <ChenhLech v={r.kq.gvCoMat - r.kq.gvDinhMuc} /> : '-' },
             ],
           },
           {
             title: 'Toàn trường (vị trí có định mức)',
             children: [
-              { title: 'Định mức', key: 'dm', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.tongDinhMuc) : '—' },
-              { title: 'Có mặt', key: 'cm', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.coMatCoDinhMuc ?? '—' },
-              { title: 'Thừa/thiếu', key: 'cl', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <ChenhLech v={r.kq.coMatCoDinhMuc - r.kq.tongDinhMuc} /> : '—' },
+              { title: 'Định mức', key: 'dm', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.tongDinhMuc) : '-' },
+              { title: 'Có mặt', key: 'cm', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.coMatCoDinhMuc ?? '-' },
+              { title: 'Thừa/thiếu', key: 'cl', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <ChenhLech v={r.kq.coMatCoDinhMuc - r.kq.tongDinhMuc} /> : '-' },
             ],
           },
           {
@@ -367,7 +367,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
       logAction(currentUser.id, currentUser.fullName, 'UPDATE', 'DanhMuc', {
         entityId: id,
         donViId: donVi.id,
-        moTa: `Khai báo quy mô năm học ${namHoc} — ${donVi.ten}: ${tongLop} lớp, ${tongHS} học sinh`
+        moTa: `Khai báo quy mô năm học ${namHoc} - ${donVi.ten}: ${tongLop} lớp, ${tongHS} học sinh`
           + (capNhatSoLop ? `; số lớp xếp hạng ${donVi.soLop ?? 'chưa có'} → ${tongLop}` : ''),
       })
       message.success(capNhatSoLop ? 'Đã lưu quy mô và cập nhật số lớp xếp hạng trường' : 'Đã lưu quy mô trường lớp')
@@ -411,7 +411,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
           <Text strong style={{ fontSize: 16 }}>{donVi.ten}</Text>
           <Tag>{TEN_CAP[cap]}</Tag>
           {quyMoDaLuu
-            ? <Text type="secondary" style={{ fontSize: 12 }}>Cập nhật {formatDatetime(quyMoDaLuu.updatedAt)} — {quyMoDaLuu.nguoiCapNhat}</Text>
+            ? <Text type="secondary" style={{ fontSize: 12 }}>Cập nhật {formatDatetime(quyMoDaLuu.updatedAt)} - {quyMoDaLuu.nguoiCapNhat}</Text>
             : <Tag color="warning">Chưa khai báo năm học {namHoc}</Tag>}
         </Space>
         <Space wrap>
@@ -428,7 +428,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
           )}
         </Space>
       </div>
-      {daDoi && <Alert type="warning" showIcon style={{ marginBottom: 8 }} title="Có thay đổi chưa lưu — số liệu định mức đang tính theo bản đang nhập" />}
+      {daDoi && <Alert type="warning" showIcon style={{ marginBottom: 8 }} title="Có thay đổi chưa lưu - số liệu định mức đang tính theo bản đang nhập" />}
       <Tabs items={items} />
     </>
   )
@@ -476,7 +476,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
                   { title: 'Trong đó học 2 buổi/ngày', children: [cot('Số lớp', 'soLop2Buoi'), cot('Số học sinh', 'soHocSinh2Buoi')] },
                 ]
               : [cot('Số nhóm, lớp', 'soLop'), cot('Số trẻ', 'soHocSinh')]),
-            { title: 'Bình quân/lớp', key: 'bq', width: 90, align: 'center' as const, render: (_: unknown, r: DongKhoi) => r.soLop ? fmt(r.soHocSinh / r.soLop) : '—' },
+            { title: 'Bình quân/lớp', key: 'bq', width: 90, align: 'center' as const, render: (_: unknown, r: DongKhoi) => r.soLop ? fmt(r.soHocSinh / r.soLop) : '-' },
           ]}
           summary={() => (
             <Table.Summary.Row style={{ background: '#f8fafc', fontWeight: 600 }}>
@@ -485,7 +485,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
               <Table.Summary.Cell index={2} align="center">{kq.tongHS.toLocaleString('vi-VN')}</Table.Summary.Cell>
               {haiBuoi && <Table.Summary.Cell index={3} align="center">{kq.tongLop2Buoi}</Table.Summary.Cell>}
               {haiBuoi && <Table.Summary.Cell index={4} align="center">{kq.tongHS2Buoi.toLocaleString('vi-VN')}</Table.Summary.Cell>}
-              <Table.Summary.Cell index={haiBuoi ? 5 : 3} align="center">{kq.tongLop ? fmt(kq.binhQuan) : '—'}</Table.Summary.Cell>
+              <Table.Summary.Cell index={haiBuoi ? 5 : 3} align="center">{kq.tongLop ? fmt(kq.binhQuan) : '-'}</Table.Summary.Cell>
             </Table.Summary.Row>
           )}
         />
@@ -500,7 +500,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
             type="warning"
             showIcon
             style={{ marginTop: 8 }}
-            title="Chưa nhập số lớp học 2 buổi/ngày — định mức đang tính toàn bộ là lớp 1 buổi (1,2 giáo viên/lớp)"
+            title="Chưa nhập số lớp học 2 buổi/ngày - định mức đang tính toàn bộ là lớp 1 buổi (1,2 giáo viên/lớp)"
           />
         )}
         {cap === 'MAM_NON' && (
@@ -524,7 +524,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
               options={KHOI_TIN_TU_CHON.map((k) => ({ value: k, label: `Khối ${k.slice(1)}` }))}
             />
             <Text type="secondary" style={{ fontSize: 12 }}>
-              Khối 3–5 bắt buộc theo chương trình GDPT 2018; khối 1, 2 tính thêm 1 tiết/tuần nếu trường có dạy.
+              Khối 3-5 bắt buộc theo chương trình GDPT 2018; khối 1, 2 tính thêm 1 tiết/tuần nếu trường có dạy.
             </Text>
           </div>
         )}
@@ -532,7 +532,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
           <Text strong>Ghi chú, căn cứ số liệu</Text>
           {coTheSua
             ? <Input.TextArea rows={2} value={nhap.ghiChu} onChange={(e) => setNhap((q) => ({ ...q, ghiChu: e.target.value }))} placeholder="VD: Theo kế hoạch tuyển sinh năm học 2026-2027 đã được phê duyệt" style={{ marginTop: 6 }} />
-            : <div style={{ marginTop: 4 }}><Text type="secondary">{nhap.ghiChu || '—'}</Text></div>}
+            : <div style={{ marginTop: 4 }}><Text type="secondary">{nhap.ghiChu || '-'}</Text></div>}
         </div>
       </Col>
       <Col xs={24} xl={haiBuoi ? 8 : 10}>
@@ -540,7 +540,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
           <Col span={12}><Card size="small"><Statistic title="Tổng số lớp" value={kq.tongLop} /></Card></Col>
           <Col span={12}><Card size="small"><Statistic title={cap === 'MAM_NON' ? 'Tổng số trẻ' : 'Tổng học sinh'} value={kq.tongHS} groupSeparator="." /></Card></Col>
           <Col span={12}><Card size="small"><Statistic title="Bình quân/lớp" value={kq.tongLop ? lamTron1(kq.binhQuan) : 0} precision={1} decimalSeparator="," /></Card></Col>
-          <Col span={12}><Card size="small"><Statistic title="Hạng trường" value={kq.tongLop ? HANG_TRUONG_LABELS[kq.hang] : '—'} /></Card></Col>
+          <Col span={12}><Card size="small"><Statistic title="Hạng trường" value={kq.tongLop ? HANG_TRUONG_LABELS[kq.hang] : '-'} /></Card></Col>
         </Row>
         <Alert
           type="info"
@@ -552,7 +552,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
               <div>{NGUONG_HANG[cap]} (TT 19/2023, TT 20/2023). Hạng trường quyết định số phó hiệu trưởng và phụ cấp chức vụ (TT 33/2005).</div>
               <div style={{ marginTop: 6 }}>
                 {hienHanh
-                  ? <>Đây là năm học hiện hành: khi lưu, tổng số lớp sẽ thành số lớp xếp hạng của trường (hiện ghi {donVi.soLop ?? 'chưa có'} lớp — {donVi.soLop ? HANG_TRUONG_LABELS[getHangTruong(cap, donVi.soLop)] : 'chưa xếp hạng'}).</>
+                  ? <>Đây là năm học hiện hành: khi lưu, tổng số lớp sẽ thành số lớp xếp hạng của trường (hiện ghi {donVi.soLop ?? 'chưa có'} lớp - {donVi.soLop ? HANG_TRUONG_LABELS[getHangTruong(cap, donVi.soLop)] : 'chưa xếp hạng'}).</>
                   : <>Năm học {namHoc} chỉ dùng để tính định mức, không thay đổi hạng trường hiện tại.</>}
               </div>
             </div>
@@ -565,14 +565,19 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
 
 // ───────────────────────────── Thẻ: Định mức & cơ cấu ─────────────────────────────
 
-type DongBang = (DongDinhMuc & { key: string; loai: 'dong'; stt: number }) | { key: string; loai: 'nhom'; ten: string }
+type DongBang =
+  | (DongDinhMuc & { key: string; loai: 'dong'; stt: number })
+  | { key: string; loai: 'nhom'; ten: string }
+  | (TongNhom & { key: string; loai: 'tong' })
+
+const SO_LA_MA = ['I', 'II', 'III', 'IV']
 
 function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
   kq: KetQuaDinhMuc; nhap: QuyMoTruong; coTheSua: boolean; datNhapTay: (ma: string, v: number | null) => void
   datKiem: (ma: string | null, v: number | null) => void; daDoi: boolean
 }) {
   if (!kq.tongLop) {
-    return <Empty description={`Chưa có số lớp — khai báo quy mô ở thẻ "Khai báo quy mô" để tính định mức`} />
+    return <Empty description={`Chưa có số lớp - khai báo quy mô ở thẻ "Khai báo quy mô" để tính định mức`} />
   }
 
   const data: DongBang[] = []
@@ -581,11 +586,18 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
     if (!ds.length) continue
     data.push({ key: `nhom-${n.key}`, loai: 'nhom', ten: n.ten })
     ds.forEach((d, i) => data.push({ ...d, key: d.ma, loai: 'dong', stt: i + 1 }))
+    const t = kq.tongNhom.find((x) => x.nhom === n.key)
+    if (t) data.push({ ...t, key: `tong-${n.key}`, loai: 'tong' })
   }
 
   const SO_COT = 10
   const an = (r: DongBang) => (r.loai === 'nhom' ? { colSpan: 0 } : {})
   const laDong = (r: DongBang): r is Extract<DongBang, { loai: 'dong' }> => r.loai === 'dong'
+  const laTong = (r: DongBang): r is Extract<DongBang, { loai: 'tong' }> => r.loai === 'tong'
+  const soNhom = (nhom: string) => SO_LA_MA[NHOM_DINH_MUC.findIndex((n) => n.key === nhom)] ?? ''
+  const tt = kq.toanTruong
+  const nhomIV = kq.tongNhom.find((t) => !t.apDungDinhMuc)
+  const ngoai = kq.tongNhom.reduce((s, t) => s + t.coMatNgoai, 0)
 
   return (
     <>
@@ -593,7 +605,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
         type="info"
         showIcon
         style={{ marginBottom: 12 }}
-        title={`Định mức giáo viên: ${fmt(kq.gvDinhMuc)} — có mặt ${kq.gvCoMat}`}
+        title={`Định mức giáo viên: ${fmt(kq.gvDinhMuc)} - có mặt ${kq.gvCoMat}`}
         description={<ul style={{ margin: 0, paddingLeft: 18 }}>{kq.dienGiai.map((s) => <li key={s}>{s}</li>)}</ul>}
       />
       {kq.cap === 'TIEU_HOC' && kq.tongLop2Buoi === 0 && (
@@ -601,12 +613,12 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
           type="error"
           showIcon
           style={{ marginBottom: 12 }}
-          title="Chưa nhập số lớp học 2 buổi/ngày — định mức giáo viên đang tính toàn bộ là lớp 1 buổi (1,2 GV/lớp), thấp hơn thực tế"
+          title="Chưa nhập số lớp học 2 buổi/ngày - định mức giáo viên đang tính toàn bộ là lớp 1 buổi (1,2 GV/lớp), thấp hơn thực tế"
           description='Nhập cột "Trong đó học 2 buổi/ngày" ở thẻ "Khai báo quy mô" (lớp 2 buổi tính 1,5 GV/lớp).'
         />
       )}
       {kq.chuaPhanMon > 0 && (
-        <Alert type="warning" showIcon style={{ marginBottom: 12 }} title={`${kq.chuaPhanMon} giáo viên chưa phân công môn — chưa đối chiếu được định mức theo từng môn`} description='Vào thẻ "Phân công môn giảng dạy" để gán môn (có nút gợi ý tự động theo nhiệm vụ chính).' />
+        <Alert type="warning" showIcon style={{ marginBottom: 12 }} title={`${kq.chuaPhanMon} giáo viên chưa phân công môn - chưa đối chiếu được định mức theo từng môn`} description='Vào thẻ "Phân công môn giảng dạy" để gán môn (có nút gợi ý tự động theo nhiệm vụ chính).' />
       )}
       {kq.phanBoKiem && <BangPhanBoKiem kq={kq} coTheSua={coTheSua} datKiem={datKiem} />}
       <Table<DongBang>
@@ -615,24 +627,37 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
         pagination={false}
         dataSource={data}
         scroll={{ x: 1100 }}
-        rowClassName={(r) => (r.loai === 'nhom' ? 'dm-nhom' : '')}
+        rowClassName={(r) => (r.loai === 'nhom' ? 'dm-nhom' : r.loai === 'tong' ? 'dm-tong' : '')}
         columns={[
           {
             title: 'STT', key: 'stt', width: 50, align: 'center',
-            onCell: (r) => (r.loai === 'nhom' ? { colSpan: SO_COT, style: { textAlign: 'left' } } : {}),
-            render: (_, r) => (r.loai === 'nhom' ? <Text strong style={{ color: '#1e3a8a' }}>{r.ten}</Text> : r.stt),
+            onCell: (r) => (r.loai === 'nhom' ? { colSpan: SO_COT, style: { textAlign: 'left' } } : r.loai === 'tong' ? { colSpan: 2 } : {}),
+            render: (_, r) => (r.loai === 'nhom'
+              ? <Text strong style={{ color: '#1e3a8a' }}>{r.ten}</Text>
+              : r.loai === 'tong' ? <Text strong>Cộng nhóm {soNhom(r.nhom)}</Text> : r.stt),
           },
           {
-            title: 'Vị trí việc làm', key: 'ten', width: 250, onCell: an,
+            title: 'Vị trí việc làm', key: 'ten', width: 250, onCell: (r) => (r.loai === 'nhom' || r.loai === 'tong' ? { colSpan: 0 } : {}),
             render: (_, r) => laDong(r) && (r.dongPhu ? <Text type="warning">{r.ten}</Text> : r.ten),
           },
           {
             title: 'Căn cứ tính', key: 'cc', width: 260, onCell: an,
-            render: (_, r) => laDong(r) && <Text type="secondary" style={{ fontSize: 12 }}>{r.canCu}</Text>,
+            render: (_, r) => {
+              if (laTong(r)) {
+                if (!r.apDungDinhMuc) return <Text type="secondary" style={{ fontSize: 12 }}>Không so sánh định mức</Text>
+                return r.coMatNgoai > 0
+                  ? <Text type="secondary" style={{ fontSize: 12 }}>{r.coMatNgoai} người ở vị trí chưa có định mức - không đưa vào so sánh</Text>
+                  : null
+              }
+              return laDong(r) && <Text type="secondary" style={{ fontSize: 12 }}>{r.canCu}</Text>
+            },
           },
           {
             title: 'Định mức theo quy định', key: 'dmt', width: 95, align: 'center', onCell: an,
-            render: (_, r) => laDong(r) && (r.nhom === 'PHUC_VU' ? <Text type="secondary" style={{ fontSize: 12 }}>Không áp dụng</Text> : fmt(r.dinhMucTinh)),
+            render: (_, r) => {
+              if (laTong(r)) return r.apDungDinhMuc ? <Text strong>{fmt(r.dinhMucTinh)}</Text> : null
+              return laDong(r) && (r.nhom === 'PHUC_VU' ? <Text type="secondary" style={{ fontSize: 12 }}>Không áp dụng</Text> : fmt(r.dinhMucTinh))
+            },
           },
           {
             title: <Tooltip title="Trường nhập khi có căn cứ riêng (VD điểm trường lẻ, học sinh khuyết tật). Để trống thì dùng định mức theo quy định.">Điều chỉnh</Tooltip>,
@@ -656,7 +681,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
                   max={r.toiDa ?? 200}
                   step={1}
                   precision={1}
-                  placeholder="—"
+                  placeholder="-"
                   onChange={(v) => datNhapTay(r.ma, v)}
                   style={{ width: 80 }}
                 />
@@ -665,31 +690,55 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
           },
           {
             title: 'Định mức áp dụng', key: 'dm', width: 90, align: 'center', onCell: an,
-            render: (_, r) => laDong(r) && r.nhom !== 'PHUC_VU' && (
+            render: (_, r) => laTong(r) ? (r.apDungDinhMuc ? <Text strong>{fmt(r.dinhMuc)}</Text> : null) : laDong(r) && r.nhom !== 'PHUC_VU' && (
               <Text strong>{fmt(r.dinhMuc)}{(r.dinhMucNhapTay != null || (r.phanBoKiem && kq.phanBoKiem?.dong.find((d) => d.ma === r.ma)?.nhapTay != null)) && <Tag color="purple" style={{ marginInlineStart: 4, fontSize: 10, lineHeight: '14px', padding: '0 3px' }}>tay</Tag>}</Text>
             ),
           },
           {
             title: 'Có mặt',
             children: [
-              { title: 'Viên chức', key: 'vc', width: 75, align: 'center', onCell: an, render: (_, r) => laDong(r) && (r.coMatVC || '') },
-              { title: 'Hợp đồng', key: 'hd', width: 75, align: 'center', onCell: an, render: (_, r) => laDong(r) && (r.coMatHD || '') },
-              { title: 'Tổng', key: 'cm', width: 65, align: 'center', onCell: an, render: (_, r) => laDong(r) && <Text strong>{r.coMat}</Text> },
+              { title: 'Viên chức', key: 'vc', width: 75, align: 'center', onCell: an, render: (_, r) => laTong(r) ? <Text strong>{r.coMatVC}</Text> : laDong(r) && (r.coMatVC || '') },
+              { title: 'Hợp đồng', key: 'hd', width: 75, align: 'center', onCell: an, render: (_, r) => laTong(r) ? <Text strong>{r.coMatHD}</Text> : laDong(r) && (r.coMatHD || '') },
+              { title: 'Tổng', key: 'cm', width: 65, align: 'center', onCell: an, render: (_, r) => (laTong(r) || laDong(r)) && <Text strong>{r.coMat}</Text> },
             ],
           },
           {
             title: 'Thừa (+) / Thiếu (−)', key: 'cl', width: 95, align: 'center', onCell: an,
-            render: (_, r) => laDong(r) && (r.nhom === 'PHUC_VU' ? null : <ChenhLech v={r.chenhLech} />),
+            render: (_, r) => (laTong(r) || laDong(r)) && (r.nhom === 'PHUC_VU' ? null : <ChenhLech v={r.chenhLech} />),
           },
         ]}
         summary={() => (
-          <Table.Summary.Row style={{ background: '#f8fafc', fontWeight: 600 }}>
-            <Table.Summary.Cell index={0} colSpan={5}>Tổng các vị trí có định mức (I–III)</Table.Summary.Cell>
-            <Table.Summary.Cell index={5} align="center">{fmt(kq.tongDinhMuc)}</Table.Summary.Cell>
-            <Table.Summary.Cell index={6} colSpan={2} />
-            <Table.Summary.Cell index={8} align="center">{kq.coMatCoDinhMuc}</Table.Summary.Cell>
-            <Table.Summary.Cell index={9} align="center"><ChenhLech v={kq.coMatCoDinhMuc - kq.tongDinhMuc} /></Table.Summary.Cell>
-          </Table.Summary.Row>
+          <>
+            <Table.Summary.Row style={{ background: '#e0e7ff', fontWeight: 600 }}>
+              <Table.Summary.Cell index={0} colSpan={2}>Tổng toàn trường - nhóm I-III (so với định mức)</Table.Summary.Cell>
+              <Table.Summary.Cell index={2}>
+                <Text type="secondary" style={{ fontSize: 12, fontWeight: 400 }}>
+                  {kq.tongNhom.filter((t) => t.apDungDinhMuc).map((t) => `Nhóm ${soNhom(t.nhom)}: ${fmt(t.dinhMuc)}`).join(' + ')}
+                  {ngoai > 0 && `; ${ngoai} người ở vị trí chưa có định mức không đưa vào so sánh`}
+                </Text>
+              </Table.Summary.Cell>
+              <Table.Summary.Cell index={3} align="center">{fmt(kq.tongNhom.filter((t) => t.apDungDinhMuc).reduce((s, t) => s + t.dinhMucTinh, 0))}</Table.Summary.Cell>
+              <Table.Summary.Cell index={4} />
+              <Table.Summary.Cell index={5} align="center">{fmt(kq.tongDinhMuc)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={6} align="center">{kq.tongNhom.filter((t) => t.apDungDinhMuc).reduce((s, t) => s + t.coMatVC, 0)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={7} align="center">{kq.tongNhom.filter((t) => t.apDungDinhMuc).reduce((s, t) => s + t.coMatHD, 0)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={8} align="center">{kq.tongNhom.filter((t) => t.apDungDinhMuc).reduce((s, t) => s + t.coMat, 0)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={9} align="center"><ChenhLech v={kq.coMatCoDinhMuc - kq.tongDinhMuc} /></Table.Summary.Cell>
+            </Table.Summary.Row>
+            <Table.Summary.Row style={{ background: '#f8fafc', fontWeight: 600 }}>
+              <Table.Summary.Cell index={0} colSpan={2}>Tổng lao động toàn trường (I-IV)</Table.Summary.Cell>
+              <Table.Summary.Cell index={2}>
+                <Text type="secondary" style={{ fontSize: 12, fontWeight: 400 }}>
+                  {nhomIV ? `Gồm ${nhomIV.coMat} người nhóm IV (không tính định mức)` : ''}
+                </Text>
+              </Table.Summary.Cell>
+              <Table.Summary.Cell index={3} colSpan={3} />
+              <Table.Summary.Cell index={6} align="center">{tt.coMatVC}</Table.Summary.Cell>
+              <Table.Summary.Cell index={7} align="center">{tt.coMatHD}</Table.Summary.Cell>
+              <Table.Summary.Cell index={8} align="center">{tt.coMat}</Table.Summary.Cell>
+              <Table.Summary.Cell index={9} />
+            </Table.Summary.Row>
+          </>
         )}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 12 }}>
@@ -697,7 +746,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
         nhân viên theo "Công việc cụ thể". Viên chức gồm biên chế và tập sự; còn lại tính là hợp đồng.
         {daDoi && ' Số liệu đang tính theo bản chưa lưu.'}
       </Text>
-      <style>{'.dm-nhom > td { background: #eff6ff !important; }'}</style>
+      <style>{'.dm-nhom > td { background: #eff6ff !important; } .dm-tong > td { background: #f1f5f9 !important; border-bottom: 2px solid #cbd5e1 !important; }'}</style>
     </>
   )
 }
@@ -750,8 +799,8 @@ function BangPhanBoKiem({ kq, coTheSua, datKiem }: {
             ? `Tổng phân bổ còn thiếu ${fmt(pb.conLai)} giáo viên so với số cần phân bổ`
             : `Tổng phân bổ vượt ${fmt(-pb.conLai)} giáo viên so với số cần phân bổ`}
           description={tatCaDaChinh
-            ? 'Trường đã điều chỉnh tất cả các môn — sửa lại cho khớp, hoặc để trống một số môn để hệ thống tự cân đối phần còn lại.'
-            : 'Số trường điều chỉnh đã vượt tổng cần phân bổ — giảm số ở các môn đã điều chỉnh.'}
+            ? 'Trường đã điều chỉnh tất cả các môn - sửa lại cho khớp, hoặc để trống một số môn để hệ thống tự cân đối phần còn lại.'
+            : 'Số trường điều chỉnh đã vượt tổng cần phân bổ - giảm số ở các môn đã điều chỉnh.'}
         />
       )}
       <Table<DongPhanBoKiem>
@@ -868,7 +917,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
           </Space>
           {chuaPhan.length > goiY.length && (
             <p style={{ marginTop: 10, marginBottom: 0 }}>
-              <Text type="secondary">{chuaPhan.length - goiY.length} giáo viên không đủ thông tin để gợi ý — cần chọn tay.</Text>
+              <Text type="secondary">{chuaPhan.length - goiY.length} giáo viên không đủ thông tin để gợi ý - cần chọn tay.</Text>
             </p>
           )}
         </div>
@@ -880,7 +929,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
           goiY.map((g) => ({ id: g.v.id, patch: { monDay: g.ma } })),
           currentUser.id,
           currentUser.fullName,
-          `Phân công môn giảng dạy theo gợi ý cho ${goiY.length} giáo viên — ${donVi.ten}`,
+          `Phân công môn giảng dạy theo gợi ý cho ${goiY.length} giáo viên - ${donVi.ten}`,
           donVi.id,
         )
         message.success(`Đã điền môn cho ${goiY.length} giáo viên`)
@@ -927,7 +976,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
         columns={[
           { title: 'STT', key: 'stt', width: 50, align: 'center' as const, render: (_: unknown, __: VienChuc, i: number) => i + 1 },
           { title: 'Họ và tên', key: 'ten', width: 200, render: (_: unknown, v: VienChuc) => `${v.ho} ${v.ten}` },
-          { title: 'Mã ngạch', key: 'ngach', width: 100, render: (_: unknown, v: VienChuc) => <Text type="secondary" style={{ fontSize: 12 }}>{cd.ma(v.chucDanhId) ?? '—'}</Text> },
+          { title: 'Mã ngạch', key: 'ngach', width: 100, render: (_: unknown, v: VienChuc) => <Text type="secondary" style={{ fontSize: 12 }}>{cd.ma(v.chucDanhId) ?? '-'}</Text> },
           { title: 'Nhiệm vụ chính', dataIndex: 'nhiemVuChinh', key: 'nv', width: 180, ellipsis: true },
           { title: 'Trình độ chuyên môn', dataIndex: 'trinhDoChuyenMon', key: 'td', width: 180, ellipsis: true },
           {
@@ -1016,8 +1065,19 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
       i + 1, d.ten, d.canCu, d.nhom === 'PHUC_VU' ? 'Không áp dụng' : so(d.dinhMuc),
       d.coMatVC, d.coMatHD, d.coMat, d.nhom === 'PHUC_VU' ? '' : so(d.chenhLech),
     ]))
+    const t = kq.tongNhom.find((x) => x.nhom === n.key)
+    if (t) {
+      aoa.push([
+        '', `Cộng nhóm ${SO_LA_MA[NHOM_DINH_MUC.indexOf(n)]}`,
+        !t.apDungDinhMuc ? 'Không so sánh định mức' : t.coMatNgoai ? `${t.coMatNgoai} người ở vị trí chưa có định mức - không so sánh` : '',
+        t.apDungDinhMuc ? lamTron1(t.dinhMuc) : '', t.coMatVC, t.coMatHD, t.coMat, t.chenhLech == null ? '' : lamTron1(t.chenhLech),
+      ])
+    }
   }
-  aoa.push(['', 'Tổng các vị trí có định mức (I–III)', '', lamTron1(kq.tongDinhMuc), '', '', kq.coMatCoDinhMuc, lamTron1(kq.coMatCoDinhMuc - kq.tongDinhMuc)])
+  const coDm = kq.tongNhom.filter((t) => t.apDungDinhMuc)
+  aoa.push(['', 'Tổng toàn trường - nhóm I-III (so với định mức)', '', lamTron1(kq.tongDinhMuc),
+    coDm.reduce((s, t) => s + t.coMatVC, 0), coDm.reduce((s, t) => s + t.coMatHD, 0), coDm.reduce((s, t) => s + t.coMat, 0), lamTron1(kq.coMatCoDinhMuc - kq.tongDinhMuc)])
+  aoa.push(['', 'Tổng lao động toàn trường (I-IV)', '', '', kq.toanTruong.coMatVC, kq.toanTruong.coMatHD, kq.toanTruong.coMat, ''])
   if (nhap.ghiChu) aoa.push([], ['Ghi chú:', nhap.ghiChu])
 
   const ws = XLSX.utils.aoa_to_sheet(aoa)

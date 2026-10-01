@@ -80,13 +80,13 @@ export default function VienChucFormPage() {
     .map((c) => ({
       value: c.id,
       label: chucDanhHopLeVoiVtvl(c.nhom, watchVtvl)
-        ? `${c.ma} — ${c.ten}`
-        : `${c.ma} — ${c.ten} (không thuộc VTVL đang chọn)`,
+        ? `${c.ma} - ${c.ten}`
+        : `${c.ma} - ${c.ten} (không thuộc VTVL đang chọn)`,
     }))
 
   const phuCapOptions = sapXepLoaiPhuCap(loaiPhuCaps.filter((pc) => pc.active))
     .filter((pc) => duocHuongPctn || pc.ma !== 'PC_THAM_NIEN')
-    .map((pc) => ({ value: pc.id, label: `${pc.ma} — ${tenHienThiLoaiPhuCap(pc)}` }))
+    .map((pc) => ({ value: pc.id, label: `${pc.ma} - ${tenHienThiLoaiPhuCap(pc)}` }))
 
   // Chỉ các loại hình đang dùng; hồ sơ cũ mang loại đã bỏ (HĐ 111, tập sự) vẫn hiện đúng khi sửa
   const loaiLaoDongOptions = vc && !LOAI_LAO_DONG_DANG_DUNG.includes(vc.loaiLaoDong)
@@ -94,7 +94,7 @@ export default function VienChucFormPage() {
     : LOAI_LAO_DONG_OPTIONS
 
   const vtvlOptions = vtvls.filter((v) => v.active).map((v) => ({ value: v.ma, label: v.ten }))
-  // Có lựa chọn rõ ràng "Không giữ chức vụ" — trước đây chỉ bỏ được bằng nút ✕ nhỏ, khó thấy khi chuyển Phó HT về giáo viên
+  // Có lựa chọn rõ ràng "Không giữ chức vụ" - trước đây chỉ bỏ được bằng nút ✕ nhỏ, khó thấy khi chuyển Phó HT về giáo viên
   const chucVuOptions = [
     { value: KHONG_CHUC_VU, label: 'Không giữ chức vụ (giáo viên, nhân viên)' },
     ...chucVus.filter((c) => c.active).map((c) => ({ value: c.ma, label: c.ten })),
@@ -105,7 +105,7 @@ export default function VienChucFormPage() {
     if (!watchChucDanhId) return []
     return getBacLuongsForChucDanh(watchChucDanhId).map((b) => ({
       value: b.id,
-      label: `Bậc ${b.bac} — Hệ số ${b.heSo.toFixed(2)}`,
+      label: `Bậc ${b.bac} - Hệ số ${b.heSo.toFixed(2)}`,
     }))
   }, [watchChucDanhId])
 
@@ -177,7 +177,7 @@ export default function VienChucFormPage() {
     const current: any[] = form.getFieldValue('phuCaps') || []
     if (!current.some((pc) => pc?.loaiPhuCapId === pcThamNien.id)) return
     form.setFieldValue('phuCaps', current.filter((pc) => pc?.loaiPhuCapId !== pcThamNien.id))
-    message.warning('Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên — đã gỡ dòng PC Thâm niên nghề')
+    message.warning('Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên - đã gỡ dòng PC Thâm niên nghề')
   }, [duocHuongPctn, watchPhuCaps, loaiPhuCaps])
 
   const watchBacLuongId = Form.useWatch('bacLuongId', form)
@@ -296,7 +296,7 @@ export default function VienChucFormPage() {
   }
 
   const onFinish = async (values: any) => {
-    // Tải bản mới nhất trước khi ghi hồ sơ, lương, phụ cấp — tránh đè sửa đổi của người khác
+    // Tải bản mới nhất trước khi ghi hồ sơ, lương, phụ cấp - tránh đè sửa đổi của người khác
     await lamMoiNgay()
     const { hoTenFull, mocHuongLuong, blBat, blSoQd, blNgayQd, blHetHan, ...restValues } = values
     // Bảo lưu PCCV: giữ mức và chức vụ cũ đã ghi (nếu có), bảo lưu mới thì lấy mức đang hưởng trước khi đổi
@@ -355,7 +355,7 @@ export default function VienChucFormPage() {
       if (!pc?.loaiPhuCapId) continue
       const k = hoPhuCap(pc.loaiPhuCapId, loaiPhuCaps)
       if (daCo.has(k)) {
-        message.error(`Phụ cấp "${daCo.get(k)}" có hai dòng — mỗi loại chỉ giữ một dòng (đổi mức thì sửa dòng đang có)`)
+        message.error(`Phụ cấp "${daCo.get(k)}" có hai dòng - mỗi loại chỉ giữ một dòng (đổi mức thì sửa dòng đang có)`)
         return
       }
       daCo.set(k, tenLoaiPc(pc.loaiPhuCapId))
@@ -417,8 +417,8 @@ export default function VienChucFormPage() {
             vienChucId: id!,
             loai: 'LUONG',
             truongThayDoi: 'Mốc hưởng lương',
-            giaTriCu: `${formatDate(currentHeSo.ngayHieuLuc) || '(trống)'} — nâng lương tiếp ${formatDate(currentHeSo.ngayNangLuongTiepTheo) || '(trống)'}`,
-            giaTriMoi: `${formatDate(mocHuongLuongStr)} — nâng lương tiếp ${formatDate(nangTiep)}`,
+            giaTriCu: `${formatDate(currentHeSo.ngayHieuLuc) || '(trống)'} - nâng lương tiếp ${formatDate(currentHeSo.ngayNangLuongTiepTheo) || '(trống)'}`,
+            giaTriMoi: `${formatDate(mocHuongLuongStr)} - nâng lương tiếp ${formatDate(nangTiep)}`,
             ngayThayDoi: dayjs().format('YYYY-MM-DD'),
             nguoiThayDoiId: currentUser?.id ?? 'system',
           })
@@ -551,7 +551,7 @@ export default function VienChucFormPage() {
                   const dangChon = chucDanhs.find((c) => c.id === form.getFieldValue('chucDanhId'))
                   if (dangChon && !chucDanhHopLeVoiVtvl(dangChon.nhom, v)) {
                     form.setFieldsValue({ chucDanhId: undefined, bacLuongId: undefined })
-                    message.info(`Ngạch "${dangChon.ma} — ${dangChon.ten}" không thuộc VTVL vừa chọn, vui lòng chọn lại ngạch/hạng`)
+                    message.info(`Ngạch "${dangChon.ma} - ${dangChon.ten}" không thuộc VTVL vừa chọn, vui lòng chọn lại ngạch/hạng`)
                   }
                 }}
               />
@@ -574,7 +574,7 @@ export default function VienChucFormPage() {
                     message.info('Đã chuyển Vị trí việc làm sang Cán bộ quản lý')
                   } else if (!CHUC_VU_QUAN_LY.includes(v) && vtvl === 'CBQL') {
                     form.setFieldValue('vtvl', 'GIAO_VIEN')
-                    message.info('Không còn chức vụ quản lý — đã chuyển Vị trí việc làm sang Giáo viên, kiểm tra lại nếu cần')
+                    message.info('Không còn chức vụ quản lý - đã chuyển Vị trí việc làm sang Giáo viên, kiểm tra lại nếu cần')
                   }
                 }}
               />
@@ -586,7 +586,7 @@ export default function VienChucFormPage() {
                 name="congViec"
                 label="Công việc cụ thể"
                 rules={[{ required: true, message: 'Chọn công việc cụ thể' }]}
-                tooltip="Căn cứ chia nhóm Nhân viên chuyên môn – hỗ trợ / phục vụ / nuôi dưỡng trên trang Tổng quan"
+                tooltip="Căn cứ chia nhóm Nhân viên chuyên môn - hỗ trợ / phục vụ / nuôi dưỡng trên trang Tổng quan"
               >
                 <Select
                   placeholder="Chọn công việc"
@@ -663,13 +663,13 @@ export default function VienChucFormPage() {
                   <Text strong>{TEN_PCCV_BAO_LUU}</Text>
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {vc?.baoLuuPccv
-                      ? `Đang ghi: chức vụ cũ ${tenChucVu(vc.baoLuuPccv.chucVuCu)} — hệ số bảo lưu ${vc.baoLuuPccv.heSo}`
+                      ? `Đang ghi: chức vụ cũ ${tenChucVu(vc.baoLuuPccv.chucVuCu)} - hệ số bảo lưu ${vc.baoLuuPccv.heSo}`
                       : `${tenChucVu(vc?.chucVu)} (hệ số ${pccvDangHuong}) → ${tenChucVu(watchChucVu)} (hệ số ${pccvTheoChucVuMoi})`}
                   </Text>
                 </Space>
                 <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: watchBlBat ? 8 : 0 }}>
                   Mức PC chức vụ của chức vụ cũ được giữ sau sắp xếp tổ chức bộ máy, khai tại đây. Không khai vào dòng
-                  "{TEN_HS_CHENH_LECH_BAO_LUU}" và không cộng vào dòng PC chức vụ hiện tại — dòng đó chỉ ghi mức theo chức vụ đang giữ.
+                  "{TEN_HS_CHENH_LECH_BAO_LUU}" và không cộng vào dòng PC chức vụ hiện tại - dòng đó chỉ ghi mức theo chức vụ đang giữ.
                 </Text>
                 {watchBlBat && (
                   <Row gutter={16}>
@@ -717,7 +717,7 @@ export default function VienChucFormPage() {
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
-                title={`Đã tự động thêm PC Chức vụ (hệ số +${pccvInfo.heSo.toFixed(2)} — ${HANG_TRUONG_LABELS[pccvInfo.hang]}, TT 33/2005) vào tổng hệ số lương`}
+                title={`Đã tự động thêm PC Chức vụ (hệ số +${pccvInfo.heSo.toFixed(2)} - ${HANG_TRUONG_LABELS[pccvInfo.hang]}, TT 33/2005) vào tổng hệ số lương`}
               />
             </Col>
           )}
@@ -868,7 +868,7 @@ export default function VienChucFormPage() {
               <Form.Item
                 name="mocHuongPctn"
                 label="Mốc hưởng PCTN"
-                tooltip="Mốc hưởng phụ cấp thâm niên — căn cứ để trường đề xuất nâng 1%/năm ở kỳ sau (6 tháng đầu hoặc cuối năm). Chỉ áp dụng với CBQL và giáo viên."
+                tooltip="Mốc hưởng phụ cấp thâm niên - căn cứ để trường đề xuất nâng 1%/năm ở kỳ sau (6 tháng đầu hoặc cuối năm). Chỉ áp dụng với CBQL và giáo viên."
               >
                 <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} placeholder="Chọn mốc hưởng PCTN" />
               </Form.Item>
@@ -908,7 +908,7 @@ export default function VienChucFormPage() {
               showIcon
               style={{ marginBottom: 8 }}
               title={`Dòng "${TEN_HS_CHENH_LECH_BAO_LUU}" ${heSoBaoLuuDangGhi} trùng mức ${TEN_PCCV_BAO_LUU}`}
-              description={`Nếu đây là phụ cấp chức vụ được giữ sau sắp xếp thì xoá dòng này — mức đó đã được tính qua khung "${TEN_PCCV_BAO_LUU}" ở trên. "${TEN_HS_CHENH_LECH_BAO_LUU}" chỉ dùng cho phần chênh lệch hệ số lương khi chuyển ngạch, xếp lại lương.`}
+              description={`Nếu đây là phụ cấp chức vụ được giữ sau sắp xếp thì xoá dòng này - mức đó đã được tính qua khung "${TEN_PCCV_BAO_LUU}" ở trên. "${TEN_HS_CHENH_LECH_BAO_LUU}" chỉ dùng cho phần chênh lệch hệ số lương khi chuyển ngạch, xếp lại lương.`}
             />
           )}
           {pcTrung.length > 0 && (
@@ -916,7 +916,7 @@ export default function VienChucFormPage() {
               type="error"
               showIcon
               style={{ marginBottom: 8 }}
-              title="Hồ sơ đang có phụ cấp ghi trùng — kiểm tra mức đúng trước khi lưu"
+              title="Hồ sơ đang có phụ cấp ghi trùng - kiểm tra mức đúng trước khi lưu"
               description={
                 <div style={{ fontSize: 13 }}>
                   {pcTrung.map((a) => (

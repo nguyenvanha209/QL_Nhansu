@@ -32,8 +32,8 @@ export default function LoginPage() {
         logAction(u?.id ?? 'unknown', u?.fullName ?? username, 'LOGIN_FAIL', 'User', {
           entityId: u?.id,
           moTa: kq.lyDo === 'KHOA'
-            ? `Đăng nhập thất bại: ${username} — tài khoản đang bị tạm khóa`
-            : `Đăng nhập thất bại: ${username} — sai mật khẩu (còn ${kq.conLai} lần thử)`,
+            ? `Đăng nhập thất bại: ${username} - tài khoản đang bị tạm khóa`
+            : `Đăng nhập thất bại: ${username} - sai mật khẩu (còn ${kq.conLai} lần thử)`,
           donViId: u?.donViId ?? undefined,
         })
       }
@@ -90,7 +90,7 @@ export default function LoginPage() {
         result.push({ key: `group_${dv.loai}`, ten: DV_LABEL[dv.loai] ?? dv.loai, kt: '', ht: '', isGroup: true })
         lastLoai = dv.loai
       }
-      result.push({ key: dv.id, ten: dv.ten, kt: kt?.username ?? '—', ht: ht?.username ?? '—' })
+      result.push({ key: dv.id, ten: dv.ten, kt: kt?.username ?? '-', ht: ht?.username ?? '-' })
     }
     return result
   }, [donVis, users])
@@ -105,12 +105,12 @@ export default function LoginPage() {
     {
       title: <Tag color="green" style={{ margin: 0 }}>Kế toán (KT)</Tag>,
       dataIndex: 'kt', key: 'kt', width: 130, align: 'center' as const,
-      render: (v: string, r: any) => r.isGroup ? null : v === '—' ? <Text type="secondary">—</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
+      render: (v: string, r: any) => r.isGroup ? null : v === '-' ? <Text type="secondary">-</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
     },
     {
       title: <Tag color="gold" style={{ margin: 0 }}>Hiệu trưởng (HT)</Tag>,
       dataIndex: 'ht', key: 'ht', width: 145, align: 'center' as const,
-      render: (v: string, r: any) => r.isGroup ? null : v === '—' ? <Text type="secondary">—</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
+      render: (v: string, r: any) => r.isGroup ? null : v === '-' ? <Text type="secondary">-</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
     },
   ]
 
@@ -124,7 +124,7 @@ export default function LoginPage() {
             {/* Logo đặc trưng của phần mềm */}
             <img
               src={`${import.meta.env.BASE_URL}logo-phuong.png`}
-              alt="Quản lý nhân sự lao động tiền lương — Phường Gia Viên"
+              alt="Quản lý nhân sự lao động tiền lương - Phường Gia Viên"
               width={300}
               height={300}
               style={{
@@ -176,7 +176,7 @@ export default function LoginPage() {
                 />
                 <div style={{ textAlign: 'center', marginTop: 8 }}>
                   <Text type="secondary" style={{ fontSize: 11 }}>
-                    Mật khẩu sẽ được cung cấp riêng — không hiển thị tại đây
+                    Mật khẩu sẽ được cung cấp riêng - không hiển thị tại đây
                   </Text>
                 </div>
               </>
@@ -190,7 +190,7 @@ export default function LoginPage() {
               <br />
               <Text style={{ fontSize: 13, fontWeight: 600 }}>
                 <PhoneOutlined style={{ marginRight: 6, color: '#2563eb' }} />
-                Đ/c Nguyễn Văn Hạ — 0902.121.599
+                Đ/c Nguyễn Văn Hạ - 0902.121.599
               </Text>
             </div>
           </div>

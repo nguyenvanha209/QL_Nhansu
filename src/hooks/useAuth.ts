@@ -20,7 +20,7 @@ export function useAuth() {
     hasPermission,
     // Quyền quản trị THỰC TẾ: đúng vai trò ADMIN, hoặc được cấp riêng quyền
     // quản trị. Dùng cho những chỗ lấy quyền admin làm cửa thoát. Khác với
-    // isAdmin bên dưới — cái đó chỉ nói về vai trò, dùng khi cần đúng danh tính.
+    // isAdmin bên dưới - cái đó chỉ nói về vai trò, dùng khi cần đúng danh tính.
     laQuanTri: can(currentUser, 'admin', 'admin'),
     isAdmin: currentUser?.role === 'ADMIN',
     isVHXH: currentUser?.role === 'CB_VH_XH',

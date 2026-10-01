@@ -24,7 +24,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/vien-chuc': 'Hồ sơ nhân sự',
   '/bang-tong-hop-luong': 'Bảng tổng hợp lương',
   '/luong/he-so': 'Hệ số lương',
-  '/luong/ra-soat': 'Rà soát ngạch – bậc – hệ số',
+  '/luong/ra-soat': 'Rà soát ngạch - bậc - hệ số',
   '/luong/phu-cap': 'Phụ cấp',
   '/vi-tri': 'Vị trí việc làm',
   '/quy-mo': 'Định mức viên chức và Cơ cấu VTVL',
@@ -51,7 +51,7 @@ export default function AppLayout() {
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
     { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
-    hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch – bậc' },
+    hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
     hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
     hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Định mức viên chức và Cơ cấu VTVL' },
     hasPermission('deXuat', 'read') && {
@@ -114,10 +114,10 @@ export default function AppLayout() {
         className="qlvc-sidebar"
         style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'auto' }}
       >
-        {/* Logo phường — hiện ở mọi trang (thanh menu dùng chung) */}
+        {/* Logo phường - hiện ở mọi trang (thanh menu dùng chung) */}
         <div
           onClick={() => navigate('/dashboard')}
-          title="Quản lý nhân sự lao động tiền lương — Phường Gia Viên"
+          title="Quản lý nhân sự lao động tiền lương - Phường Gia Viên"
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: collapsed ? '12px 0' : '16px 0 14px', cursor: 'pointer',

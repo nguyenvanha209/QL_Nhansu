@@ -6,7 +6,7 @@ import type { NhatKyThaoTac } from '@/types/luong'
 
 // Nhật ký tách khỏi ql-luong và có kho riêng.
 //
-// Trước đây nhật ký nằm chung khối với hệ số lương và phụ cấp — khối đó nặng
+// Trước đây nhật ký nằm chung khối với hệ số lương và phụ cấp - khối đó nặng
 // hơn 500KB. Mỗi lần ai đó đăng nhập là phải ghi lại toàn bộ khối. Hai người
 // thao tác gần nhau thì một bên bị từ chối ghi và mất luôn bản ghi nhật ký,
 // nên số lượt đăng nhập ghi được ít hơn thực tế rất nhiều.

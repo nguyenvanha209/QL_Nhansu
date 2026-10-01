@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 
 // Mật khẩu không còn nằm trong ql-users. Chúng được băm bcrypt và lưu ở bảng
-// mat_khau trên Supabase — bảng này bật RLS và không có policy nào, nên không
+// mat_khau trên Supabase - bảng này bật RLS và không có policy nào, nên không
 // đọc trực tiếp được kể cả khi có khóa anon. Mọi thao tác đi qua các hàm
 // security definer khai báo ở tools/sql/01-tao-bang-mat-khau.sql.
 

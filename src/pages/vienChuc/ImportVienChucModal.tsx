@@ -124,7 +124,7 @@ function readDate(raw: unknown): { ok: true; value?: string } | { ok: false } {
   return parsed ? { ok: true, value: parsed } : { ok: false }
 }
 
-/** Đọc số từ ô Excel — chấp nhận cả dấu phẩy thập phân kiểu VN */
+/** Đọc số từ ô Excel - chấp nhận cả dấu phẩy thập phân kiểu VN */
 function num(v: unknown): number | undefined {
   if (v === null || v === undefined || v === '') return undefined
   const s = String(v).trim().replace(/\s/g, '').replace(',', '.')
@@ -441,7 +441,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             })
           }
 
-          // Họ và tên — gộp 1 cột, tách khi nhập
+          // Họ và tên - gộp 1 cột, tách khi nhập
           // So sánh case-insensitive để tránh false positive khi file export UPPERCASE
           const hoTenMoi = str(row[COL.HO_TEN])
           if (hoTenMoi) {
@@ -471,7 +471,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           const checkDate = (field: keyof VienChuc, raw: unknown, colLabel: string, batBuoc = false) => {
             const r = readDate(raw)
             if (!r.ok) {
-              warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): "${colLabel}" sai định dạng ngày — giữ nguyên giá trị cũ`)
+              warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): "${colLabel}" sai định dạng ngày - giữ nguyên giá trị cũ`)
               return
             }
             // Trường bắt buộc không được xóa trắng
@@ -498,7 +498,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           if (cvTen) {
             const ma = inverseChucVu[cvTen] ?? chuanHoaChucVu(cvTen)
             if (ma) check('chucVu', ma)
-            else warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chức vụ "${cvTen}" không nhận dạng được — chọn lại trong hồ sơ`)
+            else warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chức vụ "${cvTen}" không nhận dạng được - chọn lại trong hồ sơ`)
           }
           const vtTen = str(row[COL.VTVL])
           if (vtTen) {
@@ -519,7 +519,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             const ll = inverseLoaiLD[llTen]
             // Loại hình đã bỏ (HĐ NĐ 111, tập sự) không được đặt mới qua Excel; hồ sơ đang mang sẵn thì giữ nguyên
             if (ll && !LOAI_LAO_DONG_DANG_DUNG.includes(ll as VienChuc['loaiLaoDong']) && ll !== vc.loaiLaoDong)
-              warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): loại lao động "${llTen}" không còn sử dụng — giữ nguyên loại cũ`)
+              warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): loại lao động "${llTen}" không còn sử dụng - giữ nguyên loại cũ`)
             else if (ll) check('loaiLaoDong', ll)
             else warns.push(`Dòng ${i + 2}: loại lao động "${llTen}" không nhận dạng được`)
           }
@@ -601,7 +601,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
               }
             }
           } else if (num(row[COL.HE_SO]) !== undefined) {
-            warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chưa có bản ghi lương đang áp dụng — bỏ qua cột lương`)
+            warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chưa có bản ghi lương đang áp dụng - bỏ qua cột lương`)
           }
 
           // Hệ số chênh lệch bảo lưu (file mẫu cũ đặt tên cột là "Hệ số bảo lưu")
@@ -662,7 +662,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           // File mẫu cũ đặt tên cột là "PC Ưu đãi nghề (%)"
           checkPC('PC ưu đãi nhà giáo', 'pcUd', PC_UU_DAI_PREFIX, cur.ud, num(row[COL.PC_UD] ?? row['PC Ưu đãi nghề (%)']), pcRecs.ud, '%')
 
-          // Mốc thâm niên — chỉ sửa được khi đã có bản ghi PC thâm niên
+          // Mốc thâm niên - chỉ sửa được khi đã có bản ghi PC thâm niên
           const rMocTnn = readDate(row[COL.MOC_TNN])
           if (!rMocTnn.ok) warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): "${COL.MOC_TNN}" sai định dạng ngày`)
           const mocTnnMoi = rMocTnn.ok ? rMocTnn.value : undefined
@@ -753,7 +753,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
         .map((c) => `[${c.nhom}] ${c.label}: "${c.oldDisplay}" → "${c.newDisplay}"`)
         .join('; ')
       logAction(actorId, actorName, 'UPDATE', 'VienChuc', rec.vcId,
-        `Import Excel — ${rec.hoTen}: ${detail}`)
+        `Import Excel - ${rec.hoTen}: ${detail}`)
     }
 
     setAppliedCount(selected.length)
@@ -890,7 +890,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   File gồm 3 nhóm: <b>hồ sơ</b>, <b>lương</b> (bậc, hệ số, hệ số chênh lệch bảo lưu, mốc hưởng) và{' '}
                   <b>phụ cấp</b> (vượt khung, chức vụ, trách nhiệm, thâm niên nghề, ưu đãi nhà giáo).
-                  Họ và tên xuất ra VIẾT HOA — khi nhập lại, hệ thống so sánh nội dung (không phân biệt hoa/thường).
+                  Họ và tên xuất ra VIẾT HOA - khi nhập lại, hệ thống so sánh nội dung (không phân biệt hoa/thường).
                   Muốn <b>gỡ một phụ cấp</b>, nhập số <b>0</b> vào ô đó (để trống nghĩa là giữ nguyên).
                 </Text>
               </>
@@ -903,7 +903,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             title="Lưu ý về lương"
             description={
               <Text style={{ fontSize: 13 }}>
-                Công cụ này <b>sửa trực tiếp</b> bản ghi lương đang áp dụng — dùng để đính chính
+                Công cụ này <b>sửa trực tiếp</b> bản ghi lương đang áp dụng - dùng để đính chính
                 dữ liệu nhập sai. Việc <b>nâng bậc lương</b> phải thực hiện qua chức năng
                 “Đề xuất điều chỉnh hệ số lương - phụ cấp” để giữ đúng lịch sử.
               </Text>

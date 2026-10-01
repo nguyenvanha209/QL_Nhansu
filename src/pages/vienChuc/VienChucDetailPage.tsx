@@ -73,7 +73,7 @@ export default function VienChucDetailPage() {
     const coTheXem = !scopeDonViId || kia.donViId === scopeDonViId
     return (
       <span>
-        {' '}— {huong} {coTheXem ? <a onClick={() => navigate(`/vien-chuc/${kia.id}`)}>{tenTruong}</a> : tenTruong}
+        {' '}- {huong} {coTheXem ? <a onClick={() => navigate(`/vien-chuc/${kia.id}`)}>{tenTruong}</a> : tenTruong}
       </span>
     )
   }
@@ -81,7 +81,7 @@ export default function VienChucDetailPage() {
   const heSoCols = [
     { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60 },
     { title: 'Hệ số', dataIndex: 'heSo', key: 'heSo', width: 80 },
-    { title: 'HS chênh lệch bảo lưu', dataIndex: 'heSoBaoLuu', key: 'baoLuu', width: 100, render: (v?: number) => v ?? '—' },
+    { title: 'HS chênh lệch bảo lưu', dataIndex: 'heSoBaoLuu', key: 'baoLuu', width: 100, render: (v?: number) => v ?? '-' },
     { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
     { title: 'Ngày nâng tiếp', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', render: (v: string) => formatDate(v) },
     { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', render: (v: string) => LY_DO_LABELS[v as keyof typeof LY_DO_LABELS] ?? v },
@@ -115,7 +115,7 @@ export default function VienChucDetailPage() {
     {
       title: '', key: 'tt',
       render: (_: unknown, r: { trung: boolean; dangDung: boolean; loaiPhuCapId: string }) =>
-        r.loaiPhuCapId === pcCvId && tinhTheoBaoLuu ? <Tag>Không tính — đang hưởng mức bảo lưu</Tag>
+        r.loaiPhuCapId === pcCvId && tinhTheoBaoLuu ? <Tag>Không tính - đang hưởng mức bảo lưu</Tag>
           : !r.trung ? <Tag color="green">Đang hưởng</Tag>
           : r.dangDung ? <Tag color="orange">Đang tính lương</Tag>
           : <Tag color="red">Bản trùng</Tag>,
@@ -124,7 +124,7 @@ export default function VienChucDetailPage() {
   const cotLichSu = [
     ...phuCapCols,
     { title: 'Từ ngày', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
-    { title: 'Đến ngày', dataIndex: 'ngayHetHan', key: 'nhh', render: (v?: string) => (v ? formatDate(v) : '—') },
+    { title: 'Đến ngày', dataIndex: 'ngayHetHan', key: 'nhh', render: (v?: string) => (v ? formatDate(v) : '-') },
     cotNguon,
     { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'gc', render: (v?: string) => <Text type="secondary" style={{ fontSize: 12 }}>{v ?? ''}</Text> },
   ]
@@ -150,20 +150,20 @@ export default function VienChucDetailPage() {
                 <Descriptions.Item label="Họ và tên">{vc.ho} {vc.ten}</Descriptions.Item>
                 <Descriptions.Item label="Ngày sinh">{formatDate(vc.ngaySinh)}</Descriptions.Item>
                 <Descriptions.Item label="Giới tính">{vc.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}</Descriptions.Item>
-                <Descriptions.Item label="CCCD">{vc.cccd ?? '—'}</Descriptions.Item>
-                <Descriptions.Item label="Điện thoại">{vc.dienThoai ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="CCCD">{vc.cccd ?? '-'}</Descriptions.Item>
+                <Descriptions.Item label="Điện thoại">{vc.dienThoai ?? '-'}</Descriptions.Item>
                 <Descriptions.Item label="Đơn vị">{donVi?.ten ?? vc.donViId}</Descriptions.Item>
                 <Descriptions.Item label="Ngạch/hạng">{chucDanh?.ten ?? vc.chucDanhId}</Descriptions.Item>
                 <Descriptions.Item label="Loại hình">{LOAI_LAO_DONG_LABELS[vc.loaiLaoDong]}</Descriptions.Item>
                 {vc.trangThai === 'CHUYEN_DI' && (
                   <Descriptions.Item label="Chuyển đi">
-                    {vc.ngayChuyenDi ? formatDate(vc.ngayChuyenDi) : '—'}
+                    {vc.ngayChuyenDi ? formatDate(vc.ngayChuyenDi) : '-'}
                     {hoSoLienKet(vc.chuyenSangHoSoId, 'sang')}
                   </Descriptions.Item>
                 )}
                 {vc.baoLuuPccv && (
                   <Descriptions.Item label={TEN_PCCV_BAO_LUU}>
-                    {CHUC_VU_LABELS[vc.baoLuuPccv.chucVuCu] ?? vc.baoLuuPccv.chucVuCu} — hệ số {vc.baoLuuPccv.heSo}, đến {formatDate(vc.baoLuuPccv.denNgay)}{' '}
+                    {CHUC_VU_LABELS[vc.baoLuuPccv.chucVuCu] ?? vc.baoLuuPccv.chucVuCu} - hệ số {vc.baoLuuPccv.heSo}, đến {formatDate(vc.baoLuuPccv.denNgay)}{' '}
                     {dangBaoLuuPccv(vc) ? <Tag color="gold">Đang bảo lưu</Tag> : <Tag>Đã hết</Tag>}
                     <br /><Text type="secondary" style={{ fontSize: 12 }}>QĐ {vc.baoLuuPccv.soQuyetDinh} ngày {formatDate(vc.baoLuuPccv.ngayQuyetDinh)}</Text>
                   </Descriptions.Item>
@@ -172,27 +172,27 @@ export default function VienChucDetailPage() {
                   <Descriptions.Item label="Chuyển đến từ">{hoSoLienKet(vc.chuyenTuHoSoId, 'từ')}</Descriptions.Item>
                 )}
                 {IS_BIEN_CHE[vc.loaiLaoDong] && (
-                  <Descriptions.Item label="Nguồn kinh phí">{vc.nguonKinhPhi ? NGUON_KINH_PHI_LABELS[vc.nguonKinhPhi] : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Nguồn kinh phí">{vc.nguonKinhPhi ? NGUON_KINH_PHI_LABELS[vc.nguonKinhPhi] : '-'}</Descriptions.Item>
                 )}
-                <Descriptions.Item label="VTVL">{vc.vtvl ? (vtvls.find((x) => x.ma === vc.vtvl)?.ten ?? VTVL_LABELS[vc.vtvl] ?? vc.vtvl) : '—'}</Descriptions.Item>
+                <Descriptions.Item label="VTVL">{vc.vtvl ? (vtvls.find((x) => x.ma === vc.vtvl)?.ten ?? VTVL_LABELS[vc.vtvl] ?? vc.vtvl) : '-'}</Descriptions.Item>
                 {vc.vtvl === 'NHAN_VIEN' && (
                   <Descriptions.Item label="Công việc cụ thể">{vc.congViec ? CONG_VIEC_LABELS[vc.congViec] : <Text type="warning">Chưa chọn</Text>}</Descriptions.Item>
                 )}
                 <Descriptions.Item label="Đảng viên">{vc.laDangVien ? 'Có' : 'Không'}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào ngành">{formatDate(vc.ngayVaoNganh)}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào đơn vị">{formatDate(vc.ngayVaoDonVi)}</Descriptions.Item>
-                <Descriptions.Item label="Trình độ chuyên môn nghiệp vụ">{vc.trinhDoChuyenMon ?? '—'}</Descriptions.Item>
-                <Descriptions.Item label="Nhiệm vụ chính">{vc.nhiemVuChinh ?? '—'}</Descriptions.Item>
-                <Descriptions.Item label="Trình độ khác">{vc.trinhDoKhac ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Trình độ chuyên môn nghiệp vụ">{vc.trinhDoChuyenMon ?? '-'}</Descriptions.Item>
+                <Descriptions.Item label="Nhiệm vụ chính">{vc.nhiemVuChinh ?? '-'}</Descriptions.Item>
+                <Descriptions.Item label="Trình độ khác">{vc.trinhDoKhac ?? '-'}</Descriptions.Item>
                 {coPhuCapThamNien(vc.vtvl) && (
-                  <Descriptions.Item label="Mốc hưởng PCTN">{vc.mocHuongPctn ? formatDate(vc.mocHuongPctn) : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Mốc hưởng PCTN">{vc.mocHuongPctn ? formatDate(vc.mocHuongPctn) : '-'}</Descriptions.Item>
                 )}
                 {nhanLuongTheoTien(vc) && <>
                   <Descriptions.Item label="Hình thức nhận lương">{HINH_THUC_LUONG_LABELS.TIEN}</Descriptions.Item>
-                  <Descriptions.Item label="Mức lương">{vc.mucLuongTien != null ? `${vc.mucLuongTien.toLocaleString('vi-VN')} đ/tháng` : '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Mức lương">{vc.mucLuongTien != null ? `${vc.mucLuongTien.toLocaleString('vi-VN')} đ/tháng` : '-'}</Descriptions.Item>
                 </>}
                 {activeHeSo && !nhanLuongTheoTien(vc) && <>
-                  <Descriptions.Item label="Bậc lương hiện tại">Bậc {activeHeSo.bac} — Hệ số {activeHeSo.heSo}</Descriptions.Item>
+                  <Descriptions.Item label="Bậc lương hiện tại">Bậc {activeHeSo.bac} - Hệ số {activeHeSo.heSo}</Descriptions.Item>
                   <Descriptions.Item label="Ngày nâng lương tiếp theo">
                     <Text type={new Date(activeHeSo.ngayNangLuongTiepTheo) < new Date() ? 'danger' : undefined}>
                       {formatDate(activeHeSo.ngayNangLuongTiepTheo)}
@@ -216,7 +216,7 @@ export default function VienChucDetailPage() {
                     showIcon
                     style={{ marginBottom: 12 }}
                     title={`${soLoaiTrung} loại phụ cấp đang ghi trùng (nhiều bản cùng còn hiệu lực)`}
-                    description='Bảng lương đang dùng bản gắn nhãn "Đang tính lương" (ngày hiệu lực mới nhất). Kế toán bấm Chỉnh sửa, kiểm tra đúng mức rồi Lưu — các bản còn lại sẽ chuyển sang lịch sử.'
+                    description='Bảng lương đang dùng bản gắn nhãn "Đang tính lương" (ngày hiệu lực mới nhất). Kế toán bấm Chỉnh sửa, kiểm tra đúng mức rồi Lưu - các bản còn lại sẽ chuyển sang lịch sử.'
                   />
                 )}
                 {vc.baoLuuPccv && (
@@ -226,10 +226,10 @@ export default function VienChucDetailPage() {
                       {!dangBaoLuuPccv(vc)
                         ? <Tag>Đã hết hạn</Tag>
                         : tinhTheoBaoLuu ? <Tag color="gold">Đang tính lương</Tag>
-                        : <Tag color="red">Không có tác dụng — kiểm tra lại</Tag>}
+                        : <Tag color="red">Không có tác dụng - kiểm tra lại</Tag>}
                     </Space>
                     <div style={{ fontSize: 13 }}>
-                      Chức vụ cũ: <b>{tenChucVu(vc.baoLuuPccv.chucVuCu)}</b> — hệ số bảo lưu <b>{String(vc.baoLuuPccv.heSo).replace('.', ',')}</b>,
+                      Chức vụ cũ: <b>{tenChucVu(vc.baoLuuPccv.chucVuCu)}</b> - hệ số bảo lưu <b>{String(vc.baoLuuPccv.heSo).replace('.', ',')}</b>,
                       từ {formatDate(vc.baoLuuPccv.ngayQuyetDinh)} đến {formatDate(vc.baoLuuPccv.denNgay)} (QĐ {vc.baoLuuPccv.soQuyetDinh}).
                       Chức vụ hiện tại: {tenChucVu(vc.chucVu)}, PC chức vụ hiện tại {String(pcCvHienTai).replace('.', ',')}.
                     </div>
@@ -260,7 +260,7 @@ export default function VienChucDetailPage() {
                 content: (
                   <div>
                     <Text strong>{ls.truongThayDoi}</Text>
-                    <Text type="secondary"> — {formatDate(ls.ngayThayDoi)}</Text>
+                    <Text type="secondary"> - {formatDate(ls.ngayThayDoi)}</Text>
                     <div><Text type="secondary">Cũ: </Text>{ls.giaTriCu} → <Text type="secondary">Mới: </Text>{ls.giaTriMoi}</div>
                   </div>
                 ),

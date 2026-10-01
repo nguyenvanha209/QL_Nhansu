@@ -49,7 +49,7 @@ export interface LoaiPhuCap {
   active: boolean
 }
 
-// Danh mục VTVL (vị trí việc làm) — admin tùy biến thêm/sửa/xóa
+// Danh mục VTVL (vị trí việc làm) - admin tùy biến thêm/sửa/xóa
 export interface VtvlDanhMuc {
   id: string
   ma: string
@@ -58,7 +58,7 @@ export interface VtvlDanhMuc {
   active: boolean
 }
 
-// Danh mục Chức vụ — admin tùy biến thêm/sửa/xóa
+// Danh mục Chức vụ - admin tùy biến thêm/sửa/xóa
 export interface ChucVuDanhMuc {
   id: string
   ma: string

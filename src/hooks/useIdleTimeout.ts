@@ -8,7 +8,7 @@ const NHIP_KIEM = 5 * 1000 // nhịp kiểm tra
 const KHOA_MOC = 'ql-moc-hoat-dong' // dùng chung giữa các tab
 
 // So sánh theo MỐC THỜI GIAN thay vì đếm bằng setTimeout. setTimeout bị trình
-// duyệt bóp nghẹt ở tab nền và không đáng tin sau khi máy ngủ — đóng nắp máy
+// duyệt bóp nghẹt ở tab nền và không đáng tin sau khi máy ngủ - đóng nắp máy
 // hai tiếng rồi mở lại vẫn có thể không đăng xuất. Mốc thời gian thì luôn đúng.
 //
 // Mốc lưu ở localStorage nên mọi tab dùng chung: thao tác ở tab này giữ cho tab
@@ -39,7 +39,7 @@ export function useIdleTimeout() {
         try {
           localStorage.setItem(KHOA_MOC, String(nay))
         } catch {
-          /* chế độ riêng tư có thể chặn ghi — bỏ qua, vẫn chạy theo mốc trong phiên */
+          /* chế độ riêng tư có thể chặn ghi - bỏ qua, vẫn chạy theo mốc trong phiên */
         }
       }
       setGiaySapThoat(null)

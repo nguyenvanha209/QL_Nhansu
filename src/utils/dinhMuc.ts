@@ -79,7 +79,7 @@ const MON_THCS: MonHoc[] = [
   { ma: 'TIN_HOC', ten: 'Giáo viên Tin học', tenNgan: 'Tin học', tiet: [1, 1, 1, 1] },
 ]
 
-// Không có vị trí việc làm riêng — giáo viên các môn dạy kiêm
+// Không có vị trí việc làm riêng - giáo viên các môn dạy kiêm
 const MON_KIEM_THCS: MonHoc[] = [
   { ma: 'GDDP', ten: 'Giáo dục địa phương', tenNgan: 'GDĐP', tiet: [1, 1, 1, 1] },
   { ma: 'HDTN', ten: 'Hoạt động trải nghiệm, hướng nghiệp', tenNgan: 'HĐTN-HN', tiet: [3, 3, 3, 3] },
@@ -167,7 +167,7 @@ const VI_TRI: Record<CapHoc, ViTri[]> = {
     nv('TU_VAN', 'Tư vấn học sinh', 1, undefined, 'CHUYEN_NGANH'),
     HO_TRO_KT,
     nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
-    nv('THU_VIEN', 'Thư viện', 1, '01–02 người'),
+    nv('THU_VIEN', 'Thư viện', 1, '01-02 người'),
     nv('VAN_THU', 'Văn thư', 1),
     nv('THIET_BI', 'Thiết bị', null, 'Bố trí kiêm nhiệm'),
     nv('Y_TE', 'Y tế trường học', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
@@ -182,7 +182,7 @@ const VI_TRI: Record<CapHoc, ViTri[]> = {
     nv('TU_VAN', 'Tư vấn học sinh', 1, undefined, 'CHUYEN_NGANH'),
     HO_TRO_KT,
     nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
-    nv('THU_VIEN', 'Thư viện', 1, '01–02 người'),
+    nv('THU_VIEN', 'Thư viện', 1, '01-02 người'),
     nv('VAN_THU', 'Văn thư', 1),
     nv('Y_TE', 'Y tế trường học', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
     ...PHUC_VU,
@@ -247,6 +247,24 @@ export interface PhanBoKiemNhiem {
   dong: DongPhanBoKiem[]
 }
 
+/** Cộng theo nhóm vị trí việc làm (I-IV) */
+export interface TongNhom {
+  nhom: NhomDinhMuc
+  ten: string
+  /** Nhóm IV không áp dụng định mức */
+  apDungDinhMuc: boolean
+  dinhMucTinh: number
+  dinhMuc: number
+  coMatVC: number
+  coMatHD: number
+  coMat: number
+  /** Có mặt dùng để so với định mức: vị trí có định mức (kể cả giáo viên chưa phân môn) */
+  coMatSoSanh: number
+  /** Có mặt ở vị trí không có định mức - không đưa vào so sánh */
+  coMatNgoai: number
+  chenhLech: number | null
+}
+
 export interface KetQuaDinhMuc {
   cap: CapHoc
   tongLop: number
@@ -261,16 +279,19 @@ export interface KetQuaDinhMuc {
   gvCoMat: number
   tongDinhMuc: number
   tongCoMat: number
-  /** Có mặt ở các vị trí I–III có định mức, kể cả giáo viên chưa phân môn */
+  /** Có mặt ở các vị trí I-III có định mức, kể cả giáo viên chưa phân môn */
   coMatCoDinhMuc: number
   chuaPhanMon: number
   /** Chỉ THCS */
   phanBoKiem?: PhanBoKiemNhiem
+  tongNhom: TongNhom[]
+  /** Toàn trường, cả nhóm IV */
+  toanTruong: { coMatVC: number; coMatHD: number; coMat: number }
 }
 
 export const lamTron1 = (n: number) => Math.round(n * 10) / 10
 export const fmt = (n: number | null | undefined) =>
-  n == null ? '—' : lamTron1(n).toLocaleString('vi-VN', { maximumFractionDigits: 1 })
+  n == null ? '-' : lamTron1(n).toLocaleString('vi-VN', { maximumFractionDigits: 1 })
 
 /**
  * Chia `tong` theo tỷ lệ `trongSo`, làm tròn 0,1 mà tổng vẫn khớp (phương pháp phần dư lớn nhất)
@@ -364,7 +385,7 @@ export function tinhDinhMuc(
   const dienGiai: string[] = []
 
   tinh.PHT = hang === 1 ? 2 : 1
-  canCu.PHT = `Hạng ${hang === 1 ? 'I' : hang === 2 ? 'II' : 'III'} (${tongLop} lớp): hạng I bố trí 02, hạng II–III bố trí 01`
+  canCu.PHT = `Hạng ${hang === 1 ? 'I' : hang === 2 ? 'II' : 'III'} (${tongLop} lớp): hạng I bố trí 02, hạng II-III bố trí 01`
 
   if (cap === 'MAM_NON') {
     const t = THAM_SO.MAM_NON
@@ -373,7 +394,7 @@ export function tinhDinhMuc(
     tinh.GV_MN = nhaTre * t.gvNhaTre + mauGiao * t.gvMauGiao
     const diemTruong = Math.max(1, quyMo.soDiemTruong ?? 1)
     tinh.THU_VIEN = Math.min(diemTruong, THU_VIEN_MN_TOI_DA)
-    canCu.THU_VIEN = `01 người/phân hiệu: ${diemTruong} phân hiệu${quyMo.soDiemTruong ? '' : ' (chưa khai, tính 01)'} — tối đa 0${THU_VIEN_MN_TOI_DA}`
+    canCu.THU_VIEN = `01 người/phân hiệu: ${diemTruong} phân hiệu${quyMo.soDiemTruong ? '' : ' (chưa khai, tính 01)'} - tối đa 0${THU_VIEN_MN_TOI_DA}`
     canCu.GV_MN = `${nhaTre} nhóm trẻ × 2,5 + ${mauGiao} lớp mẫu giáo × 2,2`
     dienGiai.push(
       `Nhà trẻ: ${nhaTre} nhóm × ${fmt(t.gvNhaTre)} = ${fmt(nhaTre * t.gvNhaTre)} giáo viên`,
@@ -398,7 +419,7 @@ export function tinhDinhMuc(
       mon += tinh[m.ma]
     }
     const tinThem = (quyMo.khoiDayTinThem ?? []).filter((k) => KHOI_TIN_TU_CHON.includes(k)).map((k) => k.slice(1))
-    canCu.TIN_HOC += tinThem.length ? ` (khối ${tinThem.join(', ')}, 3–5)` : ' (khối 3–5)'
+    canCu.TIN_HOC += tinThem.length ? ` (khối ${tinThem.join(', ')}, 3-5)` : ' (khối 3-5)'
     tinh.TONG_PHU_TRACH = 1
     canCu.TONG_PHU_TRACH = '01 người/trường, tính trong định mức giáo viên'
     tinh.VAN_HOA = Math.max(0, tongGV - mon - 1)
@@ -407,7 +428,7 @@ export function tinhDinhMuc(
       `Theo lớp: ${lop1B} lớp 1 buổi × ${fmt(t.gvLop1Buoi)} + ${lop2B} lớp 2 buổi × ${fmt(t.gvLop2Buoi)} = ${fmt(gvLop)} giáo viên`,
       hsDu > 0
         ? `Học sinh vượt sĩ số ${t.siSoChuan}/lớp: ${hsDu} em ÷ ${t.hsDuMoiGv} = ${fmt(gvDu)} giáo viên tăng thêm`
-        : `Sĩ số bình quân ${fmt(binhQuan)} em/lớp, không vượt ${t.siSoChuan} — không tính giáo viên tăng thêm`,
+        : `Sĩ số bình quân ${fmt(binhQuan)} em/lớp, không vượt ${t.siSoChuan} - không tính giáo viên tăng thêm`,
       `Tổng định mức giáo viên: ${fmt(tongGV)} (TT 20/2023/TT-BGDĐT), gồm cả Tổng phụ trách Đội`,
     )
   }
@@ -465,7 +486,7 @@ export function tinhDinhMuc(
       `Theo lớp: ${tongLop} lớp × ${fmt(t.gvMoiLop)} = ${fmt(gvLop)} giáo viên`,
       hsDu > 0
         ? `Học sinh vượt sĩ số ${t.siSoChuan}/lớp: ${hsDu} em ÷ ${t.hsDuMoiGv} = ${fmt(gvDu)} giáo viên tăng thêm`
-        : `Sĩ số bình quân ${fmt(binhQuan)} em/lớp, không vượt ${t.siSoChuan} — không tính giáo viên tăng thêm`,
+        : `Sĩ số bình quân ${fmt(binhQuan)} em/lớp, không vượt ${t.siSoChuan} - không tính giáo viên tăng thêm`,
       `Tổng định mức giáo viên: ${fmt(tongGV)} (TT 20/2023/TT-BGDĐT), gồm cả Tổng phụ trách Đội`,
       `Trong đó đứng lớp các môn: ${fmt(tongDungLop)}; kiêm nhiệm cần phân bổ: ${fmt(phanBo)} (dạy kiêm GDĐP, HĐTN-HN ${fmt(kiemDay)}; chủ nhiệm ${t.tietChuNhiem} tiết/lớp ${fmt(chuNhiem)}; kiêm nhiệm khác ${fmt(phanBoKiem.khac)})`,
       `Phần kiêm nhiệm hệ thống gợi ý chia theo tỷ lệ giờ đứng lớp (định mức tiết ${t.tietChuan}/tuần); trường điều chỉnh ở bảng "Phân bổ giáo viên kiêm nhiệm"`,
@@ -502,7 +523,7 @@ export function tinhDinhMuc(
       dinhMucTinh,
       dinhMucNhapTay: tay,
       dinhMuc,
-      canCu: laPhucVu ? 'Không áp dụng định mức' : (canCu[vt.ma] ?? vt.canCu ?? (dinhMucTinh == null ? 'Không có công thức — nhập tay nếu có căn cứ' : '')),
+      canCu: laPhucVu ? 'Không áp dụng định mức' : (canCu[vt.ma] ?? vt.canCu ?? (dinhMucTinh == null ? 'Không có công thức - nhập tay nếu có căn cứ' : '')),
       coMatVC: coMat.vc,
       coMatHD: coMat.hd,
       coMat: tong,
@@ -539,6 +560,25 @@ export function tinhDinhMuc(
   const coDinhMuc = trongDinhMuc.filter((d) => d.dinhMuc != null)
   const gv = dong.filter((d) => d.laGiaoVien)
   const chuaPhanMon = (dem.get(CHUA_PHAN_MON)?.vc ?? 0) + (dem.get(CHUA_PHAN_MON)?.hd ?? 0)
+  const cong = (ds: DongDinhMuc[], f: (d: DongDinhMuc) => number) => ds.reduce((s, d) => s + f(d), 0)
+  const tongNhom: TongNhom[] = NHOM_DINH_MUC
+    .map((n) => ({ n, ds: dong.filter((d) => d.nhom === n.key) }))
+    .filter(({ ds }) => ds.length)
+    .map(({ n, ds }) => {
+      const apDung = n.key !== 'PHUC_VU'
+      // Giáo viên chưa phân môn nằm trong định mức giáo viên chung nên vẫn đem so sánh
+      const soSanh = ds.filter((d) => d.dinhMuc != null || d.ma === CHUA_PHAN_MON)
+      const coMat = cong(ds, (d) => d.coMat)
+      const coMatSoSanh = apDung ? cong(soSanh, (d) => d.coMat) : 0
+      const dinhMuc = cong(ds, (d) => d.dinhMuc ?? 0)
+      return {
+        nhom: n.key, ten: n.ten, apDungDinhMuc: apDung,
+        dinhMucTinh: cong(ds, (d) => d.dinhMucTinh ?? 0), dinhMuc,
+        coMatVC: cong(ds, (d) => d.coMatVC), coMatHD: cong(ds, (d) => d.coMatHD), coMat,
+        coMatSoSanh, coMatNgoai: apDung ? coMat - coMatSoSanh : 0,
+        chenhLech: apDung ? coMatSoSanh - dinhMuc : null,
+      }
+    })
   return {
     cap, tongLop, tongHS, tongLop2Buoi, tongHS2Buoi, binhQuan, hang, dienGiai, dong,
     gvDinhMuc: gv.reduce((s, d) => s + (d.dinhMuc ?? 0), 0),
@@ -549,6 +589,8 @@ export function tinhDinhMuc(
     coMatCoDinhMuc: coDinhMuc.reduce((s, d) => s + d.coMat, 0) + chuaPhanMon,
     chuaPhanMon,
     phanBoKiem,
+    tongNhom,
+    toanTruong: { coMatVC: cong(dong, (d) => d.coMatVC), coMatHD: cong(dong, (d) => d.coMatHD), coMat: cong(dong, (d) => d.coMat) },
   }
 }
 

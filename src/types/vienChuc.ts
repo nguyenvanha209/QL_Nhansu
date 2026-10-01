@@ -23,7 +23,7 @@ export interface BaoLuuPccv {
   chucVuCu: string
   heSo: number
   soQuyetDinh: string
-  /** Ngày quyết định sắp xếp / bổ nhiệm chức vụ mới — bắt đầu bảo lưu */
+  /** Ngày quyết định sắp xếp / bổ nhiệm chức vụ mới - bắt đầu bảo lưu */
   ngayQuyetDinh: string
   /** Ngày hết thời hạn bổ nhiệm chức vụ cũ (theo quyết định bổ nhiệm cũ) */
   ngayHetHanBoNhiem: string
@@ -54,9 +54,9 @@ export interface VienChuc {
   chucVu?: ChucVu
   viTriViecLamId?: string
   vtvl?: VTVL
-  /** Công việc cụ thể của nhân viên (VTVL Nhân viên) — căn cứ chia nhóm hỗ trợ / phục vụ / nuôi dưỡng */
+  /** Công việc cụ thể của nhân viên (VTVL Nhân viên) - căn cứ chia nhóm hỗ trợ / phục vụ / nuôi dưỡng */
   congViec?: CongViecNhanVien
-  /** Môn giảng dạy của giáo viên tiểu học, THCS — căn cứ đối chiếu định mức theo môn */
+  /** Môn giảng dạy của giáo viên tiểu học, THCS - căn cứ đối chiếu định mức theo môn */
   monDay?: string
   trangThai?: TrangThaiCongTac
   nguonKinhPhi?: NguonKinhPhi
@@ -64,7 +64,7 @@ export interface VienChuc {
   nhiemVuChinh?: string
   trinhDoKhac?: string
   laDangVien?: boolean
-  /** Mốc hưởng phụ cấp thâm niên — căn cứ đề xuất nâng 1%/năm ở kỳ sau (chỉ CBQL và giáo viên) */
+  /** Mốc hưởng phụ cấp thâm niên - căn cứ đề xuất nâng 1%/năm ở kỳ sau (chỉ CBQL và giáo viên) */
   mocHuongPctn?: string
   ngayVaoNganh: string
   ngayVaoDonVi: string
@@ -80,7 +80,7 @@ export interface VienChuc {
   baoLuuPccv?: BaoLuuPccv
   /** Chỉ loại hình hợp đồng: nhận lương theo bậc/hệ số (mặc định) hay theo mức tiền cố định */
   hinhThucLuong?: HinhThucLuong
-  /** Mức lương theo tiền (VNĐ/tháng) — khi hinhThucLuong = 'TIEN' */
+  /** Mức lương theo tiền (VNĐ/tháng) - khi hinhThucLuong = 'TIEN' */
   mucLuongTien?: number
   heSoLuongHienTaiId: string
   active: boolean
@@ -101,7 +101,7 @@ export const LOAI_LAO_DONG_LABELS: Record<LoaiLaoDong, string> = {
 }
 
 /**
- * Loại hình đang dùng — cho ô chọn ở form và các ô lọc. Bỏ HĐ NĐ 111 (đã thay bằng NĐ 235/2026)
+ * Loại hình đang dùng - cho ô chọn ở form và các ô lọc. Bỏ HĐ NĐ 111 (đã thay bằng NĐ 235/2026)
  * và tập sự (không khai riêng). Nhãn đầy đủ vẫn giữ trong LOAI_LAO_DONG_LABELS để hiển thị hồ sơ cũ.
  */
 export const LOAI_LAO_DONG_DANG_DUNG: LoaiLaoDong[] = [

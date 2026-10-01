@@ -17,7 +17,7 @@ const nguoiThaoTac = () => {
 }
 
 /**
- * Thời gian nâng bậc theo bảng lương của chức danh (NĐ 204/2004): loại A 3 năm, loại B, C 2 năm —
+ * Thời gian nâng bậc theo bảng lương của chức danh (NĐ 204/2004): loại A 3 năm, loại B, C 2 năm -
  * không theo số bậc. Ở bậc cuối, đây cũng là mốc xét PC thâm niên vượt khung (36 / 24 tháng).
  */
 function thoiGianNangBac(chucDanhId: string, bac: number): 2 | 3 {

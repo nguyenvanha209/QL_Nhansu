@@ -44,7 +44,7 @@ interface RowData {
   tongHSLC: number
   thoiDiem: string
   pcCV: number
-  /** Đang hưởng PCCV bảo lưu (sắp xếp tổ chức) — ngày hết bảo lưu */
+  /** Đang hưởng PCCV bảo lưu (sắp xếp tổ chức) - ngày hết bảo lưu */
   pcCvBaoLuuDen?: string
   pcTN: number
   pcTNNG_Pct: number
@@ -54,7 +54,7 @@ interface RowData {
   pcUD: number
   tong1Thang: number
   tong6Thang: number
-  /** Hợp đồng nhận lương theo mức tiền (đ/tháng) — không có hệ số lương chính */
+  /** Hợp đồng nhận lương theo mức tiền (đ/tháng) - không có hệ số lương chính */
   mucLuongTien: number
 }
 
@@ -434,8 +434,8 @@ export default function BangTongHopLuongPage() {
         <Title level={4} style={{ margin: 0 }}>
           Bảng tổng hợp lương{' '}
           <span style={{ fontWeight: 400, fontSize: 14, color: '#666' }}>
-            ({rows.length} người — Tổng hệ số lương: <strong>{grandTotal.tong1Thang.toFixed(3)}</strong>
-            {grandTotal.mucLuongTien > 0 && <> — Lương theo mức tiền: <strong>{grandTotal.mucLuongTien.toLocaleString('vi-VN')} đ</strong></>})
+            ({rows.length} người - Tổng hệ số lương: <strong>{grandTotal.tong1Thang.toFixed(3)}</strong>
+            {grandTotal.mucLuongTien > 0 && <> - Lương theo mức tiền: <strong>{grandTotal.mucLuongTien.toLocaleString('vi-VN')} đ</strong></>})
           </span>
         </Title>
         <Button icon={<DownloadOutlined />} onClick={handleExport}>Xuất Excel</Button>

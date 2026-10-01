@@ -114,7 +114,7 @@ export default function VienChucListPage() {
     },
     {
       title: 'VTVL', dataIndex: 'vtvl', key: 'vtvl', width: 120,
-      render: (v?: string) => v ? <Tag color={v === 'CBQL' ? 'gold' : v === 'GIAO_VIEN' ? 'blue' : 'default'}>{vtvls.find((x) => x.ma === v)?.ten ?? VTVL_LABELS[v as keyof typeof VTVL_LABELS] ?? v}</Tag> : '—',
+      render: (v?: string) => v ? <Tag color={v === 'CBQL' ? 'gold' : v === 'GIAO_VIEN' ? 'blue' : 'default'}>{vtvls.find((x) => x.ma === v)?.ten ?? VTVL_LABELS[v as keyof typeof VTVL_LABELS] ?? v}</Tag> : '-',
       sorter: (a: any, b: any) => (a.vtvl ?? '').localeCompare(b.vtvl ?? ''),
     },
     {

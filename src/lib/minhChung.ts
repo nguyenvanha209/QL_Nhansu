@@ -1,8 +1,8 @@
 import { supabase } from '@/lib/supabase'
 
-// Minh chứng đính kèm phiếu đề xuất — lưu ở Supabase Storage (bucket riêng tư "minh-chung").
+// Minh chứng đính kèm phiếu đề xuất - lưu ở Supabase Storage (bucket riêng tư "minh-chung").
 // - Mỗi file tối đa 3 MB; chỉ nhận PDF, JPG, PNG.
-// - Ảnh được thu nhỏ, nén JPEG ngay trên trình duyệt trước khi tải lên (ảnh điện thoại 3–6 MB → vài trăm KB).
+// - Ảnh được thu nhỏ, nén JPEG ngay trên trình duyệt trước khi tải lên (ảnh điện thoại 3-6 MB → vài trăm KB).
 // - Tên file trên máy chủ là mã băm nội dung → cùng một quyết định đính kèm nhiều nơi chỉ lưu một bản.
 // - File không bao giờ bị xoá/ghi đè từ phần mềm; gỡ khỏi phiếu chỉ bỏ liên kết.
 
@@ -61,7 +61,7 @@ async function maBam(blob: Blob): Promise<string> {
 
 /** Kiểm tra, nén (nếu là ảnh) và tải file lên. Ném lỗi kèm thông báo tiếng Việt khi không đạt. */
 export async function taiLenMinhChung(file: File, taiLenBoi: string): Promise<MinhChung> {
-  if (!supabase) throw new Error('Chưa kết nối máy chủ lưu trữ — không tải được minh chứng')
+  if (!supabase) throw new Error('Chưa kết nối máy chủ lưu trữ - không tải được minh chứng')
   if (!LOAI_CHO_PHEP[file.type]) throw new Error(`"${file.name}": chỉ nhận file PDF, JPG hoặc PNG`)
 
   const laAnh = file.type.startsWith('image/')
@@ -69,7 +69,7 @@ export async function taiLenMinhChung(file: File, taiLenBoi: string): Promise<Mi
   if (noiDung.size > MINH_CHUNG_TOI_DA) {
     throw new Error(laAnh
       ? `"${file.name}": ảnh sau khi nén vẫn ${dinhDangDungLuong(noiDung.size)}, vượt 3 MB`
-      : `"${file.name}" nặng ${dinhDangDungLuong(noiDung.size)}, vượt 3 MB — scan lại đen trắng hoặc xám, 150–200 dpi`)
+      : `"${file.name}" nặng ${dinhDangDungLuong(noiDung.size)}, vượt 3 MB - scan lại đen trắng hoặc xám, 150-200 dpi`)
   }
 
   const loai = laAnh && noiDung !== file ? 'image/jpeg' : file.type
@@ -78,13 +78,13 @@ export async function taiLenMinhChung(file: File, taiLenBoi: string): Promise<Mi
   // Đã có đúng file này trên máy chủ (cùng nội dung) → dùng lại, không lưu trùng
   if (error && !/exists|duplicate/i.test(error.message)) {
     throw new Error(/bucket not found/i.test(error.message)
-      ? 'Máy chủ chưa có kho lưu minh chứng (bucket "minh-chung") — liên hệ quản trị'
+      ? 'Máy chủ chưa có kho lưu minh chứng (bucket "minh-chung") - liên hệ quản trị'
       : `Tải lên "${file.name}" không thành công: ${error.message}`)
   }
   return { path, ten: file.name, kichThuoc: noiDung.size, loai, taiLenLuc: new Date().toISOString(), taiLenBoi }
 }
 
-/** Link xem/tải tạm thời (1 giờ) — bucket riêng tư nên không có link công khai */
+/** Link xem/tải tạm thời (1 giờ) - bucket riêng tư nên không có link công khai */
 export async function linkMinhChung(mc: MinhChung, taiVe = false): Promise<string> {
   if (!supabase) throw new Error('Chưa kết nối máy chủ lưu trữ')
   const { data, error } = await supabase.storage

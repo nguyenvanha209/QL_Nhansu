@@ -3,7 +3,7 @@ import type { User, UserRole } from '@/types/auth'
 export type Action = 'read' | 'write' | 'approve' | 'admin'
 
 // Nguồn sự thật duy nhất về phân quyền. Trước đây ma trận này bị chép thành hai
-// bản — một bản chạy thật ở đây, một bản chỉ để hiển thị trong trang quản trị.
+// bản - một bản chạy thật ở đây, một bản chỉ để hiển thị trong trang quản trị.
 // Hai bản có thể lệch nhau, khiến giao diện báo một đằng còn hệ thống chạy một
 // nẻo. Mọi nơi nay đều dùng chung các hằng số dưới đây.
 
@@ -68,11 +68,11 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
 }
 
 export const ROLE_DESC: Record<UserRole, string> = {
-  ADMIN: 'Toàn quyền — quản trị hệ thống, tài khoản, danh mục. Không giới hạn phạm vi đơn vị.',
+  ADMIN: 'Toàn quyền - quản trị hệ thống, tài khoản, danh mục. Không giới hạn phạm vi đơn vị.',
   CB_VH_XH: 'Cán bộ Phòng VH-XH: xem + sửa toàn bộ hồ sơ, lương, đề xuất của tất cả trường.',
   LANH_DAO: 'Lãnh đạo UBND phường: chỉ xem và phê duyệt, không chỉnh sửa dữ liệu.',
   HIEU_TRUONG: 'Hiệu trưởng: xem + sửa hồ sơ trường mình, tạo và duyệt đề xuất của trường.',
-  CB_TRUONG: 'Cán bộ trường (kế toán): xem + sửa hồ sơ và tạo đề xuất — chỉ trong phạm vi trường được gán.',
+  CB_TRUONG: 'Cán bộ trường (kế toán): xem + sửa hồ sơ và tạo đề xuất - chỉ trong phạm vi trường được gán.',
 }
 
 export const khoaQuyen = (resource: string, action: Action) => `${resource}:${action}`
@@ -87,7 +87,7 @@ export function quyenTheoVaiTro(role: UserRole, resource: string, action: Action
 type NguoiDung = Pick<User, 'role' | 'quyenRieng'> | null | undefined
 
 // Quyền thực tế: mặc định theo vai trò, có thể được cấp thêm hoặc thu hồi riêng
-// cho từng tài khoản. Thu hồi luôn thắng cấp thêm — khi hai bên mâu thuẫn thì
+// cho từng tài khoản. Thu hồi luôn thắng cấp thêm - khi hai bên mâu thuẫn thì
 // chọn phía an toàn hơn.
 export function can(user: NguoiDung, resource: string, action: Action): boolean {
   if (!user) return false

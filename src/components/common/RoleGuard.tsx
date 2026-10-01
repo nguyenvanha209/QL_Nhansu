@@ -10,7 +10,7 @@ interface RoleGuardProps {
   allowedRoles: UserRole[]
   // Quyền thay thế: tài khoản được cấp riêng quyền này cũng vào được, dù vai trò
   // không nằm trong allowedRoles. Thiếu chỗ này thì quản trị viên tích quyền cho
-  // ai đó mà không có tác dụng gì — bấm vào vẫn bị chặn, không rõ vì sao.
+  // ai đó mà không có tác dụng gì - bấm vào vẫn bị chặn, không rõ vì sao.
   quyen?: { resource: string; action: Action }
   children: ReactNode
 }

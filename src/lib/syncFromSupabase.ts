@@ -72,7 +72,7 @@ if (typeof window !== 'undefined') {
 export type SyncResult =
   | 'loaded' // đã kéo được dữ liệu từ máy chủ
   | 'empty' // kết nối được nhưng máy chủ chưa có dữ liệu (lần chạy đầu tiên)
-  | 'error' // không kết nối được / lỗi — KHÔNG được coi là "chưa có dữ liệu"
+  | 'error' // không kết nối được / lỗi - KHÔNG được coi là "chưa có dữ liệu"
   | 'disabled' // chưa cấu hình Supabase
 
 // Kéo toàn bộ state từ Supabase về localStorage rồi rehydrate các store.

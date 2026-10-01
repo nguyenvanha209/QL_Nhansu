@@ -7,7 +7,7 @@ const { Text } = Typography
 
 /**
  * Tóm tắt nội dung điều chỉnh của một người, cũ → mới, theo 4 thông số lương:
- * Ngạch – Bậc – Hệ số – Mốc hưởng. Thông số không đổi thì ghi "giữ nguyên" để người duyệt thấy rõ.
+ * Ngạch - Bậc - Hệ số - Mốc hưởng. Thông số không đổi thì ghi "giữ nguyên" để người duyệt thấy rõ.
  */
 export default function NoiDungDieuChinh({ r, chucDanhs }: { r: ChiTietDeXuat; chucDanhs: ChucDanhNgheNghiep[] }) {
   const cdCu = chucDanhs.find((c) => c.id === r.chucDanhCuId)
@@ -29,7 +29,7 @@ export default function NoiDungDieuChinh({ r, chucDanhs }: { r: ChiTietDeXuat; c
       {dong('Ngạch', cdCu ? `${cdCu.ma} (${cdCu.bangLuong})` : r.chucDanhCuId, cdMoi ? `${cdMoi.ma} (${cdMoi.bangLuong})` : r.chucDanhMoiId)}
       {dong('Bậc', `Bậc ${r.bacCu}`, `Bậc ${r.bacMoi}`)}
       {dong('Hệ số', hs(r.heSoCu), hs(r.heSoMoi))}
-      {dong('Mốc hưởng', r.ngayHieuLucCu ? formatDate(r.ngayHieuLucCu) : '—', r.ngayHieuLuc ? formatDate(r.ngayHieuLuc) : '—')}
+      {dong('Mốc hưởng', r.ngayHieuLucCu ? formatDate(r.ngayHieuLucCu) : '-', r.ngayHieuLuc ? formatDate(r.ngayHieuLuc) : '-')}
     </div>
   )
 }

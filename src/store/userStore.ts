@@ -41,7 +41,7 @@ export const useUserStore = create<UserState>()(
         logAction(a.id, a.name, 'CREATE', 'User', {
           entityId: user.id,
           donViId: user.donViId ?? undefined,
-          moTa: `Tạo tài khoản ${user.username} (${user.fullName}) — vai trò ${user.role}`,
+          moTa: `Tạo tài khoản ${user.username} (${user.fullName}) - vai trò ${user.role}`,
         })
         return user
       },

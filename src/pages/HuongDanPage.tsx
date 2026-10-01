@@ -53,7 +53,7 @@ export default function HuongDanPage() {
         rows.push({ key: `g_${dv.loai}`, ten: DV_LABEL[dv.loai] ?? dv.loai, kt: '', ht: '', isGroup: true })
         lastLoai = dv.loai
       }
-      rows.push({ key: dv.id, ten: dv.ten, kt: kt?.username ?? '—', ht: ht?.username ?? '—' })
+      rows.push({ key: dv.id, ten: dv.ten, kt: kt?.username ?? '-', ht: ht?.username ?? '-' })
     }
     return rows
   }, [donVis, users])
@@ -81,16 +81,16 @@ export default function HuongDanPage() {
     },
     {
       so: 2, ai: 'Hiệu trưởng', tieuDe: 'Duyệt tại trường',
-      noiDung: <>Hiệu trưởng đăng nhập bằng tài khoản <Text code>HT.xxx</Text>, xem phiếu rồi bấm <b>Duyệt — chuyển VH-XH</b>. Có thể <b>Yêu cầu bổ sung</b> hoặc <b>Từ chối</b> kèm ý kiến.</>,
+      noiDung: <>Hiệu trưởng đăng nhập bằng tài khoản <Text code>HT.xxx</Text>, xem phiếu rồi bấm <b>Duyệt - chuyển VH-XH</b>. Có thể <b>Yêu cầu bổ sung</b> hoặc <b>Từ chối</b> kèm ý kiến.</>,
       chip: <Tag color="processing">Chờ VH-XH thẩm định</Tag>,
     },
     {
-      so: 3, ai: 'Phòng Văn hóa – Xã hội', tieuDe: 'Thẩm định hồ sơ',
-      noiDung: <>Cán bộ Phòng VH-XH kiểm tra căn cứ pháp lý, niên hạn nâng bậc, mức phụ cấp, rồi bấm <b>Đồng ý — chuyển lãnh đạo</b>.</>,
+      so: 3, ai: 'Phòng Văn hóa - Xã hội', tieuDe: 'Thẩm định hồ sơ',
+      noiDung: <>Cán bộ Phòng VH-XH kiểm tra căn cứ pháp lý, niên hạn nâng bậc, mức phụ cấp, rồi bấm <b>Đồng ý - chuyển lãnh đạo</b>.</>,
       chip: <Tag color="warning">Chờ lãnh đạo phê duyệt</Tag>,
     },
     {
-      so: 4, ai: 'Lãnh đạo phường', tieuDe: 'Phê duyệt — hệ thống tự cập nhật', cuoi: true,
+      so: 4, ai: 'Lãnh đạo phường', tieuDe: 'Phê duyệt - hệ thống tự cập nhật', cuoi: true,
       noiDung: <>Lãnh đạo bấm <b>Phê duyệt</b>. Ngay tại thời điểm này hệ thống tự ghi kết quả vào hồ sơ viên chức.</>,
       chip: <Tag color="success">Đã phê duyệt</Tag>,
     },
@@ -136,7 +136,7 @@ export default function HuongDanPage() {
         showIcon
         style={{ marginBottom: 28, borderRadius: 8 }}
         title="Dữ liệu viên chức đã được nhập sẵn từ bảng lương tháng 6/2026"
-        description="Năm việc chính: (1) rà soát, hoàn thiện hồ sơ nhân sự; (2) xử lý các hồ sơ lệch ngạch – bậc – hệ số ở trang Rà soát; (3) không tự sửa hệ số lương và phụ cấp — mọi điều chỉnh đi qua phiếu đề xuất, được phê duyệt là hệ thống tự ghi vào hồ sơ; (4) chuyển trường trong phường đi qua phiếu chuyển công tác; (5) người chuyển ra ngoài phường, nghỉ hưu, thôi việc thì đổi trạng thái công tác, không xoá hồ sơ."
+        description="Năm việc chính: (1) rà soát, hoàn thiện hồ sơ nhân sự; (2) xử lý các hồ sơ lệch ngạch - bậc - hệ số ở trang Rà soát; (3) không tự sửa hệ số lương và phụ cấp - mọi điều chỉnh đi qua phiếu đề xuất, được phê duyệt là hệ thống tự ghi vào hồ sơ; (4) chuyển trường trong phường đi qua phiếu chuyển công tác; (5) người chuyển ra ngoài phường, nghỉ hưu, thôi việc thì đổi trạng thái công tác, không xoá hồ sơ."
       />
 
       {/* ── Mục lục ── */}
@@ -149,7 +149,7 @@ export default function HuongDanPage() {
           <li><a href="#hd-s4">Quy trình đề xuất điều chỉnh</a></li>
           <li><a href="#hd-s5">Hướng dẫn lập phiếu đề xuất</a></li>
           <li><a href="#hd-s6">Chuyển công tác, chuyển đi, nghỉ hưu</a></li>
-          <li><a href="#hd-s7">Rà soát ngạch – bậc – hệ số</a></li>
+          <li><a href="#hd-s7">Rà soát ngạch - bậc - hệ số</a></li>
           <li><a href="#hd-s8">Theo dõi và tra cứu</a></li>
           <li><a href="#hd-s9">Câu hỏi thường gặp</a></li>
         </ol>
@@ -186,8 +186,8 @@ export default function HuongDanPage() {
 
         <KhungLuuY nhan="Lưu ý bảo mật">
           <ul>
-            <li>Hệ thống <b>tự động đăng xuất sau 10 phút</b> không có thao tác. Đây là quy định bảo vệ dữ liệu nhân sự, không phải lỗi — chỉ cần đăng nhập lại và tiếp tục.</li>
-            <li>Tài khoản Kế toán chỉ nhìn thấy và chỉ sửa được hồ sơ <b>thuộc trường mình</b>. Hồ sơ thêm mới luôn được gán vào trường của tài khoản — không cần chọn đơn vị.</li>
+            <li>Hệ thống <b>tự động đăng xuất sau 10 phút</b> không có thao tác. Đây là quy định bảo vệ dữ liệu nhân sự, không phải lỗi - chỉ cần đăng nhập lại và tiếp tục.</li>
+            <li>Tài khoản Kế toán chỉ nhìn thấy và chỉ sửa được hồ sơ <b>thuộc trường mình</b>. Hồ sơ thêm mới luôn được gán vào trường của tài khoản - không cần chọn đơn vị.</li>
             <li>Mọi thao tác thêm, sửa, xóa đều được ghi vào nhật ký hệ thống kèm tên người thực hiện và thời điểm.</li>
           </ul>
         </KhungLuuY>
@@ -212,7 +212,7 @@ export default function HuongDanPage() {
           Người mới thì bấm <b>Thêm hồ sơ nhân sự</b>.
         </Paragraph>
         <Paragraph>
-          Có thể bấm vào tiêu đề bất kỳ cột nào để sắp xếp danh sách — ví dụ sắp theo <b>Ngày sinh</b> để tìm nhanh những hồ sơ chưa có ngày sinh.
+          Có thể bấm vào tiêu đề bất kỳ cột nào để sắp xếp danh sách - ví dụ sắp theo <b>Ngày sinh</b> để tìm nhanh những hồ sơ chưa có ngày sinh.
         </Paragraph>
 
         <h3>Hai quy ước áp dụng cho mọi danh sách</h3>
@@ -223,17 +223,17 @@ export default function HuongDanPage() {
               <tr>
                 <td><b>Họ tên luôn IN HOA</b></td>
                 <td>
-                  Gõ thường hay gõ hoa đều được — hệ thống tự chuyển sang IN HOA khi lưu và khi
+                  Gõ thường hay gõ hoa đều được - hệ thống tự chuyển sang IN HOA khi lưu và khi
                   hiển thị. Toàn bộ hồ sơ đã nhập trước đây cũng đã được chuẩn hoá.
                   Kế toán <b>không phải tự gõ hoa</b>.
                 </td>
               </tr>
               <tr>
-                <td><b>Thứ tự: CBQL – Giáo viên – Nhân viên</b></td>
+                <td><b>Thứ tự: CBQL - Giáo viên - Nhân viên</b></td>
                 <td>
                   Mọi danh sách viên chức đều xếp cán bộ quản lý trước, rồi giáo viên, cuối cùng
                   nhân viên. Trong từng nhóm xếp theo chức vụ (Hiệu trưởng, Phó Hiệu trưởng,
-                  Tổ trưởng, Tổ phó) rồi đến tên A→Z — đúng thứ tự bảng lương quen dùng.
+                  Tổ trưởng, Tổ phó) rồi đến tên A→Z - đúng thứ tự bảng lương quen dùng.
                 </td>
               </tr>
             </tbody>
@@ -278,14 +278,14 @@ export default function HuongDanPage() {
               </tr>
               <tr>
                 <td><b>Lương &amp; phụ cấp</b></td>
-                <td>Viên chức biên chế: Bậc lương <i className="hd-req">**</i>, Hệ số lương, Mốc hưởng lương. Hợp đồng: chọn <b>Hình thức nhận lương</b> — theo bậc, hệ số hoặc theo mức tiền. Mốc hưởng PCTN, các khoản phụ cấp</td>
+                <td>Viên chức biên chế: Bậc lương <i className="hd-req">**</i>, Hệ số lương, Mốc hưởng lương. Hợp đồng: chọn <b>Hình thức nhận lương</b> - theo bậc, hệ số hoặc theo mức tiền. Mốc hưởng PCTN, các khoản phụ cấp</td>
                 <td>Từ bảng lương T6/2026</td>
               </tr>
             </tbody>
           </table>
         </div>
         <Paragraph type="secondary" style={{ fontSize: 13 }}>
-          <i className="hd-req">*</i> Bắt buộc với mọi hồ sơ. <i className="hd-req">**</i> Chỉ bắt buộc với <b>viên chức biên chế</b> — trên màn
+          <i className="hd-req">*</i> Bắt buộc với mọi hồ sơ. <i className="hd-req">**</i> Chỉ bắt buộc với <b>viên chức biên chế</b> - trên màn
           hình các ô này có nhãn xanh <Tag color="blue" style={{ fontSize: 11, marginInlineEnd: 0 }}>VC biên chế</Tag>.
         </Paragraph>
 
@@ -325,18 +325,18 @@ export default function HuongDanPage() {
         <ol className="hd-todo">
           <li>Đối chiếu tổng số viên chức trên hệ thống với danh sách thực tế của trường.</li>
           <li>Bổ sung <b>ngày sinh</b> cho những hồ sơ còn trống (một số trường hợp bảng lương không ghi ngày sinh).</li>
-          <li>Kiểm tra <b>Ngày vào ngành</b> — đây là căn cứ tính phụ cấp thâm niên nhà giáo.</li>
+          <li>Kiểm tra <b>Ngày vào ngành</b> - đây là căn cứ tính phụ cấp thâm niên nhà giáo.</li>
           <li>Bổ sung <b>số CCCD</b> và <b>số điện thoại</b> liên hệ.</li>
           <li>Bổ sung <b>trình độ chuyên môn nghiệp vụ</b> và trình độ khác (lý luận chính trị, tin học, ngoại ngữ…).</li>
           <li>Kiểm tra <b>Vị trí việc làm</b> và <b>Chức vụ</b> đúng thực tế (Hiệu trưởng, Phó Hiệu trưởng, Tổ trưởng chuyên môn, giáo viên, nhân viên).</li>
-          <li>Với nhân viên: kiểm tra <b>Công việc cụ thể</b> (kế toán, văn thư, thư viện, thiết bị, giáo vụ, y tế, tư vấn học sinh, bảo vệ, lao công, cấp dưỡng…). Hệ thống đã tự điền trước theo nhiệm vụ chính — sửa lại nếu chưa đúng. Ô này quyết định người đó thuộc nhóm <i>chuyên môn – hỗ trợ</i>, <i>phục vụ</i> hay <i>nuôi dưỡng</i> trên trang Tổng quan.</li>
+          <li>Với nhân viên: kiểm tra <b>Công việc cụ thể</b> (kế toán, văn thư, thư viện, thiết bị, giáo vụ, y tế, tư vấn học sinh, bảo vệ, lao công, cấp dưỡng…). Hệ thống đã tự điền trước theo nhiệm vụ chính - sửa lại nếu chưa đúng. Ô này quyết định người đó thuộc nhóm <i>chuyên môn - hỗ trợ</i>, <i>phục vụ</i> hay <i>nuôi dưỡng</i> trên trang Tổng quan.</li>
           <li>Rà soát <b>Trạng thái công tác</b>: người đã chuyển ra ngoài phường, nghỉ hưu hoặc thôi việc phải đổi trạng thái, <i>không xóa hồ sơ</i> (xem mục VI).</li>
           <li>Với người hợp đồng: chọn đúng <b>Hình thức nhận lương</b>; lương khoán theo tháng thì chọn <i>Theo mức tiền</i> và nhập số tiền.</li>
           <li>Kiểm tra <b>Mốc hưởng lương</b> đúng ngày trên quyết định xếp lương. Ô <b>Ngày nâng lương tiếp theo</b> ngay bên cạnh do hệ thống tự tính
-            (mốc + 3 năm với ngạch từ cao đẳng trở lên, + 2 năm với ngạch trung cấp trở xuống) — sửa mốc rồi bấm Lưu là ngày nâng lương được tính lại
+            (mốc + 3 năm với ngạch từ cao đẳng trở lên, + 2 năm với ngạch trung cấp trở xuống) - sửa mốc rồi bấm Lưu là ngày nâng lương được tính lại
             và ghi vào lịch sử biến động.</li>
-          <li>Mở trang <b>Rà soát ngạch – bậc</b> và xử lý hết các hồ sơ trường mình còn trong danh sách (xem mục VII).</li>
-          <li>Đối chiếu <b>Bảng tổng hợp lương</b> trên hệ thống với bảng lương giấy tháng 6/2026 — báo lại nếu có sai lệch.</li>
+          <li>Mở trang <b>Rà soát ngạch - bậc</b> và xử lý hết các hồ sơ trường mình còn trong danh sách (xem mục VII).</li>
+          <li>Đối chiếu <b>Bảng tổng hợp lương</b> trên hệ thống với bảng lương giấy tháng 6/2026 - báo lại nếu có sai lệch.</li>
         </ol>
 
         <KhungLuuY nhan="Không xóa hồ sơ">
@@ -363,7 +363,7 @@ export default function HuongDanPage() {
           <p><b>Kế toán không tự sửa hệ số lương, bậc lương và phụ cấp trực tiếp trong hồ sơ.</b></p>
           <p>
             Tài khoản Kế toán được cấp quyền <i>chỉ xem</i> đối với dữ liệu lương. Mọi thay đổi phải
-            đi qua phiếu đề xuất và được Phòng Văn hóa – Xã hội thẩm định.
+            đi qua phiếu đề xuất và được Phòng Văn hóa - Xã hội thẩm định.
           </p>
         </KhungLuuY>
 
@@ -379,7 +379,7 @@ export default function HuongDanPage() {
           <div className="hd-reason">
             <div className="hd-reason-num">2</div>
             <div>
-              <b>Có lịch sử biến động.</b> Hệ thống tự ghi lại "Bậc 3 – Hệ số 3.00 → Bậc 4 – Hệ số 3.33"
+              <b>Có lịch sử biến động.</b> Hệ thống tự ghi lại "Bậc 3 - Hệ số 3.00 → Bậc 4 - Hệ số 3.33"
               kèm ngày hiệu lực, xem được ngay trong hồ sơ viên chức.
             </div>
           </div>
@@ -393,7 +393,7 @@ export default function HuongDanPage() {
           <div className="hd-reason">
             <div className="hd-reason-num">4</div>
             <div>
-              <b>Giảm việc cho Kế toán.</b> Sau khi phiếu được phê duyệt, hệ thống tự cập nhật vào hồ sơ —
+              <b>Giảm việc cho Kế toán.</b> Sau khi phiếu được phê duyệt, hệ thống tự cập nhật vào hồ sơ -
               không phải nhập lại lần thứ hai.
             </div>
           </div>
@@ -411,12 +411,12 @@ export default function HuongDanPage() {
                 <td>
                   Hiệu trưởng xuống Phó hiệu trưởng, Phó hiệu trưởng xuống giáo viên <b>do sắp xếp tổ chức bộ máy</b>: hưởng
                   <b> nguyên mức PC chức vụ cũ</b> đến hết thời hạn bổ nhiệm chức vụ cũ; còn dưới 6 tháng thì được 6 tháng.
-                  Cách khai: sửa hồ sơ, đổi chức vụ (Phó HT về giáo viên thì chọn <i>Không giữ chức vụ</i>) — hệ thống hiện khung vàng <i>Bảo lưu phụ cấp chức vụ</i>; bật lên, nhập số, ngày quyết định
+                  Cách khai: sửa hồ sơ, đổi chức vụ (Phó HT về giáo viên thì chọn <i>Không giữ chức vụ</i>) - hệ thống hiện khung vàng <i>Bảo lưu phụ cấp chức vụ</i>; bật lên, nhập số, ngày quyết định
                   và ngày hết hạn bổ nhiệm cũ. Hệ thống tự tính ngày hết bảo lưu, áp mức cũ trên Bảng tổng hợp lương (nhãn <Tag color="gold" style={{ fontSize: 10 }}>BL</Tag>),
                   dùng mức này làm nền tính PC thâm niên, ưu đãi, và <b>tự chuyển về mức mới khi hết hạn</b>.
                 </td>
               </tr>
-              <tr><td><b>PC trách nhiệm công việc</b></td><td>Hệ số theo vị trí, VD kế toán 0,2 — nhập theo quyết định.</td></tr>
+              <tr><td><b>PC trách nhiệm công việc</b></td><td>Hệ số theo vị trí, VD kế toán 0,2 - nhập theo quyết định.</td></tr>
               <tr><td><b>PC thâm niên nhà giáo</b></td><td>% lương chính, chỉ <b>CBQL và giáo viên</b>: 5% khi đủ 5 năm, mỗi năm +1%. <b>Vẫn giữ nguyên</b>, hưởng song song với PC ưu đãi nhà giáo.</td></tr>
               <tr><td><b>Hệ số chênh lệch bảo lưu</b></td><td>Nhập <b>giá trị hệ số</b> (VD <i>0,33</i>), <b>không nhập %</b>. Nhập từ 5 trở lên hệ thống sẽ báo lỗi. Cộng thẳng vào tổng hệ số lương.</td></tr>
               <tr>
@@ -424,7 +424,7 @@ export default function HuongDanPage() {
                 <td>
                   % lương chính, chọn theo cấp học: <b>mầm non, tiểu học 45%</b> · <b>THCS 40%</b> · <b>nhân viên (nhân sự hỗ trợ giáo dục) 20%</b>.
                   Toàn bộ hồ sơ đã được chuyển từ mức cũ QĐ 244 (35%, 30%) sang mức mới, hiệu lực 01/01/2026, có ghi Lịch sử biến động.
-                  Hai mức cũ vẫn còn trong danh mục (nhãn <i>Mức cũ</i>) chỉ để tra lịch sử — không chọn cho hồ sơ mới.
+                  Hai mức cũ vẫn còn trong danh mục (nhãn <i>Mức cũ</i>) chỉ để tra lịch sử - không chọn cho hồ sơ mới.
                 </td>
               </tr>
             </tbody>
@@ -439,10 +439,10 @@ export default function HuongDanPage() {
           <table className="hd-table">
             <thead><tr><th style={{ width: 130 }}>Mã</th><th>Chức danh</th><th style={{ width: 230 }}>Bảng lương</th></tr></thead>
             <tbody>
-              <tr><td>V.07.03.07</td><td>Giáo viên tiểu học hạng II (mã cũ)</td><td>A1 — 9 bậc, 2,34 – 4,98, 3 năm/bậc</td></tr>
-              <tr><td>V.07.03.08</td><td>Giáo viên tiểu học hạng III (mã cũ)</td><td>A0 — 10 bậc, 2,10 – 4,89, 3 năm/bậc</td></tr>
-              <tr><td>V.07.03.09</td><td>Giáo viên tiểu học hạng IV (mã cũ)</td><td>B — 12 bậc, 1,86 – 4,06, 2 năm/bậc</td></tr>
-              <tr><td>V.07.02.06</td><td>Giáo viên mầm non hạng IV (mã cũ)</td><td>B — 12 bậc, 1,86 – 4,06, 2 năm/bậc</td></tr>
+              <tr><td>V.07.03.07</td><td>Giáo viên tiểu học hạng II (mã cũ)</td><td>A1 - 9 bậc, 2,34 - 4,98, 3 năm/bậc</td></tr>
+              <tr><td>V.07.03.08</td><td>Giáo viên tiểu học hạng III (mã cũ)</td><td>A0 - 10 bậc, 2,10 - 4,89, 3 năm/bậc</td></tr>
+              <tr><td>V.07.03.09</td><td>Giáo viên tiểu học hạng IV (mã cũ)</td><td>B - 12 bậc, 1,86 - 4,06, 2 năm/bậc</td></tr>
+              <tr><td>V.07.02.06</td><td>Giáo viên mầm non hạng IV (mã cũ)</td><td>B - 12 bậc, 1,86 - 4,06, 2 năm/bậc</td></tr>
             </tbody>
           </table>
         </div>
@@ -548,7 +548,7 @@ export default function HuongDanPage() {
           <table className="hd-table">
             <thead><tr><th style={{ width: 165 }}>Mục</th><th>Cách điền</th></tr></thead>
             <tbody>
-              <tr><td><b>Tiêu đề</b> <i className="hd-req">*</i></td><td>Ghi rõ đợt và trường. Ví dụ: <i>Nâng bậc lương 6 tháng đầu năm 2026 – THCS An Đà</i>.</td></tr>
+              <tr><td><b>Tiêu đề</b> <i className="hd-req">*</i></td><td>Ghi rõ đợt và trường. Ví dụ: <i>Nâng bậc lương 6 tháng đầu năm 2026 - THCS An Đà</i>.</td></tr>
               <tr><td><b>Đơn vị</b> <i className="hd-req">*</i></td><td>Hệ thống điền sẵn trường của bạn.</td></tr>
               <tr><td><b>Loại đề xuất</b> <i className="hd-req">*</i></td><td>Nâng bậc lương thường xuyên · Nâng phụ cấp thâm niên (hai loại theo niên hạn, không cần minh chứng) · Nâng bậc lương trước thời hạn · Chuyển ngạch/chức danh · Điều chỉnh hệ số lương - phụ cấp (ba loại bắt buộc minh chứng).</td></tr>
               <tr><td><b>Ghi chú</b></td><td>Căn cứ pháp lý, số văn bản, hoặc giải trình cho trường hợp đặc biệt.</td></tr>
@@ -556,17 +556,17 @@ export default function HuongDanPage() {
           </table>
         </div>
 
-        <h3>5.1 — Phiếu nâng bậc lương</h3>
+        <h3>5.1 - Phiếu nâng bậc lương</h3>
         <Paragraph>
           Hệ thống có sẵn bảng <b>gợi ý viên chức đến kỳ nâng lương</b>, lọc theo đợt: 6 tháng đầu năm
-          (01/01 – 30/06) hoặc 6 tháng cuối năm (01/07 – 31/12). Cách nhanh nhất:
+          (01/01 - 30/06) hoặc 6 tháng cuối năm (01/07 - 31/12). Cách nhanh nhất:
         </Paragraph>
         <ol>
           <li>Chọn <b>năm</b> và <b>đợt</b> cần xét.</li>
           <li>Tích chọn những viên chức đủ điều kiện trong bảng gợi ý.</li>
-          <li>Bấm <b>Thêm đã chọn</b> — hệ thống tự điền bậc mới, hệ số mới và mốc hưởng lương theo bảng lương của ngạch.</li>
+          <li>Bấm <b>Thêm đã chọn</b> - hệ thống tự điền bậc mới, hệ số mới và mốc hưởng lương theo bảng lương của ngạch.</li>
           <li>Kiểm tra lại từng dòng: cột <b>Hiện tại</b> ghi mã ngạch, bậc, hệ số và mốc hưởng đang có; <b>Bậc mới</b> chọn trong bảng lương của ngạch (hệ số tự điền, không gõ tay); <b>Mốc hưởng mới</b> sửa được; cột <b>Nâng bậc kế tiếp</b> cho biết ngày dự kiến (loại A +3 năm, loại B, C +2 năm).</li>
-          <li>Người đã ở <b>bậc cuối</b> không chọn được vào phiếu nâng bậc (có nhãn <i>Bậc cuối — xét vượt khung</i>).</li>
+          <li>Người đã ở <b>bậc cuối</b> không chọn được vào phiếu nâng bậc (có nhãn <i>Bậc cuối - xét vượt khung</i>).</li>
         </ol>
         <Paragraph>
           Với trường hợp không nằm trong gợi ý (nâng trước hạn do thành tích, điều chỉnh sai sót…),
@@ -575,20 +575,20 @@ export default function HuongDanPage() {
 
         <h3>Chuyển ngạch, điều chỉnh lương</h3>
         <ul>
-          <li><b>Chuyển ngạch/chức danh</b>: chọn <b>Ngạch mới</b> ở từng dòng — hệ thống xếp vào bậc có hệ số bằng hoặc cao hơn gần nhất, có thể chọn lại bậc.</li>
+          <li><b>Chuyển ngạch/chức danh</b>: chọn <b>Ngạch mới</b> ở từng dòng - hệ thống xếp vào bậc có hệ số bằng hoặc cao hơn gần nhất, có thể chọn lại bậc.</li>
           <li><b>Điều chỉnh hệ số lương - phụ cấp</b>: sửa được ngạch, bậc, hệ số, mốc hưởng theo văn bản; hệ số lệch bảng lương có dấu cảnh báo để người duyệt lưu ý.</li>
-          <li><b>Nâng bậc lương trước thời hạn</b>: mốc hưởng mới phải sớm hơn ngày đến hạn, tối đa 12 tháng — hệ thống kiểm tra khi lưu.</li>
-          <li>Cột <b>Nội dung điều chỉnh (cũ → mới)</b> tóm tắt ngạch – bậc – hệ số – mốc hưởng của từng người; thông số không đổi ghi <i>giữ nguyên</i>.</li>
+          <li><b>Nâng bậc lương trước thời hạn</b>: mốc hưởng mới phải sớm hơn ngày đến hạn, tối đa 12 tháng - hệ thống kiểm tra khi lưu.</li>
+          <li>Cột <b>Nội dung điều chỉnh (cũ → mới)</b> tóm tắt ngạch - bậc - hệ số - mốc hưởng của từng người; thông số không đổi ghi <i>giữ nguyên</i>.</li>
         </ul>
 
         <h3>Minh chứng đính kèm</h3>
         <ul>
           <li><b>Minh chứng của phiếu</b> (quyết định, biên bản xét, danh sách…) đính kèm ở ô phía trên; giấy tờ riêng từng người (VD giấy khen) ở cột <b>Minh chứng riêng</b>.</li>
-          <li>Nhận <b>PDF, JPG, PNG, tối đa 3 MB mỗi file</b>. Ảnh chụp tự được nén. PDF scan nên để đen trắng hoặc xám, 150–200 dpi để không vượt 3 MB.</li>
+          <li>Nhận <b>PDF, JPG, PNG, tối đa 3 MB mỗi file</b>. Ảnh chụp tự được nén. PDF scan nên để đen trắng hoặc xám, 150-200 dpi để không vượt 3 MB.</li>
           <li><b>Bắt buộc có minh chứng</b> khi trình phiếu <i>Nâng bậc lương trước thời hạn</i>, <i>Chuyển ngạch/chức danh</i>, <i>Điều chỉnh hệ số lương - phụ cấp</i>. Hai loại theo niên hạn (nâng bậc thường xuyên, nâng PCTN) không có ô minh chứng. Người duyệt bấm tên file để xem hoặc tải về.</li>
         </ul>
 
-        <h3>5.2 — Phiếu phụ cấp thâm niên nhà giáo</h3>
+        <h3>5.2 - Phiếu phụ cấp thâm niên nhà giáo</h3>
         <Paragraph>
           Chọn loại đề xuất <b>Phụ cấp thâm niên</b>, giao diện sẽ chuyển sang các cột riêng:
           Mốc PCTN hiện tại, PCTN hiện tại, PCTN đề nghị, Mốc hưởng PCTN.
@@ -596,7 +596,7 @@ export default function HuongDanPage() {
         <ul>
           <li>Hệ thống gợi ý theo <b>ngày kỷ niệm mốc hưởng PCTN</b> của từng người và tự đề nghị mức mới <b>tăng 1%</b> so với mức đang hưởng.</li>
           <li>Trường hợp chưa từng hưởng phụ cấp thâm niên, mức đề nghị khởi điểm là <b>5%</b>.</li>
-          <li>Hồ sơ chưa khai <b>Mốc hưởng PCTN</b> sẽ không xuất hiện trong bảng gợi ý — cần bổ sung mốc này trong hồ sơ viên chức trước.</li>
+          <li>Hồ sơ chưa khai <b>Mốc hưởng PCTN</b> sẽ không xuất hiện trong bảng gợi ý - cần bổ sung mốc này trong hồ sơ viên chức trước.</li>
         </ul>
 
         <KhungLuuY nhan="Nhân viên không hưởng PCTN">
@@ -631,7 +631,7 @@ export default function HuongDanPage() {
       <Section
         so="VI"
         tieuDe="Chuyển công tác, chuyển đi, nghỉ hưu"
-        moTa="Chuyển sang trường khác trong phường thì đi qua phiếu chuyển công tác: Quản trị duyệt, trường đi giữ hồ sơ Chuyển đi, trường đến có hồ sơ mới. Chuyển ra ngoài phường/tỉnh, nghỉ hưu, thôi việc thì không lập phiếu — chỉ đổi trạng thái trong hồ sơ."
+        moTa="Chuyển sang trường khác trong phường thì đi qua phiếu chuyển công tác: Quản trị duyệt, trường đi giữ hồ sơ Chuyển đi, trường đến có hồ sơ mới. Chuyển ra ngoài phường/tỉnh, nghỉ hưu, thôi việc thì không lập phiếu - chỉ đổi trạng thái trong hồ sơ."
       >
         <div className="hd-flow">
           {buocChuyen.map((b) => (
@@ -666,8 +666,8 @@ export default function HuongDanPage() {
           <li>Khi Quản trị duyệt xong, phiếu hiện ở menu <b>Chuyển công tác</b> với nhãn <Tag color="warning">Chờ trường đến tiếp nhận</Tag> kèm số đếm trên tiêu đề trang.</li>
           <li>Hồ sơ mới đã nằm trong danh sách của trường, trạng thái <i>Chuyển đến</i>, mang mã hồ sơ mới.</li>
           <li>Bấm <b>Tiếp nhận</b> và điền phân công. <b>Thời điểm về đơn vị</b> được ghi vào hồ sơ làm mốc công tác tại trường. Chỉ tiếp nhận được phiếu đã được Quản trị duyệt.</li>
-          <li><b>Không tự thêm hồ sơ</b> cho người chuyển đến từ trường trong phường — sẽ bị trùng hồ sơ.</li>
-          <li>Vị trí việc làm cũ đã được gỡ vì thuộc trường cũ — cần chọn lại từ danh mục vị trí của trường mình.</li>
+          <li><b>Không tự thêm hồ sơ</b> cho người chuyển đến từ trường trong phường - sẽ bị trùng hồ sơ.</li>
+          <li>Vị trí việc làm cũ đã được gỡ vì thuộc trường cũ - cần chọn lại từ danh mục vị trí của trường mình.</li>
         </ul>
 
         <KhungLuuY nhan="Chưa tiếp nhận thì hồ sơ chưa hoàn chỉnh">
@@ -678,7 +678,7 @@ export default function HuongDanPage() {
           </p>
         </KhungLuuY>
 
-        <h3>Chuyển ra ngoài phường, ngoài tỉnh — nghỉ hưu — thôi việc</h3>
+        <h3>Chuyển ra ngoài phường, ngoài tỉnh - nghỉ hưu - thôi việc</h3>
         <Paragraph>Những trường hợp này không có trường tiếp nhận trên phần mềm nên <b>không lập phiếu</b>. Kế toán tự cập nhật:</Paragraph>
         <ol>
           <li>Mở hồ sơ → <b>Chỉnh sửa</b>.</li>
@@ -695,22 +695,22 @@ export default function HuongDanPage() {
       <div id="hd-s7" />
       <Section
         so="VII"
-        tieuDe="Rà soát ngạch – bậc – hệ số"
-        moTa="Menu Rà soát ngạch – bậc (ngay dưới Bảng tổng hợp lương) liệt kê những hồ sơ đang công tác có mã ngạch, bậc, hệ số chưa khớp danh mục bảng lương, mốc hoặc ngày nâng lương sai, phụ cấp ghi trùng. Hệ thống không tự sửa — trường đối chiếu quyết định xếp lương rồi vào hồ sơ để sửa."
+        tieuDe="Rà soát ngạch - bậc - hệ số"
+        moTa="Menu Rà soát ngạch - bậc (ngay dưới Bảng tổng hợp lương) liệt kê những hồ sơ đang công tác có mã ngạch, bậc, hệ số chưa khớp danh mục bảng lương, mốc hoặc ngày nâng lương sai, phụ cấp ghi trùng. Hệ thống không tự sửa - trường đối chiếu quyết định xếp lương rồi vào hồ sơ để sửa."
       >
         <div className="hd-tw">
           <table className="hd-table">
             <thead><tr><th style={{ width: 210 }}>Vấn đề</th><th>Nghĩa là</th><th style={{ width: 250 }}>Cách xử lý</th></tr></thead>
             <tbody>
-              <tr><td><Tag color="orange">Hệ số không khớp bảng</Tag></td><td>Hệ số đang ghi khác hệ số của bậc đó trong bảng lương của mã ngạch.</td><td>Xem cột <b>Gợi ý</b>: nếu hệ số khớp bảng/bậc khác thì thường là <b>sai mã ngạch</b> hoặc <b>sai bậc</b> — sửa theo quyết định.</td></tr>
-              <tr><td><Tag color="volcano">Bậc vượt bảng lương</Tag></td><td>Bậc lớn hơn số bậc của bảng lương mã đó.</td><td>Kiểm tra lại mã ngạch — thường là mã đang gán sai bảng.</td></tr>
+              <tr><td><Tag color="orange">Hệ số không khớp bảng</Tag></td><td>Hệ số đang ghi khác hệ số của bậc đó trong bảng lương của mã ngạch.</td><td>Xem cột <b>Gợi ý</b>: nếu hệ số khớp bảng/bậc khác thì thường là <b>sai mã ngạch</b> hoặc <b>sai bậc</b> - sửa theo quyết định.</td></tr>
+              <tr><td><Tag color="volcano">Bậc vượt bảng lương</Tag></td><td>Bậc lớn hơn số bậc của bảng lương mã đó.</td><td>Kiểm tra lại mã ngạch - thường là mã đang gán sai bảng.</td></tr>
               <tr><td><Tag color="red">Chưa có mã ngạch</Tag></td><td>Viên chức biên chế chưa khai mã ngạch/hạng.</td><td>Sửa hồ sơ, chọn mã ngạch/hạng.</td></tr>
-              <tr><td><Tag color="red">Phụ cấp ghi trùng</Tag></td><td>Cùng một loại phụ cấp có từ hai bản đang hưởng (thường do hai máy cùng sửa một hồ sơ).</td><td>Mở hồ sơ, kiểm tra đúng mức theo quyết định rồi bấm <b>Lưu</b> — bản thừa được đóng lại.</td></tr>
-              <tr><td><Tag color="orange">Mốc / ngày nâng lương sai</Tag></td><td>Mốc hưởng lương trống hoặc sai năm (VD năm 0205), hoặc ngày nâng lương tiếp theo không bằng mốc + thời gian giữ bậc (3 năm loại A, 2 năm loại B, C). Người ở bậc cuối không bị kiểm tra.</td><td>Mở hồ sơ, nhập đúng <b>Mốc hưởng lương</b> theo quyết định rồi <b>Lưu</b> — ngày nâng lương tự tính lại. Trường hợp bị kéo dài thời gian nâng lương do kỷ luật thì báo Phòng VH-XH.</td></tr>
+              <tr><td><Tag color="red">Phụ cấp ghi trùng</Tag></td><td>Cùng một loại phụ cấp có từ hai bản đang hưởng (thường do hai máy cùng sửa một hồ sơ).</td><td>Mở hồ sơ, kiểm tra đúng mức theo quyết định rồi bấm <b>Lưu</b> - bản thừa được đóng lại.</td></tr>
+              <tr><td><Tag color="orange">Mốc / ngày nâng lương sai</Tag></td><td>Mốc hưởng lương trống hoặc sai năm (VD năm 0205), hoặc ngày nâng lương tiếp theo không bằng mốc + thời gian giữ bậc (3 năm loại A, 2 năm loại B, C). Người ở bậc cuối không bị kiểm tra.</td><td>Mở hồ sơ, nhập đúng <b>Mốc hưởng lương</b> theo quyết định rồi <b>Lưu</b> - ngày nâng lương tự tính lại. Trường hợp bị kéo dài thời gian nâng lương do kỷ luật thì báo Phòng VH-XH.</td></tr>
               <tr><td><Tag color="red">Chưa có bậc, hệ số</Tag></td><td>Hồ sơ chưa có lương đang hưởng.</td><td>Viên chức: khai bậc lương. Hợp đồng lương khoán: chọn <i>Theo mức tiền</i> và nhập số tiền.</td></tr>
               <tr><td><Tag color="magenta">Có PC chức vụ nhưng không có chức vụ</Tag></td><td>Đang hưởng PC chức vụ mà hồ sơ không ghi chức vụ, không có bảo lưu.</td><td>Khai chức vụ (tổ trưởng, tổ phó…); nếu đã thôi chức vụ do sắp xếp thì khai bảo lưu, không thì gỡ phụ cấp.</td></tr>
-              <tr><td><Tag color="magenta">Chức vụ lệch vị trí việc làm</Tag></td><td>Còn chức vụ Hiệu trưởng / Phó HT nhưng vị trí việc làm không phải CBQL (hoặc ngược lại) — thường là Phó HT đã về làm giáo viên nhưng chưa bỏ chức vụ.</td><td>Sửa hồ sơ, ô Chức vụ chọn <i>Không giữ chức vụ</i>; nếu do sắp xếp thì bật bảo lưu PC chức vụ.</td></tr>
-              <tr><td><Tag color="geekblue">Sắp hết bảo lưu PC chức vụ</Tag></td><td>Còn 60 ngày trở xuống là hết bảo lưu.</td><td>Chỉ để biết trước — hết hạn hệ thống tự chuyển mức, không cần sửa.</td></tr>
+              <tr><td><Tag color="magenta">Chức vụ lệch vị trí việc làm</Tag></td><td>Còn chức vụ Hiệu trưởng / Phó HT nhưng vị trí việc làm không phải CBQL (hoặc ngược lại) - thường là Phó HT đã về làm giáo viên nhưng chưa bỏ chức vụ.</td><td>Sửa hồ sơ, ô Chức vụ chọn <i>Không giữ chức vụ</i>; nếu do sắp xếp thì bật bảo lưu PC chức vụ.</td></tr>
+              <tr><td><Tag color="geekblue">Sắp hết bảo lưu PC chức vụ</Tag></td><td>Còn 60 ngày trở xuống là hết bảo lưu.</td><td>Chỉ để biết trước - hết hạn hệ thống tự chuyển mức, không cần sửa.</td></tr>
               <tr><td><Tag color="cyan">Chưa chọn công việc cụ thể</Tag></td><td>Nhân viên chưa chọn công việc (kế toán, bảo vệ, cấp dưỡng…).</td><td>Sửa hồ sơ, chọn <b>Công việc cụ thể</b>.</td></tr>
               <tr><td><Tag color="gold">Lương ghi theo mã khác</Tag></td><td>Bản ghi lương gắn mã ngạch khác mã đang ghi trong hồ sơ.</td><td>Xác định mã đúng, sửa lại mã ngạch trong hồ sơ.</td></tr>
               <tr><td><Tag color="purple">Tên lỗi font (TCVN3)</Tag></td><td>Họ tên còn ký tự bảng mã cũ, VD <i>NGUYÔN THÞ</i>.</td><td>Gõ lại họ tên bằng Unicode.</td></tr>
@@ -733,7 +733,7 @@ export default function HuongDanPage() {
           sắp nâng lương, dự báo nghỉ hưu) và phần <b>Cơ cấu nhân sự</b>, lọc được theo cấp học:
         </Paragraph>
         <ul>
-          <li><b>5 thẻ nhóm vị trí</b>, không trùng nhau và cộng lại bằng tổng lao động: Cán bộ quản lý · Giáo viên · Nhân viên chuyên môn – hỗ trợ · Nhân viên phục vụ · Nhân viên nuôi dưỡng. Mỗi thẻ ghi số biên chế và hợp đồng.</li>
+          <li><b>5 thẻ nhóm vị trí</b>, không trùng nhau và cộng lại bằng tổng lao động: Cán bộ quản lý · Giáo viên · Nhân viên chuyên môn - hỗ trợ · Nhân viên phục vụ · Nhân viên nuôi dưỡng. Mỗi thẻ ghi số biên chế và hợp đồng.</li>
           <li><b>Bảng cơ cấu</b> nhóm vị trí × loại hình (Biên chế · HĐ NĐ 235 · HĐ trường tự ký · HĐ khác). <b>Bấm vào một số</b> để mở ngay danh sách hồ sơ tương ứng.</li>
           <li><b>Biểu đồ nhân sự theo trường</b>, chia màu theo 5 nhóm, để thấy trường nào thiếu hoặc thừa nhóm nào.</li>
         </ul>
@@ -743,18 +743,18 @@ export default function HuongDanPage() {
             <thead><tr><th style={{ width: 250 }}>Menu</th><th>Dùng để làm gì</th></tr></thead>
             <tbody>
               <tr><td><b>Tổng quan</b></td><td>Số liệu nhanh, cơ cấu nhân sự theo nhóm vị trí và loại hình, biểu đồ theo trường, số phiếu đề xuất đang xử lý. Thẻ "Sắp nâng lương" hiện số viên chức cần lập phiếu trong 90 ngày tới.</td></tr>
-              <tr><td><b>Hồ sơ nhân sự</b></td><td>Danh sách và chi tiết từng người, kèm lịch sử biến động lương – phụ cấp. Xuất/nhập Excel (có cột Hình thức lương, Mức lương theo tiền).</td></tr>
+              <tr><td><b>Hồ sơ nhân sự</b></td><td>Danh sách và chi tiết từng người, kèm lịch sử biến động lương - phụ cấp. Xuất/nhập Excel (có cột Hình thức lương, Mức lương theo tiền).</td></tr>
               <tr><td><b>Bảng tổng hợp lương</b></td><td>Bảng lương theo mẫu quen thuộc, có dòng cộng của từng trường và dòng tổng cuối bảng; lọc theo loại hình lao động; cột riêng cho người nhận lương theo mức tiền. Chỉ tính người đang công tác. Bấm <b>Xuất Excel</b> để lấy file đối chiếu.</td></tr>
-              <tr><td><b>Rà soát ngạch – bậc</b></td><td>Danh sách hồ sơ lệch mã ngạch, bậc, hệ số cần trường xử lý (mục VII).</td></tr>
+              <tr><td><b>Rà soát ngạch - bậc</b></td><td>Danh sách hồ sơ lệch mã ngạch, bậc, hệ số cần trường xử lý (mục VII).</td></tr>
               <tr><td><b>Đề xuất điều chỉnh hệ số lương - phụ cấp</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
               <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
-              <tr><td><b>Định mức viên chức và Cơ cấu VTVL</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức; kế toán tính 01 người/trường. Mầm non: thư viện tính 01 người/phân hiệu, tối đa 03 — khai <b>Số phân hiệu</b> ở thẻ Khai báo quy mô.</td></tr>
+              <tr><td><b>Định mức viên chức và Cơ cấu VTVL</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức; kế toán tính 01 người/trường. Mầm non: thư viện tính 01 người/phân hiệu, tối đa 03 - khai <b>Số phân hiệu</b> ở thẻ Khai báo quy mô.</td></tr>
               <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu (theo Nghị định 135/2020) để chủ động bố trí nhân sự.</td></tr>
               <tr><td><b>Báo cáo</b></td><td>Các biểu tổng hợp phục vụ báo cáo cấp trên, lọc theo đơn vị và loại hình lao động.</td></tr>
             </tbody>
           </table>
         </div>
-        <Paragraph strong style={{ marginTop: 16 }}>Trường THCS — phân bổ giáo viên kiêm nhiệm theo môn</Paragraph>
+        <Paragraph strong style={{ marginTop: 16 }}>Trường THCS - phân bổ giáo viên kiêm nhiệm theo môn</Paragraph>
         <Paragraph>
           Định mức giáo viên THCS gồm phần <b>đứng lớp</b> từng môn (số tiết/tuần ÷ 19) và phần <b>kiêm nhiệm</b>
           (dạy kiêm GDĐP, HĐTN-HN, chủ nhiệm 4 tiết/lớp, kiêm nhiệm khác). Phần kiêm nhiệm do trường phân bổ cho các môn
@@ -764,7 +764,7 @@ export default function HuongDanPage() {
           <li>Cột <b>Gợi ý</b>: hệ thống chia phần kiêm nhiệm theo tỷ lệ giờ đứng lớp của từng môn.</li>
           <li>Cột <b>Trường điều chỉnh</b>: nhập số giáo viên kiêm nhiệm thực tế bố trí cho môn đó. Môn để trống tự nhận phần còn lại theo cùng tỷ lệ, nên tổng luôn cân.</li>
           <li><b>Kế toán soát tổng</b> ở hai ô <i>Cần phân bổ</i> và <i>Đã phân bổ</i>: nhãn <Tag color="success">Khớp tổng</Tag> là đạt;
-            nhãn đỏ <i>Còn thiếu</i> / <i>Vượt</i> nghĩa là số trường điều chỉnh chưa khớp — sửa lại, hoặc để trống bớt môn cho hệ thống tự cân đối.
+            nhãn đỏ <i>Còn thiếu</i> / <i>Vượt</i> nghĩa là số trường điều chỉnh chưa khớp - sửa lại, hoặc để trống bớt môn cho hệ thống tự cân đối.
             Nút <b>Dùng toàn bộ gợi ý</b> bỏ mọi điều chỉnh.</li>
           <li>Bấm <b>Lưu quy mô</b> để ghi. Trang tổng hợp toàn phường gắn nhãn đỏ cho trường có phân bổ lệch; file Excel có thêm phần phân bổ này.</li>
         </ul>
@@ -789,7 +789,7 @@ export default function HuongDanPage() {
               key: '1', label: 'Hệ số lương trên hệ thống lệch với bảng lương giấy thì xử lý thế nào?',
               children: (
                 <>
-                  <p>Trước hết mở trang <b>Rà soát ngạch – bậc</b>: nếu người đó có trong danh sách, cột Gợi ý thường chỉ ra ngay nguyên nhân (sai mã ngạch hoặc sai bậc) — sửa mã ngạch/bậc theo quyết định.</p>
+                  <p>Trước hết mở trang <b>Rà soát ngạch - bậc</b>: nếu người đó có trong danh sách, cột Gợi ý thường chỉ ra ngay nguyên nhân (sai mã ngạch hoặc sai bậc) - sửa mã ngạch/bậc theo quyết định.</p>
                   <p>Nếu là mức lương thực sự thay đổi, không sửa trực tiếp mà lập phiếu đề xuất loại <b>Điều chỉnh hệ số lương - phụ cấp</b> (kèm minh chứng), ghi rõ số liệu đúng và căn cứ trong phần Ghi chú. Sai lệch ở nhiều hồ sơ thì liên hệ số hỗ trợ.</p>
                 </>
               ),
@@ -809,15 +809,15 @@ export default function HuongDanPage() {
             },
             {
               key: '2e', label: 'Người hợp đồng hưởng lương khoán theo tháng thì khai thế nào?',
-              children: <p>Trong hồ sơ, phần <b>Lương &amp; Phụ cấp</b> chọn <b>Hình thức nhận lương</b>: <i>Theo mức tiền (VNĐ/tháng)</i> và nhập số tiền. Không cần khai mã ngạch, bậc. Viên chức biên chế thì luôn theo ngạch, bậc — không có lựa chọn này.</p>,
+              children: <p>Trong hồ sơ, phần <b>Lương &amp; Phụ cấp</b> chọn <b>Hình thức nhận lương</b>: <i>Theo mức tiền (VNĐ/tháng)</i> và nhập số tiền. Không cần khai mã ngạch, bậc. Viên chức biên chế thì luôn theo ngạch, bậc - không có lựa chọn này.</p>,
             },
             {
               key: '2f', label: 'Hệ số chênh lệch bảo lưu nhập là 33 hay 0,33?',
-              children: <p>Nhập <b>0,33</b> — đây là giá trị hệ số, không phải %. Hệ thống báo lỗi nếu nhập từ 5 trở lên vào một khoản phụ cấp loại hệ số.</p>,
+              children: <p>Nhập <b>0,33</b> - đây là giá trị hệ số, không phải %. Hệ thống báo lỗi nếu nhập từ 5 trở lên vào một khoản phụ cấp loại hệ số.</p>,
             },
             {
               key: '2h', label: 'Hiệu trưởng sau sắp xếp làm Phó hiệu trưởng thì phụ cấp chức vụ tính thế nào?',
-              children: <p>Được bảo lưu nguyên mức PC chức vụ hiệu trưởng đến hết thời hạn bổ nhiệm hiệu trưởng (tối thiểu 6 tháng). Sửa hồ sơ, đổi chức vụ sang Phó hiệu trưởng (Phó HT về giáo viên thì chọn <b>Không giữ chức vụ</b> — Vị trí việc làm tự chuyển sang Giáo viên), bật <b>Bảo lưu phụ cấp chức vụ</b> và nhập quyết định. Không sửa tay dòng PC chức vụ — hệ thống tự áp mức bảo lưu và tự hết hạn. Xem trạng thái bảo lưu ở trang chi tiết hồ sơ và cột PC chức vụ (nhãn BL) trên Bảng tổng hợp lương; người sắp hết bảo lưu (còn 60 ngày trở xuống) hiện ở trang Rà soát ngạch – bậc.</p>,
+              children: <p>Được bảo lưu nguyên mức PC chức vụ hiệu trưởng đến hết thời hạn bổ nhiệm hiệu trưởng (tối thiểu 6 tháng). Sửa hồ sơ, đổi chức vụ sang Phó hiệu trưởng (Phó HT về giáo viên thì chọn <b>Không giữ chức vụ</b> - Vị trí việc làm tự chuyển sang Giáo viên), bật <b>Bảo lưu phụ cấp chức vụ</b> và nhập quyết định. Không sửa tay dòng PC chức vụ - hệ thống tự áp mức bảo lưu và tự hết hạn. Xem trạng thái bảo lưu ở trang chi tiết hồ sơ và cột PC chức vụ (nhãn BL) trên Bảng tổng hợp lương; người sắp hết bảo lưu (còn 60 ngày trở xuống) hiện ở trang Rà soát ngạch - bậc.</p>,
             },
             {
               key: '2g', label: 'Mã chức danh có chữ "(mã cũ)" là gì?',
@@ -825,7 +825,7 @@ export default function HuongDanPage() {
             },
             {
               key: '2b', label: 'Vì sao tên viên chức hiển thị IN HOA, gõ chữ thường có sao không?',
-              children: <p>Đây là quy định thống nhất toàn hệ thống để tên trong hồ sơ, bảng lương và các báo cáo luôn giống nhau. Kế toán gõ thường hay gõ hoa đều được — hệ thống tự chuyển khi lưu.</p>,
+              children: <p>Đây là quy định thống nhất toàn hệ thống để tên trong hồ sơ, bảng lương và các báo cáo luôn giống nhau. Kế toán gõ thường hay gõ hoa đều được - hệ thống tự chuyển khi lưu.</p>,
             },
             {
               key: '2c', label: 'Vì sao danh sách không xếp theo thứ tự A→Z?',
@@ -833,11 +833,11 @@ export default function HuongDanPage() {
             },
             {
               key: '3', label: 'Đã trình phiếu nhưng phát hiện nhầm số liệu?',
-              children: <p>Liên hệ Hiệu trưởng để bấm <b>Yêu cầu bổ sung</b>. Phiếu quay lại trạng thái <i>Yêu cầu bổ sung</i>; mở phiếu, bấm <b>Sửa &amp; trình lại</b>, sửa rồi <b>Lưu &amp; Trình lại</b> — không cần lập phiếu mới.</p>,
+              children: <p>Liên hệ Hiệu trưởng để bấm <b>Yêu cầu bổ sung</b>. Phiếu quay lại trạng thái <i>Yêu cầu bổ sung</i>; mở phiếu, bấm <b>Sửa &amp; trình lại</b>, sửa rồi <b>Lưu &amp; Trình lại</b> - không cần lập phiếu mới.</p>,
             },
             {
               key: '4', label: 'Một phiếu có thể gồm bao nhiêu viên chức?',
-              children: <p>Không giới hạn. Nên gộp toàn bộ viên chức cùng một đợt nâng lương vào một phiếu — vừa nhanh cho Kế toán, vừa gọn cho các cấp duyệt.</p>,
+              children: <p>Không giới hạn. Nên gộp toàn bộ viên chức cùng một đợt nâng lương vào một phiếu - vừa nhanh cho Kế toán, vừa gọn cho các cấp duyệt.</p>,
             },
             {
               key: '5', label: 'Dữ liệu có bị mất khi máy tính hỏng hoặc xóa trình duyệt không?',
@@ -858,7 +858,7 @@ export default function HuongDanPage() {
       <div className="hd-footer">
         <div>
           <Text type="secondary" style={{ fontSize: 13 }}>Hỗ trợ kỹ thuật và cấp lại mật khẩu</Text>
-          <div className="hd-hotline">Đ/c Nguyễn Văn Hạ — 0902.121.599</div>
+          <div className="hd-hotline">Đ/c Nguyễn Văn Hạ - 0902.121.599</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <Text type="secondary" style={{ fontSize: 13 }}>UBND Phường Gia Viên</Text><br />

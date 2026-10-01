@@ -44,9 +44,9 @@ export default function DeXuatDetailPage() {
 
   const stepItems = [
     { title: 'Kế toán trường lập', content: dx.ngayDeXuat ? formatDate(dx.ngayDeXuat) : 'Chờ nộp' },
-    { title: 'Hiệu trưởng duyệt', content: dx.ngayDuyetHT ? `${formatDate(dx.ngayDuyetHT)} — ${ketQuaLabel(dx.ketQuaDuyetHT)}` : 'Chờ duyệt' },
-    { title: 'VH-XH thẩm định', content: dx.ngayXetDuyet ? `${formatDate(dx.ngayXetDuyet)} — ${ketQuaLabel(dx.ketQuaXetDuyet)}` : 'Chờ xử lý' },
-    { title: 'Lãnh đạo phê duyệt', content: dx.ngayPheDuyet ? `${formatDate(dx.ngayPheDuyet)} — ${ketQuaLabel(dx.ketQuaPheDuyet)}` : 'Chờ duyệt' },
+    { title: 'Hiệu trưởng duyệt', content: dx.ngayDuyetHT ? `${formatDate(dx.ngayDuyetHT)} - ${ketQuaLabel(dx.ketQuaDuyetHT)}` : 'Chờ duyệt' },
+    { title: 'VH-XH thẩm định', content: dx.ngayXetDuyet ? `${formatDate(dx.ngayXetDuyet)} - ${ketQuaLabel(dx.ketQuaXetDuyet)}` : 'Chờ xử lý' },
+    { title: 'Lãnh đạo phê duyệt', content: dx.ngayPheDuyet ? `${formatDate(dx.ngayPheDuyet)} - ${ketQuaLabel(dx.ketQuaPheDuyet)}` : 'Chờ duyệt' },
   ]
 
   const currentStep = dx.trangThai === 'NHAP' ? 0
@@ -73,7 +73,7 @@ export default function DeXuatDetailPage() {
           title: 'Hiện tại', key: 'cu', width: 200,
           render: (_: any, r: any) => {
             const cd = chucDanhs.find((c) => c.id === r.chucDanhCuId)
-            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten}>{cd?.ma ?? r.chucDanhCuId}</Text> <Text type="secondary">({cd?.bangLuong})</Text><br />Bậc {r.bacCu} — {Number(r.heSoCu).toFixed(2)}{r.ngayHieuLucCu && <><br /><Text type="secondary" style={{ fontSize: 12 }}>từ {formatDate(r.ngayHieuLucCu)}</Text></>}</div>
+            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten}>{cd?.ma ?? r.chucDanhCuId}</Text> <Text type="secondary">({cd?.bangLuong})</Text><br />Bậc {r.bacCu} - {Number(r.heSoCu).toFixed(2)}{r.ngayHieuLucCu && <><br /><Text type="secondary" style={{ fontSize: 12 }}>từ {formatDate(r.ngayHieuLucCu)}</Text></>}</div>
           },
         },
         {
@@ -81,7 +81,7 @@ export default function DeXuatDetailPage() {
           render: (_: any, r: any) => {
             const cd = chucDanhs.find((c) => c.id === r.chucDanhMoiId)
             const doiNgach = r.chucDanhMoiId !== r.chucDanhCuId
-            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten} type={doiNgach ? 'warning' : undefined}>{cd?.ma ?? r.chucDanhMoiId}</Text> <Text type="secondary">({cd?.bangLuong})</Text>{doiNgach && <Tag color="orange" style={{ marginLeft: 4 }}>Chuyển ngạch</Tag>}<br /><b>Bậc {r.bacMoi} — {Number(r.heSoMoi).toFixed(2)}</b></div>
+            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten} type={doiNgach ? 'warning' : undefined}>{cd?.ma ?? r.chucDanhMoiId}</Text> <Text type="secondary">({cd?.bangLuong})</Text>{doiNgach && <Tag color="orange" style={{ marginLeft: 4 }}>Chuyển ngạch</Tag>}<br /><b>Bậc {r.bacMoi} - {Number(r.heSoMoi).toFixed(2)}</b></div>
           },
         },
         { title: 'Mốc hưởng mới', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 120, render: (v: string) => formatDate(v) },
@@ -109,7 +109,7 @@ export default function DeXuatDetailPage() {
         message.success('Đã trình đề xuất lên Hiệu trưởng')
       } else if (modalAction === 'ht_approve') {
         duyetHieuTruong(id!, 'DONG_Y', ghiChu, currentUser.id, currentUser.fullName)
-        message.success('Hiệu trưởng đã duyệt — chuyển VH-XH thẩm định')
+        message.success('Hiệu trưởng đã duyệt - chuyển VH-XH thẩm định')
       } else if (modalAction === 'ht_reject') {
         duyetHieuTruong(id!, 'TU_CHOI', ghiChu, currentUser.id, currentUser.fullName)
         message.warning('Đã từ chối đề xuất')
@@ -118,7 +118,7 @@ export default function DeXuatDetailPage() {
         message.info('Đã yêu cầu bổ sung hồ sơ')
       } else if (modalAction === 'xd_approve') {
         xetDuyetDeXuat(id!, 'DONG_Y', ghiChu, currentUser.id, currentUser.fullName)
-        message.success('Đã thẩm định — chuyển Lãnh đạo phê duyệt')
+        message.success('Đã thẩm định - chuyển Lãnh đạo phê duyệt')
       } else if (modalAction === 'xd_reject') {
         xetDuyetDeXuat(id!, 'TU_CHOI', ghiChu, currentUser.id, currentUser.fullName)
         message.warning('Đã từ chối đề xuất')
@@ -127,7 +127,7 @@ export default function DeXuatDetailPage() {
         message.info('Đã yêu cầu bổ sung hồ sơ')
       } else if (modalAction === 'pd_approve') {
         pheDuyetDeXuat(id!, 'PHE_DUYET', ghiChu, currentUser.id, currentUser.fullName)
-        message.success(laPctn ? 'Phê duyệt thành công — phụ cấp thâm niên đã cập nhật' : 'Phê duyệt thành công — hồ sơ lương đã cập nhật')
+        message.success(laPctn ? 'Phê duyệt thành công - phụ cấp thâm niên đã cập nhật' : 'Phê duyệt thành công - hồ sơ lương đã cập nhật')
       } else if (modalAction === 'pd_reject') {
         pheDuyetDeXuat(id!, 'TU_CHOI', ghiChu, currentUser.id, currentUser.fullName)
         message.warning('Đã từ chối')
@@ -147,7 +147,7 @@ export default function DeXuatDetailPage() {
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/de-xuat')}>Quay lại</Button>
       </Space>
 
-      <Card title={<><Tag color={TRANG_THAI_COLORS[dx.trangThai]}>{TRANG_THAI_LABELS[dx.trangThai]}</Tag> {dx.ma} — {dx.tieuDe}</>}>
+      <Card title={<><Tag color={TRANG_THAI_COLORS[dx.trangThai]}>{TRANG_THAI_LABELS[dx.trangThai]}</Tag> {dx.ma} - {dx.tieuDe}</>}>
         <Steps current={currentStep} items={stepItems} size="small" style={{ marginBottom: 24 }} />
 
         <Descriptions bordered size="small" column={2} style={{ marginBottom: 16 }}>
@@ -169,12 +169,12 @@ export default function DeXuatDetailPage() {
           {canSua && <Button icon={<EditOutlined />} onClick={() => navigate(`/de-xuat/${dx.id}/edit`)}>{dx.trangThai === 'YEU_CAU_BO_SUNG' ? 'Sửa & trình lại' : 'Sửa phiếu'}</Button>}
           {canSubmit && <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('submit')}>Trình Hiệu trưởng duyệt</Button>}
           {canDuyetHT && <>
-            <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('ht_approve')}>Duyệt — chuyển VH-XH</Button>
+            <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('ht_approve')}>Duyệt - chuyển VH-XH</Button>
             <Button icon={<SyncOutlined />} onClick={() => openModal('ht_supplement')}>Yêu cầu bổ sung</Button>
             <Button danger icon={<CloseOutlined />} onClick={() => openModal('ht_reject')}>Từ chối</Button>
           </>}
           {canXetDuyet && <>
-            <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('xd_approve')}>Đồng ý — chuyển lãnh đạo</Button>
+            <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('xd_approve')}>Đồng ý - chuyển lãnh đạo</Button>
             <Button icon={<SyncOutlined />} onClick={() => openModal('xd_supplement')}>Yêu cầu bổ sung</Button>
             <Button danger icon={<CloseOutlined />} onClick={() => openModal('xd_reject')}>Từ chối</Button>
           </>}

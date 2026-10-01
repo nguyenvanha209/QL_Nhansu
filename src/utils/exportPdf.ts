@@ -30,7 +30,7 @@ async function taiPhongBase64(): Promise<Record<string, string>> {
       if (!res.ok) throw new Error(`Không tải được phông ${tep} (HTTP ${res.status})`)
       const buf = await res.arrayBuffer()
 
-      // Chuyển sang base64 theo từng đoạn — chuỗi 500KB đưa thẳng vào
+      // Chuyển sang base64 theo từng đoạn - chuỗi 500KB đưa thẳng vào
       // String.fromCharCode sẽ tràn ngăn xếp.
       let nhiPhan = ''
       const bytes = new Uint8Array(buf)
@@ -62,7 +62,7 @@ async function chuanBiPhong(doc: jsPDF): Promise<boolean> {
     doc.setFont(TEN_PHONG, 'normal')
     return true
   } catch (e) {
-    // Không tải được phông thì vẫn xuất, chỉ là mất dấu — báo cho người dùng
+    // Không tải được phông thì vẫn xuất, chỉ là mất dấu - báo cho người dùng
     // biết thay vì im lặng đưa ra tệp hỏng.
     console.error('[PDF] Không nhúng được phông tiếng Việt:', e)
     return false

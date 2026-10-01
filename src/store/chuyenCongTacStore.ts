@@ -19,7 +19,7 @@ interface ChuyenCongTacState {
   deXuats: DeXuatChuyenCongTac[]
   setDeXuats: (v: DeXuatChuyenCongTac[]) => void
 
-  /** Đề xuất mà đơn vị này liên quan — là trường đi hoặc trường đến. Admin/VH-XH truyền null để xem tất cả. */
+  /** Đề xuất mà đơn vị này liên quan - là trường đi hoặc trường đến. Admin/VH-XH truyền null để xem tất cả. */
   getAll: (donViId?: string | null) => DeXuatChuyenCongTac[]
   getById: (id: string) => DeXuatChuyenCongTac | undefined
   /** Đang có phiếu chuyển chưa kết thúc cho viên chức này không */
@@ -177,7 +177,7 @@ export const useChuyenCongTacStore = create<ChuyenCongTacState>()(
         })
       },
 
-      // Duyệt: tách hồ sơ — trường đi giữ hồ sơ cũ (Chuyển đi), trường đến có hồ sơ mới
+      // Duyệt: tách hồ sơ - trường đi giữ hồ sơ cũ (Chuyển đi), trường đến có hồ sơ mới
       // (Chuyển đến) mang theo ngạch/bậc/hệ số/phụ cấp. Vị trí việc làm cũ gắn với trường cũ
       // nên hồ sơ mới để trống, chờ trường đến phân công khi tiếp nhận.
       duyet: (id, ghiChu, actorId, actorName) => {

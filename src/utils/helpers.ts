@@ -63,7 +63,7 @@ export interface XepThuTuVienChuc {
  * Bộ so sánh chuẩn cho mọi danh sách viên chức: CBQL trước, rồi Giáo viên,
  * cuối cùng Nhân viên; trong nhóm CBQL xếp theo chức vụ (HT, P.HT, TTCM, TPCM);
  * cùng bậc thì theo tên A→Z.
- * `getNhom` dùng cho hồ sơ chưa gán VTVL — trả về nhóm của ngạch đang xếp.
+ * `getNhom` dùng cho hồ sơ chưa gán VTVL - trả về nhóm của ngạch đang xếp.
  */
 export function soSanhVienChuc<T extends XepThuTuVienChuc>(
   getNhom?: (vc: T) => string | undefined,

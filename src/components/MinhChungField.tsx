@@ -92,7 +92,7 @@ export default function MinhChungField({ value, onChange, taiLenBoi, compact }: 
         </Button>
         {!compact && (
           <Text type="secondary" style={{ fontSize: 12 }}>
-            PDF, JPG, PNG — tối đa 3 MB mỗi file. Ảnh chụp được tự nén. PDF scan nên để đen trắng hoặc xám, 150–200 dpi.
+            PDF, JPG, PNG - tối đa 3 MB mỗi file. Ảnh chụp được tự nén. PDF scan nên để đen trắng hoặc xám, 150-200 dpi.
           </Text>
         )}
       </Space>

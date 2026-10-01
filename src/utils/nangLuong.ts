@@ -2,7 +2,7 @@ import type { BacLuong, ChucDanhNgheNghiep } from '@/types/danhMuc'
 
 // Ngày nâng bậc lương thường xuyên kế tiếp = mốc hưởng bậc hiện tại + thời gian giữ bậc của ngạch:
 // 3 năm với chức danh yêu cầu cao đẳng trở lên (A0, A1, A2…), 2 năm với trung cấp trở xuống (B, C)
-// — Thông tư 08/2013/TT-BNV.
+// - Thông tư 08/2013/TT-BNV.
 
 /** Ngày dạng yyyy-mm-dd, năm trong khoảng hợp lý (loại các giá trị nhập lỗi như năm 0205) */
 export function ngayHopLe(d?: string): d is string {

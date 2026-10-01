@@ -82,7 +82,7 @@ export default function AuditLogPage() {
     }
   }, [nhatKys])
 
-  const tenDonVi = (id?: string) => (id ? donVis.find((d) => d.id === id)?.ten ?? id : '—')
+  const tenDonVi = (id?: string) => (id ? donVis.find((d) => d.id === id)?.ten ?? id : '-')
 
   const xuatCSV = () => {
     const dong = [
@@ -183,9 +183,9 @@ export default function AuditLogPage() {
               </Descriptions.Item>
               <Descriptions.Item label="Đơn vị">{tenDonVi(xemChiTiet.donViId)}</Descriptions.Item>
               <Descriptions.Item label="Nội dung">{xemChiTiet.moTa}</Descriptions.Item>
-              <Descriptions.Item label="Thiết bị">{xemChiTiet.thietBi ?? '—'}</Descriptions.Item>
+              <Descriptions.Item label="Thiết bị">{xemChiTiet.thietBi ?? '-'}</Descriptions.Item>
               <Descriptions.Item label="Mã bản ghi">
-                <Text code style={{ fontSize: 11 }}>{xemChiTiet.entityId ?? '—'}</Text>
+                <Text code style={{ fontSize: 11 }}>{xemChiTiet.entityId ?? '-'}</Text>
               </Descriptions.Item>
             </Descriptions>
 

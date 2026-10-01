@@ -1,13 +1,13 @@
 import dayjs from 'dayjs'
 import type { VienChuc } from '@/types/vienChuc'
 
-// Bảo lưu phụ cấp chức vụ khi sắp xếp tổ chức bộ máy — Điều 11 NĐ 178/2024/NĐ-CP (sửa đổi bởi NĐ 67/2025/NĐ-CP):
+// Bảo lưu phụ cấp chức vụ khi sắp xếp tổ chức bộ máy - Điều 11 NĐ 178/2024/NĐ-CP (sửa đổi bởi NĐ 67/2025/NĐ-CP):
 // thôi giữ chức vụ hoặc được bổ nhiệm chức vụ có PCCV thấp hơn thì hưởng NGUYÊN mức PCCV cũ đến hết
 // thời hạn bổ nhiệm chức vụ cũ; thời hạn còn lại dưới 6 tháng thì được bảo lưu 6 tháng.
 // Dòng phụ cấp PC_CHUC_VU trong hồ sơ luôn là mức theo chức vụ hiện tại; phần bảo lưu nằm riêng
 // trong hồ sơ và được áp khi tính lương, hết hạn thì tự trở về mức theo chức vụ hiện tại.
 
-// Ba khoản dễ nhầm vì cùng chữ "bảo lưu" / "chức vụ" — dùng thống nhất các tên dưới đây ở mọi màn hình
+// Ba khoản dễ nhầm vì cùng chữ "bảo lưu" / "chức vụ" - dùng thống nhất các tên dưới đây ở mọi màn hình
 export const TEN_PCCV_BAO_LUU = 'PC chức vụ bảo lưu (sau sắp xếp)'
 export const TEN_HS_CHENH_LECH_BAO_LUU = 'Hệ số chênh lệch bảo lưu (lương)'
 export const TEN_PCCV_HIEN_TAI = 'PC chức vụ hiện tại (TT 33/2005)'

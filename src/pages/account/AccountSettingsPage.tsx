@@ -45,7 +45,7 @@ export default function AccountSettingsPage() {
     if (!kq.ok) {
       if (kq.lyDo === 'SAI_MK_CU') message.error('Mật khẩu hiện tại không đúng')
       else if (kq.lyDo === 'CHUA_CAU_HINH') message.error('Chưa cấu hình máy chủ. Liên hệ quản trị viên.')
-      else message.error('CHƯA đổi được mật khẩu — không kết nối được máy chủ. Vui lòng thử lại, mật khẩu cũ vẫn còn hiệu lực.')
+      else message.error('CHƯA đổi được mật khẩu - không kết nối được máy chủ. Vui lòng thử lại, mật khẩu cũ vẫn còn hiệu lực.')
       return
     }
     message.success('Đã đổi mật khẩu thành công')

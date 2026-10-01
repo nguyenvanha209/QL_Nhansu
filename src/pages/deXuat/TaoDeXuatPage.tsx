@@ -69,7 +69,7 @@ export default function TaoDeXuatPage() {
     return (bang.find((b) => b.bac === bac) ?? bang[0])?.thoiGianNangLuong ?? (/^[BC]/.test(cdCua(chucDanhId)?.bangLuong ?? '') ? 2 : 3)
   }
   const chucDanhOptions = useMemo(() => chucDanhs.filter((c) => c.active)
-    .map((c) => ({ value: c.id, label: `${c.ma} — ${c.ten} (${c.bangLuong})` })), [chucDanhs])
+    .map((c) => ({ value: c.id, label: `${c.ma} - ${c.ten} (${c.bangLuong})` })), [chucDanhs])
 
   // Phiếu PCTN chỉ áp dụng cho CBQL và giáo viên (nhân viên không hưởng phụ cấp thâm niên);
   // hồ sơ cũ chưa gán VTVL thì xét theo nhóm ngạch/hạng đang xếp
@@ -88,7 +88,7 @@ export default function TaoDeXuatPage() {
     const vc = vienChucs.find((v) => v.id === vcId)
     const hsl = heSoLuongs.find((h) => h.vienChucId === vcId && h.isActive)
     if (!vc) return
-    if (!hsl) { message.warning(`${vc.ho} ${vc.ten} chưa có bậc, hệ số lương — khai trong hồ sơ trước`); return }
+    if (!hsl) { message.warning(`${vc.ho} ${vc.ten} chưa có bậc, hệ số lương - khai trong hồ sơ trước`); return }
     if (laPctn && !duocHuongPctn(vc)) {
       message.warning('Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên')
       return
@@ -97,7 +97,7 @@ export default function TaoDeXuatPage() {
     const bacCuoi = bang.length ? bang[bang.length - 1].bac : undefined
     // Bậc cuối của bảng: không còn nâng bậc, chuyển sang xét PC thâm niên vượt khung
     if (!laPctn && LOAI_NANG_BAC.includes(loaiDeXuat) && bacCuoi !== undefined && hsl.bac >= bacCuoi) {
-      message.warning(`${vc.ho} ${vc.ten} đã ở bậc cuối (${hsl.bac}/${bacCuoi}) của bảng ${cdCua(hsl.chucDanhId)?.bangLuong ?? ''} — không nâng bậc, xét phụ cấp thâm niên vượt khung`)
+      message.warning(`${vc.ho} ${vc.ten} đã ở bậc cuối (${hsl.bac}/${bacCuoi}) của bảng ${cdCua(hsl.chucDanhId)?.bangLuong ?? ''} - không nâng bậc, xét phụ cấp thâm niên vượt khung`)
       return
     }
     const nextBac = LOAI_NANG_BAC.includes(loaiDeXuat) ? bang.find((b) => b.bac === hsl.bac + 1) : bang.find((b) => b.bac === hsl.bac)
@@ -371,7 +371,7 @@ export default function TaoDeXuatPage() {
               size="small"
               style={{ width: '100%' }}
               value={r.bacMoi}
-              options={bangCua(r.chucDanhMoiId).map((b) => ({ value: b.bac, label: `Bậc ${b.bac} — ${b.heSo.toFixed(2)}` }))}
+              options={bangCua(r.chucDanhMoiId).map((b) => ({ value: b.bac, label: `Bậc ${b.bac} - ${b.heSo.toFixed(2)}` }))}
               onChange={(v: number) => updateChiTiet(idx, { bacMoi: v, heSoMoi: bangCua(r.chucDanhMoiId).find((b) => b.bac === v)?.heSo ?? r.heSoMoi })}
             />
           ),
@@ -405,7 +405,7 @@ export default function TaoDeXuatPage() {
             const ngay = formatDate(dayjs(r.ngayHieuLuc).add(tg, 'year').format('YYYY-MM-DD'))
             const bacCuoi = bang.length && r.bacMoi >= bang[bang.length - 1].bac
             return bacCuoi
-              ? <Tooltip title={`Bậc cuối — sau ${tg * 12} tháng được xét PC thâm niên vượt khung`}><Tag color="purple">Xét vượt khung {ngay}</Tag></Tooltip>
+              ? <Tooltip title={`Bậc cuối - sau ${tg * 12} tháng được xét PC thâm niên vượt khung`}><Tag color="purple">Xét vượt khung {ngay}</Tag></Tooltip>
               : <Text type="secondary">{ngay} <span style={{ fontSize: 11 }}>(+{tg} năm)</span></Text>
           },
         },
@@ -462,7 +462,7 @@ export default function TaoDeXuatPage() {
               <li>
                 <b>Minh chứng:</b>{' '}
                 {NGHIEP_VU_LOAI[loaiDeXuat].minhChung
-                  ? <><Text type="danger">bắt buộc</Text> — {NGHIEP_VU_LOAI[loaiDeXuat].minhChung} (PDF/JPG/PNG, tối đa 3 MB mỗi file)</>
+                  ? <><Text type="danger">bắt buộc</Text> - {NGHIEP_VU_LOAI[loaiDeXuat].minhChung} (PDF/JPG/PNG, tối đa 3 MB mỗi file)</>
                   : 'không cần (xét theo niên hạn).'}
               </li>
             </ul>
@@ -515,7 +515,7 @@ export default function TaoDeXuatPage() {
             { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht' },
             {
               title: 'Bậc/Hệ số hiện tại', key: 'bh', width: 200,
-              render: (_: any, r: any) => <>Bậc {r.bac} — {r.heSo}{r.daBacCuoi && <Tag color="purple" style={{ marginLeft: 6 }}>Bậc cuối — xét vượt khung</Tag>}</>,
+              render: (_: any, r: any) => <>Bậc {r.bac} - {r.heSo}{r.daBacCuoi && <Tag color="purple" style={{ marginLeft: 6 }}>Bậc cuối - xét vượt khung</Tag>}</>,
             },
             { title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 160, render: (v: string) => <Tag color="blue">{formatDate(v)}</Tag> },
           ]}

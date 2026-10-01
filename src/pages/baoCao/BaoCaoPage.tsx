@@ -79,7 +79,7 @@ export default function BaoCaoPage() {
 
   const [dangXuatPdf, setDangXuatPdf] = useState(false)
 
-  // Phông tiếng Việt nặng ~500KB, tải lần đầu mất vài giây — phải khoá nút và
+  // Phông tiếng Việt nặng ~500KB, tải lần đầu mất vài giây - phải khoá nút và
   // báo lỗi rõ, tránh người dùng bấm nhiều lần rồi tưởng hỏng.
   const exportVCPdf = async () => {
     setDangXuatPdf(true)
@@ -92,7 +92,7 @@ export default function BaoCaoPage() {
           r.donViTen, r.chucDanhTen, r.bac, r.heSo,
         ]),
         'BaoCao_NhanSu',
-        `${filterDonVi ? donVis.find((d) => d.id === filterDonVi)?.ten ?? '' : 'Toàn phường'} — ${enriched.length} người`,
+        `${filterDonVi ? donVis.find((d) => d.id === filterDonVi)?.ten ?? '' : 'Toàn phường'} - ${enriched.length} người`,
       )
     } catch (e) {
       message.warning(e instanceof Error ? e.message : 'Xuất PDF gặp sự cố')

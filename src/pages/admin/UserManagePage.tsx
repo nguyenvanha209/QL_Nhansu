@@ -175,7 +175,7 @@ export default function UserManagePage() {
       if (!kq.ok) {
         if (kq.lyDo === 'SAI_MK_ADMIN') message.error('Mật khẩu quản trị viên không đúng, hoặc tài khoản của bạn không có quyền đặt mật khẩu.')
         else if (kq.lyDo === 'CHUA_CAU_HINH') message.error('Chưa cấu hình máy chủ. Liên hệ quản trị viên.')
-        else message.error('CHƯA đặt được mật khẩu — không kết nối được máy chủ. Vui lòng thử lại.')
+        else message.error('CHƯA đặt được mật khẩu - không kết nối được máy chủ. Vui lòng thử lại.')
         return
       }
       // Đặt lại mật khẩu cho người khác là thao tác đặc quyền, phải có vết
@@ -194,14 +194,14 @@ export default function UserManagePage() {
       })
       message.success(
         (values.password ? 'Đã cập nhật tài khoản và đặt lại mật khẩu' : 'Đã cập nhật tài khoản')
-        + (soRieng ? ` — ${soRieng} quyền tùy chỉnh` : ''),
+        + (soRieng ? ` - ${soRieng} quyền tùy chỉnh` : ''),
       )
     } else {
       addUser({
         username, fullName: values.fullName, role: values.role,
         donViId: values.donViId ?? null, active: true, quyenRieng,
       })
-      message.success('Đã tạo tài khoản' + (soRieng ? ` — ${soRieng} quyền tùy chỉnh` : ''))
+      message.success('Đã tạo tài khoản' + (soRieng ? ` - ${soRieng} quyền tùy chỉnh` : ''))
     }
     closeModal()
   }
@@ -241,7 +241,7 @@ export default function UserManagePage() {
                 title={[
                   r.quyenRieng?.them?.length ? `Cấp thêm: ${r.quyenRieng.them.join(', ')}` : '',
                   r.quyenRieng?.bot?.length ? `Thu hồi: ${r.quyenRieng.bot.join(', ')}` : '',
-                ].filter(Boolean).join(' — ')}
+                ].filter(Boolean).join(' - ')}
               >
                 <Tag color="orange">Quyền riêng ({so})</Tag>
               </Tooltip>
@@ -360,7 +360,7 @@ export default function UserManagePage() {
       {/* Modal tạo/sửa tài khoản */}
       <Modal
         open={open}
-        title={editing ? `Sửa tài khoản — ${editing.username}` : 'Tạo tài khoản mới'}
+        title={editing ? `Sửa tài khoản - ${editing.username}` : 'Tạo tài khoản mới'}
         onCancel={closeModal}
         onOk={() => form.submit()}
         confirmLoading={saving}

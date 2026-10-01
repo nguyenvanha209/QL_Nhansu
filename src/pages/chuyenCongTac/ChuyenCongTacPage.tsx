@@ -112,7 +112,7 @@ export default function ChuyenCongTacPage() {
   const onDuyet = (r: DeXuatChuyenCongTac) => {
     let ghiChu = ''
     modal.confirm({
-      title: `Duyệt chuyển công tác — ${r.hoTenSnapshot}`,
+      title: `Duyệt chuyển công tác - ${r.hoTenSnapshot}`,
       width: 560,
       content: (
         <div>
@@ -142,7 +142,7 @@ export default function ChuyenCongTacPage() {
   const onTuChoi = (r: DeXuatChuyenCongTac) => {
     let ghiChu = ''
     modal.confirm({
-      title: `Từ chối đề nghị — ${r.hoTenSnapshot}`,
+      title: `Từ chối đề nghị - ${r.hoTenSnapshot}`,
       content: <Input.TextArea rows={3} placeholder="Lý do từ chối" onChange={(e) => { ghiChu = e.target.value }} style={{ marginTop: 10 }} />,
       okText: 'Từ chối', okButtonProps: { danger: true }, cancelText: 'Hủy',
       onOk: async () => {
@@ -170,7 +170,7 @@ export default function ChuyenCongTacPage() {
     if (!nhanItem || !currentUser) return
     await lamMoiNgay()
     if (!(store.getById(nhanItem.id)?.vienChucMoiId ?? nhanItem.vienChucMoiId)) {
-      message.error('Phiếu chưa được duyệt đúng quy trình nên chưa có hồ sơ ở trường đến — liên hệ Quản trị')
+      message.error('Phiếu chưa được duyệt đúng quy trình nên chưa có hồ sơ ở trường đến - liên hệ Quản trị')
       return
     }
     store.tiepNhan(nhanItem.id, {
@@ -309,7 +309,7 @@ export default function ChuyenCongTacPage() {
               optionFilterProp="label"
               options={vcCoTheChuyen.map((v) => ({
                 value: v.id,
-                label: `${v.ho} ${v.ten}${scopeDonViId ? '' : ` — ${dvMap.get(v.donViId) ?? ''}`}`,
+                label: `${v.ho} ${v.ten}${scopeDonViId ? '' : ` - ${dvMap.get(v.donViId) ?? ''}`}`,
               }))}
               notFoundContent={<Empty description="Không còn viên chức nào có thể lập phiếu" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
             />
@@ -334,7 +334,7 @@ export default function ChuyenCongTacPage() {
 
       {/* ── Tiếp nhận ── */}
       <Modal
-        title={`Tiếp nhận về đơn vị — ${nhanItem?.hoTenSnapshot ?? ''}`}
+        title={`Tiếp nhận về đơn vị - ${nhanItem?.hoTenSnapshot ?? ''}`}
         open={!!nhanItem}
         onCancel={() => { setNhanItem(null); formNhan.resetFields() }}
         onOk={onTiepNhan}
@@ -364,7 +364,7 @@ export default function ChuyenCongTacPage() {
             />
           </Form.Item>
           <Form.Item name="viTriViecLamId" label="Phân công vị trí cụ thể tại trường"
-            extra={vtvlOptionsCuaTruongDen.length === 0 ? 'Trường chưa khai báo danh mục vị trí việc làm — có thể bỏ qua' : undefined}>
+            extra={vtvlOptionsCuaTruongDen.length === 0 ? 'Trường chưa khai báo danh mục vị trí việc làm - có thể bỏ qua' : undefined}>
             <Select allowClear placeholder="Chọn vị trí" options={vtvlOptionsCuaTruongDen} />
           </Form.Item>
           <Form.Item name="ngayVaoDonVi" label="Thời điểm về đơn vị" rules={[{ required: true, message: 'Chọn ngày về đơn vị' }]}
@@ -394,20 +394,20 @@ export default function ChuyenCongTacPage() {
               <Tag color={TRANG_THAI_CCT_COLORS[xemItem.trangThai]}>{TRANG_THAI_CCT_LABELS[xemItem.trangThai]}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Người đề nghị">
-              {userMap.get(xemItem.nguoiDeXuatId) ?? '—'} · {formatDate(xemItem.ngayDeXuat)}
+              {userMap.get(xemItem.nguoiDeXuatId) ?? '-'} · {formatDate(xemItem.ngayDeXuat)}
             </Descriptions.Item>
             {xemItem.nguoiDuyetId && (
               <Descriptions.Item label="Quản trị duyệt">
-                {userMap.get(xemItem.nguoiDuyetId) ?? '—'} · {formatDate(xemItem.ngayDuyet!)}
+                {userMap.get(xemItem.nguoiDuyetId) ?? '-'} · {formatDate(xemItem.ngayDuyet!)}
                 {xemItem.ghiChuDuyet && <div><Text type="secondary">{xemItem.ghiChuDuyet}</Text></div>}
               </Descriptions.Item>
             )}
             {xemItem.nguoiTiepNhanId && (
               <Descriptions.Item label="Trường đến tiếp nhận">
-                {userMap.get(xemItem.nguoiTiepNhanId) ?? '—'} · {formatDate(xemItem.ngayTiepNhan!)}
+                {userMap.get(xemItem.nguoiTiepNhanId) ?? '-'} · {formatDate(xemItem.ngayTiepNhan!)}
                 <div style={{ marginTop: 4 }}>
                   <Text type="secondary">
-                    Vị trí: {VTVL_LABELS[xemItem.vtvlMoi ?? ''] ?? xemItem.vtvlMoi ?? '—'}
+                    Vị trí: {VTVL_LABELS[xemItem.vtvlMoi ?? ''] ?? xemItem.vtvlMoi ?? '-'}
                     {xemItem.chucVuMoi ? ` · Chức vụ: ${CHUC_VU_LABELS[xemItem.chucVuMoi] ?? xemItem.chucVuMoi}` : ''}
                     {' · Về đơn vị từ '}{formatDate(xemItem.ngayVaoDonViMoi!)}
                   </Text>

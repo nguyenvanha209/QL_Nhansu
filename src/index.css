@@ -33,7 +33,7 @@ body {
   background: rgba(0,0,0,0.15) !important;
 }
 
-/* Sidebar menu — nền trong suốt, chữ trắng */
+/* Sidebar menu - nền trong suốt, chữ trắng */
 .qlvc-sidebar .ant-menu {
   background: transparent !important;
   border: none !important;

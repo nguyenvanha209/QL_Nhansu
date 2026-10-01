@@ -2,7 +2,7 @@ import type { CongViecNhanVien, LoaiLaoDong, VienChuc } from '@/types/vienChuc'
 import type { NhomChucDanh } from '@/types/danhMuc'
 
 // Chia nhân sự theo 2 chiều tách bạch để theo dõi cơ cấu:
-// - Nhóm vị trí: CBQL / Giáo viên / NV chuyên môn – hỗ trợ / NV phục vụ / NV nuôi dưỡng
+// - Nhóm vị trí: CBQL / Giáo viên / NV chuyên môn - hỗ trợ / NV phục vụ / NV nuôi dưỡng
 // - Nhóm loại hình: Biên chế / HĐ NĐ 235 / HĐ trường tự ký / HĐ khác
 // Nhân viên không có VTVL riêng cho phục vụ, nuôi dưỡng (để giữ nguyên quy tắc PC thâm niên),
 // nên phân nhóm theo ô "Công việc cụ thể".
@@ -13,7 +13,7 @@ export type NhomLoaiHinh = 'BIEN_CHE' | 'HD_235' | 'HD_TRUONG' | 'HD_KHAC'
 export const NHOM_VI_TRI: { key: NhomViTri; ten: string; moTa: string; mau: string }[] = [
   { key: 'CBQL', ten: 'Cán bộ quản lý', moTa: 'Hiệu trưởng, Phó hiệu trưởng', mau: '#6366f1' },
   { key: 'GIAO_VIEN', ten: 'Giáo viên', moTa: 'Biên chế và hợp đồng', mau: '#2563eb' },
-  { key: 'NV_HO_TRO', ten: 'NV chuyên môn – hỗ trợ', moTa: 'Kế toán, văn thư, thư viện, thiết bị, giáo vụ, y tế, tư vấn', mau: '#0891b2' },
+  { key: 'NV_HO_TRO', ten: 'NV chuyên môn - hỗ trợ', moTa: 'Kế toán, văn thư, thư viện, thiết bị, giáo vụ, y tế, tư vấn', mau: '#0891b2' },
   { key: 'NV_PHUC_VU', ten: 'Nhân viên phục vụ', moTa: 'Bảo vệ, lao công, tạp vụ', mau: '#d97706' },
   { key: 'NV_NUOI_DUONG', ten: 'Nhân viên nuôi dưỡng', moTa: 'Cấp dưỡng, nấu ăn', mau: '#16a34a' },
 ]
@@ -96,7 +96,7 @@ export function nhomLoaiHinh(loai: LoaiLaoDong): NhomLoaiHinh {
   return NHOM_LOAI_HINH.find((n) => n.loai.includes(loai))?.key ?? 'HD_KHAC'
 }
 
-// Từ khoá nhận diện công việc — xét "Nhiệm vụ chính" trước (việc thực tế), rồi mới đến tên chức danh.
+// Từ khoá nhận diện công việc - xét "Nhiệm vụ chính" trước (việc thực tế), rồi mới đến tên chức danh.
 // Thứ tự quan trọng: "Kế toán, tổ trưởng tổ HC" là kế toán; "Văn thư" phải xét trước "thư viện".
 const TU_KHOA: [RegExp, CongViecNhanVien][] = [
   [/bảo vệ/, 'BAO_VE'],

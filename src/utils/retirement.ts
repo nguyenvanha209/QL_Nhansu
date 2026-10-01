@@ -9,10 +9,10 @@
 // tuổi. Vì tuổi nghỉ hưu tăng 3 tháng (nam) / 4 tháng (nữ) trong khi thời gian trôi đi
 // 12 tháng, nên mỗi bậc của lộ trình ứng với một nhóm 9 tháng sinh (nam) hoặc
 // 8 tháng sinh (nữ) liên tiếp:
-//   Nam: T1–T9/1961 = 60 tuổi 3 tháng; T10/1961–T6/1962 = 60 tuổi 6 tháng; ...
-//   Nữ:  T1–T8/1966 = 55 tuổi 4 tháng; T9/1966–T4/1967 = 55 tuổi 8 tháng; ...
+//   Nam: T1-T9/1961 = 60 tuổi 3 tháng; T10/1961-T6/1962 = 60 tuổi 6 tháng; ...
+//   Nữ:  T1-T8/1966 = 55 tuổi 4 tháng; T9/1966-T4/1967 = 55 tuổi 8 tháng; ...
 // Kiểm chứng mốc kết thúc lộ trình: nam sinh T4/1966 đủ 62 tuổi vào T4/2028; nữ sinh
-// T5/1975 đủ 60 tuổi vào T5/2035 — khớp với Điều 169.
+// T5/1975 đủ 60 tuổi vào T5/2035 - khớp với Điều 169.
 //
 // Thời điểm nghỉ hưu = ngày cuối cùng của tháng đủ tuổi nghỉ hưu theo lộ trình.
 // Thời điểm hưởng chế độ hưu trí = ngày đầu tiên của tháng liền kề sau đó.
@@ -34,7 +34,7 @@ const LO_TRINH: Record<GioiTinh, LoTrinh> = {
   NU:  { namBatDau: 1966, tuoiGocThang: 55 * 12 + 4, buocThang: 4, nhomThangSinh: 8, tranThang: 60 * 12, sanThang: 55 * 12 },
 }
 
-// Chuẩn hoá ngày sinh — nếu không xác định được ngày/tháng hợp lệ, lấy 01/01 năm sinh
+// Chuẩn hoá ngày sinh - nếu không xác định được ngày/tháng hợp lệ, lấy 01/01 năm sinh
 function chuanHoaNgaySinh(ngaySinh: string): Date {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ngaySinh ?? '')
   if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
@@ -92,7 +92,7 @@ export function getDaysUntilRetirement(ngaySinh: string, gioiTinh: GioiTinh): nu
   return Math.ceil((rd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-/** Số tháng còn lại đến thời điểm nghỉ hưu — đếm theo tháng thật, không quy đổi 30 ngày */
+/** Số tháng còn lại đến thời điểm nghỉ hưu - đếm theo tháng thật, không quy đổi 30 ngày */
 export function getMonthsUntilRetirement(ngaySinh: string, gioiTinh: GioiTinh): number {
   const rd = calcRetirementDate(ngaySinh, gioiTinh)
   const now = new Date()

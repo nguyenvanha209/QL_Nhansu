@@ -112,7 +112,7 @@ export default function DashboardPage() {
         <Text type="secondary" style={{ fontSize: 13 }}>{dateStr}</Text>
       </div>
 
-      {/* KPI row — 4 thẻ ngang */}
+      {/* KPI row - 4 thẻ ngang */}
       <Row gutter={[12, 12]}>
         <Col xs={12} sm={6}>
           <Card className="kpi-card" style={{ borderTop: '3px solid #2563eb' }}>
@@ -163,10 +163,10 @@ export default function DashboardPage() {
         </Col>
       </Row>
 
-      {/* Cơ cấu nhân sự theo nhóm vị trí — 5 nhóm không trùng nhau, cộng lại bằng tổng lao động */}
+      {/* Cơ cấu nhân sự theo nhóm vị trí - 5 nhóm không trùng nhau, cộng lại bằng tổng lao động */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0 8px', flexWrap: 'wrap', gap: 8 }}>
         <Text strong style={{ fontSize: 15 }}>
-          Cơ cấu nhân sự{capHoc !== 'ALL' && !scopeDonViId ? ` — ${CAP_HOC.find((c) => c.value === capHoc)?.label}` : ''}
+          Cơ cấu nhân sự{capHoc !== 'ALL' && !scopeDonViId ? ` - ${CAP_HOC.find((c) => c.value === capHoc)?.label}` : ''}
           <Text type="secondary" style={{ fontWeight: 400, fontSize: 13 }}> ({nhanSu.length} người)</Text>
         </Text>
         {!scopeDonViId && <Segmented size="small" options={CAP_HOC} value={capHoc} onChange={(v) => setCapHoc(String(v))} />}
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                   title: <span title={l.ten} style={{ whiteSpace: 'nowrap' }}>{l.tenNgan}</span>, key: l.key, align: 'right' as const, width: 78,
                   render: (_: unknown, r: { key: string }) => {
                     const so = r.key === 'TONG' ? tongLoaiHinh(l.key) : coCau[r.key as NhomViTri][l.key]
-                    if (!so) return <Text type="secondary">–</Text>
+                    if (!so) return <Text type="secondary">-</Text>
                     return <a onClick={() => moDanhSach(r.key === 'TONG' ? undefined : (r.key as NhomViTri), l.key)}>{so}</a>
                   },
                 })),

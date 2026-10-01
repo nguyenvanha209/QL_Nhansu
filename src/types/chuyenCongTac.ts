@@ -3,7 +3,7 @@ import type { VTVL, ChucVu } from './vienChuc'
 export type TrangThaiChuyenCongTac =
   | 'NHAP'        // Trường đi đang soạn, chưa trình
   | 'CHO_DUYET'   // Đã trình, chờ Admin duyệt
-  | 'DA_DUYET'    // Admin đã duyệt — hồ sơ đã sang trường đến, chờ tiếp nhận phân công
+  | 'DA_DUYET'    // Admin đã duyệt - hồ sơ đã sang trường đến, chờ tiếp nhận phân công
   | 'HOAN_TAT'    // Trường đến đã phân công vị trí và ghi nhận ngày về đơn vị
   | 'TU_CHOI'     // Admin từ chối
 
@@ -11,7 +11,7 @@ export interface DeXuatChuyenCongTac {
   id: string
   ma: string
 
-  /** Hồ sơ ở trường đi — sau khi duyệt giữ lại với trạng thái Chuyển đi */
+  /** Hồ sơ ở trường đi - sau khi duyệt giữ lại với trạng thái Chuyển đi */
   vienChucId: string
   /** Hồ sơ mới tạo ở trường đến khi duyệt (mang theo lương, phụ cấp) */
   vienChucMoiId?: string

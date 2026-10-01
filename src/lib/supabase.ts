@@ -21,7 +21,7 @@ export const isSupabaseEnabled = !!supabase
 // mở từ phiên bản cũ ghi đè dữ liệu tài khoản.
 //
 // Nay mỗi lần ghi đều kèm điều kiện "bản trên máy chủ phải đúng phiên bản tôi
-// đã đọc". Không khớp nghĩa là có người khác vừa ghi — lệnh ghi bị từ chối và
+// đã đọc". Không khớp nghĩa là có người khác vừa ghi - lệnh ghi bị từ chối và
 // hệ thống tải lại bản mới thay vì đè lên.
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -51,7 +51,7 @@ const SO_LAN_THU_LAI = 3
 const laMangCoId = (v: unknown): v is { id: string }[] =>
   Array.isArray(v) && v.every((x) => x && typeof x === 'object' && typeof (x as { id?: unknown }).id === 'string')
 
-// Gộp hai mảng theo id (bản sau thắng) — chỉ dùng khi ghép các mảnh của CÙNG một bản máy chủ lại
+// Gộp hai mảng theo id (bản sau thắng) - chỉ dùng khi ghép các mảnh của CÙNG một bản máy chủ lại
 function tronTheoId(truoc: { id: string }[], sau: { id: string }[]) {
   const ra = new Map(truoc.map((x) => [x.id, x]))
   for (const x of sau) ra.set(x.id, x)
@@ -65,7 +65,7 @@ type DaXoa = Record<string, string[]>
 
 // So bản trước và sau của một lần ghi để biết người dùng vừa xóa hẳn bản ghi
 // nào. Không có bước này thì khi trộn, bản ghi đã xóa sẽ từ máy chủ quay trở
-// lại — xóa xong vẫn thấy còn.
+// lại - xóa xong vẫn thấy còn.
 function timDaXoa(truoc: string | null, sau: string): DaXoa {
   if (!truoc) return {}
   try {
@@ -88,12 +88,12 @@ function timDaXoa(truoc: string | null, sau: string): DaXoa {
 // ───────────────────────────────────────────────────────────────────────────
 // Hợp nhất 3 chiều
 //
-// Trước đây khi xung đột, MỌI bản ghi có ở máy này đều đè lên máy chủ — kể cả
+// Trước đây khi xung đột, MỌI bản ghi có ở máy này đều đè lên máy chủ - kể cả
 // bản ghi máy này không hề sửa. Máy mở từ sáng (Admin, lãnh đạo) chỉ cần lưu một
 // thao tác bất kỳ là trả lại dữ liệu buổi sáng cho những hồ sơ Kế toán vừa sửa
 // (đã xảy ra: hồ sơ quay về mã ngạch cũ, bản ghi lương cũ bật lại → 2 bản ghi).
 //
-// Nay mỗi máy nhớ "bản gốc" — nội dung từng bản ghi lúc đọc được từ máy chủ.
+// Nay mỗi máy nhớ "bản gốc" - nội dung từng bản ghi lúc đọc được từ máy chủ.
 // So 3 bản (gốc / máy chủ / máy này) cho từng bản ghi:
 //   - máy này không sửa        → lấy bản máy chủ
 //   - chỉ máy này sửa           → lấy bản máy này
@@ -149,7 +149,7 @@ export function dangKyBaoXungDotBanGhi(fn: BaoXungDot) {
 
 /**
  * Hợp nhất 3 chiều bản máy chủ với bản máy này.
- * idsConLaiTaiMay: id đang có trong TOÀN BỘ kho ở máy này — với kho chia mảnh, bản ghi vắng
+ * idsConLaiTaiMay: id đang có trong TOÀN BỘ kho ở máy này - với kho chia mảnh, bản ghi vắng
  * mặt trong mảnh này nhưng còn ở mảnh khác là đã chuyển mảnh (VD đổi trường), không phải bị xoá.
  */
 export function hopNhat3Chieu(
@@ -236,7 +236,7 @@ export function hopNhat3Chieu(
 // vài chục KB. Hai trường khác nhau thao tác cùng lúc thì không còn liên quan
 // gì tới nhau.
 //
-// Bộ nhớ tại máy và các store vẫn giữ nguyên một mảng gộp như cũ — việc chia
+// Bộ nhớ tại máy và các store vẫn giữ nguyên một mảng gộp như cũ - việc chia
 // chỉ diễn ra ở lớp này khi ghi lên máy chủ.
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -278,7 +278,7 @@ function chiaTrangThai(ten: string, khoi: KhoiTrangThai): Map<string, KhoiTrangT
       continue
     }
     // Mảng có id thì rải từng bản ghi về mảnh của nó. Mọi mảnh đều phải có khoá
-    // này, kể cả khi rỗng — thiếu thì lúc gộp lại sẽ tưởng mảng không tồn tại.
+    // này, kể cả khi rỗng - thiếu thì lúc gộp lại sẽ tưởng mảng không tồn tại.
     for (const manh of ra.keys()) lay(manh)[tenMang] = []
     for (const bg of giaTri) {
       const manh = chiaTheo(bg as Record<string, unknown>, tenMang) || KHOA_GOC
@@ -325,7 +325,7 @@ async function layBanMayChu(name: string) {
 }
 
 // Trong lúc kéo dữ liệu từ máy chủ về, việc rehydrate có thể kích hoạt ghi
-// ngược lên — phải khoá lại, nếu không sẽ thành vòng lặp ghi.
+// ngược lên - phải khoá lại, nếu không sẽ thành vòng lặp ghi.
 let dangDongBo = false
 export function datCoDangDongBo(bat: boolean) {
   dangDongBo = bat
@@ -363,7 +363,7 @@ function idsToanKhoTaiMay(ten: string): Map<string, Set<string>> {
 
 // Đưa nội dung một mảnh (đã khớp máy chủ) vào kho gộp ở máy này rồi nạp lại store.
 // Trước đây sau khi hợp nhất một mảnh, phần mềm lưu nhầm vào khoá mảnh trong
-// localStorage nên store vẫn giữ bản cũ — lần ghi sau lại xung đột.
+// localStorage nên store vẫn giữ bản cũ - lần ghi sau lại xung đột.
 async function apDungManhVaoKho(ten: string, manh: string, noiDung: KhoiTrangThai) {
   const chiaTheo = cauHinhChia.get(ten)
   if (!chiaTheo) return
@@ -404,7 +404,7 @@ async function ghiTheoManh(name: string, value: string, daXoa: DaXoa): Promise<v
   try {
     khoi = JSON.parse(value) as KhoiTrangThai
   } catch {
-    console.error('[Supabase] Bỏ qua lệnh ghi: dữ liệu không phải JSON hợp lệ —', name)
+    console.error('[Supabase] Bỏ qua lệnh ghi: dữ liệu không phải JSON hợp lệ -', name)
     return
   }
 
@@ -442,7 +442,7 @@ async function donODangCu(name: string) {
   const { error } = await supabase.from('app_state').delete().eq('key', name)
   if (error) {
     daDonODangCu.delete(name)
-    console.warn(`[Supabase] Chưa dọn được ô cũ "${name}" —`, error.message)
+    console.warn(`[Supabase] Chưa dọn được ô cũ "${name}" -`, error.message)
     return
   }
   phienBanMayChu.delete(name)
@@ -456,7 +456,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
   try {
     parsed = JSON.parse(value)
   } catch {
-    console.error('[Supabase] Bỏ qua lệnh ghi: dữ liệu không phải JSON hợp lệ —', name)
+    console.error('[Supabase] Bỏ qua lệnh ghi: dữ liệu không phải JSON hợp lệ -', name)
     return
   }
 
@@ -474,10 +474,10 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
     if (error) {
       // Mã 23505 = trùng khoá chính: bản ghi đã tồn tại mà máy này chưa đọc.
       if (error.code === '23505') {
-        console.warn(`[Supabase] "${name}" đã có trên máy chủ nhưng máy này chưa đọc — tải lại thay vì ghi đè.`)
+        console.warn(`[Supabase] "${name}" đã có trên máy chủ nhưng máy này chưa đọc - tải lại thay vì ghi đè.`)
         xuLyXungDot?.(name)
       } else {
-        console.warn('[Supabase] Lỗi khi tạo bản ghi', name, '—', error.message)
+        console.warn('[Supabase] Lỗi khi tạo bản ghi', name, '-', error.message)
       }
       return
     }
@@ -494,7 +494,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
     .select('updated_at')
 
   if (error) {
-    console.warn('[Supabase] Lỗi khi ghi', name, '—', error.message)
+    console.warn('[Supabase] Lỗi khi ghi', name, '-', error.message)
     return
   }
 
@@ -519,7 +519,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
     const { khoi: hopNhat, soXungDot } = hopNhat3Chieu(
       ten, banMayChu.value, parsed as KhoiTrangThai, daXoa, manh ? idsToanKhoTaiMay(ten) : undefined,
     )
-    console.info(`[Supabase] "${name}": máy chủ đã thay đổi — đã hợp nhất 3 chiều và ghi lại (lần ${lanThu + 1})${soXungDot ? `, ${soXungDot} bản ghi cùng bị sửa` : ''}.`)
+    console.info(`[Supabase] "${name}": máy chủ đã thay đổi - đã hợp nhất 3 chiều và ghi lại (lần ${lanThu + 1})${soXungDot ? `, ${soXungDot} bản ghi cùng bị sửa` : ''}.`)
     if (soXungDot) baoXungDot?.([{ kho: ten, soBanGhi: soXungDot }])
 
     await ghiLenMayChu(name, JSON.stringify(hopNhat), lanThu + 1, daXoa)
@@ -551,7 +551,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
 //
 // Trước đây mỗi máy chỉ đọc máy chủ lúc mở trang: tab mở từ sáng giữ dữ liệu
 // buổi sáng cả ngày. Nay cứ 60 giây (và khi quay lại tab, khi đăng nhập lại,
-// trước thao tác quan trọng) kiểm tra phiên bản từng ô — chỉ vài trăm byte.
+// trước thao tác quan trọng) kiểm tra phiên bản từng ô - chỉ vài trăm byte.
 // Ô nào đổi thì tải về, hợp nhất 3 chiều với bản đang có ở máy (giữ nguyên
 // phần máy này đang sửa dở) rồi nạp lại store.
 // ───────────────────────────────────────────────────────────────────────────
@@ -619,7 +619,7 @@ export function lamMoiTuMayChu(): Promise<number> {
       if (tongXungDot) baoXungDot?.([{ kho: 'nhiều kho', soBanGhi: tongXungDot }])
       return dsMoi.length
     } catch (e) {
-      console.warn('[Supabase] Làm mới không thành công —', e)
+      console.warn('[Supabase] Làm mới không thành công -', e)
       return 0
     } finally {
       dangLamMoi = null
@@ -632,7 +632,7 @@ export function lamMoiTuMayChu(): Promise<number> {
 // Nhận thay đổi tức thì (Supabase Realtime)
 //
 // Kế toán vừa thêm hồ sơ thì máy chủ báo ngay cho các máy đang mở (Admin, lãnh
-// đạo) để tự làm mới — không phải chờ tới lượt kiểm tra định kỳ. Cần bật
+// đạo) để tự làm mới - không phải chờ tới lượt kiểm tra định kỳ. Cần bật
 // Realtime cho bảng app_state (tools/sql/03-bat-realtime.sql); chưa bật thì
 // vẫn còn kiểm tra định kỳ 30 giây.
 // ───────────────────────────────────────────────────────────────────────────
@@ -684,7 +684,7 @@ const hybridStorage: StateStorage = {
 
   setItem: (name: string, value: string): void => {
     // Phải đọc bản cũ TRƯỚC khi ghi đè, để biết lần này người dùng xóa hẳn
-    // bản ghi nào — dùng khi hợp nhất lúc có xung đột.
+    // bản ghi nào - dùng khi hợp nhất lúc có xung đột.
     const daXoa = supabase && !dangDongBo ? timDaXoa(localStorage.getItem(name), value) : {}
     localStorage.setItem(name, value)
     if (supabase && !dangDongBo) xepHangGhi(name, value, daXoa)
@@ -694,7 +694,7 @@ const hybridStorage: StateStorage = {
     localStorage.removeItem(name)
     if (supabase && !dangDongBo) {
       supabase.from('app_state').delete().eq('key', name).then(({ error }) => {
-        if (error) console.warn('[Supabase] Lỗi khi xoá', name, '—', error.message)
+        if (error) console.warn('[Supabase] Lỗi khi xoá', name, '-', error.message)
         else phienBanMayChu.delete(name)
       })
     }

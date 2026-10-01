@@ -28,7 +28,7 @@ export interface ChiTietDeXuat {
   pctnMoi?: number
   /** Mốc hưởng bậc hiện tại (lúc lập phiếu) để người duyệt đối chiếu */
   ngayHieuLucCu?: string
-  /** Ngày đến hạn nâng bậc theo niên hạn (lúc lập phiếu) — căn cứ kiểm tra nâng trước hạn */
+  /** Ngày đến hạn nâng bậc theo niên hạn (lúc lập phiếu) - căn cứ kiểm tra nâng trước hạn */
   ngayDenHanCu?: string
   /** Minh chứng riêng của người này (VD giấy khen khi nâng bậc trước hạn) */
   minhChung?: MinhChung[]
@@ -107,14 +107,14 @@ export const LOAI_DE_XUAT_LABELS: Record<LoaiDeXuat, string> = {
 }
 
 /**
- * Nghiệp vụ từng loại phiếu — hiện ở trang danh sách và ngay dưới ô chọn loại trong form.
+ * Nghiệp vụ từng loại phiếu - hiện ở trang danh sách và ngay dưới ô chọn loại trong form.
  * Hai loại theo niên hạn chọn người theo thời gian, không cần minh chứng;
  * ba loại còn lại phải nêu rõ cũ → mới (ngạch, bậc, hệ số, mốc hưởng) và đính kèm minh chứng.
  */
 export const NGHIEP_VU_LOAI: Record<LoaiDeXuat, { chonNguoi: string; dieuChinh: string; minhChung?: string; tomTat: string; minhChungNgan?: string }> = {
   NANG_BAC: {
     chonNguoi: 'Theo niên hạn: chọn năm, đợt 6 tháng; bảng gợi ý liệt kê người đến hạn nâng bậc trong đợt.',
-    dieuChinh: 'Giữ ngạch; lên 1 bậc theo bảng lương, hệ số tự điền; mốc hưởng mới = ngày đến hạn. Người ở bậc cuối không nâng bậc — xét phụ cấp thâm niên vượt khung.',
+    dieuChinh: 'Giữ ngạch; lên 1 bậc theo bảng lương, hệ số tự điền; mốc hưởng mới = ngày đến hạn. Người ở bậc cuối không nâng bậc - xét phụ cấp thâm niên vượt khung.',
     tomTat: 'Chọn theo đợt 6 tháng; +1 bậc, mốc = ngày đến hạn',
   },
   PHU_CAP_THAM_NIEN: {

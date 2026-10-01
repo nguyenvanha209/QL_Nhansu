@@ -121,6 +121,8 @@ interface ViTri {
   /** Định mức cố định; null = mẫu không có công thức, trường nhập tay nếu có căn cứ */
   coDinh?: number | null
   canCu?: string
+  /** Số người tối đa trường được điều chỉnh (VD kế toán 01 người/trường) */
+  toiDa?: number
 }
 
 const CBQL: ViTri[] = [
@@ -138,15 +140,15 @@ const HO_TRO_KT: ViTri = {
   ma: 'HO_TRO_KT', ten: 'Viên chức hỗ trợ giáo dục người khuyết tật', nhom: 'CHUYEN_NGANH',
   coDinh: null, canCu: 'Tối đa 02 người, theo số học sinh khuyết tật học hòa nhập',
 }
-const nv = (ma: string, ten: string, coDinh: number | null, canCu?: string, nhom: NhomDinhMuc = 'DUNG_CHUNG'): ViTri =>
-  ({ ma, ten, nhom, coDinh, canCu })
+const nv = (ma: string, ten: string, coDinh: number | null, canCu?: string, nhom: NhomDinhMuc = 'DUNG_CHUNG', toiDa?: number): ViTri =>
+  ({ ma, ten, nhom, coDinh, canCu, toiDa })
 
 const VI_TRI: Record<CapHoc, ViTri[]> = {
   MAM_NON: [
     ...CBQL,
     { ma: 'GV_MN', ten: 'Giáo viên Mầm non', nhom: 'CHUYEN_NGANH', laGiaoVien: true },
     HO_TRO_KT,
-    nv('KE_TOAN', 'Kế toán', 1),
+    nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
     nv('VAN_THU', 'Văn thư', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
     nv('THU_QUY', 'Thủ quỹ', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
     nv('Y_TE', 'Y tế trường học', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
@@ -160,7 +162,7 @@ const VI_TRI: Record<CapHoc, ViTri[]> = {
     nv('GIAO_VU', 'Giáo vụ', 1, undefined, 'CHUYEN_NGANH'),
     nv('TU_VAN', 'Tư vấn học sinh', 1, undefined, 'CHUYEN_NGANH'),
     HO_TRO_KT,
-    nv('KE_TOAN', 'Kế toán', 1, 'Tối đa 02 người'),
+    nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
     nv('THU_VIEN', 'Thư viện', 1, '01–02 người'),
     nv('VAN_THU', 'Văn thư', 1),
     nv('THIET_BI', 'Thiết bị', null, 'Bố trí kiêm nhiệm'),
@@ -175,7 +177,7 @@ const VI_TRI: Record<CapHoc, ViTri[]> = {
     nv('GIAO_VU', 'Giáo vụ', 1, undefined, 'CHUYEN_NGANH'),
     nv('TU_VAN', 'Tư vấn học sinh', 1, undefined, 'CHUYEN_NGANH'),
     HO_TRO_KT,
-    nv('KE_TOAN', 'Kế toán', 1, 'Tối đa 02 người'),
+    nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
     nv('THU_VIEN', 'Thư viện', 1, '01–02 người'),
     nv('VAN_THU', 'Văn thư', 1),
     nv('Y_TE', 'Y tế trường học', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
@@ -204,6 +206,41 @@ export interface DongDinhMuc {
   chenhLech: number | null
   /** Dòng chỉ hiện khi có người (giáo viên chưa phân môn, nhân viên chưa rõ công việc) */
   dongPhu?: boolean
+  /** Số người tối đa được điều chỉnh */
+  toiDa?: number
+  /** THCS: định mức môn = đứng lớp + kiêm nhiệm phân bổ (trường điều chỉnh ở bảng phân bổ) */
+  phanBoKiem?: boolean
+}
+
+/** THCS: một môn trong bảng phân bổ giáo viên kiêm nhiệm */
+export interface DongPhanBoKiem {
+  ma: string
+  ten: string
+  tietTuan: number
+  /** Số giáo viên đứng lớp = tiết/tuần ÷ định mức tiết */
+  dungLop: number
+  /** Hệ thống gợi ý: chia toàn bộ phần kiêm nhiệm theo tỷ lệ giờ đứng lớp */
+  goiY: number
+  /** Trường tự điều chỉnh */
+  nhapTay?: number
+  /** Áp dụng = nhập tay, không thì chia phần còn lại cho các môn chưa điều chỉnh */
+  apDung: number
+  dinhMuc: number
+}
+
+export interface PhanBoKiemNhiem {
+  /** Tổng số giáo viên kiêm nhiệm cần phân bổ = định mức GV − đứng lớp các môn − Tổng phụ trách */
+  tong: number
+  kiemDay: number
+  chuNhiem: number
+  khac: number
+  daPhanBo: number
+  /** Tổng − đã phân bổ: dương là còn thiếu, âm là phân bổ vượt */
+  conLai: number
+  /** Đã phân bổ khớp tổng (sai số dưới 0,05) */
+  khop: boolean
+  soMonDieuChinh: number
+  dong: DongPhanBoKiem[]
 }
 
 export interface KetQuaDinhMuc {
@@ -223,11 +260,32 @@ export interface KetQuaDinhMuc {
   /** Có mặt ở các vị trí I–III có định mức, kể cả giáo viên chưa phân môn */
   coMatCoDinhMuc: number
   chuaPhanMon: number
+  /** Chỉ THCS */
+  phanBoKiem?: PhanBoKiemNhiem
 }
 
 export const lamTron1 = (n: number) => Math.round(n * 10) / 10
 export const fmt = (n: number | null | undefined) =>
   n == null ? '—' : lamTron1(n).toLocaleString('vi-VN', { maximumFractionDigits: 1 })
+
+/**
+ * Chia `tong` theo tỷ lệ `trongSo`, làm tròn 0,1 mà tổng vẫn khớp (phương pháp phần dư lớn nhất)
+ */
+export function chiaTheoTyLe(tong: number, trongSo: number[]): number[] {
+  const tongTs = trongSo.reduce((a, b) => a + b, 0)
+  if (tong <= 0 || !tongTs) return trongSo.map(() => 0)
+  const dv = Math.round(tong * 10)
+  const tho = trongSo.map((w) => (dv * w) / tongTs)
+  const nguyen = tho.map(Math.floor)
+  let du = dv - nguyen.reduce((a, b) => a + b, 0)
+  const thuTu = tho.map((x, i) => [x - Math.floor(x), i] as const).sort((a, b) => b[0] - a[0])
+  for (const [, i] of thuTu) {
+    if (du <= 0) break
+    nguyen[i]++
+    du--
+  }
+  return nguyen.map((n) => n / 10)
+}
 
 const laBienChe = (vc: VienChuc) => vc.loaiLaoDong === 'VIEN_CHUC' || vc.loaiLaoDong === 'TAP_SU'
 
@@ -347,27 +405,52 @@ export function tinhDinhMuc(
     )
   }
 
+  let phanBoKiem: PhanBoKiemNhiem | undefined
   if (cap === 'THCS') {
     const t = THAM_SO.THCS
     const gvLop = tongLop * t.gvMoiLop
     const hsDu = Math.max(0, tongHS - tongLop * t.siSoChuan)
     const gvDu = hsDu / t.hsDuMoiGv
     const tongGV = gvLop + gvDu
-    const dungLop: Record<string, number> = {}
-    let tongDungLop = 0
-    for (const m of MON_THCS) {
-      dungLop[m.ma] = soTiet(quyMo, cap, m) / t.tietChuan
-      tongDungLop += dungLop[m.ma]
-    }
+    const tietMon = MON_THCS.map((m) => soTiet(quyMo, cap, m))
+    const dungLop = tietMon.map((x) => x / t.tietChuan)
+    const tongDungLop = dungLop.reduce((a, b) => a + b, 0)
     const kiemDay = MON_KIEM_THCS.reduce((s, m) => s + soTiet(quyMo, cap, m), 0) / t.tietChuan
     const chuNhiem = (tongLop * t.tietChuNhiem) / t.tietChuan
     // Phần ngoài giờ đứng lớp của các môn có vị trí riêng: dạy kiêm GDĐP, HĐTN-HN, chủ nhiệm, kiêm nhiệm khác.
-    // Chia cho các môn theo tỷ lệ số giờ đứng lớp để tổng các môn khớp đúng tổng định mức.
-    const phanBo = Math.max(0, tongGV - tongDungLop - 1)
-    for (const m of MON_THCS) {
-      const kiem = tongDungLop ? (phanBo * dungLop[m.ma]) / tongDungLop : 0
-      tinh[m.ma] = dungLop[m.ma] + kiem
-      canCu[m.ma] = `Đứng lớp ${fmt(dungLop[m.ma])} + kiêm nhiệm phân bổ ${fmt(kiem)}`
+    // Hệ thống gợi ý chia theo tỷ lệ giờ đứng lớp; trường điều chỉnh được từng môn, môn chưa điều chỉnh
+    // nhận phần còn lại theo cùng tỷ lệ để tổng các môn vẫn khớp tổng định mức.
+    const phanBo = lamTron1(Math.max(0, tongGV - tongDungLop - 1))
+    const goiY = chiaTheoTyLe(phanBo, dungLop)
+    // Bản cũ điều chỉnh thẳng định mức môn → quy về số kiêm nhiệm
+    const tay = (ma: string, i: number): number | undefined => {
+      const k = quyMo.kiemNhiemNhapTay?.[ma]
+      if (k != null) return k
+      const cu = quyMo.dinhMucNhapTay?.[ma]
+      return cu != null ? lamTron1(Math.max(0, cu - dungLop[i])) : undefined
+    }
+    const nhapTay = MON_THCS.map((m, i) => tay(m.ma, i))
+    const daChinh = nhapTay.reduce<number>((s, v) => s + (v ?? 0), 0)
+    const conChia = chiaTheoTyLe(
+      Math.max(0, lamTron1(phanBo - daChinh)),
+      dungLop.map((d, i) => (nhapTay[i] == null ? d : 0)),
+    )
+    const dongPb: DongPhanBoKiem[] = MON_THCS.map((m, i) => {
+      const apDung = nhapTay[i] ?? conChia[i]
+      return {
+        ma: m.ma, ten: m.tenNgan, tietTuan: tietMon[i], dungLop: dungLop[i],
+        goiY: goiY[i], nhapTay: nhapTay[i], apDung, dinhMuc: dungLop[i] + apDung,
+      }
+    })
+    const daPhanBo = lamTron1(dongPb.reduce((s, d) => s + d.apDung, 0))
+    phanBoKiem = {
+      tong: phanBo, kiemDay, chuNhiem, khac: Math.max(0, phanBo - kiemDay - chuNhiem),
+      daPhanBo, conLai: lamTron1(phanBo - daPhanBo), khop: Math.abs(phanBo - daPhanBo) < 0.05,
+      soMonDieuChinh: nhapTay.filter((v) => v != null).length, dong: dongPb,
+    }
+    for (const d of dongPb) {
+      tinh[d.ma] = d.dungLop + d.goiY
+      canCu[d.ma] = `Đứng lớp ${fmt(d.dungLop)} + kiêm nhiệm phân bổ ${fmt(d.apDung)}${d.nhapTay != null ? ' (trường điều chỉnh)' : ''}`
     }
     tinh.TONG_PHU_TRACH = 1
     canCu.TONG_PHU_TRACH = '01 người/trường, tính trong định mức giáo viên'
@@ -377,8 +460,8 @@ export function tinhDinhMuc(
         ? `Học sinh vượt sĩ số ${t.siSoChuan}/lớp: ${hsDu} em ÷ ${t.hsDuMoiGv} = ${fmt(gvDu)} giáo viên tăng thêm`
         : `Sĩ số bình quân ${fmt(binhQuan)} em/lớp, không vượt ${t.siSoChuan} — không tính giáo viên tăng thêm`,
       `Tổng định mức giáo viên: ${fmt(tongGV)} (TT 20/2023/TT-BGDĐT), gồm cả Tổng phụ trách Đội`,
-      `Trong đó đứng lớp các môn: ${fmt(tongDungLop)}; dạy kiêm GDĐP, HĐTN-HN: ${fmt(kiemDay)}; chủ nhiệm (${t.tietChuNhiem} tiết/lớp): ${fmt(chuNhiem)}; kiêm nhiệm khác: ${fmt(Math.max(0, phanBo - kiemDay - chuNhiem))}`,
-      `Phần dạy kiêm, chủ nhiệm, kiêm nhiệm được chia cho các môn theo tỷ lệ giờ đứng lớp (định mức tiết ${t.tietChuan}/tuần)`,
+      `Trong đó đứng lớp các môn: ${fmt(tongDungLop)}; kiêm nhiệm cần phân bổ: ${fmt(phanBo)} (dạy kiêm GDĐP, HĐTN-HN ${fmt(kiemDay)}; chủ nhiệm ${t.tietChuNhiem} tiết/lớp ${fmt(chuNhiem)}; kiêm nhiệm khác ${fmt(phanBoKiem.khac)})`,
+      `Phần kiêm nhiệm hệ thống gợi ý chia theo tỷ lệ giờ đứng lớp (định mức tiết ${t.tietChuan}/tuần); trường điều chỉnh ở bảng "Phân bổ giáo viên kiêm nhiệm"`,
     )
   }
 
@@ -398,8 +481,11 @@ export function tinhDinhMuc(
     const coMat = dem.get(vt.ma) ?? { vc: 0, hd: 0 }
     const laPhucVu = vt.nhom === 'PHUC_VU'
     const dinhMucTinh = laPhucVu ? null : (tinh[vt.ma] ?? vt.coDinh ?? null)
-    const tay = laPhucVu ? undefined : nhapTay[vt.ma]
-    const dinhMuc = tay ?? dinhMucTinh
+    // Môn THCS: điều chỉnh qua bảng phân bổ kiêm nhiệm, không nhập thẳng định mức
+    const pb = phanBoKiem?.dong.find((d) => d.ma === vt.ma)
+    const tayGoc = laPhucVu || pb ? undefined : nhapTay[vt.ma]
+    const tay = tayGoc != null && vt.toiDa != null ? Math.min(tayGoc, vt.toiDa) : tayGoc
+    const dinhMuc = pb ? pb.dinhMuc : (tay ?? dinhMucTinh)
     const tong = coMat.vc + coMat.hd
     return {
       ma: vt.ma,
@@ -414,6 +500,8 @@ export function tinhDinhMuc(
       coMatHD: coMat.hd,
       coMat: tong,
       chenhLech: dinhMuc == null ? null : tong - dinhMuc,
+      toiDa: vt.toiDa,
+      phanBoKiem: !!pb,
     }
   }
 
@@ -453,6 +541,7 @@ export function tinhDinhMuc(
     // Giáo viên chưa phân môn vẫn nằm trong định mức giáo viên chung của trường
     coMatCoDinhMuc: coDinhMuc.reduce((s, d) => s + d.coMat, 0) + chuaPhanMon,
     chuaPhanMon,
+    phanBoKiem,
   }
 }
 

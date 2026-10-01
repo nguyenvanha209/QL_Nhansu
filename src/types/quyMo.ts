@@ -19,6 +19,11 @@ export interface QuyMoTruong {
   khoiDayTinThem?: string[]
   /** Định mức trường tự điều chỉnh theo vị trí (mã vị trí → số người), khi có căn cứ riêng */
   dinhMucNhapTay?: Record<string, number>
+  /**
+   * THCS: số giáo viên kiêm nhiệm (dạy kiêm GDĐP, HĐTN-HN, chủ nhiệm, kiêm nhiệm khác) trường tự phân bổ
+   * cho từng môn (mã môn → số người). Môn không ghi thì hệ thống chia phần còn lại theo tỷ lệ giờ đứng lớp.
+   */
+  kiemNhiemNhapTay?: Record<string, number>
   ghiChu?: string
   nguoiCapNhatId?: string
   nguoiCapNhat?: string

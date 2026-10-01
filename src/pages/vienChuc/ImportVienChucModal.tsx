@@ -27,6 +27,7 @@ import {
 } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
 import { CONG_VIEC, CONG_VIEC_LABELS, doanCongViec, chuanHoaVtvl, chuanHoaChucVu } from '@/utils/nhomViTri'
+import { tinhNgayNangTiep } from '@/utils/nangLuong'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { ChucDanhNgheNghiep, LoaiPhuCap } from '@/types/danhMuc'
 import { lamMoiNgay } from '@/lib/supabase'
@@ -373,6 +374,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
   const updateVienChuc = useVienChucStore((s) => s.updateVienChuc)
   const donVis         = useDanhMucStore((s) => s.donVis)
   const chucDanhs      = useDanhMucStore((s) => s.chucDanhs)
+  const bacLuongs      = useDanhMucStore((s) => s.bacLuongs)
   const loaiPhuCaps    = useDanhMucStore((s) => s.loaiPhuCaps)
   const heSos          = useLuongStore((s) => s.heSoLuongs)
   const phuCaps        = useLuongStore((s) => s.phuCapVienChucs)
@@ -582,6 +584,22 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             else if (rNang.value)
               checkLuong('Ngày nâng lương tiếp', 'nangTiep', cur.nangTiep, rNang.value,
                 () => { patchHeSo.ngayNangLuongTiepTheo = rNang.value }, asDate)
+
+            // Đổi mốc hưởng hoặc bậc mà file không ghi ngày nâng lương tiếp → tự tính lại,
+            // không để ngày nâng lương cũ nằm lại sai lệch với mốc mới
+            if ((patchHeSo.ngayHieuLuc || patchHeSo.bac !== undefined) && !(rNang.ok && rNang.value)) {
+              const nang = tinhNgayNangTiep(
+                patchHeSo.ngayHieuLuc ?? heSoRec.ngayHieuLuc, heSoRec.chucDanhId,
+                patchHeSo.bac ?? heSoRec.bac, bacLuongs, chucDanhs,
+              )
+              if (nang && nang !== heSoRec.ngayNangLuongTiepTheo) {
+                patchHeSo.ngayNangLuongTiepTheo = nang
+                fieldChanges.push({
+                  key: 'nangTiepTinhLai', nhom: 'Lương', label: 'Ngày nâng lương tiếp (tự tính lại)',
+                  oldDisplay: asDate(heSoRec.ngayNangLuongTiepTheo), newDisplay: asDate(nang),
+                })
+              }
+            }
           } else if (num(row[COL.HE_SO]) !== undefined) {
             warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chưa có bản ghi lương đang áp dụng — bỏ qua cột lương`)
           }
@@ -683,7 +701,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
     }
     reader.readAsArrayBuffer(file)
     return false
-  }, [vienChucs, chucDanhs, donVis, heSos, phuCaps, loaiPhuCaps, message,
+  }, [vienChucs, chucDanhs, bacLuongs, donVis, heSos, phuCaps, loaiPhuCaps, message,
       inverseChucVu, inverseVtvl, inverseLoaiLD, inverseTrangThai, inverseNguon])
 
   // ── Chọn / bỏ chọn ────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
 import { CONG_VIEC, NHOM_VI_TRI } from '@/utils/nhomViTri'
 import { MON_GIANG_DAY, laCapHoc } from '@/utils/dinhMuc'
 import { chonBanDangHuong, hoPhuCap, nhomTheoLoai } from '@/utils/phuCapDangHuong'
+import { ngayHopLe, tinhNgayNangTiep } from '@/utils/nangLuong'
 import type { PhuCapVienChuc } from '@/types/luong'
 import { tinhNgayHetBaoLuu, tenHienThiLoaiPhuCap, TEN_PCCV_BAO_LUU, TEN_HS_CHENH_LECH_BAO_LUU } from '@/utils/baoLuuPccv'
 import { lamMoiNgay } from '@/lib/supabase'
@@ -180,6 +181,7 @@ export default function VienChucFormPage() {
   }, [duocHuongPctn, watchPhuCaps, loaiPhuCaps])
 
   const watchBacLuongId = Form.useWatch('bacLuongId', form)
+  const watchMocHuongLuong = Form.useWatch('mocHuongLuong', form)
   const selectedBac = useMemo(() => bacLuongs.find((b) => b.id === watchBacLuongId), [watchBacLuongId])
   const watchLoaiLaoDong = Form.useWatch('loaiLaoDong', form) as LoaiLaoDong | undefined
   // Viên chức biên chế: bắt buộc khai mã ngạch, nguồn kinh phí, ngày vào biên chế, bậc lương.
@@ -235,7 +237,8 @@ export default function VienChucFormPage() {
     if (heSo) {
       const bac = bacLuongs.find((b) => b.chucDanhId === heSo.chucDanhId && b.bac === heSo.bac)
       if (bac) form.setFieldValue('bacLuongId', bac.id)
-      form.setFieldValue('mocHuongLuong', dayjs(heSo.ngayHieuLuc))
+      // Mốc lỗi (trống, năm 0205…) thì để trống cho người dùng nhập lại thay vì hiện ngày vô nghĩa
+      form.setFieldValue('mocHuongLuong', ngayHopLe(heSo.ngayHieuLuc) ? dayjs(heSo.ngayHieuLuc) : undefined)
     }
     // Mỗi loại phụ cấp một dòng (bản đang hưởng); bản trùng được báo riêng và đóng khi lưu
     const dangHuongLucMo = luongState.getActivePhuCaps(id!)
@@ -404,6 +407,22 @@ export default function VienChucFormPage() {
           createdBy: currentUser?.id ?? 'system',
         })
         updateVienChuc(id!, { heSoLuongHienTaiId: newHeSo.id })
+      } else if (selectedBacLuong && currentHeSo && mocHuongLuongStr) {
+        // Giữ nguyên bậc, chỉ sửa mốc hưởng: trước đây thay đổi này bị bỏ qua, ngày nâng lương giữ nguyên giá trị sai.
+        // Nay ghi mốc mới vào bản lương đang áp dụng và tính lại ngày nâng lương tiếp theo.
+        const nangTiep = tinhNgayNangTiep(mocHuongLuongStr, currentHeSo.chucDanhId, currentHeSo.bac, bacLuongs, chucDanhs)
+        if (nangTiep && (mocHuongLuongStr !== currentHeSo.ngayHieuLuc || nangTiep !== currentHeSo.ngayNangLuongTiepTheo)) {
+          luongState.updateHeSoLuong(currentHeSo.id, { ngayHieuLuc: mocHuongLuongStr, ngayNangLuongTiepTheo: nangTiep })
+          luongState.addLichSuBienDong({
+            vienChucId: id!,
+            loai: 'LUONG',
+            truongThayDoi: 'Mốc hưởng lương',
+            giaTriCu: `${formatDate(currentHeSo.ngayHieuLuc) || '(trống)'} — nâng lương tiếp ${formatDate(currentHeSo.ngayNangLuongTiepTheo) || '(trống)'}`,
+            giaTriMoi: `${formatDate(mocHuongLuongStr)} — nâng lương tiếp ${formatDate(nangTiep)}`,
+            ngayThayDoi: dayjs().format('YYYY-MM-DD'),
+            nguoiThayDoiId: currentUser?.id ?? 'system',
+          })
+        }
       }
 
       ghiPhuCap(id!, phuCaps || [], dayjs().format('YYYY-MM-DD'), vcData.mocHuongPctn)
@@ -828,11 +847,21 @@ export default function VienChucFormPage() {
             <Form.Item
               name="mocHuongLuong"
               label="Mốc hưởng lương"
-              tooltip="Ngày hiệu lực bậc lương — chỉ áp dụng khi thêm mới hoặc thay đổi bậc lương"
+              tooltip="Ngày bắt đầu hưởng bậc lương hiện tại. Sửa mốc thì ngày nâng lương tiếp theo được tính lại khi lưu."
             >
               <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} placeholder="Chọn mốc hưởng lương" />
             </Form.Item>
           </Col>
+          {selectedBac && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item label="Ngày nâng lương tiếp theo" tooltip="Tự tính: mốc hưởng lương + thời gian nâng bậc của ngạch">
+                <Input
+                  disabled
+                  value={watchMocHuongLuong ? dayjs(watchMocHuongLuong).add(selectedBac.thoiGianNangLuong, 'year').format('DD/MM/YYYY') : 'Nhập mốc hưởng lương'}
+                />
+              </Form.Item>
+            </Col>
+          )}
           </>)}
           {duocHuongPctn && (
             <Col xs={24} sm={12} md={8}>

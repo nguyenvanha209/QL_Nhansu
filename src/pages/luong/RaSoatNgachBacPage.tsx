@@ -9,13 +9,14 @@ import { useAuth } from '@/hooks/useAuth'
 import { matchSearch, soSanhVienChuc, formatDate } from '@/utils/helpers'
 import { dangBaoLuuPccv, soNgayConBaoLuu } from '@/utils/baoLuuPccv'
 import { exportToExcel } from '@/utils/exportExcel'
+import { ngayHopLe, tinhNgayNangTiep, laBacCuoi } from '@/utils/nangLuong'
 import { chonBanDangHuong, nhomTheoLoai } from '@/utils/phuCapDangHuong'
 import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'PCCV_KHONG_CHUC_VU' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'NANG_LUONG_LECH' | 'PCCV_KHONG_CHUC_VU' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -25,6 +26,7 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   NGACH_KHAC: { ten: 'Lương ghi theo mã khác', mau: 'gold' },
   NHIEU_BAN_GHI_LUONG: { ten: 'Nhiều bản ghi lương đang áp dụng', mau: 'red' },
   PC_TRUNG: { ten: 'Phụ cấp ghi trùng', mau: 'red' },
+  NANG_LUONG_LECH: { ten: 'Mốc / ngày nâng lương sai', mau: 'orange' },
   PCCV_KHONG_CHUC_VU: { ten: 'Có PC chức vụ nhưng không có chức vụ', mau: 'magenta' },
   CHUC_VU_LECH_VTVL: { ten: 'Chức vụ lệch vị trí việc làm', mau: 'magenta' },
   BL_PCCV_SAP_HET: { ten: 'Sắp hết bảo lưu PC chức vụ', mau: 'geekblue' },
@@ -192,6 +194,20 @@ export default function RaSoatNgachBacPage() {
           chiTiet.push(`Bậc ${hs.bac} bảng ${cd.bangLuong} là ${bacBang.heSo.toFixed(2)}, hồ sơ đang ghi ${hs.heSo.toFixed(2)}`)
         } else {
           heSoTheoBang = bacBang.heSo
+        }
+      }
+      // Ngày nâng lương tiếp theo phải bằng mốc hưởng + thời gian giữ bậc (3 năm A0 trở lên, 2 năm B/C)
+      if (hs && !theoTien) {
+        const cdLuong = hs.chucDanhId ?? cd?.id
+        if (!ngayHopLe(hs.ngayHieuLuc)) {
+          loi.push('NANG_LUONG_LECH')
+          chiTiet.push(`Mốc hưởng lương ${hs.ngayHieuLuc ? `"${formatDate(hs.ngayHieuLuc) || hs.ngayHieuLuc}" sai năm` : 'chưa có'} — nhập lại mốc trong hồ sơ để tính ngày nâng lương`)
+        } else if (!laBacCuoi(cdLuong, hs.bac, bacLuongs)) {
+          const dung = tinhNgayNangTiep(hs.ngayHieuLuc, cdLuong, hs.bac, bacLuongs, chucDanhs)
+          if (dung && dung !== hs.ngayNangLuongTiepTheo) {
+            loi.push('NANG_LUONG_LECH')
+            chiTiet.push(`Mốc hưởng ${formatDate(hs.ngayHieuLuc)}, ngày nâng lương tiếp đang ghi ${formatDate(hs.ngayNangLuongTiepTheo) || '(trống)'} — đúng phải là ${formatDate(dung)}. Mở hồ sơ, bấm Lưu để tính lại`)
+          }
         }
       }
       if (!loi.length) continue

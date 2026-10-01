@@ -10,6 +10,7 @@ export type Action = 'read' | 'write' | 'approve' | 'admin'
 export const RESOURCES: { key: string; label: string }[] = [
   { key: 'vienChuc', label: 'Hồ sơ viên chức' },
   { key: 'viTri',    label: 'Vị trí việc làm' },
+  { key: 'quyMo',    label: 'Quy mô trường lớp & định mức' },
   { key: 'luong',    label: 'Lương & hệ số' },
   { key: 'deXuat',   label: 'Đề xuất điều chỉnh' },
   { key: 'baoCao',   label: 'Báo cáo' },
@@ -31,6 +32,7 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
   CB_VH_XH: {
     vienChuc: ['read', 'write'],
     viTri: ['read', 'write'],
+    quyMo: ['read', 'write'],
     luong: ['read', 'write'],
     deXuat: ['read', 'write', 'approve'],
     baoCao: ['read'],
@@ -39,6 +41,7 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
   LANH_DAO: {
     vienChuc: ['read'],
     viTri: ['read'],
+    quyMo: ['read'],
     luong: ['read'],
     deXuat: ['read', 'approve'],
     baoCao: ['read'],
@@ -47,6 +50,7 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
   HIEU_TRUONG: {
     vienChuc: ['read', 'write'],
     viTri: ['read'],
+    quyMo: ['read', 'write'],
     luong: ['read'],
     deXuat: ['read', 'approve'],
     baoCao: ['read'],
@@ -55,6 +59,7 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
   CB_TRUONG: {
     vienChuc: ['read', 'write'],
     viTri: ['read'],
+    quyMo: ['read', 'write'],
     luong: ['read'],
     deXuat: ['read', 'write'],
     baoCao: ['read'],

@@ -7,6 +7,24 @@ import type { VienChuc } from '@/types/vienChuc'
 // Dòng phụ cấp PC_CHUC_VU trong hồ sơ luôn là mức theo chức vụ hiện tại; phần bảo lưu nằm riêng
 // trong hồ sơ và được áp khi tính lương, hết hạn thì tự trở về mức theo chức vụ hiện tại.
 
+// Ba khoản dễ nhầm vì cùng chữ "bảo lưu" / "chức vụ" — dùng thống nhất các tên dưới đây ở mọi màn hình
+export const TEN_PCCV_BAO_LUU = 'PC chức vụ bảo lưu (sau sắp xếp)'
+export const TEN_HS_CHENH_LECH_BAO_LUU = 'Hệ số chênh lệch bảo lưu (lương)'
+export const TEN_PCCV_HIEN_TAI = 'PC chức vụ hiện tại (TT 33/2005)'
+
+/** Tên hiển thị của loại phụ cấp, tách rõ hệ số chênh lệch bảo lưu (lương) với PC chức vụ */
+export function tenHienThiLoaiPhuCap(loai?: { ma: string; ten: string }): string {
+  if (!loai) return ''
+  if (loai.ma === 'PC_BAO_LUU') return TEN_HS_CHENH_LECH_BAO_LUU
+  if (loai.ma === 'PC_CHUC_VU') return TEN_PCCV_HIEN_TAI
+  return loai.ten
+}
+
+/** Đang tính lương theo mức bảo lưu (mức bảo lưu cao hơn PC chức vụ hiện tại) */
+export function dangTinhTheoBaoLuu(vc: Pick<VienChuc, 'baoLuuPccv'>, pccvTheoChucVu: number): boolean {
+  return dangBaoLuuPccv(vc) && vc.baoLuuPccv!.heSo > pccvTheoChucVu
+}
+
 /** Ngày cuối được hưởng bảo lưu: hết hạn bổ nhiệm cũ, nhưng tối thiểu 6 tháng kể từ quyết định sắp xếp */
 export function tinhNgayHetBaoLuu(ngayQuyetDinh: string, ngayHetHanBoNhiem: string): string {
   const toiThieu = dayjs(ngayQuyetDinh).add(6, 'month').subtract(1, 'day')

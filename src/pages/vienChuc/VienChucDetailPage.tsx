@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Button, Tabs, Table, Typography, Space, Timeline, Result } from 'antd'
+import { Card, Descriptions, Tag, Button, Tabs, Table, Typography, Space, Timeline, Result, Alert } from 'antd'
 import { EditOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
@@ -10,7 +10,9 @@ import type { TrangThaiCongTac } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
 import { formatDate } from '@/utils/helpers'
 import { CONG_VIEC_LABELS } from '@/utils/nhomViTri'
-import { dangBaoLuuPccv } from '@/utils/baoLuuPccv'
+import { dangBaoLuuPccv, dangTinhTheoBaoLuu, tenHienThiLoaiPhuCap, TEN_PCCV_BAO_LUU } from '@/utils/baoLuuPccv'
+import { chonBanDangHuong, nhomTheoLoai } from '@/utils/phuCapDangHuong'
+import { useUserStore } from '@/store/userStore'
 
 const { Title, Text } = Typography
 
@@ -37,6 +39,23 @@ export default function VienChucDetailPage() {
   const activePhuCaps = allPhuCaps.filter((p) => p.vienChucId === id && p.isActive)
   const lichSu = allLichSu.filter((l) => l.vienChucId === id).sort((a, b) => b.ngayThayDoi.localeCompare(a.ngayThayDoi))
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
+  const users = useUserStore((s) => s.users)
+  // Mỗi loại một dòng đang hưởng; nếu dữ liệu còn bản trùng thì hiện đủ và chỉ rõ bản bảng lương đang dùng
+  const pcTheoLoai = [...nhomTheoLoai(activePhuCaps, loaiPhuCaps).values()]
+  const soLoaiTrung = pcTheoLoai.filter((a) => a.length > 1).length
+  const dongDangHuong = pcTheoLoai.flatMap((a) => {
+    const dangDung = chonBanDangHuong(a)!
+    return [...a]
+      .sort((x, y) => (y.ngayHieuLuc ?? '').localeCompare(x.ngayHieuLuc ?? ''))
+      .map((p) => ({ ...p, trung: a.length > 1, dangDung: p.id === dangDung.id }))
+  })
+  const lichSuPhuCap = allPhuCaps
+    .filter((p) => p.vienChucId === id && !p.isActive)
+    .sort((a, b) => (b.ngayHieuLuc ?? '').localeCompare(a.ngayHieuLuc ?? ''))
+  const nguonPhuCap = (createdBy?: string) =>
+    createdBy === 'import' ? 'Nhập dữ liệu'
+      : createdBy === 'system' ? 'Hệ thống'
+      : users.find((u) => u.id === createdBy)?.fullName ?? 'Người dùng'
   const vtvls = useDanhMucStore((s) => s.vtvls)
 
   if (!vc) return <Result status="404" title="Không tìm thấy viên chức" extra={<Button onClick={() => navigate('/vien-chuc')}>Quay lại</Button>} />
@@ -70,7 +89,7 @@ export default function VienChucDetailPage() {
   ]
 
   const phuCapCols = [
-    { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapId', key: 'lpc', render: (id: string) => loaiPhuCaps.find((l) => l.id === id)?.ten ?? id },
+    { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapId', key: 'lpc', render: (id: string) => tenHienThiLoaiPhuCap(loaiPhuCaps.find((l) => l.id === id)) || id },
     {
       title: 'Tỷ lệ/Mức', key: 'tl',
       render: (_: any, r: any) => {
@@ -82,7 +101,32 @@ export default function VienChucDetailPage() {
         return `${giaTri}%`
       },
     },
-    { title: 'Ngày hiệu lực', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
+  ]
+  const cotNguon = { title: 'Nguồn', dataIndex: 'createdBy', key: 'ng', render: (v: string) => <Text type="secondary" style={{ fontSize: 12 }}>{nguonPhuCap(v)}</Text> }
+  // PC chức vụ bảo lưu (sau sắp xếp): bảng lương lấy mức cao hơn giữa mức bảo lưu và PC chức vụ hiện tại
+  const pcCvId = loaiPhuCaps.find((l) => l.ma === 'PC_CHUC_VU')?.id
+  const pcCvHienTai = chonBanDangHuong(activePhuCaps.filter((p) => p.loaiPhuCapId === pcCvId))?.giaTri ?? 0
+  const tinhTheoBaoLuu = dangTinhTheoBaoLuu(vc, pcCvHienTai)
+  const tenChucVu = (ma?: string) => (ma ? CHUC_VU_LABELS[ma] ?? ma : 'không có chức vụ')
+  const cotDangHuong = [
+    ...phuCapCols,
+    { title: 'Từ ngày', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
+    cotNguon,
+    {
+      title: '', key: 'tt',
+      render: (_: unknown, r: { trung: boolean; dangDung: boolean; loaiPhuCapId: string }) =>
+        r.loaiPhuCapId === pcCvId && tinhTheoBaoLuu ? <Tag>Không tính — đang hưởng mức bảo lưu</Tag>
+          : !r.trung ? <Tag color="green">Đang hưởng</Tag>
+          : r.dangDung ? <Tag color="orange">Đang tính lương</Tag>
+          : <Tag color="red">Bản trùng</Tag>,
+    },
+  ]
+  const cotLichSu = [
+    ...phuCapCols,
+    { title: 'Từ ngày', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
+    { title: 'Đến ngày', dataIndex: 'ngayHetHan', key: 'nhh', render: (v?: string) => (v ? formatDate(v) : '—') },
+    cotNguon,
+    { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'gc', render: (v?: string) => <Text type="secondary" style={{ fontSize: 12 }}>{v ?? ''}</Text> },
   ]
 
   return (
@@ -118,7 +162,7 @@ export default function VienChucDetailPage() {
                   </Descriptions.Item>
                 )}
                 {vc.baoLuuPccv && (
-                  <Descriptions.Item label="Bảo lưu PC chức vụ">
+                  <Descriptions.Item label={TEN_PCCV_BAO_LUU}>
                     {CHUC_VU_LABELS[vc.baoLuuPccv.chucVuCu] ?? vc.baoLuuPccv.chucVuCu} — hệ số {vc.baoLuuPccv.heSo}, đến {formatDate(vc.baoLuuPccv.denNgay)}{' '}
                     {dangBaoLuuPccv(vc) ? <Tag color="gold">Đang bảo lưu</Tag> : <Tag>Đã hết</Tag>}
                     <br /><Text type="secondary" style={{ fontSize: 12 }}>QĐ {vc.baoLuuPccv.soQuyetDinh} ngày {formatDate(vc.baoLuuPccv.ngayQuyetDinh)}</Text>
@@ -163,8 +207,50 @@ export default function VienChucDetailPage() {
             children: <Table scroll={{ x: 'max-content' }} dataSource={heSoHistory} columns={heSoCols} rowKey="id" size="small" pagination={false} />,
           },
           {
-            key: '3', label: `Phụ cấp (${activePhuCaps.length})`,
-            children: <Table scroll={{ x: 'max-content' }} dataSource={activePhuCaps} columns={phuCapCols} rowKey="id" size="small" pagination={false} />,
+            key: '3', label: <>Phụ cấp ({pcTheoLoai.length}){soLoaiTrung > 0 && <Tag color="red" style={{ marginInlineStart: 6 }}>trùng</Tag>}</>,
+            children: (
+              <>
+                {soLoaiTrung > 0 && (
+                  <Alert
+                    type="error"
+                    showIcon
+                    style={{ marginBottom: 12 }}
+                    title={`${soLoaiTrung} loại phụ cấp đang ghi trùng (nhiều bản cùng còn hiệu lực)`}
+                    description='Bảng lương đang dùng bản gắn nhãn "Đang tính lương" (ngày hiệu lực mới nhất). Kế toán bấm Chỉnh sửa, kiểm tra đúng mức rồi Lưu — các bản còn lại sẽ chuyển sang lịch sử.'
+                  />
+                )}
+                {vc.baoLuuPccv && (
+                  <div style={{ border: '1px solid #fcd34d', background: '#fffbeb', borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
+                    <Space wrap size={8} style={{ marginBottom: 4 }}>
+                      <Text strong>{TEN_PCCV_BAO_LUU}</Text>
+                      {!dangBaoLuuPccv(vc)
+                        ? <Tag>Đã hết hạn</Tag>
+                        : tinhTheoBaoLuu ? <Tag color="gold">Đang tính lương</Tag>
+                        : <Tag color="red">Không có tác dụng — kiểm tra lại</Tag>}
+                    </Space>
+                    <div style={{ fontSize: 13 }}>
+                      Chức vụ cũ: <b>{tenChucVu(vc.baoLuuPccv.chucVuCu)}</b> — hệ số bảo lưu <b>{String(vc.baoLuuPccv.heSo).replace('.', ',')}</b>,
+                      từ {formatDate(vc.baoLuuPccv.ngayQuyetDinh)} đến {formatDate(vc.baoLuuPccv.denNgay)} (QĐ {vc.baoLuuPccv.soQuyetDinh}).
+                      Chức vụ hiện tại: {tenChucVu(vc.chucVu)}, PC chức vụ hiện tại {String(pcCvHienTai).replace('.', ',')}.
+                    </div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {dangBaoLuuPccv(vc) && !tinhTheoBaoLuu
+                        ? 'Mức bảo lưu không cao hơn PC chức vụ hiện tại nên không được tính. Dòng "PC chức vụ hiện tại" chỉ ghi mức theo chức vụ đang giữ; mức của chức vụ cũ ghi ở mục bảo lưu này.'
+                        : 'Khoản này khác "Hệ số chênh lệch bảo lưu (lương)". Bảng lương lấy mức cao hơn giữa mức bảo lưu và PC chức vụ hiện tại; hết hạn thì tự về mức theo chức vụ hiện tại.'}
+                    </Text>
+                  </div>
+                )}
+                <Text strong style={{ display: 'block', marginBottom: 6 }}>Đang hưởng</Text>
+                <Table scroll={{ x: 'max-content' }} dataSource={dongDangHuong} columns={cotDangHuong} rowKey="id" size="small" pagination={false}
+                  locale={{ emptyText: 'Không có phụ cấp đang hưởng' }} />
+                {lichSuPhuCap.length > 0 && (
+                  <>
+                    <Text strong style={{ display: 'block', margin: '16px 0 6px' }}>Lịch sử ({lichSuPhuCap.length})</Text>
+                    <Table scroll={{ x: 'max-content' }} dataSource={lichSuPhuCap} columns={cotLichSu} rowKey="id" size="small" pagination={false} />
+                  </>
+                )}
+              </>
+            ),
           },
           {
             key: '4', label: `Lịch sử biến động (${lichSu.length})`,

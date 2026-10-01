@@ -24,6 +24,7 @@ import AuditLogPage from '@/pages/admin/AuditLogPage'
 import AccountSettingsPage from '@/pages/account/AccountSettingsPage'
 import HuongDanPage from '@/pages/HuongDanPage'
 import ChuyenCongTacPage from '@/pages/chuyenCongTac/ChuyenCongTacPage'
+import QuyMoDinhMucPage from '@/pages/quyMo/QuyMoDinhMucPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth()
@@ -45,6 +46,7 @@ export default function AppRouter() {
           <Route path="vien-chuc/:id/edit" element={<VienChucFormPage />} />
           <Route path="bang-tong-hop-luong" element={<BangTongHopLuongPage />} />
           <Route path="vi-tri" element={<ViTriPage />} />
+          <Route path="quy-mo" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'quyMo', action: 'read' }}><QuyMoDinhMucPage /></RoleGuard>} />
           <Route path="luong/he-so" element={<HeSoLuongPage />} />
           <Route path="luong/ra-soat" element={<RaSoatNgachBacPage />} />
           <Route path="luong/phu-cap" element={<PhuCapPage />} />

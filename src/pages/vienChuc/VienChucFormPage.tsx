@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Card, Form, Input, Select, DatePicker, Button, Row, Col,
@@ -18,7 +18,10 @@ import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen, toUpperName } from '@/utils/helpers'
 import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
 import { CONG_VIEC, NHOM_VI_TRI } from '@/utils/nhomViTri'
-import { tinhNgayHetBaoLuu } from '@/utils/baoLuuPccv'
+import { MON_GIANG_DAY, laCapHoc } from '@/utils/dinhMuc'
+import { chonBanDangHuong, hoPhuCap, nhomTheoLoai } from '@/utils/phuCapDangHuong'
+import type { PhuCapVienChuc } from '@/types/luong'
+import { tinhNgayHetBaoLuu, tenHienThiLoaiPhuCap, TEN_PCCV_BAO_LUU, TEN_HS_CHENH_LECH_BAO_LUU } from '@/utils/baoLuuPccv'
 import { lamMoiNgay } from '@/lib/supabase'
 import { formatDate } from '@/utils/helpers'
 
@@ -82,7 +85,7 @@ export default function VienChucFormPage() {
 
   const phuCapOptions = sapXepLoaiPhuCap(loaiPhuCaps.filter((pc) => pc.active))
     .filter((pc) => duocHuongPctn || pc.ma !== 'PC_THAM_NIEN')
-    .map((pc) => ({ value: pc.id, label: `${pc.ma} — ${pc.ten}` }))
+    .map((pc) => ({ value: pc.id, label: `${pc.ma} — ${tenHienThiLoaiPhuCap(pc)}` }))
 
   // Chỉ các loại hình đang dùng; hồ sơ cũ mang loại đã bỏ (HĐ 111, tập sự) vẫn hiện đúng khi sửa
   const loaiLaoDongOptions = vc && !LOAI_LAO_DONG_DANG_DUNG.includes(vc.loaiLaoDong)
@@ -107,6 +110,9 @@ export default function VienChucFormPage() {
 
   const watchDonViId = Form.useWatch('donViId', form)
   const watchChucVu = Form.useWatch('chucVu', form)
+  // Tài khoản trường không có ô Đơn vị → lấy trường của tài khoản
+  const loaiTruongForm = donVis.find((d) => d.id === (watchDonViId ?? scopeDonViId ?? vc?.donViId))?.loai
+  const monOptions = laCapHoc(loaiTruongForm) ? MON_GIANG_DAY[loaiTruongForm].map((m) => ({ value: m.ma, label: m.ten })) : []
   const pccvInfo = useMemo(() => {
     if (!watchDonViId || !watchChucVu) return null
     const dv = donVis.find((d) => d.id === watchDonViId)
@@ -120,7 +126,7 @@ export default function VienChucFormPage() {
   const pcChucVuId = loaiPhuCaps.find((p) => p.ma === 'PC_CHUC_VU')?.id
   // Hệ số PCCV đang hưởng theo chức vụ cũ, lấy lúc mở hồ sơ (trước khi sửa)
   const pccvDangHuong = useMemo(
-    () => (isEdit && pcChucVuId ? luongState.getActivePhuCaps(id!).find((p) => p.loaiPhuCapId === pcChucVuId)?.giaTri ?? 0 : 0),
+    () => (isEdit && pcChucVuId ? chonBanDangHuong(luongState.getActivePhuCaps(id!).filter((p) => p.loaiPhuCapId === pcChucVuId))?.giaTri ?? 0 : 0),
     [isEdit, id, pcChucVuId],
   )
   const pccvTheoChucVuMoi = watchChucVu ? (pccvInfo?.heSo ?? 0) : 0
@@ -153,10 +159,11 @@ export default function VienChucFormPage() {
     if (idx >= 0) {
       if (current[idx].giaTri === pccvInfo.heSo) return
       const updated = [...current]
-      updated[idx] = { ...updated[idx], giaTri: pccvInfo.heSo }
+      // Mức mới tính từ hôm nay, không mang theo ngày hiệu lực của mức cũ
+      updated[idx] = { ...updated[idx], giaTri: pccvInfo.heSo, ngayHieuLuc: dayjs() }
       form.setFieldValue('phuCaps', updated)
     } else {
-      form.setFieldValue('phuCaps', [...current, { loaiPhuCapId: pcChucVu.id, giaTri: pccvInfo.heSo }])
+      form.setFieldValue('phuCaps', [...current, { loaiPhuCapId: pcChucVu.id, giaTri: pccvInfo.heSo, ngayHieuLuc: dayjs() }])
     }
   }, [pccvInfo, loaiPhuCaps])
 
@@ -189,8 +196,24 @@ export default function VienChucFormPage() {
     </Space>
   )
 
+  // Tải bản mới nhất từ máy chủ rồi mới điền biểu mẫu: điền từ dữ liệu cũ trên máy rồi lưu lại
+  // từng sinh bản phụ cấp trùng (giá trị cũ đè lên bản mới của người khác)
+  const [sanSang, setSanSang] = useState(!isEdit)
+  const daDien = useRef(false)
+  const [pcTrung, setPcTrung] = useState<PhuCapVienChuc[][]>([])
+  // Bản phụ cấp đang hưởng lúc mở biểu mẫu: khi lưu chỉ được đóng những bản này,
+  // không đụng tới bản người khác thêm trong lúc biểu mẫu đang mở
+  const pcLucMo = useRef<Set<string>>(new Set())
   useEffect(() => {
-    if (!vc) return
+    if (!isEdit) return
+    let huy = false
+    lamMoiNgay().finally(() => { if (!huy) setSanSang(true) })
+    return () => { huy = true }
+  }, [])
+
+  useEffect(() => {
+    if (!vc || !sanSang || daDien.current) return
+    daDien.current = true
     form.setFieldsValue({
       ...vc,
       hoTenFull: `${vc.ho} ${vc.ten}`.trim(),
@@ -214,14 +237,60 @@ export default function VienChucFormPage() {
       if (bac) form.setFieldValue('bacLuongId', bac.id)
       form.setFieldValue('mocHuongLuong', dayjs(heSo.ngayHieuLuc))
     }
-    const activePCs = luongState.getActivePhuCaps(id!)
-    if (activePCs.length > 0) {
-      form.setFieldValue(
-        'phuCaps',
-        activePCs.map((pc) => ({ loaiPhuCapId: pc.loaiPhuCapId, giaTri: pc.giaTri }))
-      )
+    // Mỗi loại phụ cấp một dòng (bản đang hưởng); bản trùng được báo riêng và đóng khi lưu
+    const dangHuongLucMo = luongState.getActivePhuCaps(id!)
+    pcLucMo.current = new Set(dangHuongLucMo.map((p) => p.id))
+    const theoLoai = [...nhomTheoLoai(dangHuongLucMo, loaiPhuCaps).values()]
+    setPcTrung(theoLoai.filter((a) => a.length > 1))
+    form.setFieldValue('phuCaps', theoLoai.map((a) => {
+      const pc = chonBanDangHuong(a)!
+      return { id: pc.id, loaiPhuCapId: pc.loaiPhuCapId, giaTri: pc.giaTri, ngayHieuLuc: pc.ngayHieuLuc ? dayjs(pc.ngayHieuLuc) : undefined }
+    }))
+  }, [vc, sanSang])
+
+  const pcBaoLuuId = loaiPhuCaps.find((l) => l.ma === 'PC_BAO_LUU')?.id
+  // Mức PC chức vụ bảo lưu (sau sắp xếp) đang khai trên biểu mẫu, để phát hiện khai nhầm sang hệ số chênh lệch
+  const heSoBaoLuuDangGhi: number | undefined = watchBlBat ? (vc?.baoLuuPccv?.heSo ?? (pccvDangHuong || undefined)) : undefined
+  const tenLoaiPc = (loaiId: string) => tenHienThiLoaiPhuCap(loaiPhuCaps.find((l) => l.id === loaiId)) || loaiId
+  const mucPc = (p: Pick<PhuCapVienChuc, 'loaiPhuCapId' | 'giaTri'>) => {
+    const l = loaiPhuCaps.find((x) => x.id === p.loaiPhuCapId)
+    return l?.loaiCongThuc === 'HE_SO' ? String(p.giaTri).replace('.', ',') : l?.loaiCongThuc === 'TIEN_MAT' ? `${p.giaTri.toLocaleString('vi-VN')}đ` : `${p.giaTri}%`
+  }
+
+  /**
+   * Chỉ ghi dòng phụ cấp thực sự thay đổi. Dòng giữ nguyên mức thì giữ nguyên bản ghi và ngày hiệu lực;
+   * đổi mức thì ghi bản mới từ ngày chọn (store tự đóng bản cũ cùng loại); bản đã hiện lúc mở biểu mẫu
+   * mà nay không còn (dòng bị xoá, bản trùng) thì đóng lại.
+   */
+  const ghiPhuCap = (vcId: string, rows: any[], macDinhNgay: string, mocPctn?: string) => {
+    const pcGoc = luongState.getActivePhuCaps(vcId)
+    const giuLai = new Set<string>()
+    for (const pc of rows) {
+      if (!pc?.loaiPhuCapId) continue
+      const giaTri = pc.giaTri || 0
+      const ngay: string | undefined = pc.ngayHieuLuc ? dayjs(pc.ngayHieuLuc).format('YYYY-MM-DD') : undefined
+      const goc = pc.id ? pcGoc.find((p) => p.id === pc.id) : undefined
+      if (goc && goc.loaiPhuCapId === pc.loaiPhuCapId && goc.giaTri === giaTri) {
+        if (ngay && ngay !== goc.ngayHieuLuc) luongState.updatePhuCap(goc.id, { ngayHieuLuc: ngay })
+        giuLai.add(goc.id)
+        continue
+      }
+      const chonNgayMoi = !!ngay && (!goc || ngay !== goc.ngayHieuLuc)
+      const laPctn = loaiPhuCaps.find((l) => l.id === pc.loaiPhuCapId)?.ma === 'PC_THAM_NIEN'
+      const moi = luongState.addPhuCap({
+        vienChucId: vcId,
+        loaiPhuCapId: pc.loaiPhuCapId,
+        giaTri,
+        ngayHieuLuc: chonNgayMoi ? ngay! : (laPctn && mocPctn) || macDinhNgay,
+        isActive: true,
+        createdBy: currentUser?.id ?? 'system',
+      })
+      giuLai.add(moi.id)
     }
-  }, [vc])
+    for (const p of luongState.getActivePhuCaps(vcId)) {
+      if (!giuLai.has(p.id) && pcLucMo.current.has(p.id)) luongState.deactivatePhuCap(p.id)
+    }
+  }
 
   const onFinish = async (values: any) => {
     // Tải bản mới nhất trước khi ghi hồ sơ, lương, phụ cấp — tránh đè sửa đổi của người khác
@@ -267,6 +336,7 @@ export default function VienChucFormPage() {
     // Nhân viên không hưởng phụ cấp thâm niên → không giữ mốc PCTN
     if (!huongPctn) formatted.mocHuongPctn = undefined
     if (formatted.vtvl !== 'NHAN_VIEN') formatted.congViec = undefined
+    if (formatted.vtvl !== 'GIAO_VIEN') formatted.monDay = undefined
     if (formatted.chucVu === KHONG_CHUC_VU) formatted.chucVu = undefined
     const { bacLuongId, phuCaps: phuCapsRaw, ...vcData } = formatted
     // Chốt chặn cuối: không ghi PC thâm niên cho vị trí không được hưởng
@@ -275,6 +345,18 @@ export default function VienChucFormPage() {
       ? phuCapsRaw
       : (phuCapsRaw || []).filter((pc: any) => pc?.loaiPhuCapId !== pcThamNienId)
     const mocHuongLuongStr: string | undefined = mocHuongLuong?.format('YYYY-MM-DD')
+
+    // Mỗi loại phụ cấp chỉ một dòng (các mức ưu đãi tính là một loại)
+    const daCo = new Map<string, string>()
+    for (const pc of phuCaps || []) {
+      if (!pc?.loaiPhuCapId) continue
+      const k = hoPhuCap(pc.loaiPhuCapId, loaiPhuCaps)
+      if (daCo.has(k)) {
+        message.error(`Phụ cấp "${daCo.get(k)}" có hai dòng — mỗi loại chỉ giữ một dòng (đổi mức thì sửa dòng đang có)`)
+        return
+      }
+      daCo.set(k, tenLoaiPc(pc.loaiPhuCapId))
+    }
 
     if (isEdit && vc) {
       updateVienChuc(id!, vcData, currentUser?.id, currentUser?.fullName)
@@ -324,21 +406,7 @@ export default function VienChucFormPage() {
         updateVienChuc(id!, { heSoLuongHienTaiId: newHeSo.id })
       }
 
-      const existingPCs = luongState.getActivePhuCaps(id)
-      existingPCs.forEach((pc) => luongState.deactivatePhuCap(pc.id))
-      const ngayHL = vcData.ngayVaoNganh || dayjs().format('YYYY-MM-DD')
-      for (const pc of phuCaps || []) {
-        if (pc.loaiPhuCapId) {
-          luongState.addPhuCap({
-            vienChucId: id!,
-            loaiPhuCapId: pc.loaiPhuCapId,
-            giaTri: pc.giaTri || 0,
-            ngayHieuLuc: ngayHL,
-            isActive: true,
-            createdBy: currentUser?.id ?? 'system',
-          })
-        }
-      }
+      ghiPhuCap(id!, phuCaps || [], dayjs().format('YYYY-MM-DD'), vcData.mocHuongPctn)
 
       message.success('Cập nhật thành công')
       navigate(`/vien-chuc/${id}`)
@@ -363,19 +431,7 @@ export default function VienChucFormPage() {
         updateVienChuc(newVc.id, { heSoLuongHienTaiId: newHeSo.id })
       }
 
-      const ngayHL = vcData.ngayVaoNganh || dayjs().format('YYYY-MM-DD')
-      for (const pc of phuCaps || []) {
-        if (pc.loaiPhuCapId) {
-          luongState.addPhuCap({
-            vienChucId: newVc.id,
-            loaiPhuCapId: pc.loaiPhuCapId,
-            giaTri: pc.giaTri || 0,
-            ngayHieuLuc: ngayHL,
-            isActive: true,
-            createdBy: currentUser?.id ?? 'system',
-          })
-        }
-      }
+      ghiPhuCap(newVc.id, phuCaps || [], vcData.ngayVaoDonVi || dayjs().format('YYYY-MM-DD'), vcData.mocHuongPctn)
 
       message.success('Thêm hồ sơ nhân sự thành công')
       navigate(`/vien-chuc/${newVc.id}`)
@@ -525,6 +581,17 @@ export default function VienChucFormPage() {
               </Form.Item>
             </Col>
           )}
+          {watchVtvl === 'GIAO_VIEN' && monOptions.length > 0 && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item
+                name="monDay"
+                label="Môn giảng dạy"
+                tooltip="Căn cứ đối chiếu định mức giáo viên theo từng môn (TT 20/2023/TT-BGDĐT) ở trang Quy mô & định mức"
+              >
+                <Select options={monOptions} placeholder="Chọn môn giảng dạy" allowClear showSearch optionFilterProp="label" />
+              </Form.Item>
+            </Col>
+          )}
           <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="chucDanhId"
@@ -574,13 +641,17 @@ export default function VienChucFormPage() {
                   <Form.Item name="blBat" valuePropName="checked" noStyle>
                     <Switch size="small" />
                   </Form.Item>
-                  <Text strong>Bảo lưu phụ cấp chức vụ do sắp xếp tổ chức bộ máy</Text>
+                  <Text strong>{TEN_PCCV_BAO_LUU}</Text>
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {vc?.baoLuuPccv
-                      ? `Đang ghi: ${tenChucVu(vc.baoLuuPccv.chucVuCu)} — hệ số ${vc.baoLuuPccv.heSo}`
+                      ? `Đang ghi: chức vụ cũ ${tenChucVu(vc.baoLuuPccv.chucVuCu)} — hệ số bảo lưu ${vc.baoLuuPccv.heSo}`
                       : `${tenChucVu(vc?.chucVu)} (hệ số ${pccvDangHuong}) → ${tenChucVu(watchChucVu)} (hệ số ${pccvTheoChucVuMoi})`}
                   </Text>
                 </Space>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: watchBlBat ? 8 : 0 }}>
+                  Mức PC chức vụ của chức vụ cũ được giữ sau sắp xếp tổ chức bộ máy, khai tại đây. Không khai vào dòng
+                  "{TEN_HS_CHENH_LECH_BAO_LUU}" và không cộng vào dòng PC chức vụ hiện tại — dòng đó chỉ ghi mức theo chức vụ đang giữ.
+                </Text>
                 {watchBlBat && (
                   <Row gutter={16}>
                     <Col xs={24} sm={8}>
@@ -790,7 +861,7 @@ export default function VienChucFormPage() {
               icon={<PlusOutlined />}
               onClick={() => {
                 const current = form.getFieldValue('phuCaps') || []
-                form.setFieldValue('phuCaps', [...current, { loaiPhuCapId: undefined, giaTri: 0 }])
+                form.setFieldValue('phuCaps', [...current, { loaiPhuCapId: undefined, giaTri: 0, ngayHieuLuc: dayjs() }])
               }}
             >
               Thêm phụ cấp
@@ -799,7 +870,38 @@ export default function VienChucFormPage() {
           <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
             PC Thâm niên nghề (CBQL, giáo viên) vẫn giữ nguyên, hưởng song song với PC ưu đãi nhà giáo.
             PC ưu đãi nhà giáo chọn theo cấp học (NĐ 182/2026): mầm non, tiểu học 45%; THCS 40%; nhân viên 20%.
+            Mỗi loại phụ cấp một dòng. Dòng giữ nguyên mức thì giữ nguyên ngày hiệu lực; đổi mức thì ghi bản mới
+            từ ngày ở ô "Từ ngày" (để nguyên thì tính từ hôm nay, PC thâm niên tính từ mốc hưởng PCTN), bản cũ chuyển sang lịch sử.
           </Text>
+          {heSoBaoLuuDangGhi != null && (watchPhuCaps ?? []).some((p: any) => p?.loaiPhuCapId === pcBaoLuuId && p?.giaTri === heSoBaoLuuDangGhi) && (
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginBottom: 8 }}
+              title={`Dòng "${TEN_HS_CHENH_LECH_BAO_LUU}" ${heSoBaoLuuDangGhi} trùng mức ${TEN_PCCV_BAO_LUU}`}
+              description={`Nếu đây là phụ cấp chức vụ được giữ sau sắp xếp thì xoá dòng này — mức đó đã được tính qua khung "${TEN_PCCV_BAO_LUU}" ở trên. "${TEN_HS_CHENH_LECH_BAO_LUU}" chỉ dùng cho phần chênh lệch hệ số lương khi chuyển ngạch, xếp lại lương.`}
+            />
+          )}
+          {pcTrung.length > 0 && (
+            <Alert
+              type="error"
+              showIcon
+              style={{ marginBottom: 8 }}
+              title="Hồ sơ đang có phụ cấp ghi trùng — kiểm tra mức đúng trước khi lưu"
+              description={
+                <div style={{ fontSize: 13 }}>
+                  {pcTrung.map((a) => (
+                    <div key={a[0].id}>
+                      <b>{tenLoaiPc(a[0].loaiPhuCapId)}</b>: {a.map((p) => `${mucPc(p)} từ ${formatDate(p.ngayHieuLuc)}`).join('; ')}
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 4 }}>
+                    Biểu mẫu đang hiện bản có ngày hiệu lực mới nhất. Khi bấm Lưu, các bản còn lại sẽ được đóng và chuyển sang lịch sử.
+                  </div>
+                </div>
+              }
+            />
+          )}
           {luongTheoTien && (
             <Alert
               type="warning"
@@ -817,6 +919,7 @@ export default function VienChucFormPage() {
                 )}
                 {fields.map(({ key, name, ...restField }) => (
                   <Row key={key} gutter={8} align="top" style={{ marginBottom: 4 }}>
+                    <Form.Item {...restField} name={[name, 'id']} hidden><Input /></Form.Item>
                     <Col flex="auto">
                       <Form.Item
                         {...restField}
@@ -834,6 +937,9 @@ export default function VienChucFormPage() {
                             if (selected) {
                               const current = form.getFieldValue('phuCaps')
                               current[name].giaTri = selected.giaTri
+                              // Dòng mới PC thâm niên: mặc định từ mốc hưởng PCTN
+                              const moc = form.getFieldValue('mocHuongPctn')
+                              if (!current[name].id && selected.ma === 'PC_THAM_NIEN' && moc) current[name].ngayHieuLuc = moc
                               form.setFieldsValue({ phuCaps: [...current] })
                             }
                           }}
@@ -856,6 +962,11 @@ export default function VienChucFormPage() {
                         }]}
                       >
                         <PhuCapGiaTriInput fieldName={name} />
+                      </Form.Item>
+                    </Col>
+                    <Col flex="150px">
+                      <Form.Item {...restField} name={[name, 'ngayHieuLuc']} style={{ marginBottom: 8 }} tooltip="Ngày bắt đầu hưởng mức này">
+                        <DatePicker format="DD/MM/YYYY" placeholder="Từ ngày" style={{ width: '100%' }} />
                       </Form.Item>
                     </Col>
                     <Col flex="36px">

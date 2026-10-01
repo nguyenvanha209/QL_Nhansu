@@ -12,9 +12,11 @@ import type {
   ChucVuDanhMuc,
 } from '@/types/danhMuc'
 import type { DonVi } from '@/types/donVi'
+import type { QuyMoTruong } from '@/types/quyMo'
 
 interface DanhMucState {
   donVis: DonVi[]
+  quyMoTruongs: QuyMoTruong[]
   chucDanhs: ChucDanhNgheNghiep[]
   viTriViecLams: ViTriViecLam[]
   bacLuongs: BacLuong[]
@@ -26,6 +28,9 @@ interface DanhMucState {
   setDonVis: (v: DonVi[]) => void
   addDonVi: (d: Omit<DonVi, 'id' | 'createdAt'>) => DonVi
   updateDonVi: (id: string, patch: Partial<DonVi>) => void
+
+  /** Ghi đè theo id (một bản ghi cho mỗi trường, mỗi năm học) */
+  luuQuyMo: (qm: Omit<QuyMoTruong, 'createdAt' | 'updatedAt'>) => void
 
   setChucDanhs: (v: ChucDanhNgheNghiep[]) => void
   addChucDanh: (d: Omit<ChucDanhNgheNghiep, 'id'>) => ChucDanhNgheNghiep
@@ -65,6 +70,7 @@ export const useDanhMucStore = create<DanhMucState>()(
   persist(
     (set, get) => ({
       donVis: [],
+      quyMoTruongs: [],
       chucDanhs: [],
       viTriViecLams: [],
       bacLuongs: [],
@@ -81,6 +87,14 @@ export const useDanhMucStore = create<DanhMucState>()(
       },
       updateDonVi: (id, patch) =>
         set((s) => ({ donVis: s.donVis.map((i) => (i.id === id ? { ...i, ...patch } : i)) })),
+
+      luuQuyMo: (qm) =>
+        set((s) => {
+          const cu = s.quyMoTruongs.find((q) => q.id === qm.id)
+          const t = now()
+          const ban: QuyMoTruong = { ...qm, createdAt: cu?.createdAt ?? t, updatedAt: t }
+          return { quyMoTruongs: cu ? s.quyMoTruongs.map((q) => (q.id === qm.id ? ban : q)) : [...s.quyMoTruongs, ban] }
+        }),
 
       setChucDanhs: (v) => set({ chucDanhs: v }),
       addChucDanh: (d) => {

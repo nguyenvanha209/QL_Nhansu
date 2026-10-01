@@ -15,6 +15,7 @@ import { isDangCongTac, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vien
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
 import MinhChungField from '@/components/MinhChungField'
 import { lamMoiNgay } from '@/lib/supabase'
+import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
 import type { MinhChung } from '@/lib/minhChung'
 
 const { Title, Text } = Typography
@@ -102,7 +103,7 @@ export default function TaoDeXuatPage() {
     const nextBac = LOAI_NANG_BAC.includes(loaiDeXuat) ? bang.find((b) => b.bac === hsl.bac + 1) : bang.find((b) => b.bac === hsl.bac)
     // PCTN đang hưởng (nếu có) để cán bộ đối chiếu khi nhập mức mới
     const pctnHienTai = loaiPctn
-      ? phuCapVienChucs.find((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiPctn.id)?.giaTri ?? 0
+      ? chonBanDangHuong(phuCapVienChucs.filter((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiPctn.id))?.giaTri ?? 0
       : 0
     // Phiếu PCTN: gợi ý mốc mới = mốc hưởng PCTN hiện tại + 1 năm, mức mới = mức cũ + 1% (chưa có thì 5%)
     const mocPctnMoi = vc.mocHuongPctn ? dayjs(vc.mocHuongPctn).add(1, 'year').format('YYYY-MM-DD') : undefined
@@ -183,7 +184,7 @@ export default function TaoDeXuatPage() {
         // Ngày kỷ niệm trong năm được chọn (cùng tháng/ngày, khác năm)
         const anniversaryStr = `${dotNam}-${moc.format('MM-DD')}`
         const pctnHienTai = loaiPctn
-          ? phuCapVienChucs.find((p) => p.vienChucId === v.id && p.isActive && p.loaiPhuCapId === loaiPctn.id)?.giaTri ?? 0
+          ? chonBanDangHuong(phuCapVienChucs.filter((p) => p.vienChucId === v.id && p.isActive && p.loaiPhuCapId === loaiPctn.id))?.giaTri ?? 0
           : 0
         return {
           id: v.id,

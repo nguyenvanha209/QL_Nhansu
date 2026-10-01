@@ -43,10 +43,53 @@ export const CONG_VIEC: { key: CongViecNhanVien; ten: string; nhom: NhomViTri }[
 export const CONG_VIEC_LABELS = Object.fromEntries(CONG_VIEC.map((c) => [c.key, c.ten])) as Record<CongViecNhanVien, string>
 const NHOM_CUA_CONG_VIEC = Object.fromEntries(CONG_VIEC.map((c) => [c.key, c.nhom])) as Record<CongViecNhanVien, NhomViTri>
 
-export function nhomViTri(vc: Pick<VienChuc, 'vtvl' | 'congViec'>, nhomChucDanh?: NhomChucDanh): NhomViTri {
-  if (vc.vtvl === 'CBQL' || (!vc.vtvl && nhomChucDanh === 'QUAN_LY')) return 'CBQL'
-  if (vc.vtvl === 'GIAO_VIEN' || (!vc.vtvl && nhomChucDanh === 'GIAO_VIEN')) return 'GIAO_VIEN'
+const VTVL_CHUAN = ['CBQL', 'GIAO_VIEN', 'NHAN_VIEN']
+
+/**
+ * CBQL / giáo viên / nhân viên của một người. Hồ sơ nhập từ Excel có thể ghi ô VTVL bằng chữ
+ * ("Giáo viên âm nhạc", "Cán bộ quản lý - Giáo viên văn hóa") thay vì mã chuẩn, nên xét lần lượt:
+ * chức vụ HT/PHT, mã chuẩn, chữ trong ô, rồi nhóm ngạch.
+ */
+export function nhomCoBan(vc: Pick<VienChuc, 'vtvl' | 'chucVu'>, nhomChucDanh?: NhomChucDanh): 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN' {
+  if (vc.chucVu === 'HT' || vc.chucVu === 'P.HT') return 'CBQL'
+  if (vc.vtvl && VTVL_CHUAN.includes(vc.vtvl)) return vc.vtvl as 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN'
+  const t = (vc.vtvl ?? '').toLowerCase()
+  if (t.includes('quản lý') || t.includes('quản lí')) return 'CBQL'
+  if (t.includes('giáo viên')) return 'GIAO_VIEN'
+  if (t.includes('nhân viên')) return 'NHAN_VIEN'
+  if (nhomChucDanh === 'QUAN_LY') return 'CBQL'
+  if (nhomChucDanh === 'GIAO_VIEN') return 'GIAO_VIEN'
+  return 'NHAN_VIEN'
+}
+
+export function nhomViTri(vc: Pick<VienChuc, 'vtvl' | 'congViec' | 'chucVu'>, nhomChucDanh?: NhomChucDanh): NhomViTri {
+  const nhom = nhomCoBan(vc, nhomChucDanh)
+  if (nhom !== 'NHAN_VIEN') return nhom
   return vc.congViec ? NHOM_CUA_CONG_VIEC[vc.congViec] : 'NV_HO_TRO'
+}
+
+/** Chuẩn hóa chữ ở cột VTVL (VD khi nhập Excel) về mã chuẩn; không nhận ra thì trả về undefined */
+export function chuanHoaVtvl(text?: string): 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN' | undefined {
+  const t = (text ?? '').trim()
+  if (!t) return undefined
+  if (VTVL_CHUAN.includes(t)) return t as 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN'
+  const s = t.toLowerCase()
+  if (s.includes('quản lý') || s.includes('quản lí') || s === 'cbql') return 'CBQL'
+  if (s.includes('giáo viên') || s === 'gv') return 'GIAO_VIEN'
+  if (s.includes('nhân viên') || s === 'nv') return 'NHAN_VIEN'
+  return undefined
+}
+
+/** Chuẩn hóa chữ ở cột Chức vụ về mã tính phụ cấp chức vụ (TT 33/2005); không nhận ra thì undefined */
+export function chuanHoaChucVu(text?: string): 'HT' | 'P.HT' | 'TTCM' | 'TPCM' | undefined {
+  const s = (text ?? '').trim().toLowerCase()
+  if (!s) return undefined
+  if (['ht', 'p.ht', 'ttcm', 'tpcm'].includes(s)) return s === 'p.ht' ? 'P.HT' : (s.toUpperCase() as 'HT' | 'TTCM' | 'TPCM')
+  if (/^phó hiệu trưởng|^phó ht|^pht\b/.test(s)) return 'P.HT'
+  if (/^hiệu trưởng/.test(s)) return 'HT'
+  if (/^tổ phó|^tp\b/.test(s)) return 'TPCM'
+  if (/^tổ trưởng|^tt\b/.test(s)) return 'TTCM'
+  return undefined
 }
 
 export function nhomLoaiHinh(loai: LoaiLaoDong): NhomLoaiHinh {

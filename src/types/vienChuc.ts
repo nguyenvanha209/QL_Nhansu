@@ -56,6 +56,8 @@ export interface VienChuc {
   vtvl?: VTVL
   /** Công việc cụ thể của nhân viên (VTVL Nhân viên) — căn cứ chia nhóm hỗ trợ / phục vụ / nuôi dưỡng */
   congViec?: CongViecNhanVien
+  /** Môn giảng dạy của giáo viên tiểu học, THCS — căn cứ đối chiếu định mức theo môn */
+  monDay?: string
   trangThai?: TrangThaiCongTac
   nguonKinhPhi?: NguonKinhPhi
   trinhDoChuyenMon?: string

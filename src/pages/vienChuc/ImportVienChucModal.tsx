@@ -26,7 +26,7 @@ import {
   laVienChucBienChe,
 } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
-import { CONG_VIEC, CONG_VIEC_LABELS, doanCongViec } from '@/utils/nhomViTri'
+import { CONG_VIEC, CONG_VIEC_LABELS, doanCongViec, chuanHoaVtvl, chuanHoaChucVu } from '@/utils/nhomViTri'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { ChucDanhNgheNghiep, LoaiPhuCap } from '@/types/danhMuc'
 import { lamMoiNgay } from '@/lib/supabase'
@@ -490,8 +490,20 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             else warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chức danh "${cdTen}" không tìm thấy`)
           }
 
-          const cvTen = str(row[COL.CHUC_VU]);  if (cvTen) check('chucVu', inverseChucVu[cvTen] ?? cvTen)
-          const vtTen = str(row[COL.VTVL]);     if (vtTen) check('vtvl', inverseVtvl[vtTen] ?? vtTen)
+          // Chức vụ, VTVL phải là mã chuẩn: ghi nguyên chữ ("Tổ trưởng tổ 4+5", "Giáo viên âm nhạc")
+          // làm sai phân nhóm trên Tổng quan và phụ cấp chức vụ. Chi tiết như tên tổ, môn dạy để ở Nhiệm vụ chính.
+          const cvTen = str(row[COL.CHUC_VU])
+          if (cvTen) {
+            const ma = inverseChucVu[cvTen] ?? chuanHoaChucVu(cvTen)
+            if (ma) check('chucVu', ma)
+            else warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chức vụ "${cvTen}" không nhận dạng được — chọn lại trong hồ sơ`)
+          }
+          const vtTen = str(row[COL.VTVL])
+          if (vtTen) {
+            const ma = inverseVtvl[vtTen] ?? chuanHoaVtvl(vtTen)
+            if (ma) check('vtvl', ma)
+            else warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): VTVL "${vtTen}" không nhận dạng được (Cán bộ quản lý / Giáo viên / Nhân viên)`)
+          }
           // Công việc cụ thể (nhân viên): khớp đúng tên trong danh sách, không khớp thì đoán theo từ khoá
           const congViecTen = str(row[COL.CONG_VIEC])
           if (congViecTen) {

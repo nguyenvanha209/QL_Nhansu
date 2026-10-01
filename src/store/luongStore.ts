@@ -4,6 +4,8 @@ import { nanoid } from 'nanoid'
 import type { HeSoLuong, PhuCapVienChuc, LichSuBienDong, NhatKyThaoTac } from '@/types/luong'
 import { persistStorage } from '@/lib/supabase'
 import { useNhatKyStore } from './nhatKyStore'
+import { useDanhMucStore } from './danhMucStore'
+import { hoPhuCap, ngayKetThucKhiThay } from '@/utils/phuCapDangHuong'
 
 interface LuongState {
   heSoLuongs: HeSoLuong[]
@@ -64,9 +66,23 @@ export const useLuongStore = create<LuongState>()(
           .sort((a, b) => b.ngayHieuLuc.localeCompare(a.ngayHieuLuc)),
 
       setPhuCapVienChucs: (v) => set({ phuCapVienChucs: v }),
+      // Mỗi người chỉ một bản đang hưởng cho mỗi loại phụ cấp: ghi bản mới thì đóng bản cũ cùng loại.
+      // Thiếu quy tắc này, lưu biểu mẫu trên máy chưa kịp nhận bản mới từ máy chủ đã sinh bản trùng.
       addPhuCap: (data) => {
         const item: PhuCapVienChuc = { ...data, id: nanoid(), createdAt: now() }
-        set((s) => ({ phuCapVienChucs: [...s.phuCapVienChucs, item] }))
+        const loais = useDanhMucStore.getState().loaiPhuCaps
+        const ho = hoPhuCap(item.loaiPhuCapId, loais)
+        const t = now()
+        set((s) => ({
+          phuCapVienChucs: [
+            ...s.phuCapVienChucs.map((p) =>
+              item.isActive && p.isActive && p.vienChucId === item.vienChucId && hoPhuCap(p.loaiPhuCapId, loais) === ho
+                ? { ...p, isActive: false, ngayHetHan: ngayKetThucKhiThay(p.ngayHieuLuc, item.ngayHieuLuc), updatedAt: t }
+                : p,
+            ),
+            item,
+          ],
+        }))
         return item
       },
       updatePhuCap: (id, patch) =>

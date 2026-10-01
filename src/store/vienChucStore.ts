@@ -12,6 +12,8 @@ interface VienChucState {
   setVienChucs: (v: VienChuc[]) => void
   addVienChuc: (d: Omit<VienChuc, 'id' | 'ma' | 'createdAt' | 'updatedAt'>, actorId?: string, actorName?: string) => VienChuc
   updateVienChuc: (id: string, patch: Partial<VienChuc>, actorId?: string, actorName?: string) => void
+  /** Cập nhật nhiều hồ sơ một lần, ghi một dòng nhật ký */
+  capNhatNhieu: (ds: { id: string; patch: Partial<VienChuc> }[], actorId: string, actorName: string, moTa: string, donViId?: string) => void
   softDelete: (id: string, actorId?: string, actorName?: string) => void
   getAll: (donViId?: string | null) => VienChuc[]
   getById: (id: string) => VienChuc | undefined
@@ -57,6 +59,16 @@ export const useVienChucStore = create<VienChucState>()(
           vienChucs: s.vienChucs.map((v) => (v.id === id ? { ...v, ...p, updatedAt: now() } : v)),
         }))
         logAction(actorId, actorName, 'UPDATE', 'VienChuc', id, `Cập nhật viên chức ${id}`)
+      },
+
+      capNhatNhieu: (ds, actorId, actorName, moTa, donViId) => {
+        if (!ds.length) return
+        const theoId = new Map(ds.map((d) => [d.id, chuanHoaHoTen(d.patch)]))
+        const t = now()
+        set((s) => ({
+          vienChucs: s.vienChucs.map((v) => (theoId.has(v.id) ? { ...v, ...theoId.get(v.id), updatedAt: t } : v)),
+        }))
+        logAction(actorId, actorName, 'UPDATE', 'VienChuc', { moTa, donViId })
       },
 
       softDelete: (id, actorId = 'system', actorName = 'Hệ thống') => {

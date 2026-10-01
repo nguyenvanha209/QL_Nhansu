@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { CHUC_VU_LABELS, LOAI_LAO_DONG_OPTIONS, duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
 import { formatDate, matchSearch, soSanhVienChuc } from '@/utils/helpers'
 import { pccvThucHuong, dangBaoLuuPccv } from '@/utils/baoLuuPccv'
+import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { LoaiPhuCap, ChucDanhNgheNghiep } from '@/types/danhMuc'
 import type { VienChuc } from '@/types/vienChuc'
@@ -101,15 +102,16 @@ function buildRow(
       ?? heSos.find((h) => h.vienChucId === vc.id && h.isActive)
   const mine = phuCaps.filter((p) => p.vienChucId === vc.id && p.isActive)
 
+  // Còn bản trùng thì lấy bản có ngày hiệu lực mới nhất (trang Rà soát báo "Phụ cấp ghi trùng")
   const byMa = (ma: string) => {
     const loai = loaiPhuCaps.find((l) => l.ma === ma)
-    const rec = loai ? mine.find((p) => p.loaiPhuCapId === loai.id) : undefined
+    const rec = loai ? chonBanDangHuong(mine.filter((p) => p.loaiPhuCapId === loai.id)) : undefined
     const val = rec ? (rec.giaTri > 0 ? rec.giaTri : loai?.giaTri ?? 0) : 0
     return { loai, rec, val }
   }
 
   const udLoaiIds = new Set(loaiPhuCaps.filter((l) => l.ma.startsWith(PC_UD_PREFIX)).map((l) => l.id))
-  const udRec = mine.find((p) => udLoaiIds.has(p.loaiPhuCapId))
+  const udRec = chonBanDangHuong(mine.filter((p) => udLoaiIds.has(p.loaiPhuCapId)))
   const udLoai = udRec ? loaiPhuCaps.find((l) => l.id === udRec.loaiPhuCapId) : undefined
   const udVal = udRec ? (udRec.giaTri > 0 ? udRec.giaTri : udLoai?.giaTri ?? 0) : 0
 

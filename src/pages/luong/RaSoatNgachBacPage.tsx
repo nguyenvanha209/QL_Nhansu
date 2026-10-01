@@ -9,12 +9,13 @@ import { useAuth } from '@/hooks/useAuth'
 import { matchSearch, soSanhVienChuc, formatDate } from '@/utils/helpers'
 import { dangBaoLuuPccv, soNgayConBaoLuu } from '@/utils/baoLuuPccv'
 import { exportToExcel } from '@/utils/exportExcel'
+import { chonBanDangHuong, nhomTheoLoai } from '@/utils/phuCapDangHuong'
 import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PCCV_KHONG_CHUC_VU' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'PCCV_KHONG_CHUC_VU' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -23,6 +24,7 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   HE_SO_LECH: { ten: 'Hệ số không khớp bảng', mau: 'orange' },
   NGACH_KHAC: { ten: 'Lương ghi theo mã khác', mau: 'gold' },
   NHIEU_BAN_GHI_LUONG: { ten: 'Nhiều bản ghi lương đang áp dụng', mau: 'red' },
+  PC_TRUNG: { ten: 'Phụ cấp ghi trùng', mau: 'red' },
   PCCV_KHONG_CHUC_VU: { ten: 'Có PC chức vụ nhưng không có chức vụ', mau: 'magenta' },
   CHUC_VU_LECH_VTVL: { ten: 'Chức vụ lệch vị trí việc làm', mau: 'magenta' },
   BL_PCCV_SAP_HET: { ten: 'Sắp hết bảo lưu PC chức vụ', mau: 'geekblue' },
@@ -96,6 +98,18 @@ export default function RaSoatNgachBacPage() {
     list = [...list].sort((a, b) =>
       (tenDonVi.get(a.donViId) ?? '').localeCompare(tenDonVi.get(b.donViId) ?? '', 'vi') || soSanhVienChuc(nhomCua)(a, b))
 
+    const pcDangHuong = new Map<string, typeof phuCaps>()
+    for (const p of phuCaps) {
+      if (!p.isActive) continue
+      const a = pcDangHuong.get(p.vienChucId) ?? []
+      a.push(p)
+      pcDangHuong.set(p.vienChucId, a)
+    }
+    const mucPc = (p: (typeof phuCaps)[number]) => {
+      const l = loaiPhuCaps.find((x) => x.id === p.loaiPhuCapId)
+      return l?.loaiCongThuc === 'HE_SO' ? String(p.giaTri).replace('.', ',') : `${p.giaTri}%`
+    }
+
     const ketQua: DongRaSoat[] = []
     for (const vc of list) {
       const hoTen = `${vc.ho} ${vc.ten}`.trim()
@@ -111,6 +125,17 @@ export default function RaSoatNgachBacPage() {
       if (KY_TU_TCVN3.test(hoTen)) {
         loi.push('TEN_LOI_FONT')
         chiTiet.push('Họ tên còn ký tự bảng mã TCVN3, cần gõ lại bằng Unicode')
+      }
+      // Cùng một loại phụ cấp có nhiều bản còn hiệu lực (thường do lưu biểu mẫu trên máy chưa nhận bản mới)
+      for (const a of nhomTheoLoai(pcDangHuong.get(vc.id) ?? [], loaiPhuCaps).values()) {
+        if (a.length < 2) continue
+        const dung = chonBanDangHuong(a)!
+        if (!loi.includes('PC_TRUNG')) loi.push('PC_TRUNG')
+        chiTiet.push(
+          `${loaiPhuCaps.find((l) => l.id === a[0].loaiPhuCapId)?.ten ?? 'Phụ cấp'} có ${a.length} bản đang hưởng: `
+          + a.map((p) => `${mucPc(p)} từ ${formatDate(p.ngayHieuLuc)}`).join('; ')
+          + ` — bảng lương đang dùng ${mucPc(dung)}. Mở hồ sơ, kiểm tra đúng mức rồi Lưu để đóng bản còn lại`,
+        )
       }
       // Có dòng PC chức vụ mà hồ sơ không ghi chức vụ và không có bảo lưu còn hạn → dễ là hưởng sót sau khi thôi chức vụ
       const pccv = pcChucVuId ? phuCaps.find((p) => p.vienChucId === vc.id && p.isActive && p.loaiPhuCapId === pcChucVuId) : undefined

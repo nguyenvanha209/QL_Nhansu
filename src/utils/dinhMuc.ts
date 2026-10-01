@@ -143,12 +143,16 @@ const HO_TRO_KT: ViTri = {
 const nv = (ma: string, ten: string, coDinh: number | null, canCu?: string, nhom: NhomDinhMuc = 'DUNG_CHUNG', toiDa?: number): ViTri =>
   ({ ma, ten, nhom, coDinh, canCu, toiDa })
 
+/** Mầm non: thư viện 01 người/điểm trường (phân hiệu), tối đa 03 */
+export const THU_VIEN_MN_TOI_DA = 3
+
 const VI_TRI: Record<CapHoc, ViTri[]> = {
   MAM_NON: [
     ...CBQL,
     { ma: 'GV_MN', ten: 'Giáo viên Mầm non', nhom: 'CHUYEN_NGANH', laGiaoVien: true },
     HO_TRO_KT,
     nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
+    nv('THU_VIEN', 'Thư viện', null, undefined, 'DUNG_CHUNG', THU_VIEN_MN_TOI_DA),
     nv('VAN_THU', 'Văn thư', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
     nv('THU_QUY', 'Thủ quỹ', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
     nv('Y_TE', 'Y tế trường học', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
@@ -367,6 +371,9 @@ export function tinhDinhMuc(
     const nhaTre = lop('NHA_TRE')
     const mauGiao = lop('MG3') + lop('MG4') + lop('MG5')
     tinh.GV_MN = nhaTre * t.gvNhaTre + mauGiao * t.gvMauGiao
+    const diemTruong = Math.max(1, quyMo.soDiemTruong ?? 1)
+    tinh.THU_VIEN = Math.min(diemTruong, THU_VIEN_MN_TOI_DA)
+    canCu.THU_VIEN = `01 người/điểm trường: ${diemTruong} điểm trường${quyMo.soDiemTruong ? '' : ' (chưa khai, tính 01)'} — tối đa 0${THU_VIEN_MN_TOI_DA}`
     canCu.GV_MN = `${nhaTre} nhóm trẻ × 2,5 + ${mauGiao} lớp mẫu giáo × 2,2`
     dienGiai.push(
       `Nhà trẻ: ${nhaTre} nhóm × ${fmt(t.gvNhaTre)} = ${fmt(nhaTre * t.gvNhaTre)} giáo viên`,

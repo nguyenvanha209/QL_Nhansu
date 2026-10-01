@@ -24,6 +24,8 @@ export interface QuyMoTruong {
    * cho từng môn (mã môn → số người). Môn không ghi thì hệ thống chia phần còn lại theo tỷ lệ giờ đứng lớp.
    */
   kiemNhiemNhapTay?: Record<string, number>
+  /** Mầm non: số điểm trường (điểm chính + phân hiệu) — căn cứ chỉ tiêu nhân viên thư viện */
+  soDiemTruong?: number
   ghiChu?: string
   nguoiCapNhatId?: string
   nguoiCapNhat?: string

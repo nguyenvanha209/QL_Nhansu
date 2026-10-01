@@ -50,6 +50,7 @@ function vanTay(q: QuyMoTruong | undefined, cap: CapHoc): string {
     b: cap === 'TIEU_HOC' ? [...(q.khoiDayTinThem ?? [])].sort() : [],
     t: Object.entries(q.dinhMucNhapTay ?? {}).sort(([a], [b]) => a.localeCompare(b)),
     kn: cap === 'THCS' ? Object.entries(q.kiemNhiemNhapTay ?? {}).sort(([a], [b]) => a.localeCompare(b)) : [],
+    d: cap === 'MAM_NON' ? q.soDiemTruong ?? 0 : 0,
     g: (q.ghiChu ?? '').trim(),
   })
 }
@@ -98,7 +99,7 @@ export default function QuyMoDinhMucPage() {
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <div>
-          <Title level={4} style={{ margin: 0 }}>Quy mô trường lớp & định mức lao động</Title>
+          <Title level={4} style={{ margin: 0 }}>Định mức viên chức và Cơ cấu VTVL</Title>
           <Text type="secondary">
             Khai báo số lớp, số học sinh từng khối; tính định mức theo TT 19/2023/TT-BGDĐT (mầm non) và TT 20/2023/TT-BGDĐT (tiểu học, THCS)
           </Text>
@@ -357,6 +358,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
         khoiDayTinThem: tinThem.length ? tinThem : undefined,
         dinhMucNhapTay: nhapTay,
         kiemNhiemNhapTay: kiemTay,
+        soDiemTruong: cap === 'MAM_NON' ? nhap.soDiemTruong || undefined : undefined,
         ghiChu: nhap.ghiChu?.trim() || undefined,
         nguoiCapNhatId: currentUser.id,
         nguoiCapNhat: currentUser.fullName,
@@ -393,7 +395,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
 
   const items = [
     { key: 'quyMo', label: 'Khai báo quy mô', children: <TheQuyMo cap={cap} nhap={nhap} kq={kq} coTheSua={coTheSua} hienHanh={hienHanh} namHoc={namHoc} donVi={donVi} datKhoi={datKhoi} setNhap={setNhap} /> },
-    { key: 'dinhMuc', label: 'Định mức & cơ cấu lao động', children: <TheDinhMuc kq={kq} nhap={nhap} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} /> },
+    { key: 'dinhMuc', label: 'Định mức & cơ cấu VTVL', children: <TheDinhMuc kq={kq} nhap={nhap} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} /> },
     {
       key: 'phanMon',
       label: <Badge count={kq.chuaPhanMon} size="small" offset={[8, -2]}>Phân công môn giảng dạy</Badge>,
@@ -500,6 +502,17 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
             style={{ marginTop: 8 }}
             title="Chưa nhập số lớp học 2 buổi/ngày — định mức đang tính toàn bộ là lớp 1 buổi (1,2 giáo viên/lớp)"
           />
+        )}
+        {cap === 'MAM_NON' && (
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <Text>Số điểm trường (kể cả điểm chính và các phân hiệu):</Text>
+            {coTheSua
+              ? <InputNumber value={nhap.soDiemTruong} min={1} max={20} precision={0} placeholder="1" onChange={(v) => setNhap((q) => ({ ...q, soDiemTruong: v ?? undefined }))} style={{ width: 88 }} />
+              : <Text strong>{nhap.soDiemTruong ?? 1}</Text>}
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Căn cứ chỉ tiêu nhân viên thư viện: 01 người/điểm trường, tối đa 03. Để trống tính là 01 điểm trường.
+            </Text>
+          </div>
         )}
         {cap === 'TIEU_HOC' && (
           <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -959,7 +972,7 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     ['UBND PHƯỜNG GIA VIÊN'],
     [donVi.ten.toUpperCase()],
     [],
-    [`ĐỊNH MỨC VÀ CƠ CẤU LAO ĐỘNG NĂM HỌC ${namHoc}`],
+    [`ĐỊNH MỨC VIÊN CHỨC VÀ CƠ CẤU VỊ TRÍ VIỆC LÀM NĂM HỌC ${namHoc}`],
     [cap === 'MAM_NON' ? 'Căn cứ Thông tư 19/2023/TT-BGDĐT' : 'Căn cứ Thông tư 20/2023/TT-BGDĐT'],
     [],
     ['I. QUY MÔ TRƯỜNG LỚP'],
@@ -993,7 +1006,7 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     aoa.push(['Tổng', '', lamTron1(pb.dong.reduce((s, d) => s + d.dungLop, 0)), lamTron1(pb.tong), '', lamTron1(pb.daPhanBo), lamTron1(pb.dong.reduce((s, d) => s + d.dinhMuc, 0))])
     aoa.push([pb.khop ? 'Tổng phân bổ khớp số cần phân bổ' : `Tổng phân bổ ${pb.conLai > 0 ? 'còn thiếu' : 'vượt'} ${lamTron1(Math.abs(pb.conLai))} giáo viên`], [])
   }
-  aoa.push(['III. ĐỊNH MỨC VÀ CƠ CẤU LAO ĐỘNG THEO VỊ TRÍ VIỆC LÀM'])
+  aoa.push(['III. ĐỊNH MỨC VIÊN CHỨC VÀ CƠ CẤU THEO VỊ TRÍ VIỆC LÀM'])
   aoa.push(['STT', 'Vị trí việc làm', 'Căn cứ tính', 'Định mức', 'Có mặt - Viên chức', 'Có mặt - Hợp đồng', 'Có mặt - Tổng', 'Thừa (+)/Thiếu (-)'])
   for (const n of NHOM_DINH_MUC) {
     const ds = kq.dong.filter((d) => d.nhom === n.key)

@@ -100,7 +100,7 @@ function DonViTab() {
           <Form.Item name="loai" label="Loại" rules={[{ required: true }]}>
             <Select options={Object.entries(LOAI_DON_VI_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
           </Form.Item>
-          <Form.Item name="soLop" label="Số lớp" tooltip="Dùng xếp hạng trường → phụ cấp chức vụ. Tự cập nhật khi trường lưu quy mô năm học hiện hành ở trang Quy mô & định mức.">
+          <Form.Item name="soLop" label="Số lớp" tooltip="Dùng xếp hạng trường → phụ cấp chức vụ. Tự cập nhật khi trường lưu quy mô năm học hiện hành ở trang Định mức viên chức và Cơ cấu VTVL.">
             <InputNumber min={1} max={100} style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="diaChi" label="Địa chỉ"><Input /></Form.Item>

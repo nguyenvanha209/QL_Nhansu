@@ -748,7 +748,7 @@ export default function HuongDanPage() {
               <tr><td><b>Rà soát ngạch – bậc</b></td><td>Danh sách hồ sơ lệch mã ngạch, bậc, hệ số cần trường xử lý (mục VII).</td></tr>
               <tr><td><b>Đề xuất điều chỉnh hệ số lương - phụ cấp</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
               <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
-              <tr><td><b>Quy mô & định mức</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức; kế toán tính 01 người/trường.</td></tr>
+              <tr><td><b>Định mức viên chức và Cơ cấu VTVL</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức; kế toán tính 01 người/trường. Mầm non: thư viện tính 01 người/điểm trường (phân hiệu), tối đa 03 — khai <b>Số điểm trường</b> ở thẻ Khai báo quy mô.</td></tr>
               <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu (theo Nghị định 135/2020) để chủ động bố trí nhân sự.</td></tr>
               <tr><td><b>Báo cáo</b></td><td>Các biểu tổng hợp phục vụ báo cáo cấp trên, lọc theo đơn vị và loại hình lao động.</td></tr>
             </tbody>
@@ -758,7 +758,7 @@ export default function HuongDanPage() {
         <Paragraph>
           Định mức giáo viên THCS gồm phần <b>đứng lớp</b> từng môn (số tiết/tuần ÷ 19) và phần <b>kiêm nhiệm</b>
           (dạy kiêm GDĐP, HĐTN-HN, chủ nhiệm 4 tiết/lớp, kiêm nhiệm khác). Phần kiêm nhiệm do trường phân bổ cho các môn
-          ở bảng <b>Phân bổ giáo viên kiêm nhiệm theo môn</b> (thẻ Định mức &amp; cơ cấu lao động):
+          ở bảng <b>Phân bổ giáo viên kiêm nhiệm theo môn</b> (thẻ Định mức &amp; cơ cấu VTVL):
         </Paragraph>
         <ul>
           <li>Cột <b>Gợi ý</b>: hệ thống chia phần kiêm nhiệm theo tỷ lệ giờ đứng lớp của từng môn.</li>

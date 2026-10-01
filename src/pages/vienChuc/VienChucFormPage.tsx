@@ -605,7 +605,7 @@ export default function VienChucFormPage() {
               <Form.Item
                 name="monDay"
                 label="Môn giảng dạy"
-                tooltip="Căn cứ đối chiếu định mức giáo viên theo từng môn (TT 20/2023/TT-BGDĐT) ở trang Quy mô & định mức"
+                tooltip="Căn cứ đối chiếu định mức giáo viên theo từng môn (TT 20/2023/TT-BGDĐT) ở trang Định mức viên chức và Cơ cấu VTVL"
               >
                 <Select options={monOptions} placeholder="Chọn môn giảng dạy" allowClear showSearch optionFilterProp="label" />
               </Form.Item>

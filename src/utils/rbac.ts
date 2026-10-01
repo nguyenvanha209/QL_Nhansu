@@ -10,7 +10,7 @@ export type Action = 'read' | 'write' | 'approve' | 'admin'
 export const RESOURCES: { key: string; label: string }[] = [
   { key: 'vienChuc', label: 'Hồ sơ viên chức' },
   { key: 'viTri',    label: 'Vị trí việc làm' },
-  { key: 'quyMo',    label: 'Quy mô trường lớp & định mức' },
+  { key: 'quyMo',    label: 'Định mức viên chức và Cơ cấu VTVL' },
   { key: 'luong',    label: 'Lương & hệ số' },
   { key: 'deXuat',   label: 'Đề xuất điều chỉnh' },
   { key: 'baoCao',   label: 'Báo cáo' },

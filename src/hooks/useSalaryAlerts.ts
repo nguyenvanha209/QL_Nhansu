@@ -10,6 +10,7 @@ export interface SalaryAlert {
   hoTen: string
   donViId: string
   donViTen: string
+  chucDanhId: string
   chucDanhTen: string
   ngayNangLuongTiepTheo: string
   daysLeft: number
@@ -47,6 +48,7 @@ export function useSalaryAlerts(donViId?: string | null, thresholdDays = 90): Sa
           hoTen: vc ? `${vc.ho} ${vc.ten}` : 'Không rõ',
           donViId: vc?.donViId ?? '',
           donViTen: donVi?.ten ?? '',
+          chucDanhId: h.chucDanhId,
           chucDanhTen: cd?.ten ?? '',
           ngayNangLuongTiepTheo: h.ngayNangLuongTiepTheo,
           daysLeft: getDaysUntilReview(h.ngayNangLuongTiepTheo),

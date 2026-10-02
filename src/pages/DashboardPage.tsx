@@ -7,6 +7,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
+import DanhSachNangLuongModal from '@/components/DanhSachNangLuongModal'
 import { useAuth } from '@/hooks/useAuth'
 import { filterRetirementInYears } from '@/utils/retirement'
 import { getReviewUrgencyColor } from '@/utils/calculations'
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
   const deXuats = useMemo(() => allDeXuats.filter((d) => !scopeDonViId || d.donViId === scopeDonViId), [allDeXuats, scopeDonViId])
   const salaryAlerts = useSalaryAlerts(scopeDonViId, 90)
+  const [moNangLuong, setMoNangLuong] = useState(false)
   const [retireYears, setRetireYears] = useState(3)
 
   // Chia 2 chiều: nhóm vị trí (hàng) × nhóm loại hình (cột). Tài khoản trường chỉ có một cấp học nên không cần lọc.
@@ -284,7 +286,15 @@ export default function DashboardPage() {
 
         <Col xs={24} lg={14}>
           <Card
-            title={<>Cảnh báo sắp đến kỳ nâng lương <Tag color="orange">{salaryAlerts.length}</Tag></>}
+            title={(
+              <>
+                Cảnh báo sắp đến kỳ nâng lương{' '}
+                <Tag color="orange" title="Bấm để xem danh sách đầy đủ" style={{ cursor: 'pointer' }} onClick={() => setMoNangLuong(true)}>{salaryAlerts.length}</Tag>
+              </>
+            )}
+            extra={salaryAlerts.length > 5 && (
+              <a onClick={() => setMoNangLuong(true)}>Xem tất cả {salaryAlerts.length} người</a>
+            )}
             size="small" className="chart-card"
           >
             <Table scroll={{ x: 'max-content' }}
@@ -308,6 +318,7 @@ export default function DashboardPage() {
           </Card>
         </Col>
       </Row>
+      <DanhSachNangLuongModal open={moNangLuong} onClose={() => setMoNangLuong(false)} alerts={salaryAlerts} />
       <style>{`.dash-tong-row td { background: #f0f5ff !important; font-weight: 600; }`}</style>
     </div>
   )

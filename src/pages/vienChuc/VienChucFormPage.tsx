@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Card, Form, Input, Select, DatePicker, Button, Row, Col,
-  Space, Typography, Divider, InputNumber, Alert, App, Tag, Switch,
+  Space, Typography, Divider, InputNumber, Alert, App, Tag, Switch, Tooltip, Result,
 } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined, LockOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -31,7 +31,7 @@ const { Title, Text } = Typography
 const KHONG_CHUC_VU = ''
 const CHUC_VU_QUAN_LY = ['HT', 'P.HT']
 
-function PhuCapGiaTriInput({ value, onChange, fieldName }: { value?: number; onChange?: (v: number | null) => void; fieldName: number }) {
+function PhuCapGiaTriInput({ value, onChange, fieldName, disabled }: { value?: number; onChange?: (v: number | null) => void; fieldName: number; disabled?: boolean }) {
   const form = Form.useFormInstance()
   const loaiPhuCapId = Form.useWatch(['phuCaps', fieldName, 'loaiPhuCapId'], form)
   const loaiPhuCaps = useDanhMucStore.getState().loaiPhuCaps
@@ -42,6 +42,7 @@ function PhuCapGiaTriInput({ value, onChange, fieldName }: { value?: number; onC
       <InputNumber
         value={value}
         onChange={onChange}
+        disabled={disabled}
         style={{ width: '100%' }}
         placeholder={selected?.loaiCongThuc === 'HE_SO' ? 'VD 0,33' : 'Giá trị'}
         min={0}
@@ -52,18 +53,115 @@ function PhuCapGiaTriInput({ value, onChange, fieldName }: { value?: number; onC
   )
 }
 
+/**
+ * Bọc ô lương. Khi bị khoá: phủ một lớp trong suốt để bắt cú bấm - ô đã disabled thì trình duyệt
+ * không phát sự kiện bấm, nên không bọc thì người dùng bấm vào mà không thấy giải thích gì.
+ */
+function OKhoaLuong({ khoa, onBam, children }: { khoa: boolean; onBam: () => void; children: React.ReactNode }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      {children}
+      {khoa && (
+        <div
+          role="button"
+          aria-label="Bậc lương, hệ số lương chỉ thay đổi qua phiếu đề xuất"
+          onClick={onBam}
+          style={{ position: 'absolute', inset: 0, cursor: 'not-allowed', zIndex: 2 }}
+        />
+      )}
+    </div>
+  )
+}
+
+/** Nhãn ô lương bị khoá với tài khoản trường */
+function NhanKhoaLuong({ ten }: { ten: React.ReactNode }) {
+  return (
+    <span>
+      {ten}{' '}
+      <Tooltip title="Chỉ thay đổi qua phiếu đề xuất do Phòng VH-XH duyệt">
+        <Tag icon={<LockOutlined />} color="default" style={{ marginInlineStart: 4, fontSize: 11 }}>Qua đề xuất</Tag>
+      </Tooltip>
+    </span>
+  )
+}
+
 export default function VienChucFormPage() {
   const { message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const navigate = useNavigate()
   const [form] = Form.useForm()
-  const { currentUser, scopeDonViId, isCBTruong } = useAuth()
+  const { currentUser, scopeDonViId, isCBTruong, hasPermission } = useAuth()
+  const { modal } = App.useApp()
   const { getById, addVienChuc, updateVienChuc } = useVienChucStore()
   const { donVis, chucDanhs, bacLuongs, loaiPhuCaps, vtvls, chucVus, getBacLuongsForChucDanh } = useDanhMucStore.getState()
   const luongState = useLuongStore.getState()
 
   const vc = isEdit ? getById(id) : undefined
+
+  // Bậc lương - hệ số lương (và mã ngạch kéo theo hệ số) của người ĐÃ có lương đang hưởng chỉ được
+  // thay đổi qua phiếu đề xuất do Phòng VH-XH duyệt; duyệt xong hệ thống tự ghi vào hồ sơ.
+  // Tài khoản trường (kế toán, hiệu trưởng) không có quyền "luong:write" nên chỉ xem.
+  const coQuyenSuaLuong = hasPermission('luong', 'write')
+  const heSoLucMo = isEdit ? luongState.getActiveHeSo(id!) : undefined
+  const khoaLuong = isEdit && !coQuyenSuaLuong && !!heSoLucMo
+  // Phụ cấp: bản đã có dữ liệu (đã cập nhật lần đầu) thì mọi thay đổi về sau phải qua phiếu đề xuất;
+  // loại phụ cấp người đó chưa từng có thì tài khoản trường vẫn khai lần đầu được.
+  const khoaPhuCap = isEdit && !coQuyenSuaLuong
+  const pcDaCoLucMo = useMemo(
+    () => (khoaPhuCap ? luongState.getActivePhuCaps(id!) : []),
+    [khoaPhuCap, id],
+  )
+  // Theo nhóm: đang hưởng PC ưu đãi 45% thì cũng không tự thêm PC ưu đãi 40%, 20% (cùng nhóm ưu đãi)
+  const hoPcDaCo = useMemo(() => new Set(pcDaCoLucMo.map((p) => hoPhuCap(p.loaiPhuCapId, loaiPhuCaps))), [pcDaCoLucMo])
+  const daCoHo = (loaiId: string) => hoPcDaCo.has(hoPhuCap(loaiId, loaiPhuCaps))
+  const khoaBaoLuu = khoaPhuCap && !!vc?.baoLuuPccv
+  const baoKhoaPhuCap = () => {
+    modal.warning({
+      title: 'Không sửa trực tiếp phụ cấp đã có',
+      content: (
+        <div>
+          <p>
+            Phụ cấp đã được cập nhật lần đầu thì mọi thay đổi về sau (mức hưởng, ngày hiệu lực, gỡ bỏ) phải qua
+            <b> phiếu đề xuất</b> gửi Phòng Văn hóa - Xã hội duyệt. Phê duyệt xong hệ thống tự cập nhật vào hồ sơ.
+          </p>
+          <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
+            <li>Nâng phụ cấp thâm niên nghề: lập phiếu <i>Nâng phụ cấp thâm niên nghề</i>.</li>
+            <li>Đổi mức phụ cấp chức vụ, trách nhiệm, ưu đãi...: lập phiếu <i>Điều chỉnh hệ số lương - phụ cấp</i>, đính kèm quyết định.</li>
+            <li>Loại phụ cấp người này chưa có thì vẫn được thêm mới ngay trong hồ sơ.</li>
+          </ul>
+        </div>
+      ),
+      okText: 'Lập phiếu điều chỉnh',
+      closable: true,
+      maskClosable: true,
+      onOk: () => navigate(`/de-xuat/new?loai=DIEU_CHINH&vienChucId=${id}`),
+    })
+  }
+  const baoKhoaLuong = () => {
+    if (!khoaLuong) return
+    modal.warning({
+      title: 'Không sửa trực tiếp bậc lương - hệ số lương',
+      content: (
+        <div>
+          <p>
+            Bậc lương, hệ số lương và mã ngạch của viên chức đang hưởng lương chỉ được thay đổi qua
+            <b> phiếu đề xuất</b> gửi Phòng Văn hóa - Xã hội duyệt. Khi phiếu được phê duyệt, hệ thống
+            <b> tự cập nhật</b> vào hồ sơ và lịch sử lương.
+          </p>
+          <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
+            <li>Đến hạn nâng bậc: lập phiếu <i>Nâng bậc lương thường xuyên</i>.</li>
+            <li>Bậc, hệ số đang ghi sai so với quyết định: lập phiếu <i>Điều chỉnh hệ số lương - phụ cấp</i>, đính kèm quyết định.</li>
+            <li>Đổi ngạch, hạng chức danh: lập phiếu <i>Chuyển ngạch</i>.</li>
+          </ul>
+        </div>
+      ),
+      okText: 'Lập phiếu điều chỉnh',
+      closable: true,
+      maskClosable: true,
+      onOk: () => navigate(`/de-xuat/new?loai=DIEU_CHINH&vienChucId=${id}`),
+    })
+  }
   const donViOptions = (scopeDonViId
     ? donVis.filter((d) => d.id === scopeDonViId)
     : donVis.filter((d) => d.active)
@@ -144,10 +242,23 @@ export default function VienChucFormPage() {
 
   // Bỏ hẳn chức vụ → gỡ dòng PC chức vụ (trước đây dòng này bị bỏ quên, hưởng mãi không hết).
   // Nếu được bảo lưu thì phần bảo lưu nằm riêng ở mục Bảo lưu PCCV.
+  // Phụ cấp đã có bị khoá mà chức vụ / vị trí vừa đổi làm mức phụ cấp phải đổi theo → nhắc lập phiếu
+  const [canLapPhieuPc, setCanLapPhieuPc] = useState<string[]>([])
+  const ghiCanLapPhieu = (key: string, noiDung: string | null) =>
+    setCanLapPhieuPc((ds) => {
+      const khac = ds.filter((x) => !x.startsWith(`${key}|`))
+      return noiDung ? [...khac, `${key}|${noiDung}`] : khac
+    })
+  const dongDaCoDb = (pc: any) => khoaPhuCap && !!pc?.id
+
   useEffect(() => {
-    if (!isEdit || !vc?.chucVu || watchChucVu || !pcChucVuId) return
+    if (!isEdit || !vc?.chucVu || watchChucVu || !pcChucVuId) { ghiCanLapPhieu('boCv', null); return }
     const current: any[] = form.getFieldValue('phuCaps') || []
     if (!current.some((pc) => pc?.loaiPhuCapId === pcChucVuId)) return
+    if (current.some((pc) => pc?.loaiPhuCapId === pcChucVuId && dongDaCoDb(pc))) {
+      ghiCanLapPhieu('boCv', 'Đã bỏ chức vụ nhưng PC chức vụ đang hưởng chưa được gỡ - lập phiếu Điều chỉnh để gỡ (hoặc khai bảo lưu nếu do sắp xếp)')
+      return
+    }
     form.setFieldValue('phuCaps', current.filter((pc) => pc?.loaiPhuCapId !== pcChucVuId))
   }, [watchChucVu, pcChucVuId])
 
@@ -157,6 +268,12 @@ export default function VienChucFormPage() {
     if (!pcChucVu) return
     const current: any[] = form.getFieldValue('phuCaps') || []
     const idx = current.findIndex((pc) => pc?.loaiPhuCapId === pcChucVu.id)
+    if (idx >= 0 && dongDaCoDb(current[idx])) {
+      ghiCanLapPhieu('pccv', current[idx].giaTri === pccvInfo.heSo
+        ? null
+        : `Chức vụ mới hưởng PC chức vụ ${pccvInfo.heSo}, đang ghi ${current[idx].giaTri} - lập phiếu Điều chỉnh để đổi mức`)
+      return
+    }
     if (idx >= 0) {
       if (current[idx].giaTri === pccvInfo.heSo) return
       const updated = [...current]
@@ -176,6 +293,10 @@ export default function VienChucFormPage() {
     if (!pcThamNien) return
     const current: any[] = form.getFieldValue('phuCaps') || []
     if (!current.some((pc) => pc?.loaiPhuCapId === pcThamNien.id)) return
+    if (current.some((pc) => pc?.loaiPhuCapId === pcThamNien.id && dongDaCoDb(pc))) {
+      ghiCanLapPhieu('pctn', 'Vị trí Nhân viên không hưởng PC thâm niên nhưng đang có - lập phiếu Điều chỉnh để gỡ')
+      return
+    }
     form.setFieldValue('phuCaps', current.filter((pc) => pc?.loaiPhuCapId !== pcThamNien.id))
     message.warning('Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên - đã gỡ dòng PC Thâm niên nghề')
   }, [duocHuongPctn, watchPhuCaps, loaiPhuCaps])
@@ -266,6 +387,24 @@ export default function VienChucFormPage() {
    * mà nay không còn (dòng bị xoá, bản trùng) thì đóng lại.
    */
   const ghiPhuCap = (vcId: string, rows: any[], macDinhNgay: string, mocPctn?: string) => {
+    if (khoaPhuCap) {
+      // Tài khoản trường: chỉ ghi phụ cấp loại (nhóm) người này chưa từng có; bản đã có giữ nguyên
+      const dangCo = new Set(luongState.getActivePhuCaps(vcId).map((p) => hoPhuCap(p.loaiPhuCapId, loaiPhuCaps)))
+      for (const pc of rows) {
+        if (!pc?.loaiPhuCapId || pc.id || dangCo.has(hoPhuCap(pc.loaiPhuCapId, loaiPhuCaps))) continue
+        const laPctn = loaiPhuCaps.find((l) => l.id === pc.loaiPhuCapId)?.ma === 'PC_THAM_NIEN'
+        luongState.addPhuCap({
+          vienChucId: vcId,
+          loaiPhuCapId: pc.loaiPhuCapId,
+          giaTri: pc.giaTri || 0,
+          ngayHieuLuc: pc.ngayHieuLuc ? dayjs(pc.ngayHieuLuc).format('YYYY-MM-DD') : (laPctn && mocPctn) || macDinhNgay,
+          isActive: true,
+          createdBy: currentUser?.id ?? 'system',
+        })
+        dangCo.add(hoPhuCap(pc.loaiPhuCapId, loaiPhuCaps))
+      }
+      return
+    }
     const pcGoc = luongState.getActivePhuCaps(vcId)
     const giuLai = new Set<string>()
     for (const pc of rows) {
@@ -300,7 +439,7 @@ export default function VienChucFormPage() {
     await lamMoiNgay()
     const { hoTenFull, mocHuongLuong, blBat, blSoQd, blNgayQd, blHetHan, ...restValues } = values
     // Bảo lưu PCCV: giữ mức và chức vụ cũ đã ghi (nếu có), bảo lưu mới thì lấy mức đang hưởng trước khi đổi
-    const baoLuuPccv = blBat && blNgayQd && blHetHan
+    const baoLuuPccv = khoaBaoLuu ? vc!.baoLuuPccv : blBat && blNgayQd && blHetHan
       ? {
           chucVuCu: vc?.baoLuuPccv?.chucVuCu ?? vc?.chucVu ?? '',
           heSo: vc?.baoLuuPccv?.heSo ?? pccvDangHuong,
@@ -341,6 +480,17 @@ export default function VienChucFormPage() {
     if (formatted.vtvl !== 'NHAN_VIEN') formatted.congViec = undefined
     if (formatted.vtvl !== 'GIAO_VIEN') formatted.monDay = undefined
     if (formatted.chucVu === KHONG_CHUC_VU) formatted.chucVu = undefined
+    // Chốt chặn cuối khi lưu: tài khoản không có quyền sửa lương thì giữ nguyên ngạch, bậc đang hưởng
+    // (kể cả khi giá trị bị đổi bằng cách khác ngoài ô nhập), và không cho chuyển sang lương theo mức tiền
+    if (khoaLuong && vc && heSoLucMo) {
+      const bacGoc = bacLuongs.find((b) => b.chucDanhId === heSoLucMo.chucDanhId && b.bac === heSoLucMo.bac)
+      const doiNgach = (formatted.chucDanhId ?? '') !== (vc.chucDanhId ?? '')
+      const doiBac = !!bacGoc && formatted.bacLuongId !== bacGoc.id
+      if (theoTien || doiNgach || doiBac) {
+        baoKhoaLuong()
+        return
+      }
+    }
     const { bacLuongId, phuCaps: phuCapsRaw, ...vcData } = formatted
     // Chốt chặn cuối: không ghi PC thâm niên cho vị trí không được hưởng
     const pcThamNienId = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')?.id
@@ -457,6 +607,11 @@ export default function VienChucFormPage() {
     }
   }
 
+  // Tài khoản trường chỉ sửa hồ sơ trường mình (trước đây mở được hồ sơ trường khác bằng đường dẫn)
+  if (vc && scopeDonViId && vc.donViId !== scopeDonViId) {
+    return <Result status="403" title="Không có quyền sửa hồ sơ này" subTitle="Hồ sơ thuộc trường khác." extra={<Button onClick={() => navigate('/vien-chuc')}>Về danh sách</Button>} />
+  }
+
   return (
     <Card>
       <Space style={{ marginBottom: 16 }}>
@@ -549,7 +704,9 @@ export default function VienChucFormPage() {
                 onChange={(v: string) => {
                   // Ngạch đang chọn không còn hợp lệ với VTVL mới → bỏ ngạch và bậc lương kèm theo
                   const dangChon = chucDanhs.find((c) => c.id === form.getFieldValue('chucDanhId'))
-                  if (dangChon && !chucDanhHopLeVoiVtvl(dangChon.nhom, v)) {
+                  if (dangChon && !chucDanhHopLeVoiVtvl(dangChon.nhom, v) && khoaLuong) {
+                    message.warning(`Ngạch "${dangChon.ma} - ${dangChon.ten}" không thuộc VTVL vừa chọn - đổi ngạch phải lập phiếu đề xuất Chuyển ngạch`)
+                  } else if (dangChon && !chucDanhHopLeVoiVtvl(dangChon.nhom, v)) {
                     form.setFieldsValue({ chucDanhId: undefined, bacLuongId: undefined })
                     message.info(`Ngạch "${dangChon.ma} - ${dangChon.ten}" không thuộc VTVL vừa chọn, vui lòng chọn lại ngạch/hạng`)
                   }
@@ -613,18 +770,24 @@ export default function VienChucFormPage() {
           )}
           <Col xs={24} sm={12} md={8}>
             <Form.Item
-              name="chucDanhId"
-              label={nhanBienChe('Mã ngạch/Hạng')}
-              rules={[{ required: laBienChe, message: 'Chọn mã ngạch/hạng' }]}
+              label={khoaLuong ? <NhanKhoaLuong ten={nhanBienChe('Mã ngạch/Hạng')} /> : nhanBienChe('Mã ngạch/Hạng')}
+              required={laBienChe}
             >
-              <Select
-                options={chucDanhOptions}
-                placeholder={laBienChe ? 'Chọn chức danh' : 'Không bắt buộc'}
-                showSearch
-                allowClear={!laBienChe}
-                optionFilterProp="label"
-                onChange={() => form.setFieldValue('bacLuongId', undefined)}
-              />
+              {/* Ô bị khoá vẫn bắt được cú bấm (Select của antd là thẻ div) để báo lý do và chỉ đường lập phiếu */}
+              <OKhoaLuong khoa={khoaLuong} onBam={baoKhoaLuong}>
+                <Form.Item name="chucDanhId" noStyle rules={[{ required: laBienChe, message: 'Chọn mã ngạch/hạng' }]}>
+                  <Select
+                    options={chucDanhOptions}
+                    placeholder={laBienChe ? 'Chọn chức danh' : 'Không bắt buộc'}
+                    showSearch
+                    allowClear={!laBienChe && !khoaLuong}
+                    optionFilterProp="label"
+                    disabled={khoaLuong}
+                    onChange={() => form.setFieldValue('bacLuongId', undefined)}
+                    style={{ width: '100%' }}
+                  />
+                </Form.Item>
+              </OKhoaLuong>
             </Form.Item>
           </Col>
           {laBienChe && (
@@ -658,8 +821,11 @@ export default function VienChucFormPage() {
               <div style={{ border: '1px solid #fcd34d', background: '#fffbeb', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
                 <Space align="center" style={{ marginBottom: watchBlBat ? 10 : 0 }} wrap>
                   <Form.Item name="blBat" valuePropName="checked" noStyle>
-                    <Switch size="small" />
+                    <Switch size="small" disabled={khoaBaoLuu} />
                   </Form.Item>
+                  {khoaBaoLuu && (
+                    <Tag icon={<LockOutlined />} style={{ cursor: 'pointer' }} onClick={baoKhoaPhuCap}>Qua đề xuất</Tag>
+                  )}
                   <Text strong>{TEN_PCCV_BAO_LUU}</Text>
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {vc?.baoLuuPccv
@@ -675,12 +841,12 @@ export default function VienChucFormPage() {
                   <Row gutter={16}>
                     <Col xs={24} sm={8}>
                       <Form.Item name="blSoQd" label="Số quyết định sắp xếp / bổ nhiệm mới" rules={[{ required: true, message: 'Nhập số quyết định' }]}>
-                        <Input placeholder="VD: 123/QĐ-UBND" />
+                        <Input placeholder="VD: 123/QĐ-UBND" disabled={khoaBaoLuu} />
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={8}>
                       <Form.Item name="blNgayQd" label="Ngày quyết định (bắt đầu bảo lưu)" rules={[{ required: true, message: 'Chọn ngày' }]}>
-                        <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+                        <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabled={khoaBaoLuu} />
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={8}>
@@ -690,7 +856,7 @@ export default function VienChucFormPage() {
                         tooltip="Theo quyết định bổ nhiệm chức vụ cũ"
                         rules={[{ required: true, message: 'Chọn ngày' }]}
                       >
-                        <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+                        <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabled={khoaBaoLuu} />
                       </Form.Item>
                     </Col>
                     <Col xs={24}>
@@ -776,6 +942,21 @@ export default function VienChucFormPage() {
 
         {/* ── Lương & Phụ cấp ── */}
         <Divider titlePlacement="left">Lương & Phụ cấp</Divider>
+        {khoaLuong && (
+          <Alert
+            type="info"
+            showIcon
+            icon={<LockOutlined />}
+            style={{ marginBottom: 12 }}
+            title="Mã ngạch, bậc lương, hệ số lương chỉ thay đổi qua phiếu đề xuất"
+            description={(
+              <span>
+                Phòng Văn hóa - Xã hội duyệt phiếu xong, hệ thống tự cập nhật vào hồ sơ.{' '}
+                <a onClick={() => navigate(`/de-xuat/new?loai=DIEU_CHINH&vienChucId=${id}`)}>Lập phiếu điều chỉnh cho người này</a>
+              </span>
+            )}
+          />
+        )}
         <Row gutter={16}>
           {!laBienChe && (
             <Col xs={24} sm={12} md={8}>
@@ -811,29 +992,35 @@ export default function VienChucFormPage() {
           {!luongTheoTien && (<>
           <Col xs={24} sm={12} md={8}>
             <Form.Item
-              name="bacLuongId"
-              label={nhanBienChe('Bậc lương')}
-              rules={[{ required: laBienChe && !isEdit, message: 'Chọn bậc lương' }]}
+              label={khoaLuong ? <NhanKhoaLuong ten={nhanBienChe('Bậc lương')} /> : nhanBienChe('Bậc lương')}
+              required={laBienChe && !isEdit}
             >
-              <Select
-                options={bacLuongOptions}
-                placeholder={watchChucDanhId ? (laBienChe ? 'Chọn bậc lương' : 'Không bắt buộc') : 'Chọn chức danh trước'}
-                disabled={!watchChucDanhId}
-                allowClear={!laBienChe}
-                showSearch
-                optionFilterProp="label"
-              />
+              <OKhoaLuong khoa={khoaLuong} onBam={baoKhoaLuong}>
+                <Form.Item name="bacLuongId" noStyle rules={[{ required: laBienChe && !isEdit, message: 'Chọn bậc lương' }]}>
+                  <Select
+                    options={bacLuongOptions}
+                    placeholder={watchChucDanhId ? (laBienChe ? 'Chọn bậc lương' : 'Không bắt buộc') : 'Chọn chức danh trước'}
+                    disabled={!watchChucDanhId || khoaLuong}
+                    allowClear={!laBienChe && !khoaLuong}
+                    showSearch
+                    optionFilterProp="label"
+                    style={{ width: '100%' }}
+                  />
+                </Form.Item>
+              </OKhoaLuong>
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item label="Hệ số lương">
-              <InputNumber
-                value={selectedBac?.heSo}
-                disabled
-                style={{ width: '100%' }}
-                precision={2}
-                placeholder="Tự động theo bậc"
-              />
+            <Form.Item label={khoaLuong ? <NhanKhoaLuong ten="Hệ số lương" /> : 'Hệ số lương'}>
+              <OKhoaLuong khoa={khoaLuong} onBam={baoKhoaLuong}>
+                <InputNumber
+                  value={selectedBac?.heSo}
+                  disabled
+                  style={{ width: '100%' }}
+                  precision={2}
+                  placeholder="Tự động theo bậc"
+                />
+              </OKhoaLuong>
             </Form.Item>
           </Col>
           {selectedBac && (
@@ -911,6 +1098,30 @@ export default function VienChucFormPage() {
               description={`Nếu đây là phụ cấp chức vụ được giữ sau sắp xếp thì xoá dòng này - mức đó đã được tính qua khung "${TEN_PCCV_BAO_LUU}" ở trên. "${TEN_HS_CHENH_LECH_BAO_LUU}" chỉ dùng cho phần chênh lệch hệ số lương khi chuyển ngạch, xếp lại lương.`}
             />
           )}
+          {khoaPhuCap && pcDaCoLucMo.length > 0 && (
+            <Alert
+              type="info"
+              showIcon
+              icon={<LockOutlined />}
+              style={{ marginBottom: 8 }}
+              title="Phụ cấp đã có dữ liệu chỉ thay đổi qua phiếu đề xuất"
+              description={(
+                <span>
+                  Các dòng có nhãn khoá giữ nguyên; loại phụ cấp người này chưa có thì vẫn bấm "Thêm phụ cấp" để khai lần đầu.{' '}
+                  <a onClick={() => navigate(`/de-xuat/new?loai=DIEU_CHINH&vienChucId=${id}`)}>Lập phiếu điều chỉnh</a>
+                </span>
+              )}
+            />
+          )}
+          {canLapPhieuPc.length > 0 && (
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginBottom: 8 }}
+              title="Cần lập phiếu đề xuất để cập nhật phụ cấp"
+              description={<ul style={{ margin: 0, paddingLeft: 18 }}>{canLapPhieuPc.map((x) => <li key={x}>{x.split('|')[1]}</li>)}</ul>}
+            />
+          )}
           {pcTrung.length > 0 && (
             <Alert
               type="error"
@@ -925,7 +1136,9 @@ export default function VienChucFormPage() {
                     </div>
                   ))}
                   <div style={{ marginTop: 4 }}>
-                    Biểu mẫu đang hiện bản có ngày hiệu lực mới nhất. Khi bấm Lưu, các bản còn lại sẽ được đóng và chuyển sang lịch sử.
+                    {khoaPhuCap
+                      ? 'Biểu mẫu đang hiện bản có ngày hiệu lực mới nhất. Phòng VH-XH sẽ đóng bản thừa - báo Phòng hoặc lập phiếu Điều chỉnh.'
+                      : 'Biểu mẫu đang hiện bản có ngày hiệu lực mới nhất. Khi bấm Lưu, các bản còn lại sẽ được đóng và chuyển sang lịch sử.'}
                   </div>
                 </div>
               }
@@ -946,8 +1159,10 @@ export default function VienChucFormPage() {
                 {fields.length === 0 && (
                   <Text type="secondary" italic>Chưa khai báo phụ cấp</Text>
                 )}
-                {fields.map(({ key, name, ...restField }) => (
-                  <Row key={key} gutter={8} align="top" style={{ marginBottom: 4 }}>
+                {fields.map(({ key, name, ...restField }) => {
+                  const khoaDong = dongDaCoDb(form.getFieldValue(['phuCaps', name]))
+                  return (
+                  <Row key={key} gutter={8} align="top" style={{ marginBottom: 4, position: 'relative' }}>
                     <Form.Item {...restField} name={[name, 'id']} hidden><Input /></Form.Item>
                     <Col flex="auto">
                       <Form.Item
@@ -957,7 +1172,11 @@ export default function VienChucFormPage() {
                         style={{ marginBottom: 8 }}
                       >
                         <Select
-                          options={phuCapOptions}
+                          disabled={khoaDong}
+                          // Dòng khai mới: không cho chọn loại người này đã có (đổi mức phải qua phiếu)
+                          options={khoaPhuCap && !khoaDong
+                            ? phuCapOptions.map((o) => ({ ...o, disabled: daCoHo(o.value), label: daCoHo(o.value) ? `${o.label} (đã có - đổi qua phiếu)` : o.label }))
+                            : phuCapOptions}
                           placeholder="Chọn loại phụ cấp"
                           showSearch
                           optionFilterProp="label"
@@ -990,25 +1209,41 @@ export default function VienChucFormPage() {
                           },
                         }]}
                       >
-                        <PhuCapGiaTriInput fieldName={name} />
+                        <PhuCapGiaTriInput fieldName={name} disabled={khoaDong} />
                       </Form.Item>
                     </Col>
                     <Col flex="150px">
                       <Form.Item {...restField} name={[name, 'ngayHieuLuc']} style={{ marginBottom: 8 }} tooltip="Ngày bắt đầu hưởng mức này">
-                        <DatePicker format="DD/MM/YYYY" placeholder="Từ ngày" style={{ width: '100%' }} />
+                        <DatePicker format="DD/MM/YYYY" placeholder="Từ ngày" style={{ width: '100%' }} disabled={khoaDong} />
                       </Form.Item>
                     </Col>
                     <Col flex="36px">
-                      <Button
-                        type="text"
-                        danger
-                        icon={<MinusCircleOutlined />}
-                        onClick={() => remove(name)}
-                        style={{ marginTop: 4 }}
-                      />
+                      {khoaDong ? (
+                        <Tooltip title="Phụ cấp đã có - thay đổi qua phiếu đề xuất">
+                          <Button type="text" icon={<LockOutlined />} onClick={baoKhoaPhuCap} style={{ marginTop: 4, color: '#94a3b8' }} />
+                        </Tooltip>
+                      ) : (
+                        <Button
+                          type="text"
+                          danger
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => remove(name)}
+                          style={{ marginTop: 4 }}
+                        />
+                      )}
                     </Col>
+                    {/* Bấm vào dòng bị khoá: báo lý do (ô disabled không phát sự kiện bấm) */}
+                    {khoaDong && (
+                      <div
+                        role="button"
+                        aria-label="Phụ cấp đã có - thay đổi qua phiếu đề xuất"
+                        onClick={baoKhoaPhuCap}
+                        style={{ position: 'absolute', inset: '0 44px 0 0', cursor: 'not-allowed', zIndex: 2 }}
+                      />
+                    )}
                   </Row>
-                ))}
+                  )
+                })}
               </>
             )}
           </Form.List>

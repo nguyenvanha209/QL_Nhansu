@@ -40,23 +40,23 @@ export default function AppRouter() {
         <Route path="/" element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="vien-chuc" element={<VienChucListPage />} />
-          <Route path="vien-chuc/new" element={<VienChucFormPage />} />
-          <Route path="vien-chuc/:id" element={<VienChucDetailPage />} />
-          <Route path="vien-chuc/:id/edit" element={<VienChucFormPage />} />
-          <Route path="bang-tong-hop-luong" element={<BangTongHopLuongPage />} />
-          <Route path="vi-tri" element={<ViTriPage />} />
+          <Route path="vien-chuc" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><VienChucListPage /></RoleGuard>} />
+          <Route path="vien-chuc/new" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'write' }}><VienChucFormPage /></RoleGuard>} />
+          <Route path="vien-chuc/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><VienChucDetailPage /></RoleGuard>} />
+          <Route path="vien-chuc/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'write' }}><VienChucFormPage /></RoleGuard>} />
+          <Route path="bang-tong-hop-luong" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'luong', action: 'read' }}><BangTongHopLuongPage /></RoleGuard>} />
+          <Route path="vi-tri" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'viTri', action: 'read' }}><ViTriPage /></RoleGuard>} />
           <Route path="quy-mo" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'quyMo', action: 'read' }}><QuyMoDinhMucPage /></RoleGuard>} />
-          <Route path="luong/he-so" element={<HeSoLuongPage />} />
-          <Route path="luong/ra-soat" element={<RaSoatNgachBacPage />} />
-          <Route path="luong/phu-cap" element={<PhuCapPage />} />
-          <Route path="chuyen-cong-tac" element={<ChuyenCongTacPage />} />
-          <Route path="de-xuat" element={<DeXuatListPage />} />
-          <Route path="de-xuat/new" element={<TaoDeXuatPage />} />
-          <Route path="de-xuat/:id" element={<DeXuatDetailPage />} />
-          <Route path="de-xuat/:id/edit" element={<TaoDeXuatPage />} />
-          <Route path="du-bao" element={<DuBaoNghiHuuPage />} />
-          <Route path="bao-cao" element={<BaoCaoPage />} />
+          <Route path="luong/he-so" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'luong', action: 'read' }}><HeSoLuongPage /></RoleGuard>} />
+          <Route path="luong/ra-soat" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><RaSoatNgachBacPage /></RoleGuard>} />
+          <Route path="luong/phu-cap" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'luong', action: 'read' }}><PhuCapPage /></RoleGuard>} />
+          <Route path="chuyen-cong-tac" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><ChuyenCongTacPage /></RoleGuard>} />
+          <Route path="de-xuat" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><DeXuatListPage /></RoleGuard>} />
+          <Route path="de-xuat/new" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><TaoDeXuatPage /></RoleGuard>} />
+          <Route path="de-xuat/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><DeXuatDetailPage /></RoleGuard>} />
+          <Route path="de-xuat/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><TaoDeXuatPage /></RoleGuard>} />
+          <Route path="du-bao" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'duBao', action: 'read' }}><DuBaoNghiHuuPage /></RoleGuard>} />
+          <Route path="bao-cao" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'baoCao', action: 'read' }}><BaoCaoPage /></RoleGuard>} />
           <Route path="admin/danh-muc" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><DanhMucPage /></RoleGuard>} />
           <Route path="admin/nguoi-dung" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><UserManagePage /></RoleGuard>} />
           <Route path="admin/nhat-ky" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><AuditLogPage /></RoleGuard>} />

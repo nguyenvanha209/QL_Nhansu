@@ -51,7 +51,7 @@ export default function AppLayout() {
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
-    { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
+    hasPermission('luong', 'read') && { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
     hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
     hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
     hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Định mức viên chức và Cơ cấu VTVL' },

@@ -136,7 +136,7 @@ export default function RaSoatNgachBacPage() {
         chiTiet.push(
           `${loaiPhuCaps.find((l) => l.id === a[0].loaiPhuCapId)?.ten ?? 'Phụ cấp'} có ${a.length} bản đang hưởng: `
           + a.map((p) => `${mucPc(p)} từ ${formatDate(p.ngayHieuLuc)}`).join('; ')
-          + ` - bảng lương đang dùng ${mucPc(dung)}. Mở hồ sơ, kiểm tra đúng mức rồi Lưu để đóng bản còn lại`,
+          + ` - bảng lương đang dùng ${mucPc(dung)}. Phòng VH-XH mở hồ sơ, kiểm tra đúng mức rồi Lưu để đóng bản còn lại (trường báo Phòng hoặc lập phiếu Điều chỉnh)`,
         )
       }
       // Có dòng PC chức vụ mà hồ sơ không ghi chức vụ và không có bảo lưu còn hạn → dễ là hưởng sót sau khi thôi chức vụ
@@ -321,7 +321,7 @@ export default function RaSoatNgachBacPage() {
         type="info"
         showIcon
         style={{ marginBottom: 12 }}
-        title="Danh sách hồ sơ đang công tác có mã ngạch, bậc, hệ số không khớp danh mục bảng lương. Hệ thống không tự sửa - trường kiểm tra quyết định xếp lương rồi vào hồ sơ để sửa mã ngạch hoặc bậc cho đúng. Người nhận lương theo mức tiền chỉ được kiểm tra họ tên và công việc cụ thể."
+        title="Danh sách hồ sơ đang công tác có mã ngạch, bậc, hệ số không khớp danh mục bảng lương. Hệ thống không tự sửa - trường kiểm tra quyết định xếp lương; sai mã ngạch, bậc, hệ số thì lập phiếu đề xuất Điều chỉnh hệ số lương - phụ cấp (đính kèm quyết định) để Phòng VH-XH duyệt. Người nhận lương theo mức tiền chỉ được kiểm tra họ tên và công việc cụ thể."
       />
       <Space wrap style={{ marginBottom: 12 }}>
         {(Object.keys(LECH_LABELS) as LoaiLech[]).filter((l) => demTheoLoi[l]).map((l) => (

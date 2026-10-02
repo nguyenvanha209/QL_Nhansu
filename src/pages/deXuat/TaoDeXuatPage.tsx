@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, Typography, Divider, Tag, App, Alert, Tooltip, Result } from 'antd'
 import { DeleteOutlined, ArrowLeftOutlined, SendOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -27,6 +27,11 @@ export default function TaoDeXuatPage() {
   const { message, modal } = App.useApp()
   const navigate = useNavigate()
   const { id: editId } = useParams<{ id: string }>()
+  // Mở từ hồ sơ viên chức ("Lập phiếu điều chỉnh"): chọn sẵn loại phiếu và người cần điều chỉnh
+  const [thamSo] = useSearchParams()
+  const loaiTuHoSo = thamSo.get('loai') as LoaiDeXuat | null
+  const vcTuHoSo = thamSo.get('vienChucId')
+  const daNapTuHoSo = useRef(false)
   const [form] = Form.useForm()
   const { currentUser, scopeDonViId } = useAuth()
   const { addDeXuat, updateDeXuat, submitDeXuat } = useDeXuatStore.getState()
@@ -60,6 +65,14 @@ export default function TaoDeXuatPage() {
     setChiTiet(dxSua.chiTiet)
     setMinhChung(dxSua.minhChung ?? [])
   }, [dxSua?.id])
+
+  useEffect(() => {
+    if (editId || !loaiTuHoSo || !(loaiTuHoSo in LOAI_DE_XUAT_LABELS)) return
+    form.setFieldValue('loai', loaiTuHoSo)
+    setLoaiDeXuat(loaiTuHoSo)
+    const dv = allVienChucs.find((v) => v.id === vcTuHoSo)?.donViId
+    if (dv && !scopeDonViId) { form.setFieldValue('donViId', dv); setSelectedDonVi(dv) }
+  }, [])
 
   // ── Bảng lương theo ngạch ──
   const bangCua = (chucDanhId: string) => bacLuongs.filter((b) => b.chucDanhId === chucDanhId).sort((a, b) => a.bac - b.bac)
@@ -128,6 +141,14 @@ export default function TaoDeXuatPage() {
       pctnMoi: laPctn ? (pctnHienTai > 0 ? pctnHienTai + 1 : 5) : pctnHienTai,
     }])
   }
+
+  // Thêm sẵn người được mở từ hồ sơ, sau khi loại phiếu đã áp dụng (addVC tính theo loại phiếu)
+  useEffect(() => {
+    if (editId || !vcTuHoSo || daNapTuHoSo.current || loaiDeXuat !== loaiTuHoSo) return
+    if (!heSoLuongs.some((h) => h.vienChucId === vcTuHoSo && h.isActive)) return
+    daNapTuHoSo.current = true
+    addVC(vcTuHoSo)
+  }, [loaiDeXuat, heSoLuongs])
 
   // ── Gợi ý viên chức đến kỳ nâng lương thường xuyên (2 đợt/năm: 6 tháng đầu / 6 tháng cuối) ──
   const currentYear = dayjs().year()

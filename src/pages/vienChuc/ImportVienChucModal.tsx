@@ -369,7 +369,9 @@ interface Props {
 
 export default function ImportVienChucModal({ open, onClose }: Props) {
   const { message } = App.useApp()
-  const { currentUser } = useAuth()
+  const { currentUser, hasPermission } = useAuth()
+  // Tài khoản trường không sửa được bậc, hệ số, mã ngạch của người đang hưởng lương - phải qua phiếu đề xuất
+  const coQuyenSuaLuong = hasPermission('luong', 'write')
   const vienChucs      = useVienChucStore((s) => s.vienChucs)
   const updateVienChuc = useVienChucStore((s) => s.updateVienChuc)
   const donVis         = useDanhMucStore((s) => s.donVis)
@@ -379,6 +381,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
   const heSos          = useLuongStore((s) => s.heSoLuongs)
   const phuCaps        = useLuongStore((s) => s.phuCapVienChucs)
   const updateHeSoLuong = useLuongStore((s) => s.updateHeSoLuong)
+  const addLichSuBienDong = useLuongStore((s) => s.addLichSuBienDong)
   const updatePhuCap    = useLuongStore((s) => s.updatePhuCap)
   const addPhuCap       = useLuongStore((s) => s.addPhuCap)
   const deactivatePhuCap = useLuongStore((s) => s.deactivatePhuCap)
@@ -486,10 +489,13 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           checkDate('thoiHanHopDong', row[COL.THOI_HAN_HD],     COL.THOI_HAN_HD)
 
           const cdTen = str(row[COL.CHUC_DANH])
+          const coLuongDangHuong = heSos.some((h) => h.vienChucId === vc.id && h.isActive)
           if (cdTen) {
             const cd = chucDanhs.find((c) => c.ten.toLowerCase() === cdTen.toLowerCase())
-            if (cd) check('chucDanhId', cd.id)
-            else warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chức danh "${cdTen}" không tìm thấy`)
+            if (!cd) warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): chức danh "${cdTen}" không tìm thấy`)
+            else if (!coQuyenSuaLuong && coLuongDangHuong && cd.id !== vc.chucDanhId) {
+              warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): không đổi mã ngạch qua file - đổi ngạch phải lập phiếu đề xuất Chuyển ngạch`)
+            } else check('chucDanhId', cd.id)
           }
 
           // Chức vụ, VTVL phải là mã chuẩn: ghi nguyên chữ ("Tổ trưởng tổ 4+5", "Giáo viên âm nhạc")
@@ -566,10 +572,17 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
 
           if (heSoRec) {
             const bacMoi = num(row[COL.BAC])
-            checkLuong('Bậc', 'bac', cur.bac, bacMoi, () => { patchHeSo.bac = bacMoi })
-
             const heSoMoi = num(row[COL.HE_SO])
-            checkLuong('Hệ số lương', 'heSo', cur.heSo, heSoMoi, () => { patchHeSo.heSo = heSoMoi })
+            if (coQuyenSuaLuong) {
+              checkLuong('Bậc', 'bac', cur.bac, bacMoi, () => { patchHeSo.bac = bacMoi })
+              checkLuong('Hệ số lương', 'heSo', cur.heSo, heSoMoi, () => { patchHeSo.heSo = heSoMoi })
+            } else if (
+              (bacMoi !== undefined && String(bacMoi) !== String(cur.bac ?? ''))
+              || (heSoMoi !== undefined && String(heSoMoi) !== String(cur.heSo ?? ''))
+            ) {
+              // Tài khoản trường: bỏ qua, chỉ báo để lập phiếu đề xuất
+              warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): bậc/hệ số trong file (${bacMoi ?? '-'} / ${heSoMoi ?? '-'}) khác đang hưởng (${cur.bac ?? '-'} / ${cur.heSo ?? '-'}) - không sửa qua file, lập phiếu đề xuất để Phòng VH-XH duyệt`)
+            }
 
             const asDate = (v: unknown) => formatDate(String(v ?? '')) || '(trống)'
 
@@ -609,7 +622,9 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             const baoLuuMoi = num(row[COL.HE_SO_BAO_LUU] ?? row['Hệ số bảo lưu'])
             if (baoLuuMoi !== undefined) {
               const baoLuuCu = cur.baoLuu ?? 0
-              if (baoLuuCu !== baoLuuMoi) {
+              if (baoLuuCu !== baoLuuMoi && !coQuyenSuaLuong) {
+                warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): hệ số chênh lệch bảo lưu không sửa qua file - lập phiếu đề xuất`)
+              } else if (baoLuuCu !== baoLuuMoi) {
                 patchHeSo.heSoBaoLuu = baoLuuMoi > 0 ? baoLuuMoi : undefined
                 fieldChanges.push({
                   key: 'baoLuu', nhom: 'Lương', label: 'Hệ số chênh lệch bảo lưu',
@@ -629,6 +644,11 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           ) => {
             if (newVal === undefined) return
             if (oldVal === newVal) return
+            // Tài khoản trường: phụ cấp đã có thì không đổi qua file, chỉ được khai loại chưa có
+            if (!coQuyenSuaLuong && rec) {
+              warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): ${label} đang hưởng ${oldVal}${suffix}, file ghi ${newVal}${suffix} - phụ cấp đã có không sửa qua file, lập phiếu đề xuất`)
+              return
+            }
 
             const loai = maLoai === PC_UU_DAI_PREFIX
               ? loaiPhuCaps.find((l) => l.ma.startsWith(PC_UU_DAI_PREFIX) && l.giaTri === newVal)
@@ -666,7 +686,9 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           const rMocTnn = readDate(row[COL.MOC_TNN])
           if (!rMocTnn.ok) warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): "${COL.MOC_TNN}" sai định dạng ngày`)
           const mocTnnMoi = rMocTnn.ok ? rMocTnn.value : undefined
-          if (mocTnnMoi && pcRecs.tnn && mocTnnMoi !== cur.mocTnn) {
+          if (mocTnnMoi && pcRecs.tnn && mocTnnMoi !== cur.mocTnn && !coQuyenSuaLuong) {
+            warns.push(`Dòng ${i + 2} (${vc.ho} ${vc.ten}): mốc PC thâm niên không sửa qua file - lập phiếu đề xuất`)
+          } else if (mocTnnMoi && pcRecs.tnn && mocTnnMoi !== cur.mocTnn) {
             phuCapOps.push({ action: 'update', pcId: pcRecs.tnn.id, ngayHieuLuc: mocTnnMoi })
             fieldChanges.push({
               key: 'mocTnn', nhom: 'Phụ cấp', label: 'Mốc thâm niên',
@@ -701,7 +723,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
     }
     reader.readAsArrayBuffer(file)
     return false
-  }, [vienChucs, chucDanhs, bacLuongs, donVis, heSos, phuCaps, loaiPhuCaps, message,
+  }, [vienChucs, chucDanhs, bacLuongs, donVis, heSos, phuCaps, loaiPhuCaps, message, coQuyenSuaLuong,
       inverseChucVu, inverseVtvl, inverseLoaiLD, inverseTrangThai, inverseNguon])
 
   // ── Chọn / bỏ chọn ────────────────────────────────────────────────────────
@@ -727,7 +749,20 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
         updateVienChuc(rec.vcId, rec.patchVC, actorId, actorName)
       }
       if (rec.heSoId && rec.patchHeSo) {
+        const cu = heSos.find((h) => h.id === rec.heSoId)
         updateHeSoLuong(rec.heSoId, rec.patchHeSo)
+        if (cu && rec.patchHeSo.ngayHieuLuc && rec.patchHeSo.ngayHieuLuc !== cu.ngayHieuLuc) {
+          const nangMoi = rec.patchHeSo.ngayNangLuongTiepTheo ?? cu.ngayNangLuongTiepTheo
+          addLichSuBienDong({
+            vienChucId: rec.vcId,
+            loai: 'LUONG',
+            truongThayDoi: 'Mốc hưởng lương',
+            giaTriCu: `${formatDate(cu.ngayHieuLuc) || '(trống)'} - nâng lương tiếp ${formatDate(cu.ngayNangLuongTiepTheo) || '(trống)'}`,
+            giaTriMoi: `${formatDate(rec.patchHeSo.ngayHieuLuc)} - nâng lương tiếp ${formatDate(nangMoi) || '(trống)'} (nhập Excel)`,
+            ngayThayDoi: dayjs().format('YYYY-MM-DD'),
+            nguoiThayDoiId: actorId,
+          })
+        }
       }
       for (const op of rec.phuCapOps) {
         if (op.action === 'remove' && op.pcId) {

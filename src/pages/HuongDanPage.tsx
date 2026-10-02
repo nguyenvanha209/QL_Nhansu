@@ -365,6 +365,23 @@ export default function HuongDanPage() {
             Tài khoản Kế toán được cấp quyền <i>chỉ xem</i> đối với dữ liệu lương. Mọi thay đổi phải
             đi qua phiếu đề xuất và được Phòng Văn hóa - Xã hội thẩm định.
           </p>
+          <p>
+            Trong biểu mẫu hồ sơ, ô <b>Mã ngạch/Hạng</b>, <b>Bậc lương</b>, <b>Hệ số lương</b> của người đang hưởng lương
+            có nhãn <Tag style={{ fontSize: 11 }}>Qua đề xuất</Tag> và bị khoá; bấm vào sẽ hiện thông báo cùng nút
+            <b> Lập phiếu điều chỉnh</b> (mở sẵn phiếu với đúng người đó). Nhập Excel cũng bỏ qua các cột này và
+            liệt kê người có số liệu khác để trường lập phiếu.
+          </p>
+          <p>
+            <b>Phụ cấp</b>: dòng phụ cấp đã có dữ liệu bị khoá (không đổi mức, ngày hiệu lực, không gỡ được); khung
+            bảo lưu PC chức vụ đã khai cũng bị khoá. Loại phụ cấp người đó chưa từng có thì vẫn bấm <b>Thêm phụ cấp</b>
+            để khai lần đầu (nhóm PC ưu đãi tính là một: đã có 45% thì không tự thêm 40%, 20%). Đổi chức vụ làm PC chức
+            vụ phải đổi theo, hệ thống nhắc lập phiếu thay vì tự sửa.
+          </p>
+          <p>
+            <b>Hồ sơ khai mới</b> (và người chưa có lương): kế toán nhập đủ ngạch, bậc, hệ số và các phụ cấp như bình thường.
+            <b> Mốc hưởng lương</b> kế toán vẫn sửa được (trong hồ sơ hoặc nhập Excel); mỗi lần sửa được ghi vào
+            lịch sử biến động kèm ngày nâng lương tính lại.
+          </p>
         </KhungLuuY>
 
         <h3>Vì sao phải làm như vậy</h3>
@@ -702,17 +719,17 @@ export default function HuongDanPage() {
           <table className="hd-table">
             <thead><tr><th style={{ width: 210 }}>Vấn đề</th><th>Nghĩa là</th><th style={{ width: 250 }}>Cách xử lý</th></tr></thead>
             <tbody>
-              <tr><td><Tag color="orange">Hệ số không khớp bảng</Tag></td><td>Hệ số đang ghi khác hệ số của bậc đó trong bảng lương của mã ngạch.</td><td>Xem cột <b>Gợi ý</b>: nếu hệ số khớp bảng/bậc khác thì thường là <b>sai mã ngạch</b> hoặc <b>sai bậc</b> - sửa theo quyết định.</td></tr>
-              <tr><td><Tag color="volcano">Bậc vượt bảng lương</Tag></td><td>Bậc lớn hơn số bậc của bảng lương mã đó.</td><td>Kiểm tra lại mã ngạch - thường là mã đang gán sai bảng.</td></tr>
+              <tr><td><Tag color="orange">Hệ số không khớp bảng</Tag></td><td>Hệ số đang ghi khác hệ số của bậc đó trong bảng lương của mã ngạch.</td><td>Xem cột <b>Gợi ý</b>: nếu hệ số khớp bảng/bậc khác thì thường là <b>sai mã ngạch</b> hoặc <b>sai bậc</b> - lập phiếu <i>Điều chỉnh hệ số lương - phụ cấp</i> kèm quyết định.</td></tr>
+              <tr><td><Tag color="volcano">Bậc vượt bảng lương</Tag></td><td>Bậc lớn hơn số bậc của bảng lương mã đó.</td><td>Kiểm tra lại mã ngạch - thường là mã đang gán sai bảng; lập phiếu <i>Điều chỉnh</i> để sửa.</td></tr>
               <tr><td><Tag color="red">Chưa có mã ngạch</Tag></td><td>Viên chức biên chế chưa khai mã ngạch/hạng.</td><td>Sửa hồ sơ, chọn mã ngạch/hạng.</td></tr>
-              <tr><td><Tag color="red">Phụ cấp ghi trùng</Tag></td><td>Cùng một loại phụ cấp có từ hai bản đang hưởng (thường do hai máy cùng sửa một hồ sơ).</td><td>Mở hồ sơ, kiểm tra đúng mức theo quyết định rồi bấm <b>Lưu</b> - bản thừa được đóng lại.</td></tr>
+              <tr><td><Tag color="red">Phụ cấp ghi trùng</Tag></td><td>Cùng một loại phụ cấp có từ hai bản đang hưởng (thường do hai máy cùng sửa một hồ sơ).</td><td>Báo Phòng VH-XH (hoặc lập phiếu <i>Điều chỉnh</i>): Phòng mở hồ sơ, kiểm tra đúng mức rồi bấm <b>Lưu</b> để đóng bản thừa.</td></tr>
               <tr><td><Tag color="orange">Mốc / ngày nâng lương sai</Tag></td><td>Mốc hưởng lương trống hoặc sai năm (VD năm 0205), hoặc ngày nâng lương tiếp theo không bằng mốc + thời gian giữ bậc (3 năm loại A, 2 năm loại B, C). Người ở bậc cuối không bị kiểm tra.</td><td>Mở hồ sơ, nhập đúng <b>Mốc hưởng lương</b> theo quyết định rồi <b>Lưu</b> - ngày nâng lương tự tính lại. Trường hợp bị kéo dài thời gian nâng lương do kỷ luật thì báo Phòng VH-XH.</td></tr>
               <tr><td><Tag color="red">Chưa có bậc, hệ số</Tag></td><td>Hồ sơ chưa có lương đang hưởng.</td><td>Viên chức: khai bậc lương. Hợp đồng lương khoán: chọn <i>Theo mức tiền</i> và nhập số tiền.</td></tr>
               <tr><td><Tag color="magenta">Có PC chức vụ nhưng không có chức vụ</Tag></td><td>Đang hưởng PC chức vụ mà hồ sơ không ghi chức vụ, không có bảo lưu.</td><td>Khai chức vụ (tổ trưởng, tổ phó…); nếu đã thôi chức vụ do sắp xếp thì khai bảo lưu, không thì gỡ phụ cấp.</td></tr>
               <tr><td><Tag color="magenta">Chức vụ lệch vị trí việc làm</Tag></td><td>Còn chức vụ Hiệu trưởng / Phó HT nhưng vị trí việc làm không phải CBQL (hoặc ngược lại) - thường là Phó HT đã về làm giáo viên nhưng chưa bỏ chức vụ.</td><td>Sửa hồ sơ, ô Chức vụ chọn <i>Không giữ chức vụ</i>; nếu do sắp xếp thì bật bảo lưu PC chức vụ.</td></tr>
               <tr><td><Tag color="geekblue">Sắp hết bảo lưu PC chức vụ</Tag></td><td>Còn 60 ngày trở xuống là hết bảo lưu.</td><td>Chỉ để biết trước - hết hạn hệ thống tự chuyển mức, không cần sửa.</td></tr>
               <tr><td><Tag color="cyan">Chưa chọn công việc cụ thể</Tag></td><td>Nhân viên chưa chọn công việc (kế toán, bảo vệ, cấp dưỡng…).</td><td>Sửa hồ sơ, chọn <b>Công việc cụ thể</b>.</td></tr>
-              <tr><td><Tag color="gold">Lương ghi theo mã khác</Tag></td><td>Bản ghi lương gắn mã ngạch khác mã đang ghi trong hồ sơ.</td><td>Xác định mã đúng, sửa lại mã ngạch trong hồ sơ.</td></tr>
+              <tr><td><Tag color="gold">Lương ghi theo mã khác</Tag></td><td>Bản ghi lương gắn mã ngạch khác mã đang ghi trong hồ sơ.</td><td>Xác định mã đúng theo quyết định, lập phiếu <i>Điều chỉnh hệ số lương - phụ cấp</i>.</td></tr>
               <tr><td><Tag color="purple">Tên lỗi font (TCVN3)</Tag></td><td>Họ tên còn ký tự bảng mã cũ, VD <i>NGUYÔN THÞ</i>.</td><td>Gõ lại họ tên bằng Unicode.</td></tr>
             </tbody>
           </table>
@@ -798,7 +815,7 @@ export default function HuongDanPage() {
               key: '1', label: 'Hệ số lương trên hệ thống lệch với bảng lương giấy thì xử lý thế nào?',
               children: (
                 <>
-                  <p>Trước hết mở trang <b>Rà soát ngạch - bậc</b>: nếu người đó có trong danh sách, cột Gợi ý thường chỉ ra ngay nguyên nhân (sai mã ngạch hoặc sai bậc) - sửa mã ngạch/bậc theo quyết định.</p>
+                  <p>Trước hết mở trang <b>Rà soát ngạch - bậc</b>: nếu người đó có trong danh sách, cột Gợi ý thường chỉ ra ngay nguyên nhân (sai mã ngạch hoặc sai bậc) - lập phiếu Điều chỉnh hệ số lương - phụ cấp kèm quyết định.</p>
                   <p>Nếu là mức lương thực sự thay đổi, không sửa trực tiếp mà lập phiếu đề xuất loại <b>Điều chỉnh hệ số lương - phụ cấp</b> (kèm minh chứng), ghi rõ số liệu đúng và căn cứ trong phần Ghi chú. Sai lệch ở nhiều hồ sơ thì liên hệ số hỗ trợ.</p>
                 </>
               ),

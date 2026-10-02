@@ -19,7 +19,7 @@ export default function DeXuatDetailPage() {
   const { message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { currentUser, isVHXH, isLanhDao, laQuanTri, isHieuTruong, scopeDonViId } = useAuth()
+  const { currentUser, isVHXH, isLanhDao, laQuanTri, isHieuTruong, scopeDonViId, hasPermission } = useAuth()
   const getById = useDeXuatStore((s) => s.getById)
   const { submitDeXuat, duyetHieuTruong, xetDuyetDeXuat, pheDuyetDeXuat } = useDeXuatStore.getState()
   const donVis = useDanhMucStore((s) => s.donVis)
@@ -33,6 +33,11 @@ export default function DeXuatDetailPage() {
   const [loading, setLoading] = useState(false)
 
   if (!dx) return <Result status="404" title="Không tìm thấy đề xuất" extra={<Button onClick={() => navigate('/de-xuat')}>Quay lại</Button>} />
+
+  // Tài khoản trường chỉ xem phiếu của trường mình (trước đây mở được phiếu trường khác bằng đường dẫn)
+  if (scopeDonViId && dx.donViId !== scopeDonViId) {
+    return <Result status="403" title="Không có quyền xem phiếu này" subTitle="Phiếu thuộc trường khác." extra={<Button onClick={() => navigate('/de-xuat')}>Quay lại</Button>} />
+  }
 
   const donVi = donVis.find((d) => d.id === dx.donViId)
 
@@ -94,9 +99,13 @@ export default function DeXuatDetailPage() {
   // Bản nháp và phiếu bị yêu cầu bổ sung: trường lập phiếu mở lại để sửa, rồi trình lại
   const canSua = (dx.trangThai === 'NHAP' || dx.trangThai === 'YEU_CAU_BO_SUNG')
     && (dx.nguoiDeXuatId === currentUser?.id || laQuanTri || (!!scopeDonViId && dx.donViId === scopeDonViId))
-  const canDuyetHT = (isHieuTruong || laQuanTri) && dx.trangThai === 'CHO_HIEU_TRUONG_DUYET'
-  const canXetDuyet = (isVHXH || laQuanTri) && dx.trangThai === 'CHO_XET_DUYET'
-  const canPheDuyet = (isLanhDao || laQuanTri) && dx.trangThai === 'CHO_PHE_DUYET'
+  // Quy trình: Kế toán lập → Hiệu trưởng duyệt → Phòng VH-XH thẩm định → Lãnh đạo (hoặc Admin) phê duyệt cuối.
+  // Mỗi bước cần đúng vai trò VÀ còn quyền "Duyệt đề xuất" - quyền bị thu hồi riêng thì không duyệt được.
+  const coQuyenDuyet = hasPermission('deXuat', 'approve')
+  const canDuyetHT = dx.trangThai === 'CHO_HIEU_TRUONG_DUYET'
+    && (laQuanTri || (isHieuTruong && coQuyenDuyet && dx.donViId === scopeDonViId))
+  const canXetDuyet = dx.trangThai === 'CHO_XET_DUYET' && (laQuanTri || (isVHXH && coQuyenDuyet))
+  const canPheDuyet = dx.trangThai === 'CHO_PHE_DUYET' && (laQuanTri || (isLanhDao && coQuyenDuyet))
 
   const handleAction = async () => {
     if (!currentUser) return

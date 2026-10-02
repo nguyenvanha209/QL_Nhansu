@@ -32,7 +32,16 @@ export interface ChiTietDeXuat {
   ngayDenHanCu?: string
   /** Minh chứng riêng của người này (VD giấy khen khi nâng bậc trước hạn) */
   minhChung?: MinhChung[]
+  /**
+   * Phụ cấp thâm niên vượt khung (%) - dòng của người đã ở bậc cuối trong phiếu nâng bậc thường xuyên:
+   * giữ nguyên bậc, hưởng 5% (lần đầu) rồi mỗi năm +1% (TT 08/2013, TT 03/2021). Có tnvkMoi = dòng vượt khung.
+   */
+  tnvkCu?: number
+  tnvkMoi?: number
 }
+
+/** Dòng phụ cấp thâm niên vượt khung (người ở bậc cuối) trong phiếu nâng bậc thường xuyên */
+export const laDongVuotKhung = (r: Pick<ChiTietDeXuat, 'tnvkMoi'>) => r.tnvkMoi != null
 
 export function laDeXuatPhuCapThamNien(loai: LoaiDeXuat): boolean {
   return loai === 'PHU_CAP_THAM_NIEN'
@@ -114,7 +123,7 @@ export const LOAI_DE_XUAT_LABELS: Record<LoaiDeXuat, string> = {
 export const NGHIEP_VU_LOAI: Record<LoaiDeXuat, { chonNguoi: string; dieuChinh: string; minhChung?: string; tomTat: string; minhChungNgan?: string }> = {
   NANG_BAC: {
     chonNguoi: 'Theo niên hạn: chọn năm, đợt 6 tháng; bảng gợi ý liệt kê người đến hạn nâng bậc trong đợt.',
-    dieuChinh: 'Giữ ngạch; lên 1 bậc theo bảng lương, hệ số tự điền; mốc hưởng mới = ngày đến hạn. Người ở bậc cuối không nâng bậc - xét phụ cấp thâm niên vượt khung.',
+    dieuChinh: 'Giữ ngạch; lên 1 bậc theo bảng lương, hệ số tự điền; mốc hưởng mới = ngày đến hạn. Người ở bậc cuối giữ bậc, hưởng phụ cấp thâm niên vượt khung: 5% lần đầu (sau 36 tháng, loại B/C 24 tháng), mỗi năm sau +1%.',
     tomTat: 'Chọn theo đợt 6 tháng; +1 bậc, mốc = ngày đến hạn',
   },
   PHU_CAP_THAM_NIEN: {

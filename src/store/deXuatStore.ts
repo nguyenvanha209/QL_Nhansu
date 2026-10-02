@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import type { DeXuatLuong, TrangThaiDeXuat, ChiTietDeXuat } from '@/types/deXuat'
+import { laDongVuotKhung } from '@/types/deXuat'
 import type { LyDoNangLuong } from '@/types/luong'
 import { coPhuCapThamNien } from '@/types/vienChuc'
 import { persistStorage } from '@/lib/supabase'
@@ -238,8 +239,44 @@ export const useDeXuatStore = create<DeXuatState>()(
           const { addHeSoLuong, deactivateHeSoLuong, getActiveHeSo, addLichSuBienDong, addNhatKy } =
             useLuongStore.getState()
           const { updateVienChuc } = useVienChucStore.getState()
+          const loaiTnvk = useDanhMucStore.getState().loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN_VK')
 
           dx.chiTiet.forEach((ct: ChiTietDeXuat) => {
+            // Người ở bậc cuối: giữ bản lương, ghi phụ cấp thâm niên vượt khung mới;
+            // lần xét tiếp theo sau 1 năm (+1%) nên dời ngày nâng lương tiếp theo thêm 1 năm
+            if (laDongVuotKhung(ct)) {
+              const lg = useLuongStore.getState()
+              const curHs = lg.getActiveHeSo(ct.vienChucId)
+              if (curHs) {
+                const tiep = new Date(ct.ngayHieuLuc)
+                tiep.setFullYear(tiep.getFullYear() + 1)
+                lg.updateHeSoLuong(curHs.id, { ngayNangLuongTiepTheo: tiep.toISOString().slice(0, 10) })
+              }
+              if (loaiTnvk) {
+                const cuPc = lg.getActivePhuCaps(ct.vienChucId).find((p) => p.loaiPhuCapId === loaiTnvk.id)
+                if (cuPc) lg.deactivatePhuCap(cuPc.id)
+                lg.addPhuCap({
+                  vienChucId: ct.vienChucId,
+                  loaiPhuCapId: loaiTnvk.id,
+                  giaTri: ct.tnvkMoi ?? 0,
+                  ngayHieuLuc: ct.ngayHieuLuc,
+                  ghiChu: `Theo đề xuất ${dx.ma}`,
+                  isActive: true,
+                  createdBy: actorId,
+                })
+              }
+              addLichSuBienDong({
+                vienChucId: ct.vienChucId,
+                loai: 'PHU_CAP',
+                truongThayDoi: 'Phụ cấp thâm niên vượt khung',
+                giaTriCu: `${ct.tnvkCu ?? 0}%`,
+                giaTriMoi: `${ct.tnvkMoi ?? 0}%`,
+                ngayThayDoi: ct.ngayHieuLuc,
+                nguoiThayDoiId: actorId,
+                deXuatId: id,
+              })
+              return
+            }
             const cur = getActiveHeSo(ct.vienChucId)
             if (cur) deactivateHeSoLuong(cur.id)
 
@@ -252,6 +289,8 @@ export const useDeXuatStore = create<DeXuatState>()(
               chucDanhId: ct.chucDanhMoiId,
               bac: ct.bacMoi,
               heSo: ct.heSoMoi,
+              // Hệ số chênh lệch bảo lưu đi theo người khi nâng bậc - trước đây bản lương mới bỏ mất phần này
+              ...(cur?.heSoBaoLuu ? { heSoBaoLuu: cur.heSoBaoLuu } : {}),
               ngayHieuLuc: ct.ngayHieuLuc,
               ngayNangLuongTiepTheo: ngayTiepTheo.toISOString().slice(0, 10),
               lyDo: 'NANG_BAC' as LyDoNangLuong,

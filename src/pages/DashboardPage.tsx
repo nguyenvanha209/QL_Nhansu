@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Row, Col, Card, Statistic, Table, Tag, Select, Typography, Space, Badge, Segmented } from 'antd'
+import { Row, Col, Card, Statistic, Table, Tag, Select, Typography, Space, Badge, Segmented, Alert } from 'antd'
 import { TeamOutlined, FileTextOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LabelList } from 'recharts'
@@ -8,6 +8,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import DanhSachNangLuongModal from '@/components/DanhSachNangLuongModal'
+import { useThongBaoMoi } from '@/hooks/useThongBaoMoi'
 import { useAuth } from '@/hooks/useAuth'
 import { filterRetirementInYears } from '@/utils/retirement'
 import { getReviewUrgencyColor } from '@/utils/calculations'
@@ -40,6 +41,7 @@ export default function DashboardPage() {
   const deXuats = useMemo(() => allDeXuats.filter((d) => !scopeDonViId || d.donViId === scopeDonViId), [allDeXuats, scopeDonViId])
   const salaryAlerts = useSalaryAlerts(scopeDonViId, 90)
   const [moNangLuong, setMoNangLuong] = useState(false)
+  const soThongBaoMoi = useThongBaoMoi()
   const [retireYears, setRetireYears] = useState(3)
 
   // Chia 2 chiều: nhóm vị trí (hàng) × nhóm loại hình (cột). Tài khoản trường chỉ có một cấp học nên không cần lọc.
@@ -114,6 +116,16 @@ export default function DashboardPage() {
         </Title>
         <Text type="secondary" style={{ fontSize: 13 }}>{dateStr}</Text>
       </div>
+      {soThongBaoMoi > 0 && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          title={`UBND phường có ${soThongBaoMoi} thông báo kết quả nâng lương, phụ cấp thâm niên mới`}
+          description={scopeDonViId ? 'Danh sách theo cấp học của trường - căn cứ để Hiệu trưởng ban hành quyết định theo thẩm quyền.' : undefined}
+          action={<a onClick={() => navigate('/thong-bao-ket-qua')}>Xem thông báo</a>}
+        />
+      )}
 
       {/* KPI row - 4 thẻ ngang */}
       <Row gutter={[12, 12]}>

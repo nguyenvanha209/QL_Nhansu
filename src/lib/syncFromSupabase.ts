@@ -10,6 +10,7 @@ import { useLuongStore } from '@/store/luongStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useChuyenCongTacStore } from '@/store/chuyenCongTacStore'
 import { useNhatKyStore } from '@/store/nhatKyStore'
+import { useThongBaoStore } from '@/store/thongBaoStore'
 
 // Không đồng bộ useAuthStore: phiên đăng nhập là của riêng từng máy.
 const STORES = [
@@ -20,6 +21,7 @@ const STORES = [
   useDeXuatStore,
   useChuyenCongTacStore,
   useNhatKyStore,
+  useThongBaoStore,
 ]
 
 // Sau khi tầng đồng bộ hợp nhất dữ liệu, store tương ứng phải nạp lại để bộ nhớ
@@ -33,6 +35,7 @@ const KHO_THEO_KHOA: Record<string, { persist: { rehydrate: () => void | Promise
   'ql-de-xuat': useDeXuatStore,
   'ql-chuyen-cong-tac': useChuyenCongTacStore,
   'ql-nhat-ky': useNhatKyStore,
+  'ql-thong-bao': useThongBaoStore,
 }
 
 // Khai báo chia kho theo đơn vị trường.

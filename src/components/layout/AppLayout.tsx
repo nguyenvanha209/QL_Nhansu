@@ -8,12 +8,13 @@ import {
   DashboardOutlined, TeamOutlined, FileTextOutlined,
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
-  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined,
+  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { ROLE_LABELS } from '@/types/auth'
 import ChiBaoDongBo from './ChiBaoDongBo'
+import { useThongBaoMoi } from '@/hooks/useThongBaoMoi'
 
 const { Header, Sider, Content, Footer } = Layout
 const { Text } = Typography
@@ -31,6 +32,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/quy-mo': 'Định mức viên chức và Cơ cấu VTVL',
   '/de-xuat': 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
   '/chuyen-cong-tac': 'Chuyển công tác',
+  '/thong-bao-ket-qua': 'Thông báo kết quả nâng lương',
   '/du-bao': 'Dự báo nghỉ hưu',
   '/bao-cao': 'Báo cáo',
   '/admin/danh-muc': 'Danh mục hệ thống',
@@ -43,6 +45,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { currentUser, logout, scopeDonViId, hasPermission } = useAuth()
+  const soThongBaoMoi = useThongBaoMoi()
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -59,6 +62,12 @@ export default function AppLayout() {
       key: '/de-xuat', icon: <FileTextOutlined />,
       label: 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
       title: 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
+      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
+    },
+    hasPermission('deXuat', 'read') && {
+      key: '/thong-bao-ket-qua', icon: <NotificationOutlined />,
+      label: <Badge count={soThongBaoMoi} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Thông báo kết quả nâng lương</span></Badge>,
+      title: 'Thông báo kết quả nâng lương, phụ cấp thâm niên',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },

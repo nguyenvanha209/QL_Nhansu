@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import RoleGuard from '@/components/common/RoleGuard'
+import ThongBaoKetQuaPage from '@/pages/thongBao/ThongBaoKetQuaPage'
 import { useAuth } from '@/hooks/useAuth'
 
 import LoginPage from '@/pages/LoginPage'
@@ -55,6 +56,7 @@ export default function AppRouter() {
           <Route path="de-xuat/new" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><TaoDeXuatPage /></RoleGuard>} />
           <Route path="de-xuat/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><DeXuatDetailPage /></RoleGuard>} />
           <Route path="de-xuat/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><TaoDeXuatPage /></RoleGuard>} />
+          <Route path="thong-bao-ket-qua" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><ThongBaoKetQuaPage /></RoleGuard>} />
           <Route path="du-bao" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'duBao', action: 'read' }}><DuBaoNghiHuuPage /></RoleGuard>} />
           <Route path="bao-cao" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'baoCao', action: 'read' }}><BaoCaoPage /></RoleGuard>} />
           <Route path="admin/danh-muc" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><DanhMucPage /></RoleGuard>} />

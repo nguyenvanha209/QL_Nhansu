@@ -9,7 +9,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import type { ChiTietDeXuat, LoaiDeXuat } from '@/types/deXuat'
-import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT } from '@/types/deXuat'
+import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import { isDangCongTac, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vienChuc'
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
@@ -52,6 +52,7 @@ export default function TaoDeXuatPage() {
   const phuCapVienChucs = useLuongStore((s) => s.phuCapVienChucs)
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const loaiPctn = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
+  const loaiTnvk = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN_VK')
   const nguoiTaiLen = currentUser?.fullName ?? ''
 
   // ── Sửa phiếu: chỉ bản nháp hoặc phiếu bị yêu cầu bổ sung ──
@@ -108,12 +109,17 @@ export default function TaoDeXuatPage() {
     }
     const bang = bangCua(hsl.chucDanhId)
     const bacCuoi = bang.length ? bang[bang.length - 1].bac : undefined
-    // Bậc cuối của bảng: không còn nâng bậc, chuyển sang xét PC thâm niên vượt khung
-    if (!laPctn && LOAI_NANG_BAC.includes(loaiDeXuat) && bacCuoi !== undefined && hsl.bac >= bacCuoi) {
+    // Bậc cuối của bảng: phiếu nâng bậc thường xuyên ghi thành dòng phụ cấp thâm niên vượt khung (giữ bậc);
+    // phiếu nâng trước hạn thì không áp dụng
+    const laVuotKhung = loaiDeXuat === 'NANG_BAC' && bacCuoi !== undefined && hsl.bac >= bacCuoi
+    if (!laPctn && loaiDeXuat === 'NANG_TRUOC_HAN' && bacCuoi !== undefined && hsl.bac >= bacCuoi) {
       message.warning(`${vc.ho} ${vc.ten} đã ở bậc cuối (${hsl.bac}/${bacCuoi}) của bảng ${cdCua(hsl.chucDanhId)?.bangLuong ?? ''} - không nâng bậc, xét phụ cấp thâm niên vượt khung`)
       return
     }
-    const nextBac = LOAI_NANG_BAC.includes(loaiDeXuat) ? bang.find((b) => b.bac === hsl.bac + 1) : bang.find((b) => b.bac === hsl.bac)
+    const nextBac = LOAI_NANG_BAC.includes(loaiDeXuat) && !laVuotKhung ? bang.find((b) => b.bac === hsl.bac + 1) : bang.find((b) => b.bac === hsl.bac)
+    const tnvkHienTai = loaiTnvk
+      ? chonBanDangHuong(phuCapVienChucs.filter((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiTnvk.id))?.giaTri ?? 0
+      : 0
     // PCTN đang hưởng (nếu có) để cán bộ đối chiếu khi nhập mức mới
     const pctnHienTai = loaiPctn
       ? chonBanDangHuong(phuCapVienChucs.filter((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiPctn.id))?.giaTri ?? 0
@@ -136,9 +142,11 @@ export default function TaoDeXuatPage() {
         : loaiDeXuat === 'NANG_TRUOC_HAN' ? 'Nâng bậc trước thời hạn do lập thành tích xuất sắc'
         : loaiDeXuat === 'CHUYEN_NGACH' ? 'Chuyển ngạch / thay đổi hạng chức danh'
         : loaiDeXuat === 'DIEU_CHINH' ? 'Điều chỉnh hệ số lương'
+        : laVuotKhung ? (tnvkHienTai > 0 ? 'Nâng phụ cấp thâm niên vượt khung' : 'Hưởng phụ cấp thâm niên vượt khung lần đầu')
         : 'Đủ thời hạn nâng bậc thường xuyên',
       pctnCu: pctnHienTai,
       pctnMoi: laPctn ? (pctnHienTai > 0 ? pctnHienTai + 1 : 5) : pctnHienTai,
+      ...(laVuotKhung ? { tnvkCu: tnvkHienTai, tnvkMoi: tnvkHienTai > 0 ? tnvkHienTai + 1 : 5 } : {}),
     }])
   }
 
@@ -261,7 +269,7 @@ export default function TaoDeXuatPage() {
       const ten = vc ? `${vc.ho} ${vc.ten}` : r.vienChucId
       if (!r.ngayHieuLuc) loi.push(`${ten}: chưa có mốc hưởng`)
       if (loai === 'PHU_CAP_THAM_NIEN') return
-      if (LOAI_NANG_BAC.includes(loai) && r.bacMoi <= r.bacCu && r.chucDanhMoiId === r.chucDanhCuId) loi.push(`${ten}: bậc mới phải cao hơn bậc ${r.bacCu}`)
+      if (LOAI_NANG_BAC.includes(loai) && !laDongVuotKhung(r) && r.bacMoi <= r.bacCu && r.chucDanhMoiId === r.chucDanhCuId) loi.push(`${ten}: bậc mới phải cao hơn bậc ${r.bacCu}`)
       if (!bangCua(r.chucDanhMoiId).some((b) => b.bac === r.bacMoi)) loi.push(`${ten}: bậc ${r.bacMoi} không có trong bảng lương của ngạch mới`)
       // Nâng trước hạn: mốc hưởng mới phải sớm hơn ngày đến hạn, nhưng không quá 12 tháng
       if (loai === 'NANG_TRUOC_HAN' && r.ngayDenHanCu && r.ngayHieuLuc) {
@@ -387,7 +395,7 @@ export default function TaoDeXuatPage() {
         },
         {
           title: 'Bậc mới', key: 'bac_moi', width: 150,
-          render: (_: any, r: ChiTietDeXuat, idx: number) => (
+          render: (_: any, r: ChiTietDeXuat, idx: number) => laDongVuotKhung(r) ? <Text type="secondary">Giữ bậc {r.bacCu} (bậc cuối)</Text> : (
             <Select
               size="small"
               style={{ width: '100%' }}
@@ -413,6 +421,15 @@ export default function TaoDeXuatPage() {
             )
           },
         },
+        ...(loaiDeXuat === 'NANG_BAC' ? [{
+          title: <Tooltip title="Người ở bậc cuối: 5% lần đầu, mỗi năm sau +1% (TT 08/2013, TT 03/2021)">PC vượt khung</Tooltip>, key: 'tnvk', width: 130,
+          render: (_: any, r: ChiTietDeXuat, idx: number) => laDongVuotKhung(r) ? (
+            <Space size={4}>
+              <Text type="secondary">{r.tnvkCu ?? 0}% →</Text>
+              <InputNumber size="small" value={r.tnvkMoi} min={5} max={100} suffix="%" style={{ width: 72 }} onChange={(v) => updateChiTiet(idx, { tnvkMoi: v ?? 5 })} />
+            </Space>
+          ) : <Text type="secondary">-</Text>,
+        }] : []),
         {
           title: 'Mốc hưởng mới', key: 'nhl', width: 140,
           render: (_: any, r: ChiTietDeXuat, idx: number) => <DatePicker size="small" value={r.ngayHieuLuc ? dayjs(r.ngayHieuLuc) : null} format="DD/MM/YYYY" onChange={(d) => updateChiTiet(idx, { ngayHieuLuc: d?.format('YYYY-MM-DD') ?? '' })} />,
@@ -421,6 +438,9 @@ export default function TaoDeXuatPage() {
           title: 'Nâng bậc kế tiếp (dự kiến)', key: 'ke_tiep', width: 150,
           render: (_: any, r: ChiTietDeXuat) => {
             if (!r.ngayHieuLuc) return ''
+            if (laDongVuotKhung(r)) {
+              return <Tag color="purple">Vượt khung {(r.tnvkMoi ?? 5) + 1}% từ {formatDate(dayjs(r.ngayHieuLuc).add(1, 'year').format('YYYY-MM-DD'))}</Tag>
+            }
             const bang = bangCua(r.chucDanhMoiId)
             const tg = thoiGianNangBac(r.chucDanhMoiId, r.bacMoi)
             const ngay = formatDate(dayjs(r.ngayHieuLuc).add(tg, 'year').format('YYYY-MM-DD'))
@@ -529,14 +549,14 @@ export default function TaoDeXuatPage() {
           rowSelection={{
             selectedRowKeys: selectedGoiY,
             onChange: (keys) => setSelectedGoiY(keys as string[]),
-            getCheckboxProps: (r) => ({ disabled: r.daBacCuoi }),
+            // Người ở bậc cuối vẫn chọn được: thêm thành dòng phụ cấp thâm niên vượt khung
           }}
           locale={{ emptyText: 'Không có viên chức nào đến kỳ nâng lương trong đợt này' }}
           columns={[
             { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht' },
             {
               title: 'Bậc/Hệ số hiện tại', key: 'bh', width: 200,
-              render: (_: any, r: any) => <>Bậc {r.bac} - {r.heSo}{r.daBacCuoi && <Tag color="purple" style={{ marginLeft: 6 }}>Bậc cuối - xét vượt khung</Tag>}</>,
+              render: (_: any, r: any) => <>Bậc {r.bac} - {r.heSo}{r.daBacCuoi && <Tag color="purple" style={{ marginLeft: 6 }}>Bậc cuối - phụ cấp vượt khung</Tag>}</>,
             },
             { title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 160, render: (v: string) => <Tag color="blue">{formatDate(v)}</Tag> },
           ]}

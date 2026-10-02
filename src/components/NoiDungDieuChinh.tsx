@@ -30,6 +30,7 @@ export default function NoiDungDieuChinh({ r, chucDanhs }: { r: ChiTietDeXuat; c
       {dong('Bậc', `Bậc ${r.bacCu}`, `Bậc ${r.bacMoi}`)}
       {dong('Hệ số', hs(r.heSoCu), hs(r.heSoMoi))}
       {dong('Mốc hưởng', r.ngayHieuLucCu ? formatDate(r.ngayHieuLucCu) : '-', r.ngayHieuLuc ? formatDate(r.ngayHieuLuc) : '-')}
+      {r.tnvkMoi != null && dong('Vượt khung', `${r.tnvkCu ?? 0}%`, `${r.tnvkMoi}%`)}
     </div>
   )
 }

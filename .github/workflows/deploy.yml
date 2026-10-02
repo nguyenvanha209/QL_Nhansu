@@ -32,3 +32,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          # Tên miền riêng (bản ghi CNAME ql-nhansu -> nguyenvanha209.github.io tại PA Việt Nam)
+          cname: ql-nhansu.ngoquyen.edu.vn

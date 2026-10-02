@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid'
 import type { DeXuatLuong, TrangThaiDeXuat, ChiTietDeXuat } from '@/types/deXuat'
 import { laDongVuotKhung } from '@/types/deXuat'
 import type { LyDoNangLuong } from '@/types/luong'
-import { coPhuCapThamNien } from '@/types/vienChuc'
+import { laDienPhuCapThamNien } from '@/utils/nhomViTri'
 import { persistStorage } from '@/lib/supabase'
 import { useLuongStore } from './luongStore'
 import { useVienChucStore } from './vienChucStore'
@@ -206,7 +206,7 @@ export const useDeXuatStore = create<DeXuatState>()(
             const cuoi = quaTrinh[quaTrinh.length - 1]
             if (!loaiPctn || !cuoi) return
             const vc = getVienChuc(ct.vienChucId)
-            if (vc && !coPhuCapThamNien(vc.vtvl, chucDanhs.find((c) => c.id === vc.chucDanhId)?.nhom)) return
+            if (vc && !laDienPhuCapThamNien(vc, chucDanhs.find((c) => c.id === vc.chucDanhId)?.nhom)) return
 
             const cu = getActivePhuCaps(ct.vienChucId).find((p) => p.loaiPhuCapId === loaiPctn.id)
             if (cu) deactivatePhuCap(cu.id)
@@ -247,7 +247,7 @@ export const useDeXuatStore = create<DeXuatState>()(
             if (!loaiPctn) return
             // Chốt chặn: nhân viên không hưởng phụ cấp thâm niên, bỏ qua dù phiếu có lọt
             const vc = getVienChuc(ct.vienChucId)
-            if (vc && !coPhuCapThamNien(vc.vtvl, chucDanhs.find((c) => c.id === vc.chucDanhId)?.nhom)) return
+            if (vc && !laDienPhuCapThamNien(vc, chucDanhs.find((c) => c.id === vc.chucDanhId)?.nhom)) return
 
             const cu = getActivePhuCaps(ct.vienChucId).find((p) => p.loaiPhuCapId === loaiPctn.id)
             if (cu) deactivatePhuCap(cu.id)

@@ -11,8 +11,9 @@ import { useAuth } from '@/hooks/useAuth'
 import type { ChiTietDeXuat, LoaiDeXuat, KhaiPctnLanDau, DongQuaTrinhPctn } from '@/types/deXuat'
 import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
-import { isDangCongTac, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vienChuc'
+import { isDangCongTac, nhanLuongTheoTien } from '@/types/vienChuc'
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
+import { laDienPhuCapThamNien, nhomCoBan } from '@/utils/nhomViTri'
 import MinhChungField from '@/components/MinhChungField'
 import { lamMoiNgay } from '@/lib/supabase'
 import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
@@ -91,8 +92,8 @@ export default function TaoDeXuatPage() {
 
   // Phiếu PCTN chỉ áp dụng cho CBQL và giáo viên (nhân viên không hưởng phụ cấp thâm niên);
   // hồ sơ cũ chưa gán VTVL thì xét theo nhóm ngạch/hạng đang xếp
-  const duocHuongPctn = (v: { vtvl?: string; chucDanhId: string }) =>
-    coPhuCapThamNien(v.vtvl, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom)
+  const duocHuongPctn = (v: { vtvl?: string; chucVu?: string; chucDanhId: string }) =>
+    laDienPhuCapThamNien(v as { vtvl?: string; chucVu?: string }, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom)
 
   const vcOptions = vienChucs
     .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
@@ -243,7 +244,7 @@ export default function TaoDeXuatPage() {
     if (!laPctn) return []
     return vienChucs
       .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
-      .filter((v) => !!v.mocHuongPctn && coPhuCapThamNien(v.vtvl, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom))
+      .filter((v) => !!v.mocHuongPctn && duocHuongPctn(v))
       .filter((v) => !chiTiet.some((c) => c.vienChucId === v.id))
       .map((v) => {
         const moc = dayjs(v.mocHuongPctn!)
@@ -274,7 +275,8 @@ export default function TaoDeXuatPage() {
       .filter((v) => !phuCapVienChucs.some((p) => p.vienChucId === v.id && p.isActive && p.loaiPhuCapId === loaiPctn.id && p.giaTri > 0))
       .map((v) => {
         const duKien = ngayDu5Nam({ batDauBhxh: v.ngayVaoNganh?.slice(0, 7), thangTapSu: 12, thangKhongTinhKhac: 0 })
-        return { id: v.id, hoTen: `${v.ho} ${v.ten}`, ngayVaoNganh: v.ngayVaoNganh, ngayTuyenDung: v.ngayVaoBienChe, duKien }
+        const laCbql = nhomCoBan(v, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom) === 'CBQL'
+        return { id: v.id, hoTen: `${v.ho} ${v.ten}`, viTri: laCbql ? 'Cán bộ quản lý' : 'Giáo viên', ngayVaoNganh: v.ngayVaoNganh, ngayTuyenDung: v.ngayVaoBienChe, duKien }
       })
       // Liệt kê mọi người chưa hưởng (hồ sơ có thể chưa ghi thời gian dạy ngoài công lập); người dự kiến đủ trong kỳ lên đầu
       .map((x) => ({ ...x, duTrongKy: !!x.duKien && x.duKien <= dotRange.end }))
@@ -667,7 +669,7 @@ export default function TaoDeXuatPage() {
         </>}
 
         {laLanDau && <>
-        <Divider plain>CBQL/Giáo viên chưa hưởng phụ cấp thâm niên (dự kiến đủ 5 năm trong kỳ tô xanh)</Divider>
+        <Divider plain>Cán bộ quản lý, giáo viên chưa hưởng phụ cấp thâm niên (dự kiến đủ 5 năm trong kỳ tô xanh) - nhân viên không thuộc diện</Divider>
         <Space wrap style={{ marginBottom: 12 }}>
           <InputNumber value={dotNam} onChange={(v) => setDotNam(v ?? currentYear)} style={{ width: 100 }} />
           <Select value={dotKy} onChange={setDotKy} style={{ width: 180 }} options={[{ value: 'H1', label: '6 tháng đầu năm' }, { value: 'H2', label: '6 tháng cuối năm' }]} />
@@ -687,6 +689,7 @@ export default function TaoDeXuatPage() {
           locale={{ emptyText: 'Mọi CBQL, giáo viên đều đã hưởng phụ cấp thâm niên' }}
           columns={[
             { title: 'Họ và tên', dataIndex: 'hoTen', key: 'ht' },
+            { title: 'Vị trí', dataIndex: 'viTri', key: 'vt', width: 130 },
             { title: 'Ngày vào ngành', key: 'vn', width: 130, render: (_: any, r: any) => (r.ngayVaoNganh ? formatDate(r.ngayVaoNganh) : <Text type="warning">Chưa có</Text>) },
             { title: 'Ngày tuyển dụng', key: 'td', width: 130, render: (_: any, r: any) => (r.ngayTuyenDung ? formatDate(r.ngayTuyenDung) : '-') },
             { title: 'Dự kiến đủ 5 năm', key: 'dk', width: 170, render: (_: any, r: any) => (r.duKien ? <Tag color={r.duTrongKy ? 'green' : 'default'}>{formatDate(r.duKien)}{r.duTrongKy ? ' - trong kỳ' : ''}</Tag> : <Text type="secondary">Khai để tính</Text>) },

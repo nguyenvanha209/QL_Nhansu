@@ -62,6 +62,16 @@ export function nhomCoBan(vc: Pick<VienChuc, 'vtvl' | 'chucVu'>, nhomChucDanh?: 
   return 'NHAN_VIEN'
 }
 
+/**
+ * Diện xét phụ cấp thâm niên nhà giáo (NĐ 77/2021): chỉ cán bộ quản lý và giáo viên - nhân viên (kế toán, văn thư,
+ * thư viện, y tế…) không hưởng. Xét cả VTVL ghi bằng chữ và nhóm ngạch, ngạch nhóm nhân viên thì loại.
+ */
+export function laDienPhuCapThamNien(vc: Pick<VienChuc, 'vtvl' | 'chucVu'>, nhomChucDanh?: NhomChucDanh): boolean {
+  if (nhomChucDanh === 'NHAN_VIEN') return false
+  const nhom = nhomCoBan(vc, nhomChucDanh)
+  return nhom === 'CBQL' || nhom === 'GIAO_VIEN'
+}
+
 export function nhomViTri(vc: Pick<VienChuc, 'vtvl' | 'congViec' | 'chucVu'>, nhomChucDanh?: NhomChucDanh): NhomViTri {
   const nhom = nhomCoBan(vc, nhomChucDanh)
   if (nhom !== 'NHAN_VIEN') return nhom

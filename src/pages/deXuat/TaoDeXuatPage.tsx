@@ -1,14 +1,14 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, Typography, Divider, Tag, App, Alert, Tooltip, Result } from 'antd'
-import { DeleteOutlined, ArrowLeftOutlined, SendOutlined, WarningOutlined } from '@ant-design/icons'
+import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, Typography, Divider, Tag, App, Alert, Tooltip, Result, Modal, Row, Col } from 'antd'
+import { DeleteOutlined, ArrowLeftOutlined, SendOutlined, WarningOutlined, EditOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import type { ChiTietDeXuat, LoaiDeXuat } from '@/types/deXuat'
+import type { ChiTietDeXuat, LoaiDeXuat, KhaiPctnLanDau, DongQuaTrinhPctn } from '@/types/deXuat'
 import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import { isDangCongTac, coPhuCapThamNien, nhanLuongTheoTien } from '@/types/vienChuc'
@@ -17,6 +17,7 @@ import MinhChungField from '@/components/MinhChungField'
 import { lamMoiNgay } from '@/lib/supabase'
 import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
 import type { MinhChung } from '@/lib/minhChung'
+import { goiYQuaTrinh, huongTuMacDinh, ngayDu5Nam, dongCuoi, ghiChuMacDinh } from '@/utils/pctnLanDau'
 
 const { Title, Text } = Typography
 
@@ -49,6 +50,9 @@ export default function TaoDeXuatPage() {
   const [selectedDonVi, setSelectedDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const [loaiDeXuat, setLoaiDeXuat] = useState<LoaiDeXuat>('NANG_BAC')
   const laPctn = loaiDeXuat === 'PHU_CAP_THAM_NIEN'
+  // Xếp phụ cấp thâm niên lần đầu: kế toán khai thời gian đóng BHXH, thời gian không tính; hệ thống tính mức hưởng
+  const laLanDau = loaiDeXuat === 'PCTN_LAN_DAU'
+  const [dangKhai, setDangKhai] = useState<number | null>(null)
   const phuCapVienChucs = useLuongStore((s) => s.phuCapVienChucs)
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const loaiPctn = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
@@ -92,7 +96,7 @@ export default function TaoDeXuatPage() {
 
   const vcOptions = vienChucs
     .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
-    .filter((v) => !laPctn || duocHuongPctn(v))
+    .filter((v) => !(laPctn || laLanDau) || duocHuongPctn(v))
     .sort(soSanhVienChuc((v) => chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom))
     .map((v) => ({ value: v.id, label: `${v.ho} ${v.ten}` }))
 
@@ -103,7 +107,7 @@ export default function TaoDeXuatPage() {
     const hsl = heSoLuongs.find((h) => h.vienChucId === vcId && h.isActive)
     if (!vc) return
     if (!hsl) { message.warning(`${vc.ho} ${vc.ten} chưa có bậc, hệ số lương - khai trong hồ sơ trước`); return }
-    if (laPctn && !duocHuongPctn(vc)) {
+    if ((laPctn || laLanDau) && !duocHuongPctn(vc)) {
       message.warning('Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên')
       return
     }
@@ -124,7 +128,40 @@ export default function TaoDeXuatPage() {
     const pctnHienTai = loaiPctn
       ? chonBanDangHuong(phuCapVienChucs.filter((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiPctn.id))?.giaTri ?? 0
       : 0
-    // Phiếu PCTN: gợi ý mốc mới = mốc hưởng PCTN hiện tại + 1 năm, mức mới = mức cũ + 1% (chưa có thì 5%)
+    // Nâng PCTN chỉ cho người đã hưởng; chưa hưởng thì phải xếp lần đầu (khai thời gian đóng BHXH, có minh chứng)
+    if (laPctn && pctnHienTai <= 0) {
+      message.warning(`${vc.ho} ${vc.ten} chưa hưởng phụ cấp thâm niên - lập phiếu "Xếp phụ cấp thâm niên nhà giáo lần đầu"`)
+      return
+    }
+    if (laLanDau && pctnHienTai > 0) {
+      message.warning(`${vc.ho} ${vc.ten} đang hưởng phụ cấp thâm niên ${pctnHienTai}% - dùng phiếu "Nâng phụ cấp thâm niên"`)
+      return
+    }
+    if (laLanDau) {
+      const khai: KhaiPctnLanDau = {
+        ngayTuyenDung: vc.ngayVaoBienChe,
+        trinhDo: vc.trinhDoChuyenMon,
+        batDauBhxh: vc.ngayVaoNganh ? vc.ngayVaoNganh.slice(0, 7) : undefined,
+        thangTapSu: 12,
+        thangKhongTinhKhac: 0,
+        huongTu: huongTuMacDinh(vc.ngayVaoBienChe),
+        quaTrinh: [],
+      }
+      khai.quaTrinh = goiYQuaTrinh(khai, dotRange.end)
+      const cuoi = dongCuoi(khai.quaTrinh)
+      setChiTiet((prev) => [...prev, {
+        vienChucId: vcId,
+        chucDanhCuId: hsl.chucDanhId, chucDanhMoiId: hsl.chucDanhId,
+        bacCu: hsl.bac, heSoCu: hsl.heSo, bacMoi: hsl.bac, heSoMoi: hsl.heSo,
+        ngayHieuLuc: cuoi?.thoiGianHuong ?? '',
+        lyDo: 'Đủ 5 năm giảng dạy có đóng BHXH bắt buộc - xếp phụ cấp thâm niên nhà giáo lần đầu',
+        ghiChu: ghiChuMacDinh(khai),
+        pctnCu: 0, pctnMoi: cuoi?.tyLe ?? 0,
+        lanDau: khai,
+      }])
+      return
+    }
+    // Phiếu PCTN: gợi ý mốc mới = mốc hưởng PCTN hiện tại + 1 năm, mức mới = mức cũ + 1%
     const mocPctnMoi = vc.mocHuongPctn ? dayjs(vc.mocHuongPctn).add(1, 'year').format('YYYY-MM-DD') : undefined
     // Mốc hưởng mặc định: nâng thường xuyên = ngày đến hạn nâng bậc; loại khác = hôm nay
     const mocMacDinh = laPctn ? mocPctnMoi : loaiDeXuat === 'NANG_BAC' ? hsl.ngayNangLuongTiepTheo : undefined
@@ -228,6 +265,26 @@ export default function TaoDeXuatPage() {
       .sort((a, b) => a.anniversaryStr.localeCompare(b.anniversaryStr))
   }, [laPctn, vienChucs, selectedDonVi, chiTiet, dotNam, dotRange, loaiPctn, phuCapVienChucs, chucDanhs])
 
+  const [selectedGoiYLanDau, setSelectedGoiYLanDau] = useState<string[]>([])
+  const goiYLanDauData = useMemo(() => {
+    if (!laLanDau || !loaiPctn) return []
+    return vienChucs
+      .filter((v) => !selectedDonVi || v.donViId === selectedDonVi)
+      .filter((v) => duocHuongPctn(v) && !chiTiet.some((c) => c.vienChucId === v.id))
+      .filter((v) => !phuCapVienChucs.some((p) => p.vienChucId === v.id && p.isActive && p.loaiPhuCapId === loaiPctn.id && p.giaTri > 0))
+      .map((v) => {
+        const duKien = ngayDu5Nam({ batDauBhxh: v.ngayVaoNganh?.slice(0, 7), thangTapSu: 12, thangKhongTinhKhac: 0 })
+        return { id: v.id, hoTen: `${v.ho} ${v.ten}`, ngayVaoNganh: v.ngayVaoNganh, ngayTuyenDung: v.ngayVaoBienChe, duKien }
+      })
+      // Liệt kê mọi người chưa hưởng (hồ sơ có thể chưa ghi thời gian dạy ngoài công lập); người dự kiến đủ trong kỳ lên đầu
+      .map((x) => ({ ...x, duTrongKy: !!x.duKien && x.duKien <= dotRange.end }))
+      .sort((a, b) => Number(b.duTrongKy) - Number(a.duTrongKy) || (a.duKien ?? '9').localeCompare(b.duKien ?? '9'))
+  }, [laLanDau, vienChucs, selectedDonVi, chiTiet, phuCapVienChucs, loaiPctn, dotRange])
+  const themDaChonLanDau = () => {
+    selectedGoiYLanDau.forEach((vcId) => addVC(vcId))
+    setSelectedGoiYLanDau([])
+  }
+
   const themDaChonPctn = () => {
     selectedGoiYPctn.forEach((vcId) => {
       const item = goiYPctnData.find((g) => g.id === vcId)
@@ -267,6 +324,16 @@ export default function TaoDeXuatPage() {
     chiTiet.forEach((r) => {
       const vc = vienChucs.find((v) => v.id === r.vienChucId) ?? allVienChucs.find((v) => v.id === r.vienChucId)
       const ten = vc ? `${vc.ho} ${vc.ten}` : r.vienChucId
+      if (loai === 'PCTN_LAN_DAU') {
+        const k = r.lanDau
+        if (!k?.batDauBhxh) loi.push(`${ten}: chưa khai tháng bắt đầu giảng dạy có đóng BHXH`)
+        else if (!k.quaTrinh.length) loi.push(`${ten}: chưa đủ 5 năm (60 tháng) tính hưởng đến hết kỳ - kiểm tra lại khai báo`)
+        k?.quaTrinh.forEach((q) => {
+          if (q.tyLe < 5 || !q.mocXet || !q.thoiGianHuong) loi.push(`${ten}: dòng quá trình hưởng chưa đủ tỷ lệ, mốc xét, thời gian hưởng`)
+        })
+        if (trinh && !r.minhChung?.length) loi.push(`${ten}: đính kèm minh chứng riêng (bằng cấp, QĐ tuyển dụng, QĐ lương, quá trình BHXH)`)
+        return
+      }
       if (!r.ngayHieuLuc) loi.push(`${ten}: chưa có mốc hưởng`)
       if (loai === 'PHU_CAP_THAM_NIEN') return
       if (LOAI_NANG_BAC.includes(loai) && !laDongVuotKhung(r) && r.bacMoi <= r.bacCu && r.chucDanhMoiId === r.chucDanhCuId) loi.push(`${ten}: bậc mới phải cao hơn bậc ${r.bacCu}`)
@@ -351,7 +418,43 @@ export default function TaoDeXuatPage() {
   const colXoa = { title: '', key: 'del', width: 44, render: (_: any, __: any, idx: number) => <Button size="small" danger icon={<DeleteOutlined />} onClick={() => setChiTiet((p) => p.filter((_, i) => i !== idx))} /> }
 
   const canMinhChung = LOAI_CAN_MINH_CHUNG.includes(loaiDeXuat)
-  const detailCols = laPctn
+  const thangVN = (ym?: string) => (ym ? `${ym.slice(5, 7)}/${ym.slice(0, 4)}` : '')
+  const colsLanDau = [
+    colVienChuc,
+    {
+      title: 'Khai báo', key: 'khai', width: 250,
+      render: (_: any, r: ChiTietDeXuat) => {
+        const k = r.lanDau
+        if (!k) return null
+        return (
+          <div style={{ fontSize: 12.5, lineHeight: 1.55 }}>
+            <div>Tuyển dụng: <b>{k.ngayTuyenDung ? formatDate(k.ngayTuyenDung) : <Text type="danger">chưa có</Text>}</b></div>
+            <div>Đóng BHXH giảng dạy từ: <b>{k.batDauBhxh ? thangVN(k.batDauBhxh) : <Text type="danger">chưa khai</Text>}</b></div>
+            <div>Không tính: tập sự {k.thangTapSu} tháng{k.thangKhongTinhKhac ? `, khác ${k.thangKhongTinhKhac} tháng` : ''}</div>
+          </div>
+        )
+      },
+    },
+    {
+      title: 'Đủ 5 năm', key: 'du5', width: 105,
+      render: (_: any, r: ChiTietDeXuat) => { const d = r.lanDau && ngayDu5Nam(r.lanDau); return d ? formatDate(d) : '-' },
+    },
+    {
+      title: 'Quá trình hưởng (đến hết kỳ)', key: 'qt', width: 270,
+      render: (_: any, r: ChiTietDeXuat) => (r.lanDau?.quaTrinh.length
+        ? r.lanDau.quaTrinh.map((q) => (
+            <div key={q.mocXet} style={{ fontSize: 12.5, fontVariantNumeric: 'tabular-nums' }}>
+              <b>{q.tyLe}%</b> · mốc xét {formatDate(q.mocXet)} · hưởng từ {formatDate(q.thoiGianHuong)}
+            </div>
+          ))
+        : <Text type="danger" style={{ fontSize: 12 }}>Chưa đủ 60 tháng đến hết {formatDate(dotRange.end)}</Text>),
+    },
+    { title: 'Ghi chú', key: 'gc', width: 170, render: (_: any, r: ChiTietDeXuat, idx: number) => <Input.TextArea size="small" autoSize={{ minRows: 1, maxRows: 3 }} value={r.ghiChu} onChange={(e) => updateChiTiet(idx, { ghiChu: e.target.value })} /> },
+    colMinhChung,
+    { title: '', key: 'sua', width: 90, render: (_: any, __: any, idx: number) => <Button size="small" icon={<EditOutlined />} onClick={() => setDangKhai(idx)}>Khai báo</Button> },
+    colXoa,
+  ]
+  const detailCols = laLanDau ? colsLanDau : laPctn
     ? [
         colVienChuc,
         {
@@ -563,6 +666,34 @@ export default function TaoDeXuatPage() {
         />
         </>}
 
+        {laLanDau && <>
+        <Divider plain>CBQL/Giáo viên chưa hưởng phụ cấp thâm niên (dự kiến đủ 5 năm trong kỳ tô xanh)</Divider>
+        <Space wrap style={{ marginBottom: 12 }}>
+          <InputNumber value={dotNam} onChange={(v) => setDotNam(v ?? currentYear)} style={{ width: 100 }} />
+          <Select value={dotKy} onChange={setDotKy} style={{ width: 180 }} options={[{ value: 'H1', label: '6 tháng đầu năm' }, { value: 'H2', label: '6 tháng cuối năm' }]} />
+          <Button type="primary" ghost disabled={selectedGoiYLanDau.length === 0} onClick={themDaChonLanDau}>
+            Thêm {selectedGoiYLanDau.length > 0 ? selectedGoiYLanDau.length : ''} đã chọn vào đề xuất
+          </Button>
+          <Text type="secondary" style={{ fontSize: 12 }}>Dự kiến tạm tính từ ngày vào ngành + 60 tháng + 12 tháng tập sự; khai đúng theo hồ sơ BHXH ở nút "Khai báo".</Text>
+        </Space>
+        <Table
+          dataSource={goiYLanDauData}
+          rowKey="id"
+          size="small"
+          pagination={false}
+          scroll={{ x: 600, y: 240 }}
+          style={{ marginBottom: 16 }}
+          rowSelection={{ selectedRowKeys: selectedGoiYLanDau, onChange: (keys) => setSelectedGoiYLanDau(keys as string[]) }}
+          locale={{ emptyText: 'Mọi CBQL, giáo viên đều đã hưởng phụ cấp thâm niên' }}
+          columns={[
+            { title: 'Họ và tên', dataIndex: 'hoTen', key: 'ht' },
+            { title: 'Ngày vào ngành', key: 'vn', width: 130, render: (_: any, r: any) => (r.ngayVaoNganh ? formatDate(r.ngayVaoNganh) : <Text type="warning">Chưa có</Text>) },
+            { title: 'Ngày tuyển dụng', key: 'td', width: 130, render: (_: any, r: any) => (r.ngayTuyenDung ? formatDate(r.ngayTuyenDung) : '-') },
+            { title: 'Dự kiến đủ 5 năm', key: 'dk', width: 170, render: (_: any, r: any) => (r.duKien ? <Tag color={r.duTrongKy ? 'green' : 'default'}>{formatDate(r.duKien)}{r.duTrongKy ? ' - trong kỳ' : ''}</Tag> : <Text type="secondary">Khai để tính</Text>) },
+          ]}
+        />
+        </>}
+
         {laPctn && <>
         <Divider plain>Gợi ý CBQL/Giáo viên đến kỳ nâng phụ cấp thâm niên (+1%/năm)</Divider>
         <Space wrap style={{ marginBottom: 12 }}>
@@ -603,11 +734,11 @@ export default function TaoDeXuatPage() {
         <Space style={{ marginBottom: 12 }} wrap>
           <Select showSearch style={{ width: 260 }} placeholder="Chọn viên chức để thêm..." options={vcOptions} onSelect={(v: string | undefined) => addVC(v)} filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())} value={undefined} />
           <span>{chiTiet.length} viên chức đã thêm</span>
-          {laPctn && <Text type="secondary">Chỉ CBQL và giáo viên (nhân viên không hưởng PCTN)</Text>}
+          {(laPctn || laLanDau) && <Text type="secondary">Chỉ CBQL và giáo viên (nhân viên không hưởng PCTN)</Text>}
 
         </Space>
 
-        <Table dataSource={chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: laPctn ? 900 : (canMinhChung ? 1780 : 1590) }} style={{ marginBottom: 16 }} />
+        <Table dataSource={chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: laLanDau ? 1400 : laPctn ? 900 : (canMinhChung ? 1780 : 1590) }} style={{ marginBottom: 16 }} />
 
         <Space>
           <Button htmlType="submit">Lưu bản nháp</Button>
@@ -616,6 +747,95 @@ export default function TaoDeXuatPage() {
           </Button>
         </Space>
       </Form>
+      {dangKhai !== null && chiTiet[dangKhai]?.lanDau && (
+        <KhaiLanDauModal
+          ten={(() => { const v = allVienChucs.find((x) => x.id === chiTiet[dangKhai].vienChucId); return v ? `${v.ho} ${v.ten}` : '' })()}
+          khai={chiTiet[dangKhai].lanDau!}
+          denNgay={dotRange.end}
+          onHuy={() => setDangKhai(null)}
+          onLuu={(k) => {
+            const cuoi = dongCuoi(k.quaTrinh)
+            const cu = chiTiet[dangKhai]
+            updateChiTiet(dangKhai, {
+              lanDau: k, pctnMoi: cuoi?.tyLe ?? 0, ngayHieuLuc: cuoi?.thoiGianHuong ?? '',
+              // Ghi chú tự sinh thì cập nhật theo khai báo mới; ghi chú đã sửa tay thì giữ
+              ghiChu: !cu.ghiChu || cu.ghiChu === ghiChuMacDinh(cu.lanDau!) ? ghiChuMacDinh(k) : cu.ghiChu,
+            })
+            setDangKhai(null)
+          }}
+        />
+      )}
     </Card>
+  )
+}
+
+/** Kế toán khai báo xếp phụ cấp thâm niên lần đầu cho một người; hệ thống gợi ý quá trình hưởng, sửa được từng dòng */
+function KhaiLanDauModal({ ten, khai, denNgay, onHuy, onLuu }: {
+  ten: string; khai: KhaiPctnLanDau; denNgay: string; onHuy: () => void; onLuu: (k: KhaiPctnLanDau) => void
+}) {
+  const [k, setK] = useState<KhaiPctnLanDau>(khai)
+  const doi = (patch: Partial<KhaiPctnLanDau>) => setK((x) => ({ ...x, ...patch }))
+  const du = ngayDu5Nam(k)
+  const goiY = goiYQuaTrinh(k, denNgay)
+  const lechGoiY = JSON.stringify(goiY) !== JSON.stringify(k.quaTrinh)
+  const doiDong = (i: number, patch: Partial<DongQuaTrinhPctn>) => doi({ quaTrinh: k.quaTrinh.map((q, j) => (j === i ? { ...q, ...patch } : q)) })
+  const d = (v?: string) => (v ? dayjs(v) : null)
+
+  return (
+    <Modal open width={860} title={`Khai báo xếp phụ cấp thâm niên lần đầu - ${ten}`} onCancel={onHuy} onOk={() => onLuu(k)} okText="Cập nhật vào phiếu" destroyOnHidden>
+      <Alert
+        type="info"
+        showIcon
+        style={{ marginBottom: 12 }}
+        title="Đủ 5 năm (60 tháng) giảng dạy, giáo dục có đóng BHXH bắt buộc thì hưởng 5%, từ năm thứ sáu mỗi năm (đủ 12 tháng) +1% (NĐ 77/2021/NĐ-CP)."
+        description="Không tính: thời gian tập sự; nghỉ việc riêng không lương liên tục từ 01 tháng; ốm đau, thai sản vượt quy định; đi học, công tác quá hạn; bị tạm đình chỉ, tạm giữ, tạm giam. Khai theo quá trình đóng BHXH và quyết định tuyển dụng."
+      />
+      <Row gutter={[12, 8]}>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Ngày tuyển dụng viên chức</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTuyenDung)} onChange={(v) => doi({ ngayTuyenDung: v?.format('YYYY-MM-DD'), huongTu: huongTuMacDinh(v?.format('YYYY-MM-DD')) })} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Trình độ chuyên môn</Text><Input value={k.trinhDo} onChange={(e) => doi({ trinhDo: e.target.value })} placeholder="VD Đại học SPMN" /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Ngày tốt nghiệp</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTotNghiep)} onChange={(v) => doi({ ngayTotNghiep: v?.format('YYYY-MM-DD') })} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Bắt đầu giảng dạy có đóng BHXH bắt buộc</Text><DatePicker picker="month" format="MM/YYYY" style={{ width: '100%' }} value={k.batDauBhxh ? dayjs(`${k.batDauBhxh}-01`) : null} onChange={(v) => doi({ batDauBhxh: v?.format('YYYY-MM') })} /></Col>
+        <Col xs={12} sm={4}><Text type="secondary" style={{ fontSize: 12 }}>Tập sự (tháng)</Text><InputNumber min={0} max={24} style={{ width: '100%' }} value={k.thangTapSu} onChange={(v) => doi({ thangTapSu: v ?? 0 })} /></Col>
+        <Col xs={12} sm={4}><Text type="secondary" style={{ fontSize: 12 }}>Không tính khác (tháng)</Text><InputNumber min={0} max={240} style={{ width: '100%' }} value={k.thangKhongTinhKhac} onChange={(v) => doi({ thangKhongTinhKhac: v ?? 0 })} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Lý do không tính khác</Text><Input value={k.lyDoKhongTinh} onChange={(e) => doi({ lyDoKhongTinh: e.target.value })} placeholder="VD Nghỉ không lương 03/2021-08/2021" disabled={!k.thangKhongTinhKhac} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Được hưởng từ ngày</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.huongTu)} onChange={(v) => doi({ huongTu: v?.format('YYYY-MM-DD') })} /></Col>
+        <Col xs={24} sm={16} style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <Text>Đủ 5 năm tính hưởng: <b>{du ? formatDate(du) : '-'}</b>{du && du > denNgay && <Text type="danger"> - sau kỳ xét (hết {formatDate(denNgay)})</Text>}</Text>
+        </Col>
+      </Row>
+      <Divider plain style={{ margin: '12px 0' }}>Quá trình hưởng đến hết {formatDate(denNgay)}</Divider>
+      {lechGoiY && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 8 }}
+          title={`Khác với gợi ý theo khai báo (${goiY.length ? goiY.map((q) => `${q.tyLe}% từ ${formatDate(q.thoiGianHuong)}`).join('; ') : 'chưa đủ 5 năm'})`}
+          action={<Button size="small" icon={<SyncOutlined />} onClick={() => doi({ quaTrinh: goiY })}>Dùng gợi ý</Button>}
+        />
+      )}
+      <Table<DongQuaTrinhPctn>
+        size="small"
+        bordered
+        pagination={false}
+        rowKey={(_, i) => String(i)}
+        dataSource={k.quaTrinh}
+        locale={{ emptyText: 'Chưa có - khai đủ thông tin hoặc bấm Thêm dòng' }}
+        columns={[
+          { title: 'Tỷ lệ (%)', key: 'tl', width: 110, render: (_, q, i) => <InputNumber size="small" min={5} max={100} value={q.tyLe} onChange={(v) => doiDong(i, { tyLe: v ?? 5 })} /> },
+          { title: 'Mốc xét nâng thâm niên', key: 'mx', render: (_, q, i) => <DatePicker size="small" format="DD/MM/YYYY" value={d(q.mocXet)} onChange={(v) => doiDong(i, { mocXet: v?.format('YYYY-MM-DD') ?? '' })} /> },
+          { title: 'Thời gian hưởng', key: 'th', render: (_, q, i) => <DatePicker size="small" format="DD/MM/YYYY" value={d(q.thoiGianHuong)} onChange={(v) => doiDong(i, { thoiGianHuong: v?.format('YYYY-MM-DD') ?? '' })} /> },
+          { title: '', key: 'x', width: 44, render: (_, __, i) => <Button size="small" type="text" danger icon={<DeleteOutlined />} onClick={() => doi({ quaTrinh: k.quaTrinh.filter((_, j) => j !== i) })} /> },
+        ]}
+      />
+      <Button size="small" icon={<PlusOutlined />} style={{ marginTop: 8 }} onClick={() => {
+        const c = dongCuoi(k.quaTrinh)
+        const moc = c ? dayjs(c.mocXet).add(1, 'year').format('YYYY-MM-DD') : du ?? dayjs().format('YYYY-MM-DD')
+        doi({ quaTrinh: [...k.quaTrinh, { tyLe: c ? c.tyLe + 1 : 5, mocXet: moc, thoiGianHuong: moc }] })
+      }}>Thêm dòng</Button>
+      <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 12 }}>
+        Dòng cuối là mức đang hưởng: khi phê duyệt, hệ thống ghi phụ cấp thâm niên mức này và lấy mốc xét của dòng cuối làm mốc nâng thâm niên lần sau.
+        Các dòng trước là thời gian truy lĩnh, ghi vào lịch sử và thông báo.
+      </Text>
+    </Modal>
   )
 }

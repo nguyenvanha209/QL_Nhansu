@@ -192,7 +192,50 @@ export const useDeXuatStore = create<DeXuatState>()(
         }
         get().updateDeXuat(id, patch)
 
-        if (ketQua === 'PHE_DUYET' && dx.loai === 'PHU_CAP_THAM_NIEN') {
+        if (ketQua === 'PHE_DUYET' && dx.loai === 'PCTN_LAN_DAU') {
+          // Xếp phụ cấp thâm niên lần đầu: ghi mức cuối của quá trình (đang hưởng), mốc xét nâng lần sau vào hồ sơ,
+          // lịch sử ghi đủ các mức truy lĩnh (VD 5% từ 01/11/2024, 6% từ 01/11/2025)
+          const { addPhuCap, deactivatePhuCap, getActivePhuCaps, addLichSuBienDong, addNhatKy } = useLuongStore.getState()
+          const { loaiPhuCaps, chucDanhs } = useDanhMucStore.getState()
+          const loaiPctn = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
+          const { updateVienChuc, getById: getVienChuc } = useVienChucStore.getState()
+          const ngayVN = (d: string) => d.split('-').reverse().join('/')
+
+          dx.chiTiet.forEach((ct: ChiTietDeXuat) => {
+            const quaTrinh = ct.lanDau?.quaTrinh ?? []
+            const cuoi = quaTrinh[quaTrinh.length - 1]
+            if (!loaiPctn || !cuoi) return
+            const vc = getVienChuc(ct.vienChucId)
+            if (vc && !coPhuCapThamNien(vc.vtvl, chucDanhs.find((c) => c.id === vc.chucDanhId)?.nhom)) return
+
+            const cu = getActivePhuCaps(ct.vienChucId).find((p) => p.loaiPhuCapId === loaiPctn.id)
+            if (cu) deactivatePhuCap(cu.id)
+            updateVienChuc(ct.vienChucId, {
+              mocHuongPctn: cuoi.mocXet,
+              ...(vc && !vc.ngayVaoBienChe && ct.lanDau?.ngayTuyenDung ? { ngayVaoBienChe: ct.lanDau.ngayTuyenDung } : {}),
+            })
+            addPhuCap({
+              vienChucId: ct.vienChucId,
+              loaiPhuCapId: loaiPctn.id,
+              giaTri: cuoi.tyLe,
+              ngayHieuLuc: cuoi.thoiGianHuong,
+              ghiChu: `Xếp lần đầu theo đề xuất ${dx.ma}`,
+              isActive: true,
+              createdBy: actorId,
+            })
+            addLichSuBienDong({
+              vienChucId: ct.vienChucId,
+              loai: 'PHU_CAP',
+              truongThayDoi: 'Phụ cấp thâm niên (xếp lần đầu)',
+              giaTriCu: cu ? `${cu.giaTri}%` : 'Chưa hưởng',
+              giaTriMoi: quaTrinh.map((q) => `${q.tyLe}% từ ${ngayVN(q.thoiGianHuong)}`).join('; ') + ` - mốc xét lần sau ${ngayVN(cuoi.mocXet)}`,
+              ngayThayDoi: cuoi.thoiGianHuong,
+              nguoiThayDoiId: actorId,
+              deXuatId: id,
+            })
+          })
+          addNhatKy({ userId: actorId, userFullName: actorName, action: 'APPROVE', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo phê duyệt xếp phụ cấp thâm niên lần đầu ${id}`, thoiGian: now() })
+        } else if (ketQua === 'PHE_DUYET' && dx.loai === 'PHU_CAP_THAM_NIEN') {
           // Phiếu phụ cấp thâm niên: cập nhật PCTN vào Phụ cấp + Lịch sử biến động
           const { addPhuCap, deactivatePhuCap, getActivePhuCaps, addLichSuBienDong, addNhatKy } =
             useLuongStore.getState()

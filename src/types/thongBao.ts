@@ -82,6 +82,8 @@ export interface DongThongBao {
   trinhDo?: string
   ngayTotNghiep?: string
   thangBatDauBhxh?: string
+  /** Lần đầu: các mức hưởng (truy lĩnh nhiều năm thì nhiều dòng) */
+  quaTrinh?: { tyLe: number; mocXet: string; thoiGianHuong: string }[]
 }
 
 export interface ThongBaoKetQua {

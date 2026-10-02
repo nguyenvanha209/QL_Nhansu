@@ -6,6 +6,7 @@ import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
+import { ngayDu5Nam } from '@/utils/pctnLanDau'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
@@ -64,7 +65,35 @@ export default function DeXuatDetailPage() {
   const colLyDo = { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', width: 200 }
   const colMinhChung = { title: 'Minh chứng riêng', key: 'mc', width: 180, render: (_: any, r: any) => <DanhSachMinhChung compact value={r.minhChung} /> }
 
-  const detailCols = laPctn
+  const thangVN = (ym?: string) => (ym ? `${ym.slice(5, 7)}/${ym.slice(0, 4)}` : '-')
+  const colsLanDau = [
+    colVienChuc,
+    {
+      title: 'Khai báo', key: 'khai', width: 260,
+      render: (_: any, r: any) => {
+        const k = r.lanDau
+        if (!k) return null
+        return (
+          <div style={{ fontSize: 12.5, lineHeight: 1.55 }}>
+            <div>Tuyển dụng: <b>{k.ngayTuyenDung ? formatDate(k.ngayTuyenDung) : '-'}</b> · {k.trinhDo || 'chưa ghi trình độ'}{k.ngayTotNghiep ? ` (TN ${formatDate(k.ngayTotNghiep)})` : ''}</div>
+            <div>Đóng BHXH giảng dạy từ: <b>{thangVN(k.batDauBhxh)}</b></div>
+            <div>Không tính: tập sự {k.thangTapSu} tháng{k.thangKhongTinhKhac ? `, ${k.lyDoKhongTinh || 'khác'} ${k.thangKhongTinhKhac} tháng` : ''}</div>
+            <div>Đủ 5 năm: <b>{ngayDu5Nam(k) ? formatDate(ngayDu5Nam(k)!) : '-'}</b></div>
+          </div>
+        )
+      },
+    },
+    {
+      title: 'Quá trình hưởng', key: 'qt', width: 270,
+      render: (_: any, r: any) => (r.lanDau?.quaTrinh ?? []).map((q: any) => (
+        <div key={q.mocXet} style={{ fontSize: 12.5 }}><b>{q.tyLe}%</b> · mốc xét {formatDate(q.mocXet)} · hưởng từ {formatDate(q.thoiGianHuong)}</div>
+      )),
+    },
+    { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'gc', width: 170 },
+    colMinhChung,
+  ]
+
+  const detailCols = dx.loai === 'PCTN_LAN_DAU' ? colsLanDau : laPctn
     ? [
         colVienChuc,
         { title: 'PCTN cũ', key: 'pctnc', width: 90, render: (_: any, r: any) => `${r.pctnCu ?? 0}%` },

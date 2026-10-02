@@ -20,8 +20,8 @@ export const tenNganTruong = (ten: string) =>
 
 const tenCapNgan: Record<CapHocTB, string> = { MAM_NON: 'MN', TIEU_HOC: 'TH', THCS: 'THCS' }
 
-/** Phiếu đã qua thẩm định của Phòng VH-XH (chờ hoặc đã được lãnh đạo phê duyệt) mới được đưa vào thông báo */
-const PHIEU_DUA_VAO: DeXuatLuong['trangThai'][] = ['CHO_PHE_DUYET', 'DA_PHE_DUYET']
+/** Chỉ phiếu đã được lãnh đạo phê duyệt (hồ sơ viên chức đã cập nhật) mới đưa vào thông báo */
+const PHIEU_DUA_VAO: DeXuatLuong['trangThai'][] = ['DA_PHE_DUYET']
 
 interface NguonDuLieu {
   deXuats: DeXuatLuong[]
@@ -51,7 +51,10 @@ export function tongHopDanhSach(loai: LoaiThongBaoKQ, nam: number, ky: KyXet, ng
 
   for (const dx of nguon.deXuats) {
     if (!PHIEU_DUA_VAO.includes(dx.trangThai)) continue
-    const dungLoai = loai === 'NANG_LUONG_TX' ? dx.loai === 'NANG_BAC' : dx.loai === 'PHU_CAP_THAM_NIEN'
+    // Lần đầu: phiếu "Xếp phụ cấp thâm niên lần đầu" (phiếu nâng PCTN cũ có mức cũ 0% cũng tính là lần đầu)
+    const dungLoai = loai === 'NANG_LUONG_TX' ? dx.loai === 'NANG_BAC'
+      : loai === 'PCTN_LAN_DAU' ? dx.loai === 'PCTN_LAN_DAU' || dx.loai === 'PHU_CAP_THAM_NIEN'
+      : dx.loai === 'PHU_CAP_THAM_NIEN'
     if (!dungLoai) continue
     const dv = dvTheoId.get(dx.donViId)
     if (!dv || !LA_CAP(dv.loai)) continue
@@ -59,11 +62,12 @@ export function tongHopDanhSach(loai: LoaiThongBaoKQ, nam: number, ky: KyXet, ng
     for (const ct of dx.chiTiet) {
       const key = `${dx.id}__${ct.vienChucId}`
       if (daCo.has(key) || !ct.ngayHieuLuc) continue
-      const lanDau = !(ct.pctnCu && ct.pctnCu > 0)
+      const lanDau = dx.loai === 'PCTN_LAN_DAU' || !(ct.pctnCu && ct.pctnCu > 0)
       if (loai === 'PCTN_LAN_DAU' && !lanDau) continue
       if (loai === 'PCTN_NANG' && lanDau) continue
       // Lần đầu có thể truy lĩnh từ trước (mốc hưởng cũ hơn kỳ); hai loại còn lại theo mốc hưởng trong kỳ
-      if (ct.ngayHieuLuc > den) continue
+      const ngayXet = ct.lanDau?.quaTrinh.length ? ct.lanDau.quaTrinh[ct.lanDau.quaTrinh.length - 1].mocXet : ct.ngayHieuLuc
+      if (ngayXet > den) continue
       if (loai !== 'PCTN_LAN_DAU' && ct.ngayHieuLuc < tu) continue
 
       const vc = vcTheoId.get(ct.vienChucId)
@@ -94,6 +98,19 @@ export function tongHopDanhSach(loai: LoaiThongBaoKQ, nam: number, ky: KyXet, ng
           baoLuu: hs?.heSoBaoLuu || undefined,
           bacMoi: ct.bacMoi, heSoMoi: ct.heSoMoi, tnvkMoiPct: ct.tnvkMoi, mocMoi: ct.ngayHieuLuc,
         })
+      } else if (ct.lanDau) {
+        // Khai báo của kế toán trên phiếu xếp lần đầu (đã qua thẩm định, phê duyệt)
+        const k = ct.lanDau
+        const cuoi = k.quaTrinh[k.quaTrinh.length - 1]
+        Object.assign(dong, {
+          pctnCu: 0, pctnMoi: cuoi?.tyLe ?? ct.pctnMoi ?? 0, mocMoi: cuoi?.mocXet ?? ct.ngayHieuLuc,
+          quaTrinh: k.quaTrinh,
+          ngayTuyenDung: k.ngayTuyenDung ?? vc?.ngayVaoBienChe,
+          trinhDo: k.trinhDo ?? vc?.trinhDoChuyenMon,
+          ngayTotNghiep: k.ngayTotNghiep,
+          thangBatDauBhxh: k.batDauBhxh ? `${k.batDauBhxh.slice(5, 7)}/${k.batDauBhxh.slice(0, 4)}` : undefined,
+        })
+        if (!dong.ghiChu && ct.ghiChu) dong.ghiChu = ct.ghiChu
       } else {
         Object.assign(dong, {
           pctnCu: ct.pctnCu ?? 0, pctnMoi: ct.pctnMoi ?? 0,
@@ -140,7 +157,7 @@ const soTb = (tb: ThongBaoKetQua) => tb.soThongBao || '....'
 const ngayTbChu = (tb: ThongBaoKetQua) => (tb.ngayThongBao ? formatDate(tb.ngayThongBao) : '..../..../.....')
 
 /** Tiêu đề và cột từng loại, đúng thứ tự của mẫu danh sách kèm thông báo */
-function cauTrucBang(loai: LoaiThongBaoKQ, cap: CapHocTB): { tieuDe: (string | null)[][]; merges: XLSX.Range[]; dong: (d: DongThongBao, i: number) => (string | number)[]; soCot: number } {
+function cauTrucBang(loai: LoaiThongBaoKQ, cap: CapHocTB): { tieuDe: (string | null)[][]; merges: XLSX.Range[]; dong: (d: DongThongBao, i: number) => (string | number)[]; dongPhu?: (d: DongThongBao) => (string | number)[][]; soCot: number } {
   const m = (r1: number, c1: number, r2: number, c2: number): XLSX.Range => ({ s: { r: r1, c: c1 }, e: { r: r2, c: c2 } })
   if (loai === 'NANG_LUONG_TX') {
     return {
@@ -172,8 +189,14 @@ function cauTrucBang(loai: LoaiThongBaoKQ, cap: CapHocTB): { tieuDe: (string | n
         [null, null, null, null, null, 'Trình độ', 'Ngày, tháng, năm tốt nghiệp', null, 'Chức danh nghề nghiệp', 'Mã số', 'Tỷ lệ % phụ cấp nhà giáo được hưởng', 'Mốc xét nâng thâm niên lần sau', 'Thời gian hưởng', null],
       ],
       merges: [m(0, 0, 1, 0), m(0, 1, 1, 1), m(0, 2, 1, 2), m(0, 3, 1, 3), m(0, 4, 1, 4), m(0, 5, 0, 6), m(0, 7, 1, 7), m(0, 8, 0, 12), m(0, 13, 1, 13)],
-      dong: (d, i) => [i + 1, d.hoTen, ngay(d.ngaySinh), `${d.chucVu} Trường ${tenCapNgan[d.cap]} ${d.donViNgan}`, ngay(d.ngayTuyenDung),
-        d.trinhDo ?? '', ngay(d.ngayTotNghiep), d.thangBatDauBhxh ?? '', d.chucDanhTen, d.maChucDanh, pct(d.pctnMoi), ngay(d.mocMoi), ngay(d.mocMoi), d.ghiChu ?? ''],
+      dong: (d, i) => {
+        const q = d.quaTrinh?.[0]
+        return [i + 1, d.hoTen, ngay(d.ngaySinh), `${d.chucVu} Trường ${tenCapNgan[d.cap]} ${d.donViNgan}`, ngay(d.ngayTuyenDung),
+          d.trinhDo ?? '', ngay(d.ngayTotNghiep), d.thangBatDauBhxh ?? '', d.chucDanhTen, d.maChucDanh,
+          pct(q?.tyLe ?? d.pctnMoi), ngay(q?.mocXet ?? d.mocMoi), ngay(q?.thoiGianHuong ?? d.mocMoi), d.ghiChu ?? '']
+      },
+      // Các mức truy lĩnh tiếp theo (6%, 7%…) mỗi mức một dòng, chỉ ghi ba cột tỷ lệ - mốc xét - thời gian hưởng
+      dongPhu: (d) => (d.quaTrinh ?? []).slice(1).map((q) => ['', '', '', '', '', '', '', '', '', '', pct(q.tyLe), ngay(q.mocXet), ngay(q.thoiGianHuong), '']),
     }
   }
   return {
@@ -205,7 +228,7 @@ export function xuatExcelThongBao(tb: ThongBaoKetQua, chiCap?: CapHocTB) {
       [],
     ]
     const tieuDe = bang.tieuDe.map((r) => r.map((c) => (c === 'Nâng bậc lương năm ' ? `Nâng bậc lương năm ${tb.nam}` : c === 'Nâng phụ cấp thâm niên nhà giáo' ? `Nâng phụ cấp thâm niên nhà giáo ${tenKy(tb.ky, tb.nam).replace('6 tháng ', '')}` : c)))
-    const aoa = [...dau, ...tieuDe, ...ds.map(bang.dong), [], [`Tổng số: ${String(ds.length).padStart(2, '0')} người`]]
+    const aoa = [...dau, ...tieuDe, ...ds.flatMap((d, i) => [bang.dong(d, i), ...(bang.dongPhu?.(d) ?? [])]), [], [`Tổng số: ${String(ds.length).padStart(2, '0')} người`]]
     const ws = XLSX.utils.aoa_to_sheet(aoa)
     const lech = dau.length
     ws['!merges'] = [

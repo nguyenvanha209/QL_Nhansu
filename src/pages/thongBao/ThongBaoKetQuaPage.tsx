@@ -51,8 +51,8 @@ function QuanLyThongBao() {
   // Phiếu trong kỳ còn đang ở các bước trước - nhắc để không bỏ sót người khi tổng hợp
   const conDangXuLy = useMemo(() => {
     const { tu, den } = khoangKy(ky, nam)
-    return deXuats.filter((d) => (d.loai === 'NANG_BAC' || d.loai === 'PHU_CAP_THAM_NIEN')
-      && ['NHAP', 'CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET', 'YEU_CAU_BO_SUNG'].includes(d.trangThai)
+    return deXuats.filter((d) => (d.loai === 'NANG_BAC' || d.loai === 'PHU_CAP_THAM_NIEN' || d.loai === 'PCTN_LAN_DAU')
+      && ['NHAP', 'CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET', 'CHO_PHE_DUYET', 'YEU_CAU_BO_SUNG'].includes(d.trangThai)
       && d.chiTiet.some((c) => c.ngayHieuLuc >= tu && c.ngayHieuLuc <= den))
   }, [deXuats, nam, ky])
 
@@ -64,7 +64,7 @@ function QuanLyThongBao() {
         <div>
           <Title level={4} style={{ margin: 0 }}>Thông báo kết quả nâng lương, phụ cấp thâm niên</Title>
           <Text type="secondary">
-            Tổng hợp từ các phiếu đề xuất đã qua thẩm định, theo mẫu thông báo của UBND phường; ban hành xong các trường nhận theo cấp học.
+            Tổng hợp từ các phiếu đề xuất đã được phê duyệt (hồ sơ viên chức đã cập nhật), theo mẫu thông báo của UBND phường; ban hành xong các trường nhận theo cấp học.
           </Text>
         </div>
         <Space wrap>
@@ -82,8 +82,8 @@ function QuanLyThongBao() {
         style={{ marginBottom: 12 }}
         title={`Kỳ ${tenKy(ky, nam)}: xét đến hết ${formatDate(khoangKy(ky, nam).den)}; Phòng VH-XH thẩm định và trình UBND phường ra thông báo vào tháng ${ky === 'H1' ? 6 : 12}.`}
         description={conDangXuLy.length > 0
-          ? `Còn ${conDangXuLy.length} phiếu nâng lương / phụ cấp thâm niên trong kỳ chưa qua thẩm định (${[...new Set(conDangXuLy.map((d) => donVis.find((v) => v.id === d.donViId)?.ten ?? ''))].join(', ')}) - chưa được đưa vào thông báo.`
-          : 'Thông báo đưa vào các phiếu đã qua thẩm định (chờ hoặc đã được lãnh đạo phê duyệt). Người đã có trong thông báo kỳ trước không bị đưa trùng.'}
+          ? `Còn ${conDangXuLy.length} phiếu nâng lương / phụ cấp thâm niên trong kỳ chưa được phê duyệt (${[...new Set(conDangXuLy.map((d) => donVis.find((v) => v.id === d.donViId)?.ten ?? ''))].join(', ')}) - chưa được đưa vào thông báo.`
+          : 'Thông báo đưa vào các phiếu đã được lãnh đạo phê duyệt, tức hồ sơ lương, phụ cấp của viên chức đã cập nhật. Người đã có trong thông báo kỳ trước không bị đưa trùng.'}
       />
       <Tabs
         activeKey={loai}
@@ -188,12 +188,12 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
           description={(
             <span>
               Chưa lập thông báo <b>{LOAI_THONG_BAO_KQ[loai].ten}</b> kỳ {tenKy(ky, nam)}.<br />
-              Có <b>{ungVien.length}</b> người từ các phiếu đã thẩm định đủ điều kiện đưa vào
+              Có <b>{ungVien.length}</b> người từ các phiếu đã phê duyệt đủ điều kiện đưa vào
               {ungVien.length > 0 && ` (${CAC_CAP.map((c) => `${TEN_CAP_TB[c].danhSach.replace('Các trường ', '')}: ${ungVien.filter((d) => d.cap === c).length}`).join('; ')})`}.
             </span>
           )}
         >
-          <Button type="primary" icon={<SyncOutlined />} onClick={taoBan} disabled={!ungVien.length}>Lập thông báo từ phiếu đã thẩm định</Button>
+          <Button type="primary" icon={<SyncOutlined />} onClick={taoBan} disabled={!ungVien.length}>Lập thông báo từ phiếu đã phê duyệt</Button>
         </Empty>
       </div>
     )
@@ -343,8 +343,12 @@ function BangDanhSach({ tb, sua, onDoi, onXoa, chiCap, truongMinh }: {
           },
           { title: 'Bắt đầu đóng BHXH', dataIndex: 'thangBatDauBhxh', key: 'bh', width: 95 },
           { title: 'Mã CDNN', dataIndex: 'maChucDanh', key: 'ma', width: 95 },
-          { title: 'Tỷ lệ', key: 'tl', width: 65, align: 'center' as const, render: (_: unknown, r: DongBang) => la(r) && <b>{pct(r.pctnMoi)}</b> },
-          { title: 'Thời gian hưởng', key: 'th', width: 105, render: (_: unknown, r: DongBang) => la(r) && formatDate(r.mocMoi ?? '') },
+          {
+            title: 'Tỷ lệ - mốc xét - thời gian hưởng', key: 'qt', width: 250,
+            render: (_: unknown, r: DongBang) => la(r) && (r.quaTrinh?.length
+              ? r.quaTrinh.map((q) => <div key={q.mocXet} style={{ fontVariantNumeric: 'tabular-nums' }}><b>{q.tyLe}%</b> · {formatDate(q.mocXet)} · hưởng {formatDate(q.thoiGianHuong)}</div>)
+              : <span><b>{pct(r.pctnMoi)}</b> · hưởng {formatDate(r.mocMoi ?? '')}</span>),
+          },
         ]
       : [
           { title: 'Chức vụ', dataIndex: 'chucVu', key: 'cv', width: 110 },

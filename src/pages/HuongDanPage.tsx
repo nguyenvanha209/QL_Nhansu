@@ -623,6 +623,18 @@ export default function HuongDanPage() {
             Hệ thống sẽ chặn không cho thêm vào phiếu và báo cảnh báo ngay tại màn hình.
           </p>
         </KhungLuuY>
+        <Paragraph strong style={{ marginTop: 16 }}>Xếp phụ cấp thâm niên nhà giáo lần đầu</Paragraph>
+        <Paragraph>
+          Người chưa hưởng phụ cấp thâm niên không lập phiếu <i>Nâng phụ cấp thâm niên</i> mà lập phiếu
+          <b> Xếp phụ cấp thâm niên nhà giáo lần đầu</b> (NĐ 77/2021/NĐ-CP, Công văn hướng dẫn của Phòng VH-XH):
+        </Paragraph>
+        <ol>
+          <li>Chọn năm, kỳ; bảng liệt kê CBQL, giáo viên chưa hưởng, người dự kiến đủ 5 năm trong kỳ tô xanh (tạm tính từ ngày vào ngành).</li>
+          <li>Thêm người vào phiếu rồi bấm <b>Khai báo</b>: ngày tuyển dụng, trình độ, ngày tốt nghiệp, <b>tháng bắt đầu giảng dạy có đóng BHXH bắt buộc</b>, số tháng <b>tập sự</b> và thời gian không tính khác (nghỉ không lương, ốm đau vượt quy định, đi học quá hạn…), ngày được hưởng.</li>
+          <li>Hệ thống tính <b>ngày đủ 5 năm</b> = tháng bắt đầu đóng BHXH + 60 tháng + số tháng không tính, và gợi ý quá trình hưởng đến hết kỳ: 5%, mỗi năm sau +1%. Trường hợp truy lĩnh nhiều năm thì có nhiều dòng (VD 5% từ 01/11/2024, 6% từ 01/11/2025). Sửa được từng dòng; có nút <b>Dùng gợi ý</b> để lấy lại.</li>
+          <li>Đính kèm <b>minh chứng riêng từng người</b> (bắt buộc khi trình): bản sao bằng cấp, quyết định tuyển dụng / hợp đồng, quyết định lương, quá trình đóng BHXH.</li>
+          <li>Phiếu đi qua Hiệu trưởng → Phòng VH-XH thẩm định → Lãnh đạo phê duyệt. Phê duyệt xong hệ thống ghi phụ cấp thâm niên mức dòng cuối, mốc xét nâng lần sau vào hồ sơ, các mức truy lĩnh vào lịch sử; người này vào danh sách thông báo <i>Hưởng phụ cấp thâm niên nhà giáo lần đầu</i> của kỳ.</li>
+        </ol>
 
         <h3>Lưu và trình phiếu</h3>
         <div className="hd-tw">
@@ -764,7 +776,7 @@ export default function HuongDanPage() {
               <tr><td><b>Bảng tổng hợp lương</b></td><td>Bảng lương theo mẫu quen thuộc, có dòng cộng của từng trường và dòng tổng cuối bảng; lọc theo loại hình lao động; cột riêng cho người nhận lương theo mức tiền. Chỉ tính người đang công tác. Bấm <b>Xuất Excel</b> để lấy file đối chiếu.</td></tr>
               <tr><td><b>Rà soát ngạch - bậc</b></td><td>Danh sách hồ sơ lệch mã ngạch, bậc, hệ số cần trường xử lý (mục VII).</td></tr>
               <tr><td><b>Đề xuất điều chỉnh hệ số lương - phụ cấp</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
-              <tr><td><b>Thông báo kết quả nâng lương</b></td><td>Hai kỳ mỗi năm (tháng 6 cho 6 tháng đầu năm, tháng 12 cho 6 tháng cuối năm), Phòng VH-XH tổng hợp từ các phiếu đã thẩm định ba loại thông báo theo mẫu: <i>nâng bậc lương thường xuyên</i> (kèm phụ cấp thâm niên vượt khung), <i>phụ cấp thâm niên nhà giáo lần đầu</i>, <i>nâng phụ cấp thâm niên nhà giáo</i>; nhập số, ngày, người ký rồi <b>Ban hành</b>, tải danh sách Excel (mỗi cấp học một trang) và thông báo Word. Kế toán, hiệu trưởng nhận thông báo phần cấp học của trường (dòng của trường tô vàng, có nhãn <i>Mới</i> trên menu và Tổng quan) để Hiệu trưởng ra quyết định theo thẩm quyền; Hiệu trưởng, Phó hiệu trưởng và giáo viên hạng I (mầm non, tiểu học, THCS) ghi chú <i>UBND phường ra QĐ</i>.</td></tr>
+              <tr><td><b>Thông báo kết quả nâng lương</b></td><td>Hai kỳ mỗi năm (tháng 6 cho 6 tháng đầu năm, tháng 12 cho 6 tháng cuối năm), sau khi lãnh đạo phê duyệt phiếu (hồ sơ viên chức đã tự cập nhật), Phòng VH-XH tổng hợp ba loại thông báo theo mẫu: <i>nâng bậc lương thường xuyên</i> (kèm phụ cấp thâm niên vượt khung), <i>phụ cấp thâm niên nhà giáo lần đầu</i>, <i>nâng phụ cấp thâm niên nhà giáo</i>; nhập số, ngày, người ký rồi <b>Ban hành</b>, tải danh sách Excel (mỗi cấp học một trang) và thông báo Word. Kế toán, hiệu trưởng nhận thông báo phần cấp học của trường (dòng của trường tô vàng, có nhãn <i>Mới</i> trên menu và Tổng quan) để Hiệu trưởng ra quyết định theo thẩm quyền; Hiệu trưởng, Phó hiệu trưởng và giáo viên hạng I (mầm non, tiểu học, THCS) ghi chú <i>UBND phường ra QĐ</i>.</td></tr>
               <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
               <tr><td><b>Định mức viên chức và Cơ cấu VTVL</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức; kế toán tính 01 người/trường. Mầm non: thư viện tính 01 người/phân hiệu, tối đa 03 - khai <b>Số phân hiệu</b> ở thẻ Khai báo quy mô. Nút <b>Lịch sử khai báo</b> giữ 30 lần lưu gần nhất; khai nhầm hoặc mất số liệu thì bấm <b>Nạp vào form</b> ở bản cần lấy lại rồi Lưu quy mô.</td></tr>
               <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu (theo Nghị định 135/2020) để chủ động bố trí nhân sự.</td></tr>

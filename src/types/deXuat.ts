@@ -9,7 +9,32 @@ export type TrangThaiDeXuat =
   | 'TU_CHOI'
   | 'YEU_CAU_BO_SUNG'
 
-export type LoaiDeXuat = 'NANG_BAC' | 'NANG_TRUOC_HAN' | 'DIEU_CHINH' | 'CHUYEN_NGACH' | 'PHU_CAP_THAM_NIEN'
+export type LoaiDeXuat = 'NANG_BAC' | 'NANG_TRUOC_HAN' | 'DIEU_CHINH' | 'CHUYEN_NGACH' | 'PHU_CAP_THAM_NIEN' | 'PCTN_LAN_DAU'
+
+/** Một mức trong quá trình hưởng phụ cấp thâm niên lần đầu (có thể truy lĩnh nhiều năm: 5%, 6%…) */
+export interface DongQuaTrinhPctn {
+  tyLe: number
+  /** Mốc xét nâng thâm niên (ngày kỷ niệm) */
+  mocXet: string
+  /** Thời gian bắt đầu hưởng mức này */
+  thoiGianHuong: string
+}
+
+/** Kế toán khai báo để xếp phụ cấp thâm niên nhà giáo lần đầu (theo hồ sơ: bằng cấp, QĐ tuyển dụng, quá trình BHXH) */
+export interface KhaiPctnLanDau {
+  ngayTuyenDung?: string
+  trinhDo?: string
+  ngayTotNghiep?: string
+  /** Tháng năm bắt đầu tham gia giảng dạy, giáo dục có đóng BHXH bắt buộc - 'YYYY-MM' */
+  batDauBhxh?: string
+  thangTapSu: number
+  /** Thời gian không tính khác (nghỉ không lương, ốm đau quá hạn, đi học quá hạn…) - số tháng */
+  thangKhongTinhKhac: number
+  lyDoKhongTinh?: string
+  /** Ngày bắt đầu được hưởng (thường từ khi tuyển dụng) - mốc trước ngày này không được trả */
+  huongTu?: string
+  quaTrinh: DongQuaTrinhPctn[]
+}
 
 // Phiếu đề xuất phụ cấp thâm niên dùng các trường pctn*, phiếu nâng lương dùng bac*/heSo*
 export interface ChiTietDeXuat {
@@ -38,13 +63,15 @@ export interface ChiTietDeXuat {
    */
   tnvkCu?: number
   tnvkMoi?: number
+  /** Phiếu xếp phụ cấp thâm niên lần đầu: phần kế toán khai báo; pctnMoi / ngayHieuLuc lấy theo mức cuối của quá trình */
+  lanDau?: KhaiPctnLanDau
 }
 
 /** Dòng phụ cấp thâm niên vượt khung (người ở bậc cuối) trong phiếu nâng bậc thường xuyên */
 export const laDongVuotKhung = (r: Pick<ChiTietDeXuat, 'tnvkMoi'>) => r.tnvkMoi != null
 
 export function laDeXuatPhuCapThamNien(loai: LoaiDeXuat): boolean {
-  return loai === 'PHU_CAP_THAM_NIEN'
+  return loai === 'PHU_CAP_THAM_NIEN' || loai === 'PCTN_LAN_DAU'
 }
 
 export interface DeXuatLuong {
@@ -103,13 +130,14 @@ export const TRANG_THAI_COLORS: Record<TrangThaiDeXuat, string> = {
 }
 
 /** Loại phiếu bắt buộc có minh chứng khi trình */
-export const LOAI_CAN_MINH_CHUNG: LoaiDeXuat[] = ['NANG_TRUOC_HAN', 'DIEU_CHINH', 'CHUYEN_NGACH']
+export const LOAI_CAN_MINH_CHUNG: LoaiDeXuat[] = ['NANG_TRUOC_HAN', 'DIEU_CHINH', 'CHUYEN_NGACH', 'PCTN_LAN_DAU']
 
 export const TEN_CHUC_NANG_DE_XUAT = 'Đề xuất điều chỉnh hệ số lương - phụ cấp'
 
 export const LOAI_DE_XUAT_LABELS: Record<LoaiDeXuat, string> = {
   NANG_BAC: 'Nâng bậc lương thường xuyên',
   PHU_CAP_THAM_NIEN: 'Nâng phụ cấp thâm niên',
+  PCTN_LAN_DAU: 'Xếp phụ cấp thâm niên nhà giáo lần đầu',
   NANG_TRUOC_HAN: 'Nâng bậc lương trước thời hạn',
   CHUYEN_NGACH: 'Chuyển ngạch/chức danh',
   DIEU_CHINH: 'Điều chỉnh hệ số lương - phụ cấp',
@@ -130,6 +158,13 @@ export const NGHIEP_VU_LOAI: Record<LoaiDeXuat, { chonNguoi: string; dieuChinh: 
     chonNguoi: 'Theo niên hạn: bảng gợi ý liệt kê CBQL, giáo viên đến ngày kỷ niệm mốc hưởng PCTN trong đợt.',
     dieuChinh: 'PCTN mới = mức cũ + 1% (chưa hưởng thì 5%); mốc hưởng mới = ngày kỷ niệm. Nhân viên không hưởng PCTN.',
     tomTat: 'Chọn theo ngày kỷ niệm mốc PCTN; +1%/năm',
+  },
+  PCTN_LAN_DAU: {
+    chonNguoi: 'CBQL, giáo viên chưa hưởng phụ cấp thâm niên; bảng gợi ý liệt kê người dự kiến đủ 5 năm (60 tháng) giảng dạy có đóng BHXH bắt buộc đến hết kỳ.',
+    dieuChinh: 'Khai tháng bắt đầu giảng dạy có đóng BHXH và thời gian không tính (tập sự, nghỉ không lương…); hệ thống tính ngày đủ 5 năm và gợi ý quá trình hưởng 5%, mỗi năm sau +1% (sửa được từng dòng). Phê duyệt xong ghi phụ cấp thâm niên và mốc xét nâng lần sau vào hồ sơ.',
+    minhChung: 'Bản sao bằng cấp chuyên môn; quyết định tuyển dụng / hợp đồng lao động; quyết định lương đang hưởng; quá trình đóng BHXH và minh chứng (đính kèm riêng từng người).',
+    tomTat: 'Khai BHXH, thời gian không tính; tính 5% khi đủ 60 tháng',
+    minhChungNgan: 'Bằng, QĐ tuyển dụng, QĐ lương, quá trình BHXH',
   },
   NANG_TRUOC_HAN: {
     chonNguoi: 'Chọn từng người có thành tích được xét nâng trước hạn.',

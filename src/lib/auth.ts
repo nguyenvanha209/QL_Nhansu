@@ -1,12 +1,22 @@
-import { supabase } from './supabase'
+import { supabase, napPhienDangNhap } from './supabase'
 
 // Mật khẩu không còn nằm trong ql-users. Chúng được băm bcrypt và lưu ở bảng
 // mat_khau trên Supabase - bảng này bật RLS và không có policy nào, nên không
 // đọc trực tiếp được kể cả khi có khóa anon. Mọi thao tác đi qua các hàm
 // security definer khai báo ở tools/sql/01-tao-bang-mat-khau.sql.
 
+/** Email nội bộ của tài khoản trong Supabase Auth - cùng quy tắc với public.email_dang_nhap (tools/sql/04) */
+export const emailDangNhap = (username: string) =>
+  `${username.trim().replace(/[^A-Za-z0-9._-]/g, '-').toLowerCase()}@ql-nhansu.ngoquyen.edu.vn`
+
+/** Đăng xuất phiên máy chủ (không chờ - mất mạng vẫn đăng xuất được ở máy) */
+export function dangXuatMayChu() {
+  supabase?.auth.signOut().catch(() => {})
+}
+
 export type KetQuaDangNhap =
   | { ok: true }
+  | { ok: false; lyDo: 'CHUA_KICH_HOAT' }
   | { ok: false; lyDo: 'SAI'; conLai: number }
   | { ok: false; lyDo: 'KHOA'; khoaDen: string }
   | { ok: false; lyDo: 'CHUA_CAU_HINH' }
@@ -24,7 +34,16 @@ export async function dangNhap(username: string, password: string): Promise<KetQ
     console.error('[dang_nhap]', error.message)
     return { ok: false, lyDo: 'LOI' }
   }
-  if (data?.ok) return { ok: true }
+  if (data?.ok) {
+    // Mật khẩu đúng → lấy phiên có chữ ký của máy chủ; dữ liệu chỉ mở cho phiên này
+    const { error: e2 } = await supabase.auth.signInWithPassword({ email: emailDangNhap(username), password })
+    if (e2) {
+      console.error('[dang_nhap] Supabase Auth:', e2.message)
+      return /invalid login credentials|not found|banned/i.test(e2.message) ? { ok: false, lyDo: 'CHUA_KICH_HOAT' } : { ok: false, lyDo: 'LOI' }
+    }
+    await napPhienDangNhap()
+    return { ok: true }
+  }
   if (data?.ly_do === 'KHOA') return { ok: false, lyDo: 'KHOA', khoaDen: data.khoa_den }
   return { ok: false, lyDo: 'SAI', conLai: data?.con_lai ?? 0 }
 }

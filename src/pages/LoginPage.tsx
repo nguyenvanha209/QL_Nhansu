@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Form, Input, Button, Typography, Alert, Divider, Tag, Table } from 'antd'
+import { Form, Input, Button, Typography, Alert, Divider } from 'antd'
 import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
-import { useDanhMucStore } from '@/store/danhMucStore'
 import { logAction } from '@/utils/auditLogger'
-import { dangNhap } from '@/lib/auth'
+import { dangNhap, dangXuatMayChu } from '@/lib/auth'
+import { syncFromSupabase } from '@/lib/syncFromSupabase'
+import { initSeedData } from '@/utils/seed'
 
 const { Title, Text } = Typography
 
@@ -15,9 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
-  const findByUsername = useUserStore((s) => s.findByUsername)
   const users = useUserStore((s) => s.users)
-  const donVis = useDanhMucStore((s) => s.donVis)
   const navigate = useNavigate()
 
   const onFinish = async ({ username, password }: { username: string; password: string }) => {
@@ -42,6 +41,8 @@ export default function LoginPage() {
         setError(`Tài khoản tạm khóa do nhập sai nhiều lần. Thử lại sau ${den.toLocaleTimeString('vi-VN')}.`)
       } else if (kq.lyDo === 'CHUA_CAU_HINH') {
         setError('Chưa cấu hình máy chủ dữ liệu. Liên hệ quản trị viên.')
+      } else if (kq.lyDo === 'CHUA_KICH_HOAT') {
+        setError('Tài khoản chưa được kích hoạt trên máy chủ xác thực. Liên hệ quản trị viên.')
       } else if (kq.lyDo === 'LOI') {
         setError('Không kết nối được máy chủ. Kiểm tra kết nối mạng rồi thử lại.')
       } else {
@@ -51,8 +52,18 @@ export default function LoginPage() {
       return
     }
 
-    const user = findByUsername(username)
+    // Đã có phiên máy chủ → mới kéo được dữ liệu về (trước khi đăng nhập máy chủ không cho đọc)
+    const dongBo = await syncFromSupabase()
+    if (dongBo === 'error') {
+      dangXuatMayChu()
+      setError('Không tải được dữ liệu từ máy chủ. Kiểm tra kết nối mạng rồi thử lại.')
+      setLoading(false)
+      return
+    }
+    initSeedData()
+    const user = useUserStore.getState().findByUsername(username)
     if (!user) {
+      dangXuatMayChu()
       setError('Tài khoản đã bị khóa hoặc không còn hiệu lực.')
       setLoading(false)
       return
@@ -66,53 +77,6 @@ export default function LoginPage() {
     })
     navigate('/dashboard')
   }
-
-  const DV_ORDER: Record<string, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3 }
-  const DV_LABEL: Record<string, string> = { MAM_NON: 'Mầm non', TIEU_HOC: 'Tiểu học', THCS: 'THCS' }
-
-  const schoolAccounts = useMemo(() => {
-    const activeDonVis = donVis
-      .filter((d) => d.active)
-      .sort((a, b) => {
-        const oa = DV_ORDER[a.loai] ?? 9
-        const ob = DV_ORDER[b.loai] ?? 9
-        if (oa !== ob) return oa - ob
-        return a.ten.localeCompare(b.ten, 'vi')
-      })
-
-    const result: Array<{ key: string; ten: string; kt: string; ht: string; loai?: string; isGroup?: boolean }> = []
-    let lastLoai = ''
-    for (const dv of activeDonVis) {
-      const kt = users.find((u) => u.active && u.donViId === dv.id && u.role === 'CB_TRUONG')
-      const ht = users.find((u) => u.active && u.donViId === dv.id && u.role === 'HIEU_TRUONG')
-      if (!kt && !ht) continue
-      if (dv.loai !== lastLoai) {
-        result.push({ key: `group_${dv.loai}`, ten: DV_LABEL[dv.loai] ?? dv.loai, kt: '', ht: '', isGroup: true })
-        lastLoai = dv.loai
-      }
-      result.push({ key: dv.id, ten: dv.ten, kt: kt?.username ?? '-', ht: ht?.username ?? '-' })
-    }
-    return result
-  }, [donVis, users])
-
-  const columns = [
-    {
-      title: 'Trường', dataIndex: 'ten', key: 'ten',
-      render: (v: string, r: any) => r.isGroup
-        ? <Text strong style={{ color: '#2563eb', fontSize: 13 }}>── {v} ──</Text>
-        : v,
-    },
-    {
-      title: <Tag color="green" style={{ margin: 0 }}>Kế toán (KT)</Tag>,
-      dataIndex: 'kt', key: 'kt', width: 130, align: 'center' as const,
-      render: (v: string, r: any) => r.isGroup ? null : v === '-' ? <Text type="secondary">-</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
-    },
-    {
-      title: <Tag color="gold" style={{ margin: 0 }}>Hiệu trưởng (HT)</Tag>,
-      dataIndex: 'ht', key: 'ht', width: 145, align: 'center' as const,
-      render: (v: string, r: any) => r.isGroup ? null : v === '-' ? <Text type="secondary">-</Text> : <Text code style={{ fontSize: 13 }}>{v}</Text>,
-    },
-  ]
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#f1f5f9' }}>
@@ -161,26 +125,10 @@ export default function LoginPage() {
               </Form.Item>
             </Form>
 
-            {schoolAccounts.length > 0 && (
-              <>
-                <Divider plain style={{ margin: '24px 0 12px' }}>
-                  <Text type="secondary" style={{ fontSize: 12 }}>Danh mục tài khoản theo trường</Text>
-                </Divider>
-                <Table
-                  dataSource={schoolAccounts}
-                  columns={columns}
-                  size="small"
-                  pagination={false}
-                  rowClassName={(r: any) => r.isGroup ? 'login-group-row' : ''}
-                  style={{ marginBottom: 4 }}
-                />
-                <div style={{ textAlign: 'center', marginTop: 8 }}>
-                  <Text type="secondary" style={{ fontSize: 11 }}>
-                    Mật khẩu sẽ được cung cấp riêng - không hiển thị tại đây
-                  </Text>
-                </div>
-              </>
-            )}
+            {/* Không công khai danh sách tên đăng nhập (giúp kẻ xấu dò mật khẩu) - tên đăng nhập do Phòng VH-XH cấp riêng */}
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'center' }}>
+              Tên đăng nhập và mật khẩu do Phòng Văn hóa - Xã hội cấp riêng cho từng trường.
+            </Text>
 
             <Divider style={{ margin: '16px 0 12px' }} />
             <div style={{ textAlign: 'center', padding: '0 8px' }}>

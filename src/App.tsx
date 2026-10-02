@@ -8,7 +8,8 @@ import AppRouter from '@/router/AppRouter'
 import LopBaoVePhien from '@/components/LopBaoVePhien'
 import { useHydration } from '@/hooks/useHydration'
 import { initSeedData } from '@/utils/seed'
-import { isSupabaseEnabled } from '@/lib/supabase'
+import { isSupabaseEnabled, napPhienDangNhap, dangKyKhiHetPhien } from '@/lib/supabase'
+import { useAuthStore } from '@/store/authStore'
 import { syncFromSupabase } from '@/lib/syncFromSupabase'
 
 dayjs.locale('vi')
@@ -18,10 +19,23 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const [syncError, setSyncError] = useState(false)
 
+  // Phiên máy chủ hết hạn / bị thu hồi trong lúc dùng → đăng xuất khỏi phần mềm
+  useEffect(() => {
+    dangKyKhiHetPhien(() => { if (useAuthStore.getState().currentUser) useAuthStore.setState({ currentUser: null }) })
+  }, [])
+
   useEffect(() => {
     if (!hydrated) return
 
     const init = async () => {
+      // 0. Chưa có phiên máy chủ (chưa đăng nhập, phiên hết hạn, hoặc "phiên" tự tạo trong trình duyệt)
+      //    → về màn hình đăng nhập; không đồng bộ, không tạo dữ liệu mẫu
+      if (isSupabaseEnabled && !(await napPhienDangNhap())) {
+        if (useAuthStore.getState().currentUser) useAuthStore.setState({ currentUser: null })
+        setReady(true)
+        return
+      }
+
       // 1. Kéo dữ liệu mới nhất từ Supabase trước khi nghĩ đến việc seed
       const result = isSupabaseEnabled ? await syncFromSupabase() : 'disabled'
 

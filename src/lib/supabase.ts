@@ -13,6 +13,40 @@ export const supabase =
 export const isSupabaseEnabled = !!supabase
 
 // ───────────────────────────────────────────────────────────────────────────
+// Phiên đăng nhập máy chủ (Supabase Auth)
+//
+// Dữ liệu chỉ phục vụ người đã đăng nhập (quy tắc RLS trên máy chủ). Chưa có phiên thì không
+// ghi, không làm mới: ghi lúc đó sẽ bị máy chủ từ chối, và tệ hơn là bản dữ liệu tạm trên máy
+// (VD dữ liệu mẫu) có thể được đẩy lên ngay khi vừa đăng nhập.
+// ───────────────────────────────────────────────────────────────────────────
+
+let coPhien = false
+export const coPhienDangNhap = () => coPhien
+
+type KhiHetPhien = () => void
+let khiHetPhien: KhiHetPhien | null = null
+/** Phiên máy chủ hết hạn / bị thu hồi → đăng xuất khỏi phần mềm */
+export function dangKyKhiHetPhien(fn: KhiHetPhien) {
+  khiHetPhien = fn
+}
+
+/** Đọc phiên đã lưu trên máy (nếu có) - gọi khi khởi động, trước khi đồng bộ dữ liệu */
+export async function napPhienDangNhap(): Promise<boolean> {
+  if (!supabase) return false
+  const { data } = await supabase.auth.getSession()
+  coPhien = !!data.session
+  return coPhien
+}
+
+if (supabase) {
+  supabase.auth.onAuthStateChange((suKien, phien) => {
+    const truoc = coPhien
+    coPhien = !!phien
+    if (truoc && !phien && suKien === 'SIGNED_OUT') khiHetPhien?.()
+  })
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Khoá lạc quan (optimistic locking)
 //
 // Trước đây mỗi lần ghi là một lệnh upsert mù: ai ghi sau thắng. Một máy giữ
@@ -681,7 +715,7 @@ export function lamMoiTuMayChu(): Promise<number> {
   if (dangLamMoi) return dangLamMoi
   dangLamMoi = (async () => {
     try {
-      if (soLenhDangGhi > 0 || dangDongBo) return 0
+      if (soLenhDangGhi > 0 || dangDongBo || !coPhien) return 0
       const { data: dsPhienBan, error } = await supabase.from('app_state').select('key, updated_at')
       if (error || !dsPhienBan) return 0
       const doi = dsPhienBan
@@ -755,7 +789,7 @@ export function lamMoiTuMayChu(): Promise<number> {
 // ───────────────────────────────────────────────────────────────────────────
 
 export function batNhanThayDoiTucThi(): () => void {
-  if (!supabase) return () => {}
+  if (!supabase || !coPhien) return () => {}
   let hen: number | undefined
   const kenh = supabase
     .channel('app_state_thay_doi')
@@ -804,12 +838,13 @@ const hybridStorage: StateStorage = {
     // bản ghi nào - dùng khi hợp nhất lúc có xung đột.
     const daXoa = supabase && !dangDongBo ? timDaXoa(localStorage.getItem(name), value) : {}
     localStorage.setItem(name, value)
-    if (supabase && !dangDongBo) xepHangGhi(name, value, daXoa)
+    // Chưa đăng nhập máy chủ thì chỉ lưu trên máy (máy chủ không nhận ghi từ người chưa đăng nhập)
+    if (supabase && !dangDongBo && coPhien) xepHangGhi(name, value, daXoa)
   },
 
   removeItem: (name: string): void => {
     localStorage.removeItem(name)
-    if (supabase && !dangDongBo) {
+    if (supabase && !dangDongBo && coPhien) {
       supabase.from('app_state').delete().eq('key', name).then(({ error }) => {
         if (error) console.warn('[Supabase] Lỗi khi xoá', name, '-', error.message)
         else phienBanMayChu.delete(name)

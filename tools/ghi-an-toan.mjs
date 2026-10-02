@@ -17,7 +17,9 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const env = fs.readFileSync(path.join(ROOT, '.env.local'), 'utf8')
 const URL_SB = env.match(/VITE_SUPABASE_URL=(.+)/)[1].trim()
-const KEY = env.match(/VITE_SUPABASE_ANON_KEY=(.+)/)[1].trim()
+// Sau khi khoá dữ liệu (tools/sql/05) khoá công khai không đọc, ghi được nữa: công cụ dùng khoá service_role
+// đặt trong .env.local với tên SUPABASE_SERVICE_ROLE_KEY (KHÔNG thêm tiền tố VITE_ - tiền tố đó đưa khoá vào trang web).
+const KEY = (env.match(/^SUPABASE_SERVICE_ROLE_KEY=(.+)$/m)?.[1] ?? env.match(/VITE_SUPABASE_ANON_KEY=(.+)/)[1]).trim()
 const HEADERS = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
 
 export async function docKho(key) {

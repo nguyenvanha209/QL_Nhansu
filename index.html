@@ -7,20 +7,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QLVC&amp;LĐ phường Gia Viên (các CSGD)</title>
-    <script>
-      // Giải mã đường dẫn do public/404.html chuyển hướng (SPA trên GitHub Pages)
-      // /?/admin/danh-muc  ->  /admin/danh-muc
-      (function (l) {
-        if (l.search[1] === '/') {
-          var decoded = l.search
-            .slice(1)
-            .split('&')
-            .map(function (s) { return s.replace(/~and~/g, '&') })
-            .join('?')
-          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash)
-        }
-      })(window.location)
-    </script>
+    <!-- Giải mã đường dẫn do public/404.html chuyển hướng; để ở file riêng để chính sách CSP không phải cho phép mã nội tuyến -->
+    <script src="/spa-redirect.js"></script>
   </head>
   <body>
     <div id="root"></div>

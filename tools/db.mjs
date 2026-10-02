@@ -22,7 +22,9 @@ const [, , cmd, ...args] = process.argv.filter((a) => a !== '--apply')
 
 const env = fs.readFileSync(path.join(ROOT, '.env.local'), 'utf8')
 const URL_SB = env.match(/VITE_SUPABASE_URL=(.+)/)[1].trim()
-const KEY = env.match(/VITE_SUPABASE_ANON_KEY=(.+)/)[1].trim()
+// Sau khi khoá dữ liệu (tools/sql/05) khoá công khai không đọc, ghi được nữa: công cụ dùng khoá service_role
+// đặt trong .env.local với tên SUPABASE_SERVICE_ROLE_KEY (KHÔNG thêm tiền tố VITE_ - tiền tố đó đưa khoá vào trang web).
+const KEY = (env.match(/^SUPABASE_SERVICE_ROLE_KEY=(.+)$/m)?.[1] ?? env.match(/VITE_SUPABASE_ANON_KEY=(.+)/)[1]).trim()
 
 const sb = async (method, url, body) => {
   const res = await fetch(`${URL_SB}/rest/v1/${url}`, {

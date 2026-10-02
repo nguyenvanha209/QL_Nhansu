@@ -1,6 +1,10 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Button, Tabs, Table, Typography, Space, Timeline, Result, Alert } from 'antd'
-import { EditOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import { Card, Descriptions, Tag, Button, Tabs, Table, Typography, Space, Timeline, Result, Alert, Popconfirm, App } from 'antd'
+import { EditOutlined, ArrowLeftOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
+import type { PhuCapVienChuc, HeSoLuong } from '@/types/luong'
+import XuLyPhuCapTrungModal from '@/components/XuLyPhuCapTrungModal'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -27,8 +31,11 @@ const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
 export default function VienChucDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { hasPermission, scopeDonViId } = useAuth()
+  const { hasPermission, scopeDonViId, laQuanTri, currentUser } = useAuth()
+  const { message } = App.useApp()
+  const [banGiu, setBanGiu] = useState<PhuCapVienChuc | null>(null)
   const getById = useVienChucStore((s) => s.getById)
+  const updateVienChuc = useVienChucStore((s) => s.updateVienChuc)
   const vc = getById(id!)
   const donVis = useDanhMucStore((s) => s.donVis)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
@@ -78,6 +85,82 @@ export default function VienChucDetailPage() {
     )
   }
 
+  // ── Quản trị xử lý dữ liệu trùng / nhập sai (kế toán không còn quyền sửa phụ cấp, bậc lương đã nhập) ──
+  const tenVc = `${vc.ho} ${vc.ten}`
+  const ghiNhatKy = (action: 'UPDATE' | 'DELETE', entity: string, moTa: string) =>
+    useLuongStore.getState().addNhatKy({
+      userId: currentUser?.id ?? 'system',
+      userFullName: currentUser?.fullName ?? 'Hệ thống',
+      action, entity, entityId: vc.id, moTa,
+      thoiGian: new Date().toISOString(),
+      donViId: vc.donViId,
+    })
+  const ghiLichSu = (loai: 'LUONG' | 'PHU_CAP', truongThayDoi: string, giaTriCu: string, giaTriMoi: string) =>
+    useLuongStore.getState().addLichSuBienDong({
+      vienChucId: vc.id, loai, truongThayDoi, giaTriCu, giaTriMoi,
+      ngayThayDoi: dayjs().format('YYYY-MM-DD'),
+      nguoiThayDoiId: currentUser?.id ?? 'system',
+    })
+  const mucPhuCap = (r: Pick<PhuCapVienChuc, 'loaiPhuCapId' | 'giaTri'>) => {
+    const lpc = loaiPhuCaps.find((l) => l.id === r.loaiPhuCapId)
+    if (!lpc) return ''
+    const giaTri = r.giaTri > 0 ? r.giaTri : lpc.giaTri
+    if (lpc.loaiCongThuc === 'TIEN_MAT') return `${giaTri.toLocaleString()}đ`
+    if (lpc.loaiCongThuc === 'HE_SO') return `+${giaTri}`
+    return `${giaTri}%`
+  }
+  const moTaPhuCap = (p: PhuCapVienChuc) =>
+    `${tenHienThiLoaiPhuCap(loaiPhuCaps.find((l) => l.id === p.loaiPhuCapId)) || p.loaiPhuCapId} ${mucPhuCap(p)} từ ${formatDate(p.ngayHieuLuc)} (${nguonPhuCap(p.createdBy)})`
+  const banKhacCungLoai = banGiu
+    ? (pcTheoLoai.find((a) => a.some((p) => p.id === banGiu.id)) ?? []).filter((p) => p.id !== banGiu.id)
+    : []
+  const xoaBanLichSuPhuCap = (p: PhuCapVienChuc) => {
+    useLuongStore.getState().xoaPhuCap(p.id)
+    ghiLichSu('PHU_CAP', 'Xoá bản lịch sử phụ cấp nhập sai', moTaPhuCap(p), '(đã xoá)')
+    ghiNhatKy('DELETE', 'PhuCapVienChuc', `Xoá bản lịch sử phụ cấp nhập sai của ${tenVc}: ${moTaPhuCap(p)}`)
+    message.success('Đã xoá bản ghi')
+  }
+
+  const moTaHeSo = (h: HeSoLuong) => `Bậc ${h.bac} - hệ số ${h.heSo} từ ${formatDate(h.ngayHieuLuc)}`
+  const heSoDangApDung = heSoHistory.filter((h) => h.isActive)
+  const giuHeSo = (h: HeSoLuong) => {
+    const khac = heSoDangApDung.filter((x) => x.id !== h.id)
+    for (const x of khac) useLuongStore.getState().deactivateHeSoLuong(x.id)
+    updateVienChuc(vc.id, { heSoLuongHienTaiId: h.id }, currentUser?.id, currentUser?.fullName)
+    ghiLichSu('LUONG', 'Xử lý bản ghi lương trùng', khac.map(moTaHeSo).join(' | '), `Giữ: ${moTaHeSo(h)} (các bản kia chuyển lịch sử)`)
+    ghiNhatKy('UPDATE', 'HeSoLuong', `Xử lý bản ghi lương trùng của ${tenVc}: giữ ${moTaHeSo(h)}, chuyển lịch sử ${khac.map(moTaHeSo).join('; ')}`)
+    message.success('Đã giữ bản ghi lương này')
+  }
+  const xoaHeSo = (h: HeSoLuong) => {
+    useLuongStore.getState().xoaHeSoLuong(h.id)
+    if (vc.heSoLuongHienTaiId === h.id) {
+      const conLai = heSoDangApDung.find((x) => x.id !== h.id)
+      updateVienChuc(vc.id, { heSoLuongHienTaiId: conLai?.id }, currentUser?.id, currentUser?.fullName)
+    }
+    ghiLichSu('LUONG', 'Xoá bản ghi lương nhập sai', moTaHeSo(h), '(đã xoá)')
+    ghiNhatKy('DELETE', 'HeSoLuong', `Xoá bản ghi lương nhập sai của ${tenVc}: ${moTaHeSo(h)}`)
+    message.success('Đã xoá bản ghi lương')
+  }
+  // Được xoá: bản lịch sử, hoặc bản đang áp dụng khi còn bản đang áp dụng khác (trùng)
+  const coTheXoaHeSo = (h: HeSoLuong) => !h.isActive || heSoDangApDung.length > 1
+  const cotQuanTriHeSo = laQuanTri && heSoHistory.length > 1 ? [{
+    title: 'Quản trị', key: 'qt',
+    render: (_: unknown, h: HeSoLuong) => (
+      <Space size={4}>
+        {h.isActive && heSoDangApDung.length > 1 && (
+          <Popconfirm title="Giữ bản ghi lương này?" description="Các bản đang áp dụng khác chuyển sang lịch sử." okText="Giữ" cancelText="Huỷ" onConfirm={() => giuHeSo(h)}>
+            <Button size="small" icon={<CheckOutlined />}>Giữ bản này</Button>
+          </Popconfirm>
+        )}
+        {coTheXoaHeSo(h) && (
+          <Popconfirm title="Xoá hẳn bản ghi lương này?" description={moTaHeSo(h)} okText="Xoá" okButtonProps={{ danger: true }} cancelText="Huỷ" onConfirm={() => xoaHeSo(h)}>
+            <Button size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        )}
+      </Space>
+    ),
+  }] : []
+
   const heSoCols = [
     { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60 },
     { title: 'Hệ số', dataIndex: 'heSo', key: 'heSo', width: 80 },
@@ -86,21 +169,12 @@ export default function VienChucDetailPage() {
     { title: 'Ngày nâng tiếp', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', render: (v: string) => formatDate(v) },
     { title: 'Lý do', dataIndex: 'lyDo', key: 'ld', render: (v: string) => LY_DO_LABELS[v as keyof typeof LY_DO_LABELS] ?? v },
     { title: 'Trạng thái', dataIndex: 'isActive', key: 'ts', render: (v: boolean) => <Tag color={v ? 'green' : 'default'}>{v ? 'Đang áp dụng' : 'Lịch sử'}</Tag> },
+    ...cotQuanTriHeSo,
   ]
 
   const phuCapCols = [
     { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapId', key: 'lpc', render: (id: string) => tenHienThiLoaiPhuCap(loaiPhuCaps.find((l) => l.id === id)) || id },
-    {
-      title: 'Tỷ lệ/Mức', key: 'tl',
-      render: (_: any, r: any) => {
-        const lpc = loaiPhuCaps.find((l) => l.id === r.loaiPhuCapId)
-        if (!lpc) return ''
-        const giaTri = r.giaTri > 0 ? r.giaTri : lpc.giaTri
-        if (lpc.loaiCongThuc === 'TIEN_MAT') return `${giaTri.toLocaleString()}đ`
-        if (lpc.loaiCongThuc === 'HE_SO') return `+${giaTri}`
-        return `${giaTri}%`
-      },
-    },
+    { title: 'Tỷ lệ/Mức', key: 'tl', render: (_: unknown, r: PhuCapVienChuc) => mucPhuCap(r) },
   ]
   const cotNguon = { title: 'Nguồn', dataIndex: 'createdBy', key: 'ng', render: (v: string) => <Text type="secondary" style={{ fontSize: 12 }}>{nguonPhuCap(v)}</Text> }
   // PC chức vụ bảo lưu (sau sắp xếp): bảng lương lấy mức cao hơn giữa mức bảo lưu và PC chức vụ hiện tại
@@ -120,6 +194,11 @@ export default function VienChucDetailPage() {
           : r.dangDung ? <Tag color="orange">Đang tính lương</Tag>
           : <Tag color="red">Bản trùng</Tag>,
     },
+    ...(laQuanTri && soLoaiTrung > 0 ? [{
+      title: 'Quản trị', key: 'qt',
+      render: (_: unknown, r: PhuCapVienChuc & { trung: boolean }) =>
+        r.trung && <Button size="small" icon={<CheckOutlined />} onClick={() => setBanGiu(r)}>Giữ bản này</Button>,
+    }] : []),
   ]
   const cotLichSu = [
     ...phuCapCols,
@@ -127,6 +206,14 @@ export default function VienChucDetailPage() {
     { title: 'Đến ngày', dataIndex: 'ngayHetHan', key: 'nhh', render: (v?: string) => (v ? formatDate(v) : '-') },
     cotNguon,
     { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'gc', render: (v?: string) => <Text type="secondary" style={{ fontSize: 12 }}>{v ?? ''}</Text> },
+    ...(laQuanTri ? [{
+      title: '', key: 'xoa',
+      render: (_: unknown, p: PhuCapVienChuc) => (
+        <Popconfirm title="Xoá hẳn bản lịch sử này?" description="Chỉ xoá bản nhập sai; giai đoạn hưởng có thật nên giữ lại." okText="Xoá" okButtonProps={{ danger: true }} cancelText="Huỷ" onConfirm={() => xoaBanLichSuPhuCap(p)}>
+          <Button size="small" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
+      ),
+    }] : []),
   ]
 
   return (
@@ -216,7 +303,9 @@ export default function VienChucDetailPage() {
                     showIcon
                     style={{ marginBottom: 12 }}
                     title={`${soLoaiTrung} loại phụ cấp đang ghi trùng (nhiều bản cùng còn hiệu lực)`}
-                    description='Bảng lương đang dùng bản gắn nhãn "Đang tính lương" (ngày hiệu lực mới nhất). Kế toán bấm Chỉnh sửa, kiểm tra đúng mức rồi Lưu - các bản còn lại sẽ chuyển sang lịch sử.'
+                    description={laQuanTri
+                      ? 'Bảng lương đang dùng bản gắn nhãn "Đang tính lương" (ngày hiệu lực mới nhất). Đối chiếu quyết định, bấm "Giữ bản này" ở bản đúng; bản còn lại chuyển vào lịch sử hoặc xoá hẳn nếu nhập sai.'
+                      : 'Bảng lương đang dùng bản gắn nhãn "Đang tính lương" (ngày hiệu lực mới nhất). Báo Quản trị hệ thống (hoặc Phòng VHXH) để chọn bản đúng và xoá bản nhập sai.'}
                   />
                 )}
                 {vc.baoLuuPccv && (
@@ -249,6 +338,14 @@ export default function VienChucDetailPage() {
                     <Table scroll={{ x: 'max-content' }} dataSource={lichSuPhuCap} columns={cotLichSu} rowKey="id" size="small" pagination={false} />
                   </>
                 )}
+                <XuLyPhuCapTrungModal
+                  giu={banGiu}
+                  banKhac={banKhacCungLoai}
+                  donViId={vc.donViId}
+                  tenVienChuc={tenVc}
+                  moTa={moTaPhuCap}
+                  onClose={() => setBanGiu(null)}
+                />
               </>
             ),
           },

@@ -24,6 +24,9 @@ interface LuongState {
   addPhuCap: (d: Omit<PhuCapVienChuc, 'id' | 'createdAt'>) => PhuCapVienChuc
   updatePhuCap: (id: string, patch: Partial<PhuCapVienChuc>) => void
   deactivatePhuCap: (id: string) => void
+  /** Xoá hẳn bản ghi nhập sai (chỉ quản trị dùng khi xử lý dữ liệu trùng) */
+  xoaPhuCap: (id: string) => void
+  xoaHeSoLuong: (id: string) => void
   getActivePhuCaps: (vienChucId: string) => PhuCapVienChuc[]
 
   setLichSuBienDongs: (v: LichSuBienDong[]) => void
@@ -95,6 +98,9 @@ export const useLuongStore = create<LuongState>()(
             p.id === id ? { ...p, isActive: false, ngayHetHan: now().slice(0, 10), updatedAt: now() } : p
           ),
         })),
+      // Lọc bỏ khỏi mảng: lớp đồng bộ nhận ra id bị xoá có chủ đích và không kéo lại từ máy chủ
+      xoaPhuCap: (id) => set((s) => ({ phuCapVienChucs: s.phuCapVienChucs.filter((p) => p.id !== id) })),
+      xoaHeSoLuong: (id) => set((s) => ({ heSoLuongs: s.heSoLuongs.filter((h) => h.id !== id) })),
       getActivePhuCaps: (vienChucId) =>
         get().phuCapVienChucs.filter((p) => p.vienChucId === vienChucId && p.isActive),
 

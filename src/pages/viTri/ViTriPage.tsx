@@ -5,6 +5,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { isDangCongTac } from '@/types/vienChuc'
+import { LOAI_DON_VI_LABELS } from '@/types/donVi'
 
 const { Title, Text } = Typography
 
@@ -136,7 +137,35 @@ export default function ViTriPage() {
       })
     })
 
-    return rows
+    // Tài khoản của một trường chỉ thấy trường mình: không có tổng cấp, tổng phường
+    if (scopeDonViId) return rows
+
+    // Tách thành từng khối trường (mỗi khối kết thúc bằng dòng "Tổng cộng" của trường)
+    const khoiTruong: { loai: string; rows: any[]; sub: any }[] = []
+    let dangGom: any[] = []
+    for (const r of rows) {
+      dangGom.push(r)
+      if (r.rowType === 'subtotal') {
+        khoiTruong.push({ loai: r.donViLoai, rows: dangGom, sub: r })
+        dangGom = []
+      }
+    }
+
+    const CAC_COT = ['chiTieuNS', 'chiTieuSN', 'chiTieuHD', 'chiTieuCoNuoi', 'chiTieuTong', 'coMatNS', 'coMatSN', 'coMatHD', 'coMatTong'] as const
+    const dongTong = (kieu: 'phuong' | 'cap', id: string, nhan: string, subs: any[]) => {
+      const tong = Object.fromEntries(CAC_COT.map((k) => [k, subs.reduce((a, x) => a + (x[k] ?? 0), 0)])) as Record<(typeof CAC_COT)[number], number>
+      return { id, rowType: kieu, nhan, soTruong: subs.length, ...tong, overQuota: tong.coMatTong > tong.chiTieuTong }
+    }
+
+    const ra: any[] = [dongTong('phuong', 'tong_phuong', 'TỔNG TOÀN PHƯỜNG', khoiTruong.map((k) => k.sub))]
+    const thuTuCap = ['MAM_NON', 'TIEU_HOC', 'THCS', ...new Set(khoiTruong.map((k) => k.loai))].filter((v, i, a) => a.indexOf(v) === i)
+    for (const loai of thuTuCap) {
+      const cua = khoiTruong.filter((k) => k.loai === loai)
+      if (!cua.length) continue
+      const ten = loai === 'OTHER' ? 'Đơn vị khác' : `Cấp ${LOAI_DON_VI_LABELS[loai as keyof typeof LOAI_DON_VI_LABELS] ?? loai}`
+      ra.push(dongTong('cap', `tong_cap_${loai}`, ten, cua.map((k) => k.sub)), ...cua.flatMap((k) => k.rows))
+    }
+    return ra
   }, [viTris, vienChucs, scopeDonViId, donVis, chucDanhs])
 
   const onSave = (values: any) => {
@@ -145,55 +174,66 @@ export default function ViTriPage() {
     setEditing(null)
   }
 
+  // Dòng tổng cấp / tổng phường: nhãn gộp ba cột đầu, số liệu ở các cột bên phải
+  const laTongGop = (r: any) => r.rowType === 'cap' || r.rowType === 'phuong'
+  // Mọi dòng tổng (của trường, của cấp, của phường) hiển thị số theo cùng một cách
+  const laTong = (r: any) => r.rowType !== 'position'
+
   const columns = [
     {
       title: 'Trường', dataIndex: 'donViTen', key: 'dv', width: 150,
-      render: (v: string) => <Text strong>{v}</Text>,
-      onCell: (r: any) => ({ rowSpan: r.rowType === 'position' && r.isFirstInGroup ? r.groupSize : 0 }),
+      render: (v: string, r: any) => laTongGop(r)
+        ? <Text strong style={{ fontSize: r.rowType === 'phuong' ? 14 : 13 }}>{r.nhan} <Text type="secondary" style={{ fontWeight: 400, fontSize: 12 }}>({r.soTruong} trường)</Text></Text>
+        : <Text strong>{v}</Text>,
+      onCell: (r: any) => (laTongGop(r)
+        ? { colSpan: 3 }
+        : { rowSpan: r.rowType === 'position' && r.isFirstInGroup ? r.groupSize : 0 }),
     },
     {
       title: 'Vị trí', dataIndex: 'ten', key: 'ten', width: 150, ellipsis: true,
+      onCell: (r: any) => (laTongGop(r) ? { colSpan: 0 } : {}),
       render: (v: string, r: any) => r.rowType === 'subtotal' ? <Text strong>Tổng cộng</Text> : v,
     },
     {
       title: 'Loại', dataIndex: 'loai', key: 'loai', width: 110,
-      render: (v: string, r: any) => r.rowType === 'subtotal' ? '' : <span style={{ whiteSpace: 'nowrap' }}>{LOAI_LABELS[v] ?? v}</span>,
+      onCell: (r: any) => (laTongGop(r) ? { colSpan: 0 } : {}),
+      render: (v: string, r: any) => laTong(r) ? '' : <span style={{ whiteSpace: 'nowrap' }}>{LOAI_LABELS[v] ?? v}</span>,
     },
     {
       title: 'Chỉ tiêu giao (theo trường)',
       children: [
         {
           title: 'Ngân sách', dataIndex: 'chiTieuNS', key: 'ctns', width: 90, align: 'center' as const,
-          render: (v: number, r: any) => r.rowType === 'subtotal' ? <Text strong>{v}</Text> : '',
+          render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : '',
         },
         {
           title: 'Sự nghiệp', dataIndex: 'chiTieuSN', key: 'ctsn', width: 90, align: 'center' as const,
-          render: (v: number, r: any) => r.rowType === 'subtotal' ? <Text strong>{v}</Text> : '',
+          render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : '',
         },
         {
           title: 'Cô nuôi MN', dataIndex: 'chiTieuCoNuoi', key: 'ctcn', width: 90, align: 'center' as const,
-          render: (v: number, r: any) => r.rowType === 'subtotal' ? (v > 0 ? <Text strong>{v}</Text> : <Text type="secondary">-</Text>) : '',
+          render: (v: number, r: any) => laTong(r) ? (v > 0 ? <Text strong>{v}</Text> : <Text type="secondary">-</Text>) : '',
         },
         {
           title: 'Hợp đồng', dataIndex: 'chiTieuHD', key: 'cthd', width: 90, align: 'center' as const,
-          render: (v: number, r: any) => r.rowType === 'subtotal' ? <Text strong>{v}</Text> : '',
+          render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : '',
         },
         {
           title: 'Tổng', dataIndex: 'chiTieuTong', key: 'cttong', width: 80, align: 'center' as const,
-          render: (v: number, r: any) => r.rowType === 'subtotal' ? <Text strong>{v}</Text> : '',
+          render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : '',
         },
       ],
     },
     {
       title: 'Số có mặt',
       children: [
-        { title: 'Ngân sách', dataIndex: 'coMatNS', key: 'cmns', width: 90, align: 'center' as const, render: (v: number, r: any) => r.rowType === 'subtotal' ? <Text strong>{v}</Text> : v },
-        { title: 'Sự nghiệp', dataIndex: 'coMatSN', key: 'cmsn', width: 90, align: 'center' as const, render: (v: number, r: any) => r.rowType === 'subtotal' ? <Text strong>{v}</Text> : v },
-        { title: 'Hợp đồng', dataIndex: 'coMatHD', key: 'cmhd', width: 90, align: 'center' as const, render: (v: number, r: any) => r.rowType === 'subtotal' ? <Text strong>{v}</Text> : v },
+        { title: 'Ngân sách', dataIndex: 'coMatNS', key: 'cmns', width: 90, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
+        { title: 'Sự nghiệp', dataIndex: 'coMatSN', key: 'cmsn', width: 90, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
+        { title: 'Hợp đồng', dataIndex: 'coMatHD', key: 'cmhd', width: 90, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
         {
           title: 'Tổng', dataIndex: 'coMatTong', key: 'cmtong', width: 80, align: 'center' as const,
           render: (v: number, r: any) => (
-            <span style={{ color: r.overQuota ? '#f5222d' : 'inherit', fontWeight: r.overQuota || r.rowType === 'subtotal' ? 700 : 400 }}>
+            <span style={{ color: r.overQuota ? '#f5222d' : 'inherit', fontWeight: r.overQuota || laTong(r) ? 700 : 400 }}>
               {r.overQuota && <Tooltip title="Vượt chỉ tiêu!"><WarningOutlined style={{ color: '#f5222d', marginRight: 4 }} /></Tooltip>}
               {r.chiTietNv ? (
                 <Tooltip
@@ -213,7 +253,7 @@ export default function ViTriPage() {
     },
     {
       title: 'Tỷ lệ', key: 'ratio', width: 120,
-      render: (_: any, r: any) => r.rowType === 'subtotal' ? (
+      render: (_: any, r: any) => laTong(r) ? (
         <Progress
           percent={r.chiTieuTong > 0 ? Math.round((r.coMatTong / r.chiTieuTong) * 100) : 0}
           size="small"
@@ -258,6 +298,12 @@ export default function ViTriPage() {
     return map
   }, [data])
 
+  const kieuDong = (r: any) => {
+    if (r.rowType === 'phuong') return { backgroundColor: '#bfdbfe' }
+    if (r.rowType === 'cap') return { backgroundColor: '#dbeafe' }
+    return { backgroundColor: donViColorMap[r.donViTen] ?? 'transparent' }
+  }
+
   return (
     <Card>
       <Title level={4} style={{ marginBottom: 16 }}>Vị trí việc làm & Chỉ tiêu biên chế</Title>
@@ -266,6 +312,8 @@ export default function ViTriPage() {
         .vt-table .ant-table-thead .ant-table-cell { padding: 5px 8px !important; }
         .vt-subtotal-row td { border-top: 2px solid #096dd9 !important; background: transparent !important; font-weight: 700; }
         .vt-subtotal-row td.ant-table-cell-fix-left { background: inherit !important; }
+        .vt-phuong-row td { border-top: 2px solid #1d4ed8 !important; border-bottom: 2px solid #1d4ed8 !important; background: transparent !important; }
+        .vt-cap-row td { border-top: 2px solid #3b82f6 !important; background: transparent !important; }
       `}</style>
       <Table
         className="vt-table"
@@ -276,8 +324,8 @@ export default function ViTriPage() {
         bordered
         scroll={{ x: 1350 }}
         pagination={false}
-        rowClassName={(r) => r.rowType === 'subtotal' ? 'vt-subtotal-row' : ''}
-        onRow={(r) => ({ style: { backgroundColor: donViColorMap[r.donViTen] ?? 'transparent' } })}
+        rowClassName={(r) => (r.rowType === 'subtotal' ? 'vt-subtotal-row' : r.rowType === 'cap' ? 'vt-cap-row' : r.rowType === 'phuong' ? 'vt-phuong-row' : '')}
+        onRow={(r) => ({ style: kieuDong(r) })}
       />
 
       <Modal open={!!editing} title={`Giao chỉ tiêu: ${editing?.donViTen}`} onCancel={() => setEditing(null)} onOk={() => form.submit()} destroyOnHidden>

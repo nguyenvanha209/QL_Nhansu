@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Row, Col, Card, Statistic, Table, Tag, Select, Typography, Space, Badge, Segmented } from 'antd'
 import { TeamOutlined, FileTextOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LabelList } from 'recharts'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
@@ -85,6 +85,7 @@ export default function DashboardPage() {
         total += c
       }
       row.total = total
+      row.nhanTong = 0.001 // cột vô hình nằm cuối cùng để mang nhãn tổng
       return row
     }).filter((d) => (d.total as number) > 0)
   }, [donVis, nhanSu, capHoc])
@@ -238,7 +239,7 @@ export default function DashboardPage() {
         <Col xs={24} lg={12}>
           <Card title="Nhân sự theo đơn vị trường" size="small" className="chart-card">
             <ResponsiveContainer width="100%" height={Math.max(260, bySchoolData.length * 26 + 40)}>
-              <BarChart data={bySchoolData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+              <BarChart data={bySchoolData} layout="vertical" margin={{ top: 0, right: 36, left: 0, bottom: 0 }}>
                 <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: '#475569' }} />
                 <Tooltip
@@ -256,6 +257,11 @@ export default function DashboardPage() {
                     radius={i === NHOM_VI_TRI.length - 1 ? [0, 3, 3, 0] : undefined}
                   />
                 ))}
+                {/* Tổng nhân sự của trường ghi ở cuối cột. Nhóm xếp cuối có thể bằng 0 (không vẽ ra, không có nhãn)
+                    nên dùng một cột vô hình mỏng nằm sau cùng để mang nhãn */}
+                <Bar dataKey="nhanTong" stackId="nhom" fill="transparent" legendType="none" tooltipType="none" isAnimationActive={false}>
+                  <LabelList dataKey="total" position="right" style={{ fontSize: 12, fontWeight: 700, fill: '#1e293b' }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </Card>

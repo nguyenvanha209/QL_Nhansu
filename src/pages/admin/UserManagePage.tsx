@@ -4,7 +4,7 @@ import {
   Typography, App, Row, Col, Alert, Badge, Tooltip, Checkbox, Switch,
 } from 'antd'
 import {
-  PlusOutlined, EditOutlined, LockOutlined, UnlockOutlined, CheckOutlined, CloseOutlined,
+  PlusOutlined, EditOutlined, LockOutlined, UnlockOutlined, CheckOutlined, CloseOutlined, DeleteOutlined,
 } from '@ant-design/icons'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -15,7 +15,7 @@ import {
 } from '@/utils/rbac'
 import { formatDate } from '@/utils/helpers'
 import { useAuth } from '@/hooks/useAuth'
-import { adminDatMatKhau } from '@/lib/auth'
+import { adminDatMatKhau, adminXoaMatKhau } from '@/lib/auth'
 import { logAction } from '@/utils/auditLogger'
 
 const { Title, Text } = Typography
@@ -87,7 +87,7 @@ function BangQuyen({
 export default function UserManagePage() {
   const { message } = App.useApp()
   const { currentUser } = useAuth()
-  const { users, addUser, updateUser, softDelete } = useUserStore()
+  const { users, addUser, updateUser, softDelete, xoaTaiKhoan } = useUserStore()
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
 
@@ -216,6 +216,32 @@ export default function UserManagePage() {
     }
   }
 
+  // ── Xoá hẳn tài khoản: xác nhận bằng mật khẩu quản trị; xoá mật khẩu trên máy chủ (chặn đăng nhập) rồi xoá khỏi danh sách ──
+  const [dangXoa, setDangXoa] = useState<User | null>(null)
+  const [mkXoa, setMkXoa] = useState('')
+  const [xacNhanTen, setXacNhanTen] = useState('')
+  const [dangXuLyXoa, setDangXuLyXoa] = useState(false)
+  const soAdminConLai = users.filter((u) => u.active && can(u, 'admin', 'admin')).length
+  const lyDoKhongXoa = (r: User): string | null => {
+    if (r.id === currentUser?.id) return 'Không xoá tài khoản đang đăng nhập'
+    if (r.active && can(r, 'admin', 'admin') && soAdminConLai <= 1) return 'Không xoá quản trị viên cuối cùng'
+    return null
+  }
+  const moXoa = (r: User) => { setDangXoa(r); setMkXoa(''); setXacNhanTen('') }
+  const thucHienXoa = async () => {
+    if (!currentUser || !dangXoa) return
+    setDangXuLyXoa(true)
+    const ok = await adminXoaMatKhau(currentUser.username, mkXoa, dangXoa.username)
+    setDangXuLyXoa(false)
+    if (!ok) {
+      message.error('Mật khẩu quản trị viên không đúng hoặc không kết nối được máy chủ - CHƯA xoá tài khoản')
+      return
+    }
+    xoaTaiKhoan(dangXoa.id)
+    message.success(`Đã xoá tài khoản ${dangXoa.username}`)
+    setDangXoa(null)
+  }
+
   // Thống kê nhanh
   const stats = useMemo(() => {
     const total = users.filter((u) => u.active).length
@@ -262,7 +288,7 @@ export default function UserManagePage() {
     },
     { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'ct', width: 100, render: (v: string) => formatDate(v) },
     {
-      title: 'Thao tác', key: 'act', width: 100,
+      title: 'Thao tác', key: 'act', width: 130,
       render: (_: any, r: any) => (
         <Space size="small">
           <Tooltip title="Chỉnh sửa">
@@ -283,6 +309,9 @@ export default function UserManagePage() {
                 ghost={!r.active}
               />
             </Popconfirm>
+          </Tooltip>
+          <Tooltip title={lyDoKhongXoa(r) ?? 'Xoá hẳn tài khoản'}>
+            <Button size="small" danger icon={<DeleteOutlined />} disabled={!!lyDoKhongXoa(r)} onClick={() => moXoa(r)} />
           </Tooltip>
         </Space>
       ),
@@ -356,6 +385,39 @@ export default function UserManagePage() {
         pagination={{ pageSize: 20 }}
         rowClassName={(r) => !r.active ? 'ant-table-row-disabled' : ''}
       />
+
+      <Modal
+        open={!!dangXoa}
+        title={`Xoá hẳn tài khoản ${dangXoa?.username ?? ''}`}
+        onCancel={() => setDangXoa(null)}
+        onOk={thucHienXoa}
+        okText="Xoá tài khoản"
+        okButtonProps={{ danger: true, loading: dangXuLyXoa, disabled: !mkXoa || xacNhanTen.trim() !== dangXoa?.username }}
+        cancelText="Hủy"
+        destroyOnHidden
+      >
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          title="Không hoàn tác được"
+          description={(
+            <span>
+              Tài khoản <b>{dangXoa?.fullName}</b> sẽ bị xoá khỏi danh sách và không đăng nhập được nữa (mật khẩu trên máy chủ bị xoá).
+              Nhật ký, phiếu đề xuất do tài khoản này lập vẫn giữ nguyên tên người thực hiện.
+              Nếu chỉ tạm ngừng sử dụng, hãy dùng nút <b>Khoá</b> thay vì xoá.
+            </span>
+          )}
+        />
+        <Form layout="vertical">
+          <Form.Item label={<>Gõ lại tên đăng nhập <Text code>{dangXoa?.username}</Text> để xác nhận</>}>
+            <Input value={xacNhanTen} onChange={(e) => setXacNhanTen(e.target.value)} autoComplete="off" />
+          </Form.Item>
+          <Form.Item label="Mật khẩu quản trị viên của bạn" style={{ marginBottom: 0 }}>
+            <Input.Password value={mkXoa} onChange={(e) => setMkXoa(e.target.value)} autoComplete="current-password" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Modal tạo/sửa tài khoản */}
       <Modal

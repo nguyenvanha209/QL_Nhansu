@@ -26,6 +26,8 @@ interface UserState {
   addUser: (data: Omit<User, 'id' | 'createdAt'>) => User
   updateUser: (id: string, patch: Partial<User>) => void
   softDelete: (id: string) => void
+  /** Xoá hẳn tài khoản khỏi danh sách (mật khẩu, quyền đăng nhập máy chủ xoá riêng qua adminXoaMatKhau) */
+  xoaTaiKhoan: (id: string) => void
   findByUsername: (username: string) => User | undefined
 }
 
@@ -78,6 +80,17 @@ export const useUserStore = create<UserState>()(
         logAction(a.id, a.name, 'DELETE', 'User', {
           entityId: id,
           moTa: `Khóa tài khoản ${u?.username ?? id}`,
+        })
+      },
+      xoaTaiKhoan: (id) => {
+        const u = get().users.find((x) => x.id === id)
+        if (!u) return
+        set((s) => ({ users: s.users.filter((x) => x.id !== id) }))
+        const a = nguoiThaoTac()
+        logAction(a.id, a.name, 'DELETE', 'User', {
+          entityId: id,
+          donViId: u.donViId ?? undefined,
+          moTa: `Xoá hẳn tài khoản ${u.username} (${u.fullName}) - vai trò ${u.role}`,
         })
       },
       findByUsername: (username) => get().users.find((u) => u.username === username && u.active),

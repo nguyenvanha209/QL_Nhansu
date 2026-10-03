@@ -793,6 +793,13 @@ export default function HuongDanPage() {
           <b> không đóng trang và không xóa dữ liệu trình duyệt</b> cho tới khi nhãn đỏ biến mất.
           Đóng trang lúc còn nhãn "Đang lưu" hoặc nhãn đỏ, trình duyệt sẽ hỏi lại để tránh mất dữ liệu.
         </Paragraph>
+        <Paragraph strong style={{ marginTop: 16 }}>Màu thừa / thiếu so với định mức</Paragraph>
+        <Paragraph>
+          Ở bảng <b>Định mức viên chức và Cơ cấu VTVL</b>, cột <b>Thừa / thiếu</b> dùng nhãn nền đặc:
+          <Tag variant="solid" style={{ background: "#cf1322", borderColor: "#cf1322", color: "#fff", fontWeight: 700 }}>+1,0</Tag> <b>đỏ</b> là thừa (có mặt nhiều hơn định mức),
+          <Tag variant="solid" style={{ background: "#1d4ed8", borderColor: "#1d4ed8", color: "#fff", fontWeight: 700 }}>-1,0</Tag> <b>xanh dương</b> là thiếu (còn chỗ so với định mức),
+          <Tag color="success">Đủ</Tag> là bằng định mức.
+        </Paragraph>
         <Paragraph strong style={{ marginTop: 16 }}>Trường THCS - phân bổ giáo viên kiêm nhiệm theo môn</Paragraph>
         <Paragraph>
           Định mức giáo viên THCS gồm phần <b>đứng lớp</b> từng môn (số tiết/tuần ÷ 19) và phần <b>kiêm nhiệm</b>
@@ -803,9 +810,9 @@ export default function HuongDanPage() {
           <li>Cột <b>Gợi ý</b>: hệ thống chia phần kiêm nhiệm theo tỷ lệ giờ đứng lớp của từng môn.</li>
           <li>Cột <b>Trường điều chỉnh</b>: nhập số giáo viên kiêm nhiệm thực tế bố trí cho môn đó. Môn để trống tự nhận phần còn lại theo cùng tỷ lệ, nên tổng luôn cân.</li>
           <li><b>Kế toán soát tổng</b> ở hai ô <i>Cần phân bổ</i> và <i>Đã phân bổ</i>: nhãn <Tag color="success">Khớp tổng</Tag> là đạt;
-            nhãn đỏ <i>Còn thiếu</i> / <i>Vượt</i> nghĩa là số trường điều chỉnh chưa khớp - sửa lại, hoặc để trống bớt môn cho hệ thống tự cân đối.
+            nhãn xanh dương <i>Còn thiếu</i> hoặc nhãn đỏ <i>Vượt</i> nghĩa là số trường điều chỉnh chưa khớp - sửa lại, hoặc để trống bớt môn cho hệ thống tự cân đối.
             Nút <b>Dùng toàn bộ gợi ý</b> bỏ mọi điều chỉnh.</li>
-          <li>Bấm <b>Lưu quy mô</b> để ghi. Trang tổng hợp toàn phường gắn nhãn đỏ cho trường có phân bổ lệch; file Excel có thêm phần phân bổ này.</li>
+          <li>Bấm <b>Lưu quy mô</b> để ghi. Trang tổng hợp toàn phường gắn nhãn cho trường có phân bổ lệch (đỏ: vượt, xanh dương: thiếu); file Excel có thêm phần phân bổ này.</li>
         </ul>
         <Paragraph>
           Ở các bảng danh sách, bấm vào <b>tiêu đề cột</b> để sắp xếp tăng hoặc giảm dần. Trang

@@ -57,14 +57,19 @@ function vanTay(q: QuyMoTruong | undefined, cap: CapHoc): string {
   })
 }
 
+const MAU_THUA = '#cf1322'
+const MAU_THIEU = '#1d4ed8'
+// Thừa (vượt định mức) = ĐỎ, thiếu (còn chỗ) = XANH DƯƠNG; nền đặc, chữ trắng đậm để nhìn rõ từ xa
+const kieuChenhLech =(thua: boolean) => ({ background: thua ? MAU_THUA : MAU_THIEU, borderColor: thua ? MAU_THUA : MAU_THIEU, color: '#fff', fontWeight: 700 })
+
 function ChenhLech({ v }: { v: number | null }) {
   if (v == null) return <Text type="secondary">-</Text>
   const r = lamTron1(v)
   if (r === 0) return <Tag color="success" style={{ marginInlineEnd: 0 }}>Đủ</Tag>
   return (
     <Tooltip title={r > 0 ? 'Thừa so với định mức' : 'Thiếu so với định mức'}>
-      <Tag color={r > 0 ? 'warning' : 'error'} style={{ marginInlineEnd: 0, fontVariantNumeric: 'tabular-nums' }}>
-        {r > 0 ? '+' : '−'}{fmt(Math.abs(r))}
+      <Tag variant="solid" style={{ ...kieuChenhLech(r > 0), marginInlineEnd: 0, fontVariantNumeric: 'tabular-nums' }}>
+        {r > 0 ? '+' : '-'}{fmt(Math.abs(r))}
       </Tag>
     </Tooltip>
   )
@@ -234,7 +239,7 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
                   {r.cap === 'TIEU_HOC' && r.kq!.tongLop2Buoi === 0 && <Tag color="error" style={{ marginTop: 2 }}>Chưa nhập lớp 2 buổi</Tag>}
                   {r.kq!.chuaPhanMon > 0 && <Tag color="warning" style={{ marginTop: 2 }}>{r.kq!.chuaPhanMon} GV chưa phân môn</Tag>}
                   {r.kq!.phanBoKiem && !r.kq!.phanBoKiem.khop && (
-                    <Tag color="error" style={{ marginTop: 2 }}>
+                    <Tag variant="solid" style={{ ...kieuChenhLech(r.kq!.phanBoKiem.conLai <= 0), marginTop: 2 }}>
                       Kiêm nhiệm {r.kq!.phanBoKiem.conLai > 0 ? `thiếu ${fmt(r.kq!.phanBoKiem.conLai)}` : `vượt ${fmt(-r.kq!.phanBoKiem.conLai)}`}
                     </Tag>
                   )}
@@ -854,8 +859,8 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
 function TrangThaiPhanBo({ conLai }: { conLai: number }) {
   if (Math.abs(conLai) < 0.05) return <Tag color="success" style={{ marginInlineEnd: 0 }}>Khớp tổng</Tag>
   return conLai > 0
-    ? <Tag color="error" style={{ marginInlineEnd: 0 }}>Còn thiếu {fmt(conLai)}</Tag>
-    : <Tag color="error" style={{ marginInlineEnd: 0 }}>Vượt {fmt(-conLai)}</Tag>
+    ? <Tag variant="solid" style={{ ...kieuChenhLech(false), marginInlineEnd: 0 }}>Còn thiếu {fmt(conLai)}</Tag>
+    : <Tag variant="solid" style={{ ...kieuChenhLech(true), marginInlineEnd: 0 }}>Vượt {fmt(-conLai)}</Tag>
 }
 
 function BangPhanBoKiem({ kq, coTheSua, datKiem }: {

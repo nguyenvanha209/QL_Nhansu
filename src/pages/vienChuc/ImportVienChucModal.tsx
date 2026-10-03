@@ -839,7 +839,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
         return (
           <Space size={4} wrap>
             {nhoms.map((n) => (
-              <Tag key={n} color={NHOM_COLOR[n]} style={{ margin: 0, fontSize: 11 }}>
+              <Tag key={n} color={NHOM_COLOR[n]} style={{ margin: 0, fontSize: 12 }}>
                 {n} ({r.changes.filter((c) => c.nhom === n).length})
               </Tag>
             ))}
@@ -859,17 +859,17 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
     <div style={{ padding: '6px 16px' }}>
       {r.changes.map((c) => (
         <div key={c.key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <Tag color={NHOM_COLOR[c.nhom]} style={{ margin: 0, fontSize: 10, minWidth: 62, textAlign: 'center' }}>
+          <Tag color={NHOM_COLOR[c.nhom]} style={{ margin: 0, fontSize: 11, minWidth: 62, textAlign: 'center' }}>
             {c.nhom}
           </Tag>
-          <Text type="secondary" style={{ minWidth: 150, fontSize: 12, flexShrink: 0 }}>
+          <Text type="secondary" style={{ minWidth: 150, fontSize: 13, flexShrink: 0 }}>
             {c.label}
           </Text>
-          <Tag color="error" style={{ fontSize: 12, textDecoration: 'line-through', opacity: 0.85 }}>
+          <Tag color="error" style={{ fontSize: 13, textDecoration: 'line-through', opacity: 0.85 }}>
             {c.oldDisplay}
           </Tag>
-          <Text style={{ color: '#aaa', fontSize: 12 }}>→</Text>
-          <Tag color="success" style={{ fontSize: 12 }}>{c.newDisplay}</Tag>
+          <Text style={{ color: '#aaa', fontSize: 13 }}>→</Text>
+          <Tag color="success" style={{ fontSize: 13 }}>{c.newDisplay}</Tag>
         </div>
       ))}
     </div>
@@ -922,7 +922,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
                   <li>Chỉnh sửa thông tin trong file, giữ nguyên các cột đánh dấu <b>(không sửa)</b></li>
                   <li>Kéo thả hoặc chọn file đã sửa để hệ thống đối chiếu</li>
                 </ol>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: 13 }}>
                   File gồm 3 nhóm: <b>hồ sơ</b>, <b>lương</b> (bậc, hệ số, hệ số chênh lệch bảo lưu, mốc hưởng) và{' '}
                   <b>phụ cấp</b> (vượt khung, chức vụ, trách nhiệm, thâm niên nghề, ưu đãi nhà giáo).
                   Họ và tên xuất ra VIẾT HOA - khi nhập lại, hệ thống so sánh nội dung (không phân biệt hoa/thường).
@@ -937,7 +937,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             style={{ marginBottom: 14 }}
             title="Lưu ý về lương"
             description={
-              <Text style={{ fontSize: 13 }}>
+              <Text style={{ fontSize: 14 }}>
                 Công cụ này <b>sửa trực tiếp</b> bản ghi lương đang áp dụng - dùng để đính chính
                 dữ liệu nhập sai. Việc <b>nâng bậc lương</b> phải thực hiện qua chức năng
                 “Đề xuất điều chỉnh hệ số lương - phụ cấp” để giữ đúng lịch sử.
@@ -970,7 +970,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
               title={`${warnings.length} cảnh báo khi đọc file`}
               description={
                 <ul style={{ margin: '4px 0 0', paddingLeft: 18, maxHeight: 100, overflowY: 'auto' }}>
-                  {warnings.map((w, i) => <li key={i} style={{ fontSize: 12 }}>{w}</li>)}
+                  {warnings.map((w, i) => <li key={i} style={{ fontSize: 13 }}>{w}</li>)}
                 </ul>
               }
               style={{ marginBottom: 12 }}
@@ -1011,7 +1011,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           <Title level={4} style={{ marginBottom: 6 }}>Nhập thành công!</Title>
           <Text style={{ fontSize: 15 }}>Đã cập nhật <b>{appliedCount}</b> hồ sơ viên chức.</Text>
           <br />
-          <Text type="secondary" style={{ fontSize: 13 }}>
+          <Text type="secondary" style={{ fontSize: 14 }}>
             Chi tiết thay đổi đã được ghi vào nhật ký thao tác hệ thống.
           </Text>
         </div>

@@ -52,7 +52,7 @@ export default function DuBaoNghiHuuPage() {
     { title: 'Họ và tên', key: 'hoTen', render: (_: any, r: any) => `${r.ho} ${r.ten}`, ellipsis: true },
     { title: 'Ngày sinh', dataIndex: 'ngaySinh', key: 'ns', width: 110, render: (v: string) => formatDate(v) },
     { title: 'Giới tính', dataIndex: 'gioiTinh', key: 'gt', width: 80, render: (v: string) => v === 'NAM' ? 'Nam' : 'Nữ' },
-    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', ellipsis: true },
+    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', ellipsis: true, width: 250 },
     { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd', ellipsis: true },
     {
       // Hiện tuổi nghỉ hưu theo lộ trình để đối chiếu thẳng với Phụ lục I/II NĐ 135
@@ -77,7 +77,7 @@ export default function DuBaoNghiHuuPage() {
       sorter: (a: any, b: any) => a.days - b.days,
     },
     {
-      title: 'Mức độ', key: 'level',
+      title: 'Mức độ', key: 'level', width: 150,
       render: (_: any, r: any) => r.days <= 90 ? <Tag color="red">Rất gấp</Tag> : r.days <= 180 ? <Tag color="orange">Gấp</Tag> : r.days <= 365 ? <Tag color="gold">Cần chuẩn bị</Tag> : <Tag>Theo dõi</Tag>,
     },
   ]

@@ -211,15 +211,15 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
         <Col xs={24} lg={14}>
           <Space wrap align="end">
             <div>
-              <Text type="secondary" style={{ fontSize: 12 }}>Số thông báo</Text>
+              <Text type="secondary" style={{ fontSize: 13 }}>Số thông báo</Text>
               <Input addonAfter="/TB-UBND" value={ban.soThongBao} disabled={daBanHanh} onChange={(e) => setBan({ ...ban, soThongBao: e.target.value })} style={{ width: 190 }} placeholder="VD 422" />
             </div>
             <div>
-              <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Ngày thông báo</Text>
+              <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>Ngày thông báo</Text>
               <DatePicker format="DD/MM/YYYY" value={ban.ngayThongBao ? dayjs(ban.ngayThongBao) : null} disabled={daBanHanh} onChange={(d) => setBan({ ...ban, ngayThongBao: d ? d.format('YYYY-MM-DD') : '' })} />
             </div>
             <div>
-              <Text type="secondary" style={{ fontSize: 12 }}>Người ký (TM. UBND - Chủ tịch)</Text>
+              <Text type="secondary" style={{ fontSize: 13 }}>Người ký (TM. UBND - Chủ tịch)</Text>
               <Input value={ban.nguoiKy} disabled={daBanHanh} onChange={(e) => setBan({ ...ban, nguoiKy: e.target.value })} style={{ width: 200 }} placeholder="Họ tên người ký" />
             </div>
           </Space>
@@ -274,7 +274,7 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
       <Card size="small" title="Nội dung thông báo (xem trước)" style={{ marginBottom: 12 }}>
         <Paragraph strong style={{ textAlign: 'center', marginBottom: 4 }}>THÔNG BÁO<br />{nd.tieuDe}</Paragraph>
         {nd.doan.slice(0, 2).map((t) => <Paragraph key={t} style={{ marginBottom: 6, textIndent: 24 }}>{t}</Paragraph>)}
-        <Text type="secondary" style={{ fontSize: 12 }}>Phần căn cứ và nơi nhận có đầy đủ trong file Word.</Text>
+        <Text type="secondary" style={{ fontSize: 13 }}>Phần căn cứ và nơi nhận có đầy đủ trong file Word.</Text>
       </Card>
 
       <BangDanhSach tb={ban} sua={!daBanHanh} onDoi={doiDong} onXoa={xoaDong} />
@@ -315,7 +315,7 @@ function BangDanhSach({ tb, sua, onDoi, onXoa, chiCap, truongMinh }: {
           render: (_: unknown, r: DongBang) => la(r) && (
             <span style={{ fontVariantNumeric: 'tabular-nums' }}>
               Bậc {r.bacCu} - {hs(r.heSoCu)}{r.tnvkCuPct ? ` + VK ${r.tnvkCuPct}%` : ''}
-              <div style={{ fontSize: 12, color: '#64748b' }}>từ {formatDate(r.mocCu ?? '')}{r.baoLuu ? ` · BL ${hs(r.baoLuu)}` : ''}</div>
+              <div style={{ fontSize: 13, color: '#64748b' }}>từ {formatDate(r.mocCu ?? '')}{r.baoLuu ? ` · BL ${hs(r.baoLuu)}` : ''}</div>
             </span>
           ),
         },
@@ -324,8 +324,8 @@ function BangDanhSach({ tb, sua, onDoi, onXoa, chiCap, truongMinh }: {
           render: (_: unknown, r: DongBang) => la(r) && (
             <span style={{ fontVariantNumeric: 'tabular-nums' }}>
               <b>Bậc {r.bacMoi} - {hs(r.heSoMoi)}{r.tnvkMoiPct ? ` + VK ${r.tnvkMoiPct}%` : ''}</b>
-              {r.laVuotKhung && <Tag color="purple" style={{ marginInlineStart: 6, fontSize: 10 }}>Vượt khung</Tag>}
-              <div style={{ fontSize: 12, color: '#64748b' }}>từ {formatDate(r.mocMoi ?? '')}</div>
+              {r.laVuotKhung && <Tag color="purple" style={{ marginInlineStart: 6, fontSize: 11 }}>Vượt khung</Tag>}
+              <div style={{ fontSize: 13, color: '#64748b' }}>từ {formatDate(r.mocMoi ?? '')}</div>
             </span>
           ),
         },
@@ -354,8 +354,8 @@ function BangDanhSach({ tb, sua, onDoi, onXoa, chiCap, truongMinh }: {
           { title: 'Chức vụ', dataIndex: 'chucVu', key: 'cv', width: 110 },
           truongCot,
           { title: 'Mã CDNN', dataIndex: 'maChucDanh', key: 'ma', width: 95 },
-          { title: 'Đang hưởng', key: 'cu', width: 130, render: (_: unknown, r: DongBang) => la(r) && <span>{pct(r.pctnCu)} <Text type="secondary" style={{ fontSize: 12 }}>từ {formatDate(r.mocCu ?? '')}</Text></span> },
-          { title: 'Nâng (mới)', key: 'moi', width: 130, render: (_: unknown, r: DongBang) => la(r) && <span><b>{pct(r.pctnMoi)}</b> <Text type="secondary" style={{ fontSize: 12 }}>từ {formatDate(r.mocMoi ?? '')}</Text></span> },
+          { title: 'Đang hưởng', key: 'cu', width: 130, render: (_: unknown, r: DongBang) => la(r) && <span>{pct(r.pctnCu)} <Text type="secondary" style={{ fontSize: 13 }}>từ {formatDate(r.mocCu ?? '')}</Text></span> },
+          { title: 'Nâng (mới)', key: 'moi', width: 130, render: (_: unknown, r: DongBang) => la(r) && <span><b>{pct(r.pctnMoi)}</b> <Text type="secondary" style={{ fontSize: 13 }}>từ {formatDate(r.mocMoi ?? '')}</Text></span> },
         ]
 
   const soCot = 4 + cotRieng.length + (sua ? 1 : 0)
@@ -389,7 +389,7 @@ function BangDanhSach({ tb, sua, onDoi, onXoa, chiCap, truongMinh }: {
           title: 'Ghi chú', key: 'gc', width: 180, onCell: (r) => (r.loaiDong === 'nhom' ? { colSpan: 0 } : {}),
           render: (_, r) => la(r) && (sua
             ? <Input size="small" value={r.ghiChu} onChange={(e) => onDoi?.(r.key, { ghiChu: e.target.value })} placeholder={tb.loai === 'PCTN_LAN_DAU' ? 'VD Thời gian tập sự 9 tháng' : ''} />
-            : <Text style={{ fontSize: 12 }}>{r.ghiChu}</Text>),
+            : <Text style={{ fontSize: 13 }}>{r.ghiChu}</Text>),
         },
         ...(sua ? [{
           title: '', key: 'xoa', width: 44, onCell: (r: DongBang) => (r.loaiDong === 'nhom' ? { colSpan: 0 } : {}),
@@ -457,10 +457,10 @@ function XemThongBao() {
                     <Space size={6} wrap>
                       <NotificationOutlined style={{ color: '#2563eb' }} />
                       <Text strong>TB số {t.soThongBao}/TB-UBND</Text>
-                      {moi && <Badge status="error" text={<Text type="danger" style={{ fontSize: 12 }}>Mới</Text>} />}
+                      {moi && <Badge status="error" text={<Text type="danger" style={{ fontSize: 13 }}>Mới</Text>} />}
                     </Space>
-                    <Text style={{ fontSize: 13 }}>{LOAI_THONG_BAO_KQ[t.loai].tenNgan} - {tenKy(t.ky, t.nam)}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text style={{ fontSize: 14 }}>{LOAI_THONG_BAO_KQ[t.loai].tenNgan} - {tenKy(t.ky, t.nam)}</Text>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
                       Ngày {formatDate(t.ngayThongBao)} · {scopeDonViId ? `trường mình ${soCuaTruong} người` : `${t.dong.length} người`}
                     </Text>
                   </Space>

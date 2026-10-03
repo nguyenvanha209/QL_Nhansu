@@ -258,40 +258,40 @@ export default function RaSoatNgachBacPage() {
       ),
     },
     ...(scopeDonViId ? [] : [{
-      title: 'Đơn vị', key: 'dv', width: 170,
+      title: 'Đơn vị', key: 'dv', width: 210,
       render: (_: unknown, r: DongRaSoat) => tenDonVi.get(r.donViId) ?? '',
     }]),
     {
-      title: 'Mã CDNN', key: 'cd', width: 230,
+      title: 'Mã CDNN', key: 'cd', width: 210,
       render: (_: unknown, r: DongRaSoat) => r.maCd
-        ? <><Text strong>{r.maCd}</Text><br /><Text type="secondary" style={{ fontSize: 12 }}>{r.tenCd}</Text></>
+        ? <><Text strong>{r.maCd}</Text><br /><Text type="secondary" style={{ fontSize: 13 }}>{r.tenCd}</Text></>
         : <Text type="secondary">{LOAI_LAO_DONG_LABELS[r.loaiLaoDong as keyof typeof LOAI_LAO_DONG_LABELS]}</Text>,
     },
     {
-      title: 'Bảng', key: 'bang', width: 70, align: 'center' as const,
+      title: 'Bảng', key: 'bang', width: 80, align: 'center' as const,
       render: (_: unknown, r: DongRaSoat) => r.bangLuong ? `${r.bangLuong}${r.soBac ? ` (${r.soBac})` : ''}` : '',
     },
     { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 55, align: 'center' as const },
     {
-      title: 'Hệ số đang ghi', key: 'hs', width: 90, align: 'right' as const,
+      title: 'Hệ số đang ghi', key: 'hs', width: 100, align: 'right' as const,
       render: (_: unknown, r: DongRaSoat) => r.heSo?.toFixed(2) ?? '',
     },
     {
-      title: 'Hệ số theo bảng', key: 'hsb', width: 90, align: 'right' as const,
+      title: 'Hệ số theo bảng', key: 'hsb', width: 100, align: 'right' as const,
       render: (_: unknown, r: DongRaSoat) => r.heSoTheoBang?.toFixed(2) ?? '',
     },
     {
-      title: 'Vấn đề', key: 'loi', width: 330,
+      title: 'Vấn đề', key: 'loi', width: 360,
       render: (_: unknown, r: DongRaSoat) => (
         <Space orientation="vertical" size={2}>
           <Space size={4} wrap>{r.loi.map((l) => <Tag key={l} color={LECH_LABELS[l].mau}>{LECH_LABELS[l].ten}</Tag>)}</Space>
-          {r.chiTiet.map((c) => <Text key={c} style={{ fontSize: 12 }}>{c}</Text>)}
+          {r.chiTiet.map((c) => <Text key={c} style={{ fontSize: 13 }}>{c}</Text>)}
         </Space>
       ),
     },
     {
-      title: 'Gợi ý', dataIndex: 'goiY', key: 'goiY', width: 260,
-      render: (v: string) => <Text type="secondary" style={{ fontSize: 12 }}>{v}</Text>,
+      title: 'Gợi ý', dataIndex: 'goiY', key: 'goiY', width: 280,
+      render: (v: string) => <Text type="secondary" style={{ fontSize: 13 }}>{v}</Text>,
     },
   ]
 

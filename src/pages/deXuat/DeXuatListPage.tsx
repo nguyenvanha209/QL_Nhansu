@@ -35,12 +35,12 @@ export default function DeXuatListPage() {
 
   const columns = [
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 130 },
-    { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'td', ellipsis: true },
+    { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'td', ellipsis: true, width: 420 },
     {
       title: 'Đơn vị', dataIndex: 'donViId', key: 'dv', ellipsis: true,
       render: (id: string) => donVis.find((d) => d.id === id)?.ten ?? id,
     },
-    { title: 'Loại', dataIndex: 'loai', key: 'loai', render: (v: string) => LOAI_DE_XUAT_LABELS[v as keyof typeof LOAI_DE_XUAT_LABELS] ?? v },
+    { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 240, render: (v: string) => LOAI_DE_XUAT_LABELS[v as keyof typeof LOAI_DE_XUAT_LABELS] ?? v },
     { title: 'Số VC', key: 'sl', width: 70, render: (_: any, r: any) => r.chiTiet.length },
     {
       title: 'Trạng thái', dataIndex: 'trangThai', key: 'tt',
@@ -74,7 +74,7 @@ export default function DeXuatListPage() {
           key: 'hd',
           label: <b>Hướng dẫn lập đề xuất</b>,
           children: (
-            <div style={{ fontSize: 13.5 }}>
+            <div style={{ fontSize: 14.5 }}>
               <ol style={{ margin: '0 0 8px', paddingLeft: 18, lineHeight: 1.65 }}>
                 <li><b>Tạo đề xuất</b> → chọn loại → thêm người (một phiếu gộp nhiều người cùng đợt).</li>
                 <li>Kiểm tra cột <b>Nội dung điều chỉnh (cũ → mới)</b>: ngạch - bậc - hệ số - mốc hưởng; đính kèm minh chứng nếu loại bắt buộc (tối đa 3 MB/file).</li>

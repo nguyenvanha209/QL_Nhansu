@@ -47,7 +47,7 @@ function TabPane({ title, desc, children }: { title: string; desc: string; child
   return (
     <div style={{ padding: '4px 16px 16px' }}>
       <Title level={5} style={{ marginTop: 0, marginBottom: 4 }}>{title}</Title>
-      <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 16 }}>{desc}</Text>
+      <Text type="secondary" style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>{desc}</Text>
       {children}
     </div>
   )
@@ -171,25 +171,25 @@ function PhuCapTab() {
   const cols = [
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 170, render: (v: string) => <span style={{ whiteSpace: 'nowrap' }}>{v}</span> },
     {
-      title: 'Tên phụ cấp', dataIndex: 'ten', key: 'ten',
+      title: 'Tên phụ cấp', dataIndex: 'ten', key: 'ten', width: 300,
       render: (v: string, r: any) => PCUD_MUC_CU.has(r.ma) ? <Space size={6}>{v}<Tag>Mức cũ</Tag></Space> : v,
     },
-    { title: 'Công thức', dataIndex: 'loaiCongThuc', key: 'ct', render: (v: string) => CONG_THUC_LABELS[v as keyof typeof CONG_THUC_LABELS] ?? v ?? '-' },
+    { title: 'Công thức', dataIndex: 'loaiCongThuc', key: 'ct', width: 270, render: (v: string) => CONG_THUC_LABELS[v as keyof typeof CONG_THUC_LABELS] ?? v ?? '-' },
     {
-      title: 'Giá trị', dataIndex: 'giaTri', key: 'gt', width: 130,
+      title: 'Giá trị', dataIndex: 'giaTri', key: 'gt', width: 170,
       render: (v: number | null, r: any) => {
         if (!v) return <Typography.Text type="secondary">Nhập theo từng người</Typography.Text>
         return r.loaiCongThuc === 'TIEN_MAT' ? `${v.toLocaleString()} đ` : r.loaiCongThuc === 'HE_SO' ? `+${v}` : `${v}%`
       },
     },
     { title: 'Đối tượng / Căn cứ', dataIndex: 'moTa', key: 'moTa', render: (v?: string) => v ?? '-' },
-    { title: '', key: 'act', render: (_: any, r: any) => <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} /> },
+    { title: '', key: 'act', width: 60, render: (_: any, r: any) => <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} /> },
   ]
 
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm loại phụ cấp</Button>
-      <Table scroll={{ x: 'max-content' }} dataSource={sapXepLoaiPhuCap(loaiPhuCaps.filter((p) => p.active))} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 1300 }} dataSource={sapXepLoaiPhuCap(loaiPhuCaps.filter((p) => p.active))} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa phụ cấp' : 'Thêm phụ cấp'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
@@ -261,8 +261,8 @@ function ChucVuTab() {
 
   const cols = [
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 150 },
-    { title: 'Chức vụ', dataIndex: 'ten', key: 'ten', width: 170 },
-    { title: 'Áp dụng cho', dataIndex: 'apDung', key: 'apDung', width: 200, render: (v: string) => v ?? '-' },
+    { title: 'Chức vụ', dataIndex: 'ten', key: 'ten', width: 190 },
+    { title: 'Áp dụng cho', dataIndex: 'apDung', key: 'apDung', width: 300, render: (v: string) => v ?? '-' },
     { title: 'Căn cứ pháp lý', dataIndex: 'canCu', key: 'canCu', ellipsis: true, render: (v: string) => v ?? '-' },
     { title: 'Ghi chú', dataIndex: 'moTa', key: 'moTa', ellipsis: true, render: (v: string) => v ?? '-' },
     {
@@ -287,7 +287,7 @@ function ChucVuTab() {
         </Descriptions.Item>
       </Descriptions>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức vụ</Button>
-      <Table dataSource={chucVus.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} scroll={{ x: 800 }} />
+      <Table dataSource={chucVus.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} scroll={{ x: 1100 }} />
       <Modal open={open} title={editing ? 'Sửa chức vụ' : 'Thêm chức vụ'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]} tooltip="Dùng 4 mã chuẩn để hệ thống tự tính phụ cấp chức vụ: HT, P.HT, TTCM, TPCM">

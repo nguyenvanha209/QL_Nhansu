@@ -72,12 +72,12 @@ export default function VienChucListPage() {
 
   const columns = [
     {
-      title: 'Mã VC', dataIndex: 'ma', key: 'ma', width: 100,
+      title: 'Mã VC', dataIndex: 'ma', key: 'ma', width: 110,
       render: (v: string) => <Tag>{v}</Tag>,
       sorter: (a: any, b: any) => a.ma.localeCompare(b.ma),
     },
     {
-      title: 'Họ và tên', key: 'hoTen', width: 215,
+      title: 'Họ và tên', key: 'hoTen', width: 200,
       render: (_: any, r: any) => (
         <Button
           type="link"
@@ -90,35 +90,35 @@ export default function VienChucListPage() {
       sorter: (a: any, b: any) => `${a.ho} ${a.ten}`.localeCompare(`${b.ho} ${b.ten}`, 'vi'),
     },
     {
-      title: 'Ngày sinh', dataIndex: 'ngaySinh', key: 'ns', width: 110,
+      title: 'Ngày sinh', dataIndex: 'ngaySinh', key: 'ns', width: 115,
       render: (v: string) => formatDate(v),
       sorter: (a: any, b: any) => (a.ngaySinh ?? '').localeCompare(b.ngaySinh ?? ''),
     },
-    { title: 'Giới tính', dataIndex: 'gioiTinh', key: 'gt', width: 75, render: (v: string) => v === 'NAM' ? 'Nam' : 'Nữ', sorter: (a: any, b: any) => a.gioiTinh.localeCompare(b.gioiTinh) },
+    { title: 'Giới tính', dataIndex: 'gioiTinh', key: 'gt', width: 85, render: (v: string) => v === 'NAM' ? 'Nam' : 'Nữ', sorter: (a: any, b: any) => a.gioiTinh.localeCompare(b.gioiTinh) },
     {
-      title: 'Đơn vị', dataIndex: 'donViId', key: 'dv', width: 155,
+      title: 'Đơn vị', dataIndex: 'donViId', key: 'dv', width: 240,
       render: (id: string) => dvNameMap.get(id) ?? id,
       sorter: (a: any, b: any) => (dvNameMap.get(a.donViId) ?? '').localeCompare(dvNameMap.get(b.donViId) ?? '', 'vi'),
     },
     {
-      title: 'Chức danh', dataIndex: 'chucDanhId', key: 'cd', width: 150,
+      title: 'Chức danh', dataIndex: 'chucDanhId', key: 'cd', width: 235,
       render: (id: string) => cdNameMap.get(id) ?? id,
       sorter: (a: any, b: any) => (cdNameMap.get(a.chucDanhId) ?? '').localeCompare(cdNameMap.get(b.chucDanhId) ?? '', 'vi'),
     },
     {
       // Không đặt width thì cột này nuốt hết phần dư của bảng, kéo tiêu đề rộng
       // ra trong khi nội dung chỉ là một thẻ ngắn.
-      title: 'Loại hình LĐ', dataIndex: 'loaiLaoDong', key: 'll', width: 150,
+      title: 'Loại hình LĐ', dataIndex: 'loaiLaoDong', key: 'll', width: 190,
       render: (v: string) => <Tag color={v === 'VIEN_CHUC' ? 'blue' : v === 'TAP_SU' ? 'cyan' : 'default'}>{LOAI_LAO_DONG_LABELS[v as keyof typeof LOAI_LAO_DONG_LABELS] ?? v}</Tag>,
       sorter: (a: any, b: any) => a.loaiLaoDong.localeCompare(b.loaiLaoDong),
     },
     {
-      title: 'VTVL', dataIndex: 'vtvl', key: 'vtvl', width: 120,
+      title: 'VTVL', dataIndex: 'vtvl', key: 'vtvl', width: 130,
       render: (v?: string) => v ? <Tag color={v === 'CBQL' ? 'gold' : v === 'GIAO_VIEN' ? 'blue' : 'default'}>{vtvls.find((x) => x.ma === v)?.ten ?? VTVL_LABELS[v as keyof typeof VTVL_LABELS] ?? v}</Tag> : '-',
       sorter: (a: any, b: any) => (a.vtvl ?? '').localeCompare(b.vtvl ?? ''),
     },
     {
-      title: 'Trạng thái', dataIndex: 'trangThai', key: 'trangThai', width: 130,
+      title: 'Trạng thái', dataIndex: 'trangThai', key: 'trangThai', width: 140,
       render: (v?: TrangThaiCongTac) => {
         const key = v ?? 'DANG_LAM_VIEC'
         return <Tag color={TRANG_THAI_COLORS[key]}>{TRANG_THAI_CONG_TAC_LABELS[key]}</Tag>
@@ -220,7 +220,7 @@ export default function VienChucListPage() {
         columns={columns}
         rowKey="id"
         size="small"
-        scroll={{ x: 1315, y: 'calc(100vh - 290px)' }}
+        scroll={{ x: 1555, y: 'calc(100vh - 290px)' }}
         pagination={{ pageSize: 50, showSizeChanger: true, pageSizeOptions: [20, 50, 100], showTotal: (t) => `Tổng ${t} bản ghi` }}
       />
 

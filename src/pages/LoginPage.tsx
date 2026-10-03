@@ -126,17 +126,17 @@ export default function LoginPage() {
             </Form>
 
             {/* Không công khai danh sách tên đăng nhập (giúp kẻ xấu dò mật khẩu) - tên đăng nhập do Phòng VH-XH cấp riêng */}
-            <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'center' }}>
+            <Text type="secondary" style={{ fontSize: 13, display: 'block', textAlign: 'center' }}>
               Tên đăng nhập và mật khẩu do Phòng Văn hóa - Xã hội cấp riêng cho từng trường.
             </Text>
 
             <Divider style={{ margin: '16px 0 12px' }} />
             <div style={{ textAlign: 'center', padding: '0 8px' }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: 13 }}>
                 Nếu không đăng nhập được, xin liên hệ:
               </Text>
               <br />
-              <Text style={{ fontSize: 13, fontWeight: 600 }}>
+              <Text style={{ fontSize: 14, fontWeight: 600 }}>
                 <PhoneOutlined style={{ marginRight: 6, color: '#2563eb' }} />
                 Đ/c Nguyễn Văn Hạ - 0902.121.599
               </Text>

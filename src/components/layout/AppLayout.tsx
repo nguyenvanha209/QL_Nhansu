@@ -209,15 +209,15 @@ export default function AppLayout() {
                   size={32}
                   style={{
                     background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
-                    fontSize: 13, fontWeight: 600,
+                    fontSize: 14, fontWeight: 600,
                   }}
                 >
                   {currentUser?.fullName?.charAt(0) ?? 'U'}
                 </Avatar>
                 {currentUser && (
                   <div style={{ lineHeight: '16px' }}>
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{currentUser.fullName}</div>
-                    <div style={{ fontSize: 11, color: token.colorTextSecondary }}>{ROLE_LABELS[currentUser.role]}</div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>{currentUser.fullName}</div>
+                    <div style={{ fontSize: 12, color: token.colorTextSecondary }}>{ROLE_LABELS[currentUser.role]}</div>
                   </div>
                 )}
               </Space>
@@ -233,7 +233,7 @@ export default function AppLayout() {
         <Footer style={{
           textAlign: 'center', padding: '8px 16px',
           borderTop: `1px solid ${token.colorBorderSecondary}`,
-          fontSize: 12, color: token.colorTextSecondary,
+          fontSize: 13, color: token.colorTextSecondary,
           background: '#fff',
         }}>
           {FOOTER_TEXT}

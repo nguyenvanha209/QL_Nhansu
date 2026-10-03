@@ -176,7 +176,7 @@ export default function VienChucDetailPage() {
     { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapId', key: 'lpc', render: (id: string) => tenHienThiLoaiPhuCap(loaiPhuCaps.find((l) => l.id === id)) || id },
     { title: 'Tỷ lệ/Mức', key: 'tl', render: (_: unknown, r: PhuCapVienChuc) => mucPhuCap(r) },
   ]
-  const cotNguon = { title: 'Nguồn', dataIndex: 'createdBy', key: 'ng', render: (v: string) => <Text type="secondary" style={{ fontSize: 12 }}>{nguonPhuCap(v)}</Text> }
+  const cotNguon = { title: 'Nguồn', dataIndex: 'createdBy', key: 'ng', render: (v: string) => <Text type="secondary" style={{ fontSize: 13 }}>{nguonPhuCap(v)}</Text> }
   // PC chức vụ bảo lưu (sau sắp xếp): bảng lương lấy mức cao hơn giữa mức bảo lưu và PC chức vụ hiện tại
   const pcCvId = loaiPhuCaps.find((l) => l.ma === 'PC_CHUC_VU')?.id
   const pcCvHienTai = chonBanDangHuong(activePhuCaps.filter((p) => p.loaiPhuCapId === pcCvId))?.giaTri ?? 0
@@ -205,7 +205,7 @@ export default function VienChucDetailPage() {
     { title: 'Từ ngày', dataIndex: 'ngayHieuLuc', key: 'nhl', render: (v: string) => formatDate(v) },
     { title: 'Đến ngày', dataIndex: 'ngayHetHan', key: 'nhh', render: (v?: string) => (v ? formatDate(v) : '-') },
     cotNguon,
-    { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'gc', render: (v?: string) => <Text type="secondary" style={{ fontSize: 12 }}>{v ?? ''}</Text> },
+    { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'gc', render: (v?: string) => <Text type="secondary" style={{ fontSize: 13 }}>{v ?? ''}</Text> },
     ...(laQuanTri ? [{
       title: '', key: 'xoa',
       render: (_: unknown, p: PhuCapVienChuc) => (
@@ -252,7 +252,7 @@ export default function VienChucDetailPage() {
                   <Descriptions.Item label={TEN_PCCV_BAO_LUU}>
                     {CHUC_VU_LABELS[vc.baoLuuPccv.chucVuCu] ?? vc.baoLuuPccv.chucVuCu} - hệ số {vc.baoLuuPccv.heSo}, đến {formatDate(vc.baoLuuPccv.denNgay)}{' '}
                     {dangBaoLuuPccv(vc) ? <Tag color="gold">Đang bảo lưu</Tag> : <Tag>Đã hết</Tag>}
-                    <br /><Text type="secondary" style={{ fontSize: 12 }}>QĐ {vc.baoLuuPccv.soQuyetDinh} ngày {formatDate(vc.baoLuuPccv.ngayQuyetDinh)}</Text>
+                    <br /><Text type="secondary" style={{ fontSize: 13 }}>QĐ {vc.baoLuuPccv.soQuyetDinh} ngày {formatDate(vc.baoLuuPccv.ngayQuyetDinh)}</Text>
                   </Descriptions.Item>
                 )}
                 {vc.chuyenTuHoSoId && (
@@ -317,12 +317,12 @@ export default function VienChucDetailPage() {
                         : tinhTheoBaoLuu ? <Tag color="gold">Đang tính lương</Tag>
                         : <Tag color="red">Không có tác dụng - kiểm tra lại</Tag>}
                     </Space>
-                    <div style={{ fontSize: 13 }}>
+                    <div style={{ fontSize: 14 }}>
                       Chức vụ cũ: <b>{tenChucVu(vc.baoLuuPccv.chucVuCu)}</b> - hệ số bảo lưu <b>{String(vc.baoLuuPccv.heSo).replace('.', ',')}</b>,
                       từ {formatDate(vc.baoLuuPccv.ngayQuyetDinh)} đến {formatDate(vc.baoLuuPccv.denNgay)} (QĐ {vc.baoLuuPccv.soQuyetDinh}).
                       Chức vụ hiện tại: {tenChucVu(vc.chucVu)}, PC chức vụ hiện tại {String(pcCvHienTai).replace('.', ',')}.
                     </div>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
                       {dangBaoLuuPccv(vc) && !tinhTheoBaoLuu
                         ? 'Mức bảo lưu không cao hơn PC chức vụ hiện tại nên không được tính. Dòng "PC chức vụ hiện tại" chỉ ghi mức theo chức vụ đang giữ; mức của chức vụ cũ ghi ở mục bảo lưu này.'
                         : 'Khoản này khác "Hệ số chênh lệch bảo lưu (lương)". Bảng lương lấy mức cao hơn giữa mức bảo lưu và PC chức vụ hiện tại; hết hạn thì tự về mức theo chức vụ hiện tại.'}

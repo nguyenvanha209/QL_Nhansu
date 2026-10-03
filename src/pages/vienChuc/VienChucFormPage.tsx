@@ -79,7 +79,7 @@ function NhanKhoaLuong({ ten }: { ten: React.ReactNode }) {
     <span>
       {ten}{' '}
       <Tooltip title="Chỉ thay đổi qua phiếu đề xuất do Phòng VH-XH duyệt">
-        <Tag icon={<LockOutlined />} color="default" style={{ marginInlineStart: 4, fontSize: 11 }}>Qua đề xuất</Tag>
+        <Tag icon={<LockOutlined />} color="default" style={{ marginInlineStart: 4, fontSize: 12 }}>Qua đề xuất</Tag>
       </Tooltip>
     </span>
   )
@@ -315,7 +315,7 @@ export default function VienChucFormPage() {
   const nhanBienChe = (text: string) => (
     <Space size={6}>
       {text}
-      {laBienChe && <Tag color="blue" style={{ marginInlineEnd: 0, fontSize: 11, lineHeight: '16px' }}>VC biên chế</Tag>}
+      {laBienChe && <Tag color="blue" style={{ marginInlineEnd: 0, fontSize: 12, lineHeight: '16px' }}>VC biên chế</Tag>}
     </Space>
   )
 
@@ -827,13 +827,13 @@ export default function VienChucFormPage() {
                     <Tag icon={<LockOutlined />} style={{ cursor: 'pointer' }} onClick={baoKhoaPhuCap}>Qua đề xuất</Tag>
                   )}
                   <Text strong>{TEN_PCCV_BAO_LUU}</Text>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" style={{ fontSize: 13 }}>
                     {vc?.baoLuuPccv
                       ? `Đang ghi: chức vụ cũ ${tenChucVu(vc.baoLuuPccv.chucVuCu)} - hệ số bảo lưu ${vc.baoLuuPccv.heSo}`
                       : `${tenChucVu(vc?.chucVu)} (hệ số ${pccvDangHuong}) → ${tenChucVu(watchChucVu)} (hệ số ${pccvTheoChucVuMoi})`}
                   </Text>
                 </Space>
-                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: watchBlBat ? 8 : 0 }}>
+                <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: watchBlBat ? 8 : 0 }}>
                   Mức PC chức vụ của chức vụ cũ được giữ sau sắp xếp tổ chức bộ máy, khai tại đây. Không khai vào dòng
                   "{TEN_HS_CHENH_LECH_BAO_LUU}" và không cộng vào dòng PC chức vụ hiện tại - dòng đó chỉ ghi mức theo chức vụ đang giữ.
                 </Text>
@@ -860,17 +860,17 @@ export default function VienChucFormPage() {
                       </Form.Item>
                     </Col>
                     <Col xs={24}>
-                      <Text style={{ fontSize: 12.5 }}>
+                      <Text style={{ fontSize: 13.5 }}>
                         {blDenNgay
                           ? <>Được hưởng nguyên PCCV cũ <b>đến hết {formatDate(blDenNgay)}</b>; sau đó hệ thống tự chuyển về mức theo chức vụ hiện tại.</>
                           : 'Nhập đủ hai ngày để hệ thống tính ngày hết bảo lưu.'}
-                        <Text type="secondary" style={{ fontSize: 12 }}> Thời hạn còn lại dưới 6 tháng thì được bảo lưu 6 tháng (NĐ 178/2024, NĐ 67/2025).</Text>
+                        <Text type="secondary" style={{ fontSize: 13 }}> Thời hạn còn lại dưới 6 tháng thì được bảo lưu 6 tháng (NĐ 178/2024, NĐ 67/2025).</Text>
                       </Text>
                     </Col>
                   </Row>
                 )}
                 {!watchBlBat && giamPccv && (
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 6 }}>
+                  <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 6 }}>
                     Phụ cấp chức vụ đang giảm. Bật mục này nếu việc thôi giữ / hạ chức vụ là do sắp xếp tổ chức bộ máy.
                   </Text>
                 )}
@@ -910,12 +910,12 @@ export default function VienChucFormPage() {
           )}
         </Row>
         {laBienChe ? (
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
-            Các ô gắn nhãn <Tag color="blue" style={{ fontSize: 11, lineHeight: '16px' }}>VC biên chế</Tag>
+          <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>
+            Các ô gắn nhãn <Tag color="blue" style={{ fontSize: 12, lineHeight: '16px' }}>VC biên chế</Tag>
             là thông tin bắt buộc theo quy định đối với viên chức biên chế.
           </Text>
         ) : (
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+          <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>
             Loại hình hợp đồng: Mã ngạch/Hạng và Bậc lương không bắt buộc; có thể chọn nhận lương theo mức tiền ở phần Lương & Phụ cấp. Không khai nguồn kinh phí, ngày vào biên chế.
           </Text>
         )}
@@ -1063,7 +1063,7 @@ export default function VienChucFormPage() {
           )}
         </Row>
         {!duocHuongPctn && watchVtvl && (
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+          <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>
             Vị trí việc làm Nhân viên không hưởng phụ cấp thâm niên nên không khai báo mốc hưởng PCTN.
           </Text>
         )}
@@ -1083,7 +1083,7 @@ export default function VienChucFormPage() {
               Thêm phụ cấp
             </Button>
           </div>
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
+          <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
             PC Thâm niên nghề (CBQL, giáo viên) vẫn giữ nguyên, hưởng song song với PC ưu đãi nhà giáo.
             PC ưu đãi nhà giáo chọn theo cấp học (NĐ 182/2026): mầm non, tiểu học 45%; THCS 40%; nhân viên 20%.
             Mỗi loại phụ cấp một dòng. Dòng giữ nguyên mức thì giữ nguyên ngày hiệu lực; đổi mức thì ghi bản mới
@@ -1129,7 +1129,7 @@ export default function VienChucFormPage() {
               style={{ marginBottom: 8 }}
               title="Hồ sơ đang có phụ cấp ghi trùng - kiểm tra mức đúng trước khi lưu"
               description={
-                <div style={{ fontSize: 13 }}>
+                <div style={{ fontSize: 14 }}>
                   {pcTrung.map((a) => (
                     <div key={a[0].id}>
                       <b>{tenLoaiPc(a[0].loaiPhuCapId)}</b>: {a.map((p) => `${mucPc(p)} từ ${formatDate(p.ngayHieuLuc)}`).join('; ')}

@@ -36,8 +36,8 @@ function BangQuyen({
 }) {
   return (
     <div style={{ overflowX: 'auto', marginTop: 8 }}>
-      <Alert title={ROLE_DESC[role]} type="info" showIcon style={{ marginBottom: 8, fontSize: 12 }} />
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+      <Alert title={ROLE_DESC[role]} type="info" showIcon style={{ marginBottom: 8, fontSize: 13 }} />
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
           <tr style={{ background: '#fafafa' }}>
             <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #f0f0f0' }}>Chức năng</th>
@@ -253,8 +253,8 @@ export default function UserManagePage() {
   }, [users])
 
   const cols = [
-    { title: 'Tên đăng nhập', dataIndex: 'username', key: 'un', width: 140 },
-    { title: 'Họ và tên', dataIndex: 'fullName', key: 'fn' },
+    { title: 'Tên đăng nhập', dataIndex: 'username', key: 'un', width: 160 },
+    { title: 'Họ và tên', dataIndex: 'fullName', key: 'fn', width: 280 },
     {
       title: 'Vai trò', dataIndex: 'role', key: 'role', width: 240,
       render: (v: UserRole, r: any) => {
@@ -286,7 +286,7 @@ export default function UserManagePage() {
       title: 'Trạng thái', dataIndex: 'active', key: 'ac', width: 110,
       render: (v: boolean) => <Badge status={v ? 'success' : 'default'} text={v ? 'Hoạt động' : 'Đã khóa'} />,
     },
-    { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'ct', width: 100, render: (v: string) => formatDate(v) },
+    { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'ct', width: 120, render: (v: string) => formatDate(v) },
     {
       title: 'Thao tác', key: 'act', width: 130,
       render: (_: any, r: any) => (
@@ -336,7 +336,7 @@ export default function UserManagePage() {
           </Col>
         ))}
         <Col>
-          <Text type="secondary" style={{ fontSize: 12 }}>Tổng đang hoạt động: {stats.total}</Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>Tổng đang hoạt động: {stats.total}</Text>
         </Col>
       </Row>
 
@@ -475,7 +475,7 @@ export default function UserManagePage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
                 <Text strong>Quyền của tài khoản</Text>
                 <Space size={6}>
-                  <Text type="secondary" style={{ fontSize: 12 }}>Tùy chỉnh riêng</Text>
+                  <Text type="secondary" style={{ fontSize: 13 }}>Tùy chỉnh riêng</Text>
                   <Switch
                     size="small"
                     checked={tuyChinhQuyen}
@@ -496,7 +496,7 @@ export default function UserManagePage() {
                 <Alert
                   type="warning"
                   showIcon
-                  style={{ marginTop: 8, fontSize: 12 }}
+                  style={{ marginTop: 8, fontSize: 13 }}
                   title="Tài khoản này không còn theo đúng mặc định của vai trò"
                   description="Ô nền xanh là quyền cấp thêm, nền đỏ là quyền đã thu hồi. Tắt công tắc để trả về đúng vai trò."
                 />

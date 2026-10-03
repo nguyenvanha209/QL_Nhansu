@@ -25,7 +25,7 @@ export default function NoiDungDieuChinh({ r, chucDanhs }: { r: ChiTietDeXuat; c
     )
   }
   return (
-    <div style={{ lineHeight: 1.6, fontSize: 13 }}>
+    <div style={{ lineHeight: 1.6, fontSize: 14 }}>
       {dong('Ngạch', cdCu ? `${cdCu.ma} (${cdCu.bangLuong})` : r.chucDanhCuId, cdMoi ? `${cdMoi.ma} (${cdMoi.bangLuong})` : r.chucDanhMoiId)}
       {dong('Bậc', `Bậc ${r.bacCu}`, `Bậc ${r.bacMoi}`)}
       {dong('Hệ số', hs(r.heSoCu), hs(r.heSoMoi))}

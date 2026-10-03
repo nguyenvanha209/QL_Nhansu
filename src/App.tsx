@@ -84,12 +84,16 @@ export default function App() {
         token: {
           colorPrimary: '#2563eb',
           borderRadius: 8,
+          // Chữ mặc định 14px nhỏ khi đọc lâu trên màn 1080p: nâng lên 15px (tiêu đề, ô nhập, bảng tự giãn theo)
+          fontSize: 15,
+          controlHeight: 34,
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           colorBgLayout: '#f1f5f9',
         },
         components: {
           Card: { borderRadiusLG: 12 },
-          Table: { borderRadiusLG: 8 },
+          Table: { borderRadiusLG: 8, cellPaddingInline: 10, cellPaddingBlock: 10, cellPaddingInlineSM: 8, cellPaddingBlockSM: 7 },
+          Menu: { fontSize: 15 },
           Button: { borderRadius: 8 },
         },
       }}

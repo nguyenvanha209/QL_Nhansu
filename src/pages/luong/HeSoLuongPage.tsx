@@ -75,7 +75,7 @@ export default function HeSoLuongPage() {
           <Text style={{ color: getReviewUrgencyColor(r.days) }}>
             {r.days <= 90 && <WarningOutlined style={{ marginRight: 4 }} />}
             {formatDate(v)}
-            <Text type="secondary" style={{ fontSize: 11, marginLeft: 4 }}>
+            <Text type="secondary" style={{ fontSize: 12, marginLeft: 4 }}>
               ({r.days > 0 ? `còn ${r.days} ngày` : `quá ${-r.days} ngày`})
             </Text>
           </Text>

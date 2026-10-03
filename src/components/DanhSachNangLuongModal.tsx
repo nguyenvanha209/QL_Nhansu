@@ -125,7 +125,7 @@ export default function DanhSachNangLuongModal({ open, onClose, alerts }: {
             render: (_, r) => (
               <span style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {r.bac} - {r.heSoHienTai.toFixed(2)}
-                {r.bacCuoi && <div><Tag color="purple" style={{ margin: 0, fontSize: 10 }}>Bậc cuối</Tag></div>}
+                {r.bacCuoi && <div><Tag color="purple" style={{ margin: 0, fontSize: 11 }}>Bậc cuối</Tag></div>}
               </span>
             ),
           },
@@ -141,8 +141,8 @@ export default function DanhSachNangLuongModal({ open, onClose, alerts }: {
           },
         ]}
       />
-      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
-        Người có nhãn <Tag color="purple" style={{ fontSize: 10 }}>Bậc cuối</Tag> đã ở bậc cao nhất của ngạch: không nâng bậc mà xét phụ cấp thâm niên vượt khung.
+      <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 8 }}>
+        Người có nhãn <Tag color="purple" style={{ fontSize: 11 }}>Bậc cuối</Tag> đã ở bậc cao nhất của ngạch: không nâng bậc mà xét phụ cấp thâm niên vượt khung.
         Bấm họ tên để mở hồ sơ.
       </Text>
     </Modal>

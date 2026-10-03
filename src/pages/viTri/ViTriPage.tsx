@@ -181,21 +181,21 @@ export default function ViTriPage() {
 
   const columns = [
     {
-      title: 'Trường', dataIndex: 'donViTen', key: 'dv', width: 150,
+      title: 'Trường', dataIndex: 'donViTen', key: 'dv', width: 230,
       render: (v: string, r: any) => laTongGop(r)
-        ? <Text strong style={{ fontSize: r.rowType === 'phuong' ? 14 : 13 }}>{r.nhan} <Text type="secondary" style={{ fontWeight: 400, fontSize: 12 }}>({r.soTruong} trường)</Text></Text>
+        ? <Text strong style={{ fontSize: r.rowType === 'phuong' ? 14 : 13 }}>{r.nhan} <Text type="secondary" style={{ fontWeight: 400, fontSize: 13 }}>({r.soTruong} trường)</Text></Text>
         : <Text strong>{v}</Text>,
       onCell: (r: any) => (laTongGop(r)
         ? { colSpan: 3 }
         : { rowSpan: r.rowType === 'position' && r.isFirstInGroup ? r.groupSize : 0 }),
     },
     {
-      title: 'Vị trí', dataIndex: 'ten', key: 'ten', width: 150, ellipsis: true,
+      title: 'Vị trí', dataIndex: 'ten', key: 'ten', width: 223, ellipsis: true,
       onCell: (r: any) => (laTongGop(r) ? { colSpan: 0 } : {}),
       render: (v: string, r: any) => r.rowType === 'subtotal' ? <Text strong>Tổng cộng</Text> : v,
     },
     {
-      title: 'Loại', dataIndex: 'loai', key: 'loai', width: 110,
+      title: 'Loại', dataIndex: 'loai', key: 'loai', width: 120,
       onCell: (r: any) => (laTongGop(r) ? { colSpan: 0 } : {}),
       render: (v: string, r: any) => laTong(r) ? '' : <span style={{ whiteSpace: 'nowrap' }}>{LOAI_LABELS[v] ?? v}</span>,
     },
@@ -203,23 +203,23 @@ export default function ViTriPage() {
       title: 'Chỉ tiêu giao (theo trường)',
       children: [
         {
-          title: 'Ngân sách', dataIndex: 'chiTieuNS', key: 'ctns', width: 90, align: 'center' as const,
+          title: 'Ngân sách', dataIndex: 'chiTieuNS', key: 'ctns', width: 80, align: 'center' as const,
           render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : '',
         },
         {
-          title: 'Sự nghiệp', dataIndex: 'chiTieuSN', key: 'ctsn', width: 90, align: 'center' as const,
+          title: 'Sự nghiệp', dataIndex: 'chiTieuSN', key: 'ctsn', width: 80, align: 'center' as const,
           render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : '',
         },
         {
-          title: 'Cô nuôi MN', dataIndex: 'chiTieuCoNuoi', key: 'ctcn', width: 90, align: 'center' as const,
+          title: 'Cô nuôi MN', dataIndex: 'chiTieuCoNuoi', key: 'ctcn', width: 80, align: 'center' as const,
           render: (v: number, r: any) => laTong(r) ? (v > 0 ? <Text strong>{v}</Text> : <Text type="secondary">-</Text>) : '',
         },
         {
-          title: 'Hợp đồng', dataIndex: 'chiTieuHD', key: 'cthd', width: 90, align: 'center' as const,
+          title: 'Hợp đồng', dataIndex: 'chiTieuHD', key: 'cthd', width: 80, align: 'center' as const,
           render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : '',
         },
         {
-          title: 'Tổng', dataIndex: 'chiTieuTong', key: 'cttong', width: 80, align: 'center' as const,
+          title: 'Tổng', dataIndex: 'chiTieuTong', key: 'cttong', width: 70, align: 'center' as const,
           render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : '',
         },
       ],
@@ -227,11 +227,11 @@ export default function ViTriPage() {
     {
       title: 'Số có mặt',
       children: [
-        { title: 'Ngân sách', dataIndex: 'coMatNS', key: 'cmns', width: 90, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
-        { title: 'Sự nghiệp', dataIndex: 'coMatSN', key: 'cmsn', width: 90, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
-        { title: 'Hợp đồng', dataIndex: 'coMatHD', key: 'cmhd', width: 90, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
+        { title: 'Ngân sách', dataIndex: 'coMatNS', key: 'cmns', width: 80, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
+        { title: 'Sự nghiệp', dataIndex: 'coMatSN', key: 'cmsn', width: 80, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
+        { title: 'Hợp đồng', dataIndex: 'coMatHD', key: 'cmhd', width: 80, align: 'center' as const, render: (v: number, r: any) => laTong(r) ? <Text strong>{v}</Text> : v },
         {
-          title: 'Tổng', dataIndex: 'coMatTong', key: 'cmtong', width: 80, align: 'center' as const,
+          title: 'Tổng', dataIndex: 'coMatTong', key: 'cmtong', width: 70, align: 'center' as const,
           render: (v: number, r: any) => (
             <span style={{ color: r.overQuota ? '#f5222d' : 'inherit', fontWeight: r.overQuota || laTong(r) ? 700 : 400 }}>
               {r.overQuota && <Tooltip title="Vượt chỉ tiêu!"><WarningOutlined style={{ color: '#f5222d', marginRight: 4 }} /></Tooltip>}
@@ -252,7 +252,7 @@ export default function ViTriPage() {
       ],
     },
     {
-      title: 'Tỷ lệ', key: 'ratio', width: 120,
+      title: 'Tỷ lệ', key: 'ratio', width: 135,
       render: (_: any, r: any) => laTong(r) ? (
         <Progress
           percent={r.chiTieuTong > 0 ? Math.round((r.coMatTong / r.chiTieuTong) * 100) : 0}
@@ -262,7 +262,7 @@ export default function ViTriPage() {
       ) : null,
     },
     ...(canEdit ? [{
-      title: '', key: 'act', width: 130,
+      title: '', key: 'act', width: 150,
       render: (_: any, r: any) => r.rowType === 'subtotal' ? (
         <Button
           size="small"
@@ -322,7 +322,7 @@ export default function ViTriPage() {
         rowKey="id"
         size="small"
         bordered
-        scroll={{ x: 1350 }}
+        scroll={{ x: 1558 }}
         pagination={false}
         rowClassName={(r) => (r.rowType === 'subtotal' ? 'vt-subtotal-row' : r.rowType === 'cap' ? 'vt-cap-row' : r.rowType === 'phuong' ? 'vt-phuong-row' : '')}
         onRow={(r) => ({ style: kieuDong(r) })}

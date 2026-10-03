@@ -74,7 +74,7 @@ export default function DeXuatDetailPage() {
         const k = r.lanDau
         if (!k) return null
         return (
-          <div style={{ fontSize: 12.5, lineHeight: 1.55 }}>
+          <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>
             <div>Tuyển dụng: <b>{k.ngayTuyenDung ? formatDate(k.ngayTuyenDung) : '-'}</b> · {k.trinhDo || 'chưa ghi trình độ'}{k.ngayTotNghiep ? ` (TN ${formatDate(k.ngayTotNghiep)})` : ''}</div>
             <div>Đóng BHXH giảng dạy từ: <b>{thangVN(k.batDauBhxh)}</b></div>
             <div>Không tính: tập sự {k.thangTapSu} tháng{k.thangKhongTinhKhac ? `, ${k.lyDoKhongTinh || 'khác'} ${k.thangKhongTinhKhac} tháng` : ''}</div>
@@ -86,7 +86,7 @@ export default function DeXuatDetailPage() {
     {
       title: 'Quá trình hưởng', key: 'qt', width: 270,
       render: (_: any, r: any) => (r.lanDau?.quaTrinh ?? []).map((q: any) => (
-        <div key={q.mocXet} style={{ fontSize: 12.5 }}><b>{q.tyLe}%</b> · mốc xét {formatDate(q.mocXet)} · hưởng từ {formatDate(q.thoiGianHuong)}</div>
+        <div key={q.mocXet} style={{ fontSize: 13.5 }}><b>{q.tyLe}%</b> · mốc xét {formatDate(q.mocXet)} · hưởng từ {formatDate(q.thoiGianHuong)}</div>
       )),
     },
     { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'gc', width: 170 },
@@ -107,7 +107,7 @@ export default function DeXuatDetailPage() {
           title: 'Hiện tại', key: 'cu', width: 200,
           render: (_: any, r: any) => {
             const cd = chucDanhs.find((c) => c.id === r.chucDanhCuId)
-            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten}>{cd?.ma ?? r.chucDanhCuId}</Text> <Text type="secondary">({cd?.bangLuong})</Text><br />Bậc {r.bacCu} - {Number(r.heSoCu).toFixed(2)}{r.ngayHieuLucCu && <><br /><Text type="secondary" style={{ fontSize: 12 }}>từ {formatDate(r.ngayHieuLucCu)}</Text></>}</div>
+            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten}>{cd?.ma ?? r.chucDanhCuId}</Text> <Text type="secondary">({cd?.bangLuong})</Text><br />Bậc {r.bacCu} - {Number(r.heSoCu).toFixed(2)}{r.ngayHieuLucCu && <><br /><Text type="secondary" style={{ fontSize: 13 }}>từ {formatDate(r.ngayHieuLucCu)}</Text></>}</div>
           },
         },
         {

@@ -29,7 +29,7 @@ export function DanhSachMinhChung({ value, onRemove, compact }: {
           <a onClick={() => mo(mc)} style={{ maxWidth: compact ? 140 : 360, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }} title={mc.ten}>
             {mc.ten}
           </a>
-          {!compact && <Text type="secondary" style={{ fontSize: 12 }}>{dinhDangDungLuong(mc.kichThuoc)}</Text>}
+          {!compact && <Text type="secondary" style={{ fontSize: 13 }}>{dinhDangDungLuong(mc.kichThuoc)}</Text>}
           <Tooltip title="Tải về"><Button type="text" size="small" icon={<DownloadOutlined />} onClick={() => mo(mc, true)} /></Tooltip>
           {onRemove && <Tooltip title="Gỡ khỏi phiếu"><Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => onRemove(mc.path)} /></Tooltip>}
         </Space>
@@ -91,7 +91,7 @@ export default function MinhChungField({ value, onChange, taiLenBoi, compact }: 
           {compact ? (ds.length ? 'Thêm' : 'Đính kèm') : 'Đính kèm minh chứng'}
         </Button>
         {!compact && (
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" style={{ fontSize: 13 }}>
             PDF, JPG, PNG - tối đa 3 MB mỗi file. Ảnh chụp được tự nén. PDF scan nên để đen trắng hoặc xám, 150-200 dpi.
           </Text>
         )}

@@ -73,7 +73,7 @@ export default function LopBaoVePhien() {
           showInfo={false}
           status="exception"
         />
-        <Paragraph type="secondary" style={{ fontSize: 13, marginTop: 12, marginBottom: 16 }}>
+        <Paragraph type="secondary" style={{ fontSize: 14, marginTop: 12, marginBottom: 16 }}>
           Nội dung đang nhập dở mà chưa bấm Lưu sẽ không được giữ lại. Bấm nút bên dưới
           để tiếp tục làm việc.
         </Paragraph>
@@ -96,7 +96,7 @@ export default function LopBaoVePhien() {
         <Paragraph>
           Phần mềm đã được cập nhật trên máy chủ nhưng trang này vẫn đang chạy bản cũ.
         </Paragraph>
-        <Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 0 }}>
+        <Paragraph type="secondary" style={{ fontSize: 14, marginBottom: 0 }}>
           Nên tải lại trước khi nhập tiếp. Dùng bản cũ có thể khiến thao tác được lưu sai chỗ,
           chẳng hạn đổi mật khẩu xong nhưng đăng nhập lại không được.
         </Paragraph>

@@ -253,7 +253,7 @@ export default function BangTongHopLuongPage() {
       render: (_: any, r: DisplayRow, i: number) => r._type === 'subtotal' ? '' : i + 1,
     },
     {
-      title: 'Họ và tên', key: 'hoTen', width: 200, fixed: 'left' as const,
+      title: 'Họ và tên', key: 'hoTen', width: 190, fixed: 'left' as const,
       render: (_: any, r: DisplayRow) =>
         r._type === 'subtotal'
           ? <Text strong style={{ color: '#1677ff' }}>Cộng: {r.donViTen} ({r.count} người)</Text>
@@ -265,18 +265,18 @@ export default function BangTongHopLuongPage() {
     // Tài khoản xem được nhiều trường thì phải biết mỗi dòng thuộc trường nào.
     // Dòng "Cộng" chỉ hiện ở cuối mỗi nhóm, cuộn giữa bảng là mất dấu.
     ...(scopeDonViId ? [] : [{
-      title: 'Đơn vị trường', key: 'donVi', width: 170, fixed: 'left' as const,
+      title: 'Đơn vị trường', key: 'donVi', width: 235, fixed: 'left' as const,
       render: (_: any, r: DisplayRow) => (r._type === 'data' ? tenDonVi(r.donViId) : ''),
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0
           : tenDonVi((a as RowData).donViId).localeCompare(tenDonVi((b as RowData).donViId), 'vi'),
     }]),
     {
-      title: 'Chức vụ, vị trí đảm nhiệm', key: 'chucVu', width: 165,
+      title: 'Chức vụ, vị trí đảm nhiệm', key: 'chucVu', width: 210,
       render: (_: any, r: DisplayRow) => r._type === 'data' ? r.chucVuHienThi : '',
     },
     {
-      title: 'Mã CDNN', key: 'maCDNN', width: 110, align: 'center' as const,
+      title: 'Mã CDNN', key: 'maCDNN', width: 105, align: 'center' as const,
       render: (_: any, r: DisplayRow) => r._type === 'data' ? r.maCDNN : '',
     },
     {
@@ -326,7 +326,7 @@ export default function BangTongHopLuongPage() {
         if (r._type === 'subtotal') return <Text strong>{d3(r.pcCV)}</Text>
         const den = (r as RowData).pcCvBaoLuuDen
         return den
-          ? <Tooltip title={`Bảo lưu PCCV (sắp xếp tổ chức) đến ${formatDate(den)}`}><span>{d3(r.pcCV)} <Tag color="gold" style={{ fontSize: 10, lineHeight: '14px', padding: '0 3px', marginInlineEnd: 0 }}>BL</Tag></span></Tooltip>
+          ? <Tooltip title={`Bảo lưu PCCV (sắp xếp tổ chức) đến ${formatDate(den)}`}><span>{d3(r.pcCV)} <Tag color="gold" style={{ fontSize: 11, lineHeight: '14px', padding: '0 3px', marginInlineEnd: 0 }}>BL</Tag></span></Tooltip>
           : d3((r as RowData).pcCV)
       },
       sorter: (a: DisplayRow, b: DisplayRow) =>
@@ -371,7 +371,7 @@ export default function BangTongHopLuongPage() {
       render: (_: any, r: DisplayRow) =>
         r._type === 'subtotal'
           ? <Text strong style={{ color: '#1677ff' }}>{r.tong1Thang.toFixed(3)}</Text>
-          : <Text strong style={{ color: '#0958d9', fontSize: 13 }}>{(r as RowData).tong1Thang.toFixed(3)}</Text>,
+          : <Text strong style={{ color: '#0958d9', fontSize: 14 }}>{(r as RowData).tong1Thang.toFixed(3)}</Text>,
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).tong1Thang - (b as RowData).tong1Thang,
     },
@@ -476,7 +476,7 @@ export default function BangTongHopLuongPage() {
         rowKey="key"
         size="small"
         bordered
-        scroll={{ x: 2220, y: 'calc(100vh - 280px)' }}
+        scroll={{ x: 1855, y: 'calc(100vh - 280px)' }}
         rowClassName={(r: DisplayRow) => r._type === 'subtotal' ? 'subtotal-row' : ''}
         pagination={{ pageSize: 100, showSizeChanger: true, pageSizeOptions: [50, 100, 200], showTotal: (t) => `Tổng ${rows.length} viên chức` }}
         summary={() => {

@@ -114,7 +114,7 @@ export default function DashboardPage() {
         <Title level={4} style={{ margin: '0 0 2px', fontWeight: 600 }}>
           {greeting}, {currentUser?.fullName ?? 'bạn'}
         </Title>
-        <Text type="secondary" style={{ fontSize: 13 }}>{dateStr}</Text>
+        <Text type="secondary" style={{ fontSize: 14 }}>{dateStr}</Text>
       </div>
       {soThongBaoMoi > 0 && (
         <Alert
@@ -182,7 +182,7 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0 8px', flexWrap: 'wrap', gap: 8 }}>
         <Text strong style={{ fontSize: 15 }}>
           Cơ cấu nhân sự{capHoc !== 'ALL' && !scopeDonViId ? ` - ${CAP_HOC.find((c) => c.value === capHoc)?.label}` : ''}
-          <Text type="secondary" style={{ fontWeight: 400, fontSize: 13 }}> ({nhanSu.length} người)</Text>
+          <Text type="secondary" style={{ fontWeight: 400, fontSize: 14 }}> ({nhanSu.length} người)</Text>
         </Text>
         {!scopeDonViId && <Segmented size="small" options={CAP_HOC} value={capHoc} onChange={(v) => setCapHoc(String(v))} />}
       </div>
@@ -199,10 +199,10 @@ export default function DashboardPage() {
                 onClick={() => moDanhSach(n.key)}
                 style={{ borderTop: `3px solid ${n.mau}`, height: '100%' }}
               >
-                <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{n.ten}</div>
+                <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>{n.ten}</div>
                 <div style={{ fontSize: 24, fontWeight: 700, color: n.mau, fontVariantNumeric: 'tabular-nums' }}>{tong}</div>
-                <div style={{ fontSize: 11.5, color: '#64748b' }}>Biên chế {bienChe} · Hợp đồng {tong - bienChe}</div>
-                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{n.moTa}</div>
+                <div style={{ fontSize: 12.5, color: '#64748b' }}>Biên chế {bienChe} · Hợp đồng {tong - bienChe}</div>
+                <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{n.moTa}</div>
               </Card>
             </Col>
           )
@@ -244,7 +244,7 @@ export default function DashboardPage() {
                 },
               ]}
             />
-            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
+            <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 8 }}>
               Bấm vào số để mở danh sách hồ sơ tương ứng. Nhân viên được chia nhóm theo ô <i>Công việc cụ thể</i> trong hồ sơ.
             </Text>
           </Card>
@@ -254,13 +254,13 @@ export default function DashboardPage() {
           <Card title="Nhân sự theo đơn vị trường" size="small" className="chart-card">
             <ResponsiveContainer width="100%" height={Math.max(260, bySchoolData.length * 26 + 40)}>
               <BarChart data={bySchoolData} layout="vertical" margin={{ top: 0, right: 36, left: 0, bottom: 0 }}>
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} />
-                <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: '#475569' }} />
+                <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} />
+                <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12, fill: '#475569' }} />
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
                   cursor={{ fill: 'rgba(37,99,235,0.06)' }}
                 />
-                <Legend wrapperStyle={{ fontSize: 11 }} iconSize={9} />
+                <Legend wrapperStyle={{ fontSize: 12 }} iconSize={9} />
                 {NHOM_VI_TRI.map((n, i) => (
                   <Bar
                     key={n.key}
@@ -274,7 +274,7 @@ export default function DashboardPage() {
                 {/* Tổng nhân sự của trường ghi ở cuối cột. Nhóm xếp cuối có thể bằng 0 (không vẽ ra, không có nhãn)
                     nên dùng một cột vô hình mỏng nằm sau cùng để mang nhãn */}
                 <Bar dataKey="nhanTong" stackId="nhom" fill="transparent" legendType="none" tooltipType="none" isAnimationActive={false}>
-                  <LabelList dataKey="total" position="right" style={{ fontSize: 12, fontWeight: 700, fill: '#1e293b' }} />
+                  <LabelList dataKey="total" position="right" style={{ fontSize: 13, fontWeight: 700, fill: '#1e293b' }} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

@@ -239,7 +239,7 @@ export default function HuongDanPage() {
             </tbody>
           </table>
         </div>
-        <Paragraph type="secondary" style={{ fontSize: 13.5 }}>
+        <Paragraph type="secondary" style={{ fontSize: 14.5 }}>
           Vì thứ tự này lấy theo <b>Vị trí việc làm</b> và <b>Chức vụ</b> trong hồ sơ, hai mục đó khai
           sai sẽ khiến người đó đứng nhầm nhóm. Đây là lý do cần rà kỹ hai trường này.
         </Paragraph>
@@ -284,9 +284,9 @@ export default function HuongDanPage() {
             </tbody>
           </table>
         </div>
-        <Paragraph type="secondary" style={{ fontSize: 13 }}>
+        <Paragraph type="secondary" style={{ fontSize: 14 }}>
           <i className="hd-req">*</i> Bắt buộc với mọi hồ sơ. <i className="hd-req">**</i> Chỉ bắt buộc với <b>viên chức biên chế</b> - trên màn
-          hình các ô này có nhãn xanh <Tag color="blue" style={{ fontSize: 11, marginInlineEnd: 0 }}>VC biên chế</Tag>.
+          hình các ô này có nhãn xanh <Tag color="blue" style={{ fontSize: 12, marginInlineEnd: 0 }}>VC biên chế</Tag>.
         </Paragraph>
 
         <h3>Viên chức biên chế và các loại hình hợp đồng</h3>
@@ -315,7 +315,7 @@ export default function HuongDanPage() {
             </tbody>
           </table>
         </div>
-        <Paragraph type="secondary" style={{ fontSize: 13.5 }}>
+        <Paragraph type="secondary" style={{ fontSize: 14.5 }}>
           Người nhận lương theo mức tiền hiện ở cột riêng <b>Lương theo mức tiền (đ/tháng)</b> trên Bảng tổng hợp lương,
           không tính vào tổng hệ số, không nằm trong danh sách nâng bậc lương. Phụ cấp tính theo % lương chính không
           áp dụng cho họ; phụ cấp dạng hệ số (nếu có) vẫn được tính. Loại hình <i>Hợp đồng NĐ 111</i> đã bỏ, không chọn được nữa.
@@ -367,7 +367,7 @@ export default function HuongDanPage() {
           </p>
           <p>
             Trong biểu mẫu hồ sơ, ô <b>Mã ngạch/Hạng</b>, <b>Bậc lương</b>, <b>Hệ số lương</b> của người đang hưởng lương
-            có nhãn <Tag style={{ fontSize: 11 }}>Qua đề xuất</Tag> và bị khoá; bấm vào sẽ hiện thông báo cùng nút
+            có nhãn <Tag style={{ fontSize: 12 }}>Qua đề xuất</Tag> và bị khoá; bấm vào sẽ hiện thông báo cùng nút
             <b> Lập phiếu điều chỉnh</b> (mở sẵn phiếu với đúng người đó). Nhập Excel cũng bỏ qua các cột này và
             liệt kê người có số liệu khác để trường lập phiếu.
           </p>
@@ -424,12 +424,12 @@ export default function HuongDanPage() {
               <tr><td><b>PC thâm niên vượt khung</b></td><td>% lương chính. Hưởng khi đã ở bậc cuối của bảng đủ 36 tháng (loại A) hoặc 24 tháng (loại B, C): 5%, mỗi năm sau +1%.</td></tr>
               <tr><td><b>PC chức vụ</b></td><td>Hệ số, tự tính theo loại trường × hạng trường × chức vụ (TT 33/2005) khi khai chức vụ trong hồ sơ. Bỏ chức vụ thì dòng phụ cấp này tự được gỡ.</td></tr>
               <tr>
-                <td><b>Bảo lưu PC chức vụ</b><br /><Text type="secondary" style={{ fontSize: 12.5 }}>NĐ 178/2024, NĐ 67/2025</Text></td>
+                <td><b>Bảo lưu PC chức vụ</b><br /><Text type="secondary" style={{ fontSize: 13.5 }}>NĐ 178/2024, NĐ 67/2025</Text></td>
                 <td>
                   Hiệu trưởng xuống Phó hiệu trưởng, Phó hiệu trưởng xuống giáo viên <b>do sắp xếp tổ chức bộ máy</b>: hưởng
                   <b> nguyên mức PC chức vụ cũ</b> đến hết thời hạn bổ nhiệm chức vụ cũ; còn dưới 6 tháng thì được 6 tháng.
                   Cách khai: sửa hồ sơ, đổi chức vụ (Phó HT về giáo viên thì chọn <i>Không giữ chức vụ</i>) - hệ thống hiện khung vàng <i>Bảo lưu phụ cấp chức vụ</i>; bật lên, nhập số, ngày quyết định
-                  và ngày hết hạn bổ nhiệm cũ. Hệ thống tự tính ngày hết bảo lưu, áp mức cũ trên Bảng tổng hợp lương (nhãn <Tag color="gold" style={{ fontSize: 10 }}>BL</Tag>),
+                  và ngày hết hạn bổ nhiệm cũ. Hệ thống tự tính ngày hết bảo lưu, áp mức cũ trên Bảng tổng hợp lương (nhãn <Tag color="gold" style={{ fontSize: 11 }}>BL</Tag>),
                   dùng mức này làm nền tính PC thâm niên, ưu đãi, và <b>tự chuyển về mức mới khi hết hạn</b>.
                 </td>
               </tr>
@@ -437,7 +437,7 @@ export default function HuongDanPage() {
               <tr><td><b>PC thâm niên nhà giáo</b></td><td>% lương chính, chỉ <b>CBQL và giáo viên</b>: 5% khi đủ 5 năm, mỗi năm +1%. <b>Vẫn giữ nguyên</b>, hưởng song song với PC ưu đãi nhà giáo.</td></tr>
               <tr><td><b>Hệ số chênh lệch bảo lưu</b></td><td>Nhập <b>giá trị hệ số</b> (VD <i>0,33</i>), <b>không nhập %</b>. Nhập từ 5 trở lên hệ thống sẽ báo lỗi. Cộng thẳng vào tổng hệ số lương.</td></tr>
               <tr>
-                <td><b>PC ưu đãi nhà giáo</b><br /><Text type="secondary" style={{ fontSize: 12.5 }}>NĐ 182/2026, từ 01/01/2026</Text></td>
+                <td><b>PC ưu đãi nhà giáo</b><br /><Text type="secondary" style={{ fontSize: 13.5 }}>NĐ 182/2026, từ 01/01/2026</Text></td>
                 <td>
                   % lương chính, chọn theo cấp học: <b>mầm non, tiểu học 45%</b> · <b>THCS 40%</b> · <b>nhân viên (nhân sự hỗ trợ giáo dục) 20%</b>.
                   Toàn bộ hồ sơ đã được chuyển từ mức cũ QĐ 244 (35%, 30%) sang mức mới, hiệu lực 01/01/2026, có ghi Lịch sử biến động.
@@ -463,7 +463,7 @@ export default function HuongDanPage() {
             </tbody>
           </table>
         </div>
-        <Paragraph type="secondary" style={{ fontSize: 13.5 }}>
+        <Paragraph type="secondary" style={{ fontSize: 14.5 }}>
           Giáo viên chưa đạt chuẩn trình độ (VD trình độ trung cấp) giữ mã hạng IV và bảng lương loại B cho đến khi đạt chuẩn.
           Người đã ở <b>bậc cuối</b> của bảng không nâng bậc nữa mà chuyển sang phụ cấp thâm niên vượt khung.
         </Paragraph>
@@ -511,7 +511,7 @@ export default function HuongDanPage() {
               <span className="hd-who">{b.ai}</span>
               <h4>{b.tieuDe}</h4>
               <p>{b.noiDung}</p>
-              <p><Text type="secondary" style={{ fontSize: 13, marginRight: 6 }}>Trạng thái:</Text>{b.chip}</p>
+              <p><Text type="secondary" style={{ fontSize: 14, marginRight: 6 }}>Trạng thái:</Text>{b.chip}</p>
             </div>
           ))}
         </div>
@@ -669,7 +669,7 @@ export default function HuongDanPage() {
               <span className="hd-who">{b.ai}</span>
               <h4>{b.tieuDe}</h4>
               <p>{b.noiDung}</p>
-              <p><Text type="secondary" style={{ fontSize: 13, marginRight: 6 }}>Trạng thái:</Text>{b.chip}</p>
+              <p><Text type="secondary" style={{ fontSize: 14, marginRight: 6 }}>Trạng thái:</Text>{b.chip}</p>
             </div>
           ))}
         </div>
@@ -896,12 +896,12 @@ export default function HuongDanPage() {
 
       <div className="hd-footer">
         <div>
-          <Text type="secondary" style={{ fontSize: 13 }}>Hỗ trợ kỹ thuật và cấp lại mật khẩu</Text>
+          <Text type="secondary" style={{ fontSize: 14 }}>Hỗ trợ kỹ thuật và cấp lại mật khẩu</Text>
           <div className="hd-hotline">Đ/c Nguyễn Văn Hạ - 0902.121.599</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <Text type="secondary" style={{ fontSize: 13 }}>UBND Phường Gia Viên</Text><br />
-          <Text type="secondary" style={{ fontSize: 13 }}>Hệ thống Quản lý Viên chức &amp; Lao động ngành Giáo dục</Text>
+          <Text type="secondary" style={{ fontSize: 14 }}>UBND Phường Gia Viên</Text><br />
+          <Text type="secondary" style={{ fontSize: 14 }}>Hệ thống Quản lý Viên chức &amp; Lao động ngành Giáo dục</Text>
         </div>
       </div>
 

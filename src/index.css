@@ -78,6 +78,8 @@ body {
 /* ── Content fade-in ─────────────────────────────────────────── */
 .qlvc-content-fade {
   animation: fadeSlide 0.25s ease-out;
+  /* Row có gutter dùng lề âm, tràn vài px gây thanh cuộn ngang thừa (bảng rộng đã tự cuộn trong khung riêng) */
+  overflow-x: clip;
 }
 @keyframes fadeSlide {
   from { opacity: 0; transform: translateY(6px); }

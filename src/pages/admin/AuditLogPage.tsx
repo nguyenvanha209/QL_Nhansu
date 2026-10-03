@@ -108,10 +108,10 @@ export default function AuditLogPage() {
 
   const cols = [
     {
-      title: 'Thời gian', dataIndex: 'thoiGian', key: 'tg', width: 150,
+      title: 'Thời gian', dataIndex: 'thoiGian', key: 'tg', width: 180,
       render: (v: string) => formatDatetime(v),
     },
-    { title: 'Người thực hiện', dataIndex: 'userFullName', key: 'nguoi', width: 180, ellipsis: true },
+    { title: 'Người thực hiện', dataIndex: 'userFullName', key: 'nguoi', width: 200, ellipsis: true },
     {
       title: 'Hành động', dataIndex: 'action', key: 'hd', width: 130,
       render: (v: string) => {
@@ -185,7 +185,7 @@ export default function AuditLogPage() {
               <Descriptions.Item label="Nội dung">{xemChiTiet.moTa}</Descriptions.Item>
               <Descriptions.Item label="Thiết bị">{xemChiTiet.thietBi ?? '-'}</Descriptions.Item>
               <Descriptions.Item label="Mã bản ghi">
-                <Text code style={{ fontSize: 11 }}>{xemChiTiet.entityId ?? '-'}</Text>
+                <Text code style={{ fontSize: 12 }}>{xemChiTiet.entityId ?? '-'}</Text>
               </Descriptions.Item>
             </Descriptions>
 

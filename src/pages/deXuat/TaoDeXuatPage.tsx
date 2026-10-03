@@ -429,7 +429,7 @@ export default function TaoDeXuatPage() {
         const k = r.lanDau
         if (!k) return null
         return (
-          <div style={{ fontSize: 12.5, lineHeight: 1.55 }}>
+          <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>
             <div>Tuyển dụng: <b>{k.ngayTuyenDung ? formatDate(k.ngayTuyenDung) : <Text type="danger">chưa có</Text>}</b></div>
             <div>Đóng BHXH giảng dạy từ: <b>{k.batDauBhxh ? thangVN(k.batDauBhxh) : <Text type="danger">chưa khai</Text>}</b></div>
             <div>Không tính: tập sự {k.thangTapSu} tháng{k.thangKhongTinhKhac ? `, khác ${k.thangKhongTinhKhac} tháng` : ''}</div>
@@ -445,11 +445,11 @@ export default function TaoDeXuatPage() {
       title: 'Quá trình hưởng (đến hết kỳ)', key: 'qt', width: 270,
       render: (_: any, r: ChiTietDeXuat) => (r.lanDau?.quaTrinh.length
         ? r.lanDau.quaTrinh.map((q) => (
-            <div key={q.mocXet} style={{ fontSize: 12.5, fontVariantNumeric: 'tabular-nums' }}>
+            <div key={q.mocXet} style={{ fontSize: 13.5, fontVariantNumeric: 'tabular-nums' }}>
               <b>{q.tyLe}%</b> · mốc xét {formatDate(q.mocXet)} · hưởng từ {formatDate(q.thoiGianHuong)}
             </div>
           ))
-        : <Text type="danger" style={{ fontSize: 12 }}>Chưa đủ 60 tháng đến hết {formatDate(dotRange.end)}</Text>),
+        : <Text type="danger" style={{ fontSize: 13 }}>Chưa đủ 60 tháng đến hết {formatDate(dotRange.end)}</Text>),
     },
     { title: 'Ghi chú', key: 'gc', width: 170, render: (_: any, r: ChiTietDeXuat, idx: number) => <Input.TextArea size="small" autoSize={{ minRows: 1, maxRows: 3 }} value={r.ghiChu} onChange={(e) => updateChiTiet(idx, { ghiChu: e.target.value })} /> },
     colMinhChung,
@@ -552,7 +552,7 @@ export default function TaoDeXuatPage() {
             const bacCuoi = bang.length && r.bacMoi >= bang[bang.length - 1].bac
             return bacCuoi
               ? <Tooltip title={`Bậc cuối - sau ${tg * 12} tháng được xét PC thâm niên vượt khung`}><Tag color="purple">Xét vượt khung {ngay}</Tag></Tooltip>
-              : <Text type="secondary">{ngay} <span style={{ fontSize: 11 }}>(+{tg} năm)</span></Text>
+              : <Text type="secondary">{ngay} <span style={{ fontSize: 12 }}>(+{tg} năm)</span></Text>
           },
         },
         {
@@ -676,7 +676,7 @@ export default function TaoDeXuatPage() {
           <Button type="primary" ghost disabled={selectedGoiYLanDau.length === 0} onClick={themDaChonLanDau}>
             Thêm {selectedGoiYLanDau.length > 0 ? selectedGoiYLanDau.length : ''} đã chọn vào đề xuất
           </Button>
-          <Text type="secondary" style={{ fontSize: 12 }}>Dự kiến tạm tính từ ngày vào ngành + 60 tháng + 12 tháng tập sự; khai đúng theo hồ sơ BHXH ở nút "Khai báo".</Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>Dự kiến tạm tính từ ngày vào ngành + 60 tháng + 12 tháng tập sự; khai đúng theo hồ sơ BHXH ở nút "Khai báo".</Text>
         </Space>
         <Table
           dataSource={goiYLanDauData}
@@ -794,14 +794,14 @@ function KhaiLanDauModal({ ten, khai, denNgay, onHuy, onLuu }: {
         description="Không tính: thời gian tập sự; nghỉ việc riêng không lương liên tục từ 01 tháng; ốm đau, thai sản vượt quy định; đi học, công tác quá hạn; bị tạm đình chỉ, tạm giữ, tạm giam. Khai theo quá trình đóng BHXH và quyết định tuyển dụng."
       />
       <Row gutter={[12, 8]}>
-        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Ngày tuyển dụng viên chức</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTuyenDung)} onChange={(v) => doi({ ngayTuyenDung: v?.format('YYYY-MM-DD'), huongTu: huongTuMacDinh(v?.format('YYYY-MM-DD')) })} /></Col>
-        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Trình độ chuyên môn</Text><Input value={k.trinhDo} onChange={(e) => doi({ trinhDo: e.target.value })} placeholder="VD Đại học SPMN" /></Col>
-        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Ngày tốt nghiệp</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTotNghiep)} onChange={(v) => doi({ ngayTotNghiep: v?.format('YYYY-MM-DD') })} /></Col>
-        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Bắt đầu giảng dạy có đóng BHXH bắt buộc</Text><DatePicker picker="month" format="MM/YYYY" style={{ width: '100%' }} value={k.batDauBhxh ? dayjs(`${k.batDauBhxh}-01`) : null} onChange={(v) => doi({ batDauBhxh: v?.format('YYYY-MM') })} /></Col>
-        <Col xs={12} sm={4}><Text type="secondary" style={{ fontSize: 12 }}>Tập sự (tháng)</Text><InputNumber min={0} max={24} style={{ width: '100%' }} value={k.thangTapSu} onChange={(v) => doi({ thangTapSu: v ?? 0 })} /></Col>
-        <Col xs={12} sm={4}><Text type="secondary" style={{ fontSize: 12 }}>Không tính khác (tháng)</Text><InputNumber min={0} max={240} style={{ width: '100%' }} value={k.thangKhongTinhKhac} onChange={(v) => doi({ thangKhongTinhKhac: v ?? 0 })} /></Col>
-        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Lý do không tính khác</Text><Input value={k.lyDoKhongTinh} onChange={(e) => doi({ lyDoKhongTinh: e.target.value })} placeholder="VD Nghỉ không lương 03/2021-08/2021" disabled={!k.thangKhongTinhKhac} /></Col>
-        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 12 }}>Được hưởng từ ngày</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.huongTu)} onChange={(v) => doi({ huongTu: v?.format('YYYY-MM-DD') })} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Ngày tuyển dụng viên chức</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTuyenDung)} onChange={(v) => doi({ ngayTuyenDung: v?.format('YYYY-MM-DD'), huongTu: huongTuMacDinh(v?.format('YYYY-MM-DD')) })} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Trình độ chuyên môn</Text><Input value={k.trinhDo} onChange={(e) => doi({ trinhDo: e.target.value })} placeholder="VD Đại học SPMN" /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Ngày tốt nghiệp</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTotNghiep)} onChange={(v) => doi({ ngayTotNghiep: v?.format('YYYY-MM-DD') })} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Bắt đầu giảng dạy có đóng BHXH bắt buộc</Text><DatePicker picker="month" format="MM/YYYY" style={{ width: '100%' }} value={k.batDauBhxh ? dayjs(`${k.batDauBhxh}-01`) : null} onChange={(v) => doi({ batDauBhxh: v?.format('YYYY-MM') })} /></Col>
+        <Col xs={12} sm={4}><Text type="secondary" style={{ fontSize: 13 }}>Tập sự (tháng)</Text><InputNumber min={0} max={24} style={{ width: '100%' }} value={k.thangTapSu} onChange={(v) => doi({ thangTapSu: v ?? 0 })} /></Col>
+        <Col xs={12} sm={4}><Text type="secondary" style={{ fontSize: 13 }}>Không tính khác (tháng)</Text><InputNumber min={0} max={240} style={{ width: '100%' }} value={k.thangKhongTinhKhac} onChange={(v) => doi({ thangKhongTinhKhac: v ?? 0 })} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Lý do không tính khác</Text><Input value={k.lyDoKhongTinh} onChange={(e) => doi({ lyDoKhongTinh: e.target.value })} placeholder="VD Nghỉ không lương 03/2021-08/2021" disabled={!k.thangKhongTinhKhac} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Được hưởng từ ngày</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.huongTu)} onChange={(v) => doi({ huongTu: v?.format('YYYY-MM-DD') })} /></Col>
         <Col xs={24} sm={16} style={{ display: 'flex', alignItems: 'flex-end' }}>
           <Text>Đủ 5 năm tính hưởng: <b>{du ? formatDate(du) : '-'}</b>{du && du > denNgay && <Text type="danger"> - sau kỳ xét (hết {formatDate(denNgay)})</Text>}</Text>
         </Col>
@@ -835,7 +835,7 @@ function KhaiLanDauModal({ ten, khai, denNgay, onHuy, onLuu }: {
         const moc = c ? dayjs(c.mocXet).add(1, 'year').format('YYYY-MM-DD') : du ?? dayjs().format('YYYY-MM-DD')
         doi({ quaTrinh: [...k.quaTrinh, { tyLe: c ? c.tyLe + 1 : 5, mocXet: moc, thoiGianHuong: moc }] })
       }}>Thêm dòng</Button>
-      <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 12 }}>
+      <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Dòng cuối là mức đang hưởng: khi phê duyệt, hệ thống ghi phụ cấp thâm niên mức này và lấy mốc xét của dòng cuối làm mốc nâng thâm niên lần sau.
         Các dòng trước là thời gian truy lĩnh, ghi vào lịch sử và thông báo.
       </Text>

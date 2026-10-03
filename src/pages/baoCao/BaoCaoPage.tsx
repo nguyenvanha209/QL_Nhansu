@@ -49,18 +49,18 @@ export default function BaoCaoPage() {
   }), [filtered, donVis, chucDanhs, heSoLuongs])
 
   const vcCols = [
-    { title: 'Mã VC', dataIndex: 'ma', key: 'ma', width: 100 },
-    { title: 'Họ và tên', key: 'ht', render: (_: any, r: any) => `${r.ho} ${r.ten}` },
-    { title: 'Ngày sinh', dataIndex: 'ngaySinh', key: 'ns', render: (v: string) => formatDate(v) },
-    { title: 'Giới tính', dataIndex: 'gioiTinh', key: 'gt', render: (v: string) => v === 'NAM' ? 'Nam' : 'Nữ' },
-    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv' },
-    { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd' },
-    { title: 'Loại HĐ', dataIndex: 'loaiLaoDong', key: 'll', render: (v: string) => LOAI_LAO_DONG_LABELS[v as keyof typeof LOAI_LAO_DONG_LABELS] ?? v },
-    { title: 'Bậc', dataIndex: 'bac', key: 'bac' },
-    { title: 'Hệ số', dataIndex: 'heSo', key: 'hs' },
-    { title: 'Lương theo mức tiền', dataIndex: 'luongTien', key: 'lt', render: (v: number) => (v ? `${v.toLocaleString('vi-VN')} đ` : '') },
-    { title: 'Ngày nâng tiếp', dataIndex: 'ngayNangTiep', key: 'nnt', render: (v: string) => formatDate(v) },
-    { title: 'Ngày vào ngành', dataIndex: 'ngayVaoNganh', key: 'nvn', render: (v: string) => formatDate(v) },
+    { title: 'Mã VC', dataIndex: 'ma', key: 'ma', width: 95 },
+    { title: 'Họ và tên', key: 'ht', width: 175, render: (_: any, r: any) => `${r.ho} ${r.ten}` },
+    { title: 'Ngày sinh', dataIndex: 'ngaySinh', key: 'ns', width: 115, render: (v: string) => formatDate(v) },
+    { title: 'Giới tính', dataIndex: 'gioiTinh', key: 'gt', width: 75, render: (v: string) => v === 'NAM' ? 'Nam' : 'Nữ' },
+    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', width: 200 },
+    { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd', width: 215 },
+    { title: 'Loại HĐ', dataIndex: 'loaiLaoDong', key: 'll', width: 195, render: (v: string) => LOAI_LAO_DONG_LABELS[v as keyof typeof LOAI_LAO_DONG_LABELS] ?? v },
+    { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 65 },
+    { title: 'Hệ số', dataIndex: 'heSo', key: 'hs', width: 80 },
+    { title: 'Lương theo mức tiền', dataIndex: 'luongTien', key: 'lt', width: 115, render: (v: number) => (v ? `${v.toLocaleString('vi-VN')} đ` : '') },
+    { title: 'Ngày nâng tiếp', dataIndex: 'ngayNangTiep', key: 'nnt', width: 125, render: (v: string) => formatDate(v) },
+    { title: 'Ngày vào ngành', dataIndex: 'ngayVaoNganh', key: 'nvn', width: 125, render: (v: string) => formatDate(v) },
   ]
 
   const alertCols = [
@@ -68,7 +68,7 @@ export default function BaoCaoPage() {
     { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv' },
     { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd' },
     { title: 'Bậc / Hệ số', key: 'bh', render: (_: any, r: any) => `Bậc ${r.bac} / ${r.heSoHienTai}` },
-    { title: 'Ngày nâng lương', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', render: (v: string) => formatDate(v) },
+    { title: 'Ngày nâng lương', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 130, render: (v: string) => formatDate(v) },
     { title: 'Còn lại', dataIndex: 'daysLeft', key: 'days', render: (v: number) => `${v > 0 ? v + ' ngày' : 'Quá hạn ' + (-v) + ' ngày'}` },
   ]
 
@@ -121,7 +121,7 @@ export default function BaoCaoPage() {
                 <Button icon={<FileExcelOutlined />} onClick={exportVCExcel}>Xuất Excel</Button>
                 <Button icon={<FilePdfOutlined />} onClick={exportVCPdf} loading={dangXuatPdf}>Xuất PDF</Button>
               </Space>
-              <Table dataSource={enriched} columns={vcCols} rowKey="id" size="small" scroll={{ x: 1100 }} pagination={{ pageSize: 20 }} />
+              <Table dataSource={enriched} columns={vcCols} rowKey="id" size="small" scroll={{ x: 1580 }} pagination={{ pageSize: 20 }} />
             </>
           ),
         },

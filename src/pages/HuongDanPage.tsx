@@ -3,6 +3,7 @@ import { Card, Typography, Table, Tag, Button, Collapse, Alert } from 'antd'
 import { PrinterOutlined } from '@ant-design/icons'
 import { useUserStore } from '@/store/userStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
+import { TagKeoDai, TagMucBoNhiem } from '@/components/BoNhiemTags'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -151,6 +152,7 @@ export default function HuongDanPage() {
           <li><a href="#hd-s6">Chuyển công tác, chuyển đi, nghỉ hưu</a></li>
           <li><a href="#hd-s7">Rà soát ngạch - bậc - hệ số</a></li>
           <li><a href="#hd-s8">Theo dõi và tra cứu</a></li>
+          <li><a href="#hd-sbn">Theo dõi bổ nhiệm cán bộ quản lý</a></li>
           <li><a href="#hd-s9">Câu hỏi thường gặp</a></li>
         </ol>
       </div>
@@ -825,8 +827,45 @@ export default function HuongDanPage() {
       </Section>
 
       {/* ── IX ── */}
+      <div id="hd-sbn" />
+      <Section
+        so="IX"
+        tieuDe="Theo dõi bổ nhiệm cán bộ quản lý"
+        moTa="Nhắc Phòng VHXH các trường hợp Hiệu trưởng, Phó Hiệu trưởng sắp hết nhiệm kỳ bổ nhiệm (5 năm) để chuẩn bị quy trình bổ nhiệm lại, tránh bị quên."
+      >
+        <Paragraph strong>Kế toán trường: nhập quyết định bổ nhiệm</Paragraph>
+        <ul>
+          <li>Mở hồ sơ Hiệu trưởng / Phó Hiệu trưởng, thẻ <b>Bổ nhiệm</b>, bấm <b>Thêm lần bổ nhiệm</b>.</li>
+          <li>Nhập chức vụ, hình thức (bổ nhiệm lần đầu / bổ nhiệm lại / kéo dài thời hạn giữ chức vụ), số và ngày quyết định, cơ quan ra quyết định, ngày bắt đầu giữ chức vụ.</li>
+          <li>Ngày hết nhiệm kỳ <b>tự tính 5 năm</b> (ví dụ từ 01/09/2021 đến 31/08/2026); sửa tay nếu quyết định ghi khác. Chọn <i>Kéo dài</i> thì ngày hết tự lấy ngày nghỉ hưu.</li>
+          <li>Khi có quyết định bổ nhiệm lại, thêm một lần bổ nhiệm mới - hệ thống lấy lần mới nhất làm nhiệm kỳ hiện tại, người đó tự rời danh sách nhắc.</li>
+          <li>Phòng VHXH sửa được dữ liệu của mọi trường. Mọi lần thêm, sửa, xoá đều ghi vào lịch sử biến động của hồ sơ và nhật ký thao tác.</li>
+        </ul>
+        <Paragraph strong>Phòng VHXH: theo dõi và nhắc việc</Paragraph>
+        <Paragraph>
+          Menu <b>Theo dõi bổ nhiệm</b> (số đỏ bên cạnh là số trường hợp cần nhắc), thẻ nhắc việc ở <b>Tổng quan</b> và chuông trên đầu trang đều dẫn tới danh sách:
+        </Paragraph>
+        <div className="hd-tw">
+          <table className="hd-table">
+            <thead><tr><th style={{ width: 230 }}>Nhãn</th><th>Nghĩa là</th></tr></thead>
+            <tbody>
+              <tr><td><TagMucBoNhiem muc="CHUAN_BI" /></td><td>Còn dưới 6 tháng đến ngày hết nhiệm kỳ - bắt đầu chuẩn bị hồ sơ bổ nhiệm lại.</td></tr>
+              <tr><td><TagMucBoNhiem muc="DEN_HAN" /></td><td>Còn dưới 90 ngày - đến hạn phải hoàn thành quy trình bổ nhiệm lại (hoặc không bổ nhiệm lại).</td></tr>
+              <tr><td><TagMucBoNhiem muc="QUA_HAN" /></td><td>Đã hết nhiệm kỳ mà chưa nhập quyết định mới.</td></tr>
+              <tr><td><TagKeoDai /></td><td>Còn dưới 2 năm đến tuổi nghỉ hưu (tính tại ngày hết nhiệm kỳ, theo NĐ 135) - xem xét kéo dài thời hạn giữ chức vụ đến khi nghỉ hưu thay vì bổ nhiệm lại.</td></tr>
+              <tr><td><TagMucBoNhiem muc="NGHI_HUU_TRUOC" /></td><td>Đến tuổi nghỉ hưu trước ngày hết nhiệm kỳ - không nhắc.</td></tr>
+              <tr><td><TagMucBoNhiem muc="CHUA_NHAP" /></td><td>Hiệu trưởng / Phó Hiệu trưởng chưa có dữ liệu bổ nhiệm - nhắc trường bổ sung.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Paragraph style={{ marginTop: 8 }}>
+          Bấm các ô thống kê ở đầu trang để lọc; lọc theo trường; nút <b>Xuất Excel</b> lấy đúng danh sách đang xem. Bấm tên người để mở thẳng thẻ Bổ nhiệm của hồ sơ.
+        </Paragraph>
+      </Section>
+
+      {/* ── X ── */}
       <div id="hd-s9" />
-      <Section so="IX" tieuDe="Câu hỏi thường gặp">
+      <Section so="X" tieuDe="Câu hỏi thường gặp">
         <Collapse
           ghost
           className="hd-faq"

@@ -9,7 +9,9 @@ import {
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
   AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
+  SolutionOutlined, WarningOutlined,
 } from '@ant-design/icons'
+import { useBoNhiem } from '@/hooks/useBoNhiem'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { ROLE_LABELS } from '@/types/auth'
@@ -33,6 +35,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/de-xuat': 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
   '/chuyen-cong-tac': 'Chuyển công tác',
   '/thong-bao-ket-qua': 'Thông báo kết quả nâng lương',
+  '/bo-nhiem': 'Theo dõi bổ nhiệm',
   '/du-bao': 'Dự báo nghỉ hưu',
   '/bao-cao': 'Báo cáo',
   '/admin/danh-muc': 'Danh mục hệ thống',
@@ -50,6 +53,9 @@ export default function AppLayout() {
   const location = useLocation()
   const { token } = theme.useToken()
   const alerts = useSalaryAlerts(scopeDonViId, 90)
+  const boNhiem = useBoNhiem(scopeDonViId)
+  const coXemBoNhiem = hasPermission('vienChuc', 'read')
+  const soBoNhiem = coXemBoNhiem ? boNhiem.canNhac.length : 0
 
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
@@ -71,6 +77,11 @@ export default function AppLayout() {
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
+    hasPermission('vienChuc', 'read') && {
+      key: '/bo-nhiem', icon: <SolutionOutlined />,
+      label: <Badge count={boNhiem.canNhac.length} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Theo dõi bổ nhiệm</span></Badge>,
+      title: 'Theo dõi bổ nhiệm cán bộ quản lý',
+    },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
     hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },
     hasPermission('admin', 'admin') && {
@@ -200,9 +211,21 @@ export default function AppLayout() {
                 <span className="hd-btn-label">Hướng dẫn</span>
               </Button>
             </Tooltip>
-            <Badge count={alerts.length} size="small" offset={[-2, 2]}>
-              <Button type="text" icon={<BellOutlined style={{ fontSize: 18 }} />} onClick={() => navigate('/de-xuat')} style={{ borderRadius: 8 }} />
-            </Badge>
+            <Dropdown
+              trigger={['click']}
+              placement="bottomRight"
+              menu={{
+                items: [
+                  { key: '/de-xuat', icon: <WarningOutlined />, label: `Sắp đến kỳ nâng lương: ${alerts.length} người` },
+                  ...(coXemBoNhiem ? [{ key: '/bo-nhiem', icon: <SolutionOutlined />, label: `Sắp hết nhiệm kỳ bổ nhiệm: ${soBoNhiem} người` }] : []),
+                ],
+                onClick: ({ key }) => navigate(key),
+              }}
+            >
+              <Badge count={alerts.length + soBoNhiem} size="small" offset={[-2, 2]}>
+                <Button type="text" icon={<BellOutlined style={{ fontSize: 18 }} />} style={{ borderRadius: 8 }} aria-label="Nhắc việc" />
+              </Badge>
+            </Dropdown>
             <Dropdown menu={userMenu} placement="bottomRight">
               <Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 8, transition: 'background 0.2s' }}>
                 <Avatar

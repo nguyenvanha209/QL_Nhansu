@@ -14,7 +14,11 @@ import { filterRetirementInYears } from '@/utils/retirement'
 import { getReviewUrgencyColor } from '@/utils/calculations'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS } from '@/types/deXuat'
-import { isDangCongTac } from '@/types/vienChuc'
+import { isDangCongTac, CHUC_VU_LABELS } from '@/types/vienChuc'
+import { useBoNhiem } from '@/hooks/useBoNhiem'
+import { moTaConLai } from '@/utils/boNhiem'
+import type { TinhTrangBoNhiem } from '@/utils/boNhiem'
+import { TagKeoDai, TagMucBoNhiem } from '@/components/BoNhiemTags'
 import { NHOM_VI_TRI, NHOM_LOAI_HINH, nhomViTri, nhomLoaiHinh } from '@/utils/nhomViTri'
 import type { NhomViTri, NhomLoaiHinh } from '@/utils/nhomViTri'
 
@@ -40,6 +44,7 @@ export default function DashboardPage() {
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
   const deXuats = useMemo(() => allDeXuats.filter((d) => !scopeDonViId || d.donViId === scopeDonViId), [allDeXuats, scopeDonViId])
   const salaryAlerts = useSalaryAlerts(scopeDonViId, 90)
+  const boNhiem = useBoNhiem(scopeDonViId)
   const [moNangLuong, setMoNangLuong] = useState(false)
   const soThongBaoMoi = useThongBaoMoi()
   const [retireYears, setRetireYears] = useState(3)
@@ -330,6 +335,33 @@ export default function DashboardPage() {
           </Card>
         </Col>
       </Row>
+      <Card
+        size="small" className="chart-card" style={{ marginTop: 12 }}
+        title={(
+          <Space size={8} wrap>
+            <span>Nhắc việc bổ nhiệm cán bộ quản lý (HT, P.HT)</span>
+            <Tag color={boNhiem.canNhac.length ? 'red' : 'green'} style={{ cursor: 'pointer' }} onClick={() => navigate('/bo-nhiem')}>{boNhiem.canNhac.length}</Tag>
+            {boNhiem.chuaNhap.length > 0 && (
+              <a style={{ fontWeight: 400, fontSize: 14 }} onClick={() => navigate('/bo-nhiem?loc=CHUA_NHAP')}>{boNhiem.chuaNhap.length} người chưa nhập QĐ bổ nhiệm</a>
+            )}
+          </Space>
+        )}
+        extra={<a onClick={() => navigate('/bo-nhiem')}>Mở trang theo dõi</a>}
+      >
+        <Table<TinhTrangBoNhiem>
+          size="small" pagination={false} scroll={{ x: 'max-content' }}
+          rowKey={(t) => t.vc.id}
+          dataSource={boNhiem.canNhac.slice(0, 5)}
+          locale={{ emptyText: 'Không có cán bộ quản lý nào sắp hết nhiệm kỳ trong 6 tháng tới' }}
+          columns={[
+            { title: 'Họ và tên', key: 'ht', render: (_: unknown, t) => <a onClick={() => navigate(`/vien-chuc/${t.vc.id}?tab=bo-nhiem`)}>{t.vc.ho} {t.vc.ten}</a> },
+            ...(scopeDonViId ? [] : [{ title: 'Trường', key: 'dv', render: (_: unknown, t: TinhTrangBoNhiem) => allDonVis.find((d) => d.id === t.vc.donViId)?.ten ?? '' }]),
+            { title: 'Chức vụ', key: 'cv', render: (_: unknown, t) => CHUC_VU_LABELS[t.vc.chucVu ?? ''] ?? t.vc.chucVu },
+            { title: 'Hết nhiệm kỳ', key: 'het', render: (_: unknown, t) => <span><b>{formatDate(t.bn?.ngayHetNhiemKy)}</b> <Text type="secondary">({moTaConLai(t.soNgayCon)})</Text></span> },
+            { title: 'Tình trạng', key: 'muc', render: (_: unknown, t) => <Space size={4}><TagMucBoNhiem muc={t.muc} />{t.xemXetKeoDai && <TagKeoDai ngayNghiHuu={t.ngayNghiHuu} />}</Space> },
+          ]}
+        />
+      </Card>
       <DanhSachNangLuongModal open={moNangLuong} onClose={() => setMoNangLuong(false)} alerts={salaryAlerts} />
       <style>{`.dash-tong-row td { background: #f0f5ff !important; font-weight: 600; }`}</style>
     </div>

@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, Descriptions, Tag, Button, Tabs, Table, Typography, Space, Timeline, Result, Alert, Popconfirm, App } from 'antd'
 import { EditOutlined, ArrowLeftOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import type { PhuCapVienChuc, HeSoLuong } from '@/types/luong'
 import XuLyPhuCapTrungModal from '@/components/XuLyPhuCapTrungModal'
+import BoNhiemTab from '@/components/BoNhiemTab'
+import { laChucVuBoNhiem } from '@/utils/boNhiem'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -30,6 +32,7 @@ const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
 
 export default function VienChucDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { hasPermission, scopeDonViId, laQuanTri, currentUser } = useAuth()
   const { message } = App.useApp()
@@ -229,7 +232,7 @@ export default function VienChucDetailPage() {
         <Tag color="blue">{vc.ma}</Tag> {vc.ho} {vc.ten}{' '}
         <Tag color={TRANG_THAI_COLORS[vc.trangThai ?? 'DANG_LAM_VIEC']}>{TRANG_THAI_CONG_TAC_LABELS[vc.trangThai ?? 'DANG_LAM_VIEC']}</Tag>
       </>}>
-        <Tabs items={[
+        <Tabs defaultActiveKey={searchParams.get('tab') ?? '1'} items={[
           {
             key: '1', label: 'Hồ sơ',
             children: (
@@ -349,11 +352,15 @@ export default function VienChucDetailPage() {
               </>
             ),
           },
+          ...(laChucVuBoNhiem(vc.chucVu) || vc.boNhiems?.length ? [{
+            key: 'bo-nhiem', label: `Bổ nhiệm (${vc.boNhiems?.length ?? 0})`,
+            children: <BoNhiemTab vc={vc} />,
+          }] : []),
           {
             key: '4', label: `Lịch sử biến động (${lichSu.length})`,
             children: (
               <Timeline items={lichSu.map((ls) => ({
-                color: ls.loai === 'LUONG' ? 'blue' : ls.loai === 'CHUC_DANH' ? 'green' : 'gray',
+                color: ls.loai === 'LUONG' ? 'blue' : ls.loai === 'CHUC_DANH' ? 'green' : ls.loai === 'BO_NHIEM' ? 'purple' : 'gray',
                 content: (
                   <div>
                     <Text strong>{ls.truongThayDoi}</Text>

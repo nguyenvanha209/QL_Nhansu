@@ -18,6 +18,7 @@ import DeXuatListPage from '@/pages/deXuat/DeXuatListPage'
 import TaoDeXuatPage from '@/pages/deXuat/TaoDeXuatPage'
 import DeXuatDetailPage from '@/pages/deXuat/DeXuatDetailPage'
 import DuBaoNghiHuuPage from '@/pages/duBao/DuBaoNghiHuuPage'
+import TheoDoiBoNhiemPage from '@/pages/boNhiem/TheoDoiBoNhiemPage'
 import BaoCaoPage from '@/pages/baoCao/BaoCaoPage'
 import DanhMucPage from '@/pages/admin/DanhMucPage'
 import UserManagePage from '@/pages/admin/UserManagePage'
@@ -57,7 +58,8 @@ export default function AppRouter() {
           <Route path="de-xuat/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><DeXuatDetailPage /></RoleGuard>} />
           <Route path="de-xuat/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><TaoDeXuatPage /></RoleGuard>} />
           <Route path="thong-bao-ket-qua" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><ThongBaoKetQuaPage /></RoleGuard>} />
-          <Route path="du-bao" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'duBao', action: 'read' }}><DuBaoNghiHuuPage /></RoleGuard>} />
+          <Route path="bo-nhiem" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><TheoDoiBoNhiemPage /></RoleGuard>} />
+          <Route path="du-bao"element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'duBao', action: 'read' }}><DuBaoNghiHuuPage /></RoleGuard>} />
           <Route path="bao-cao" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'baoCao', action: 'read' }}><BaoCaoPage /></RoleGuard>} />
           <Route path="admin/danh-muc" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><DanhMucPage /></RoleGuard>} />
           <Route path="admin/nguoi-dung" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'admin', action: 'admin' }}><UserManagePage /></RoleGuard>} />

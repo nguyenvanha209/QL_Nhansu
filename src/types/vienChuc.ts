@@ -18,6 +18,31 @@ export type TrangThaiCongTac = 'DANG_LAM_VIEC' | 'CHUYEN_DEN' | 'CHUYEN_DI' | 'N
 
 export type NguonKinhPhi = 'NGAN_SACH' | 'SU_NGHIEP'
 
+export type HinhThucBoNhiem = 'LAN_DAU' | 'BO_NHIEM_LAI' | 'KEO_DAI'
+
+export const HINH_THUC_BO_NHIEM_LABELS: Record<HinhThucBoNhiem, string> = {
+  LAN_DAU: 'Bổ nhiệm lần đầu',
+  BO_NHIEM_LAI: 'Bổ nhiệm lại',
+  KEO_DAI: 'Kéo dài thời hạn giữ chức vụ',
+}
+
+/** Một lần bổ nhiệm Hiệu trưởng / Phó Hiệu trưởng theo quyết định */
+export interface BoNhiem {
+  id: string
+  chucVu: string
+  hinhThuc: HinhThucBoNhiem
+  soQuyetDinh: string
+  ngayQuyetDinh: string
+  coQuanQuyetDinh: string
+  ngayBatDau: string
+  /** Mặc định ngày bắt đầu + 5 năm - 1 ngày; sửa tay khi quyết định ghi khác */
+  ngayHetNhiemKy: string
+  ghiChu?: string
+  createdAt: string
+  createdBy: string
+  updatedAt?: string
+}
+
 export interface BaoLuuPccv {
   /** Chức vụ trước khi sắp xếp và hệ số PCCV đang hưởng lúc đó */
   chucVuCu: string
@@ -78,6 +103,8 @@ export interface VienChuc {
   chuyenTuHoSoId?: string
   /** Bảo lưu phụ cấp chức vụ do sắp xếp tổ chức bộ máy (NĐ 178/2024, NĐ 67/2025) */
   baoLuuPccv?: BaoLuuPccv
+  /** Các lần bổ nhiệm HT/P.HT - căn cứ nhắc hết nhiệm kỳ */
+  boNhiems?: BoNhiem[]
   /** Chỉ loại hình hợp đồng: nhận lương theo bậc/hệ số (mặc định) hay theo mức tiền cố định */
   hinhThucLuong?: HinhThucLuong
   /** Mức lương theo tiền (VNĐ/tháng) - khi hinhThucLuong = 'TIEN' */

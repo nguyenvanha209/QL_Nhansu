@@ -38,7 +38,7 @@ export interface PhuCapVienChuc {
 export interface LichSuBienDong {
   id: string
   vienChucId: string
-  loai: 'LUONG' | 'CHUC_DANH' | 'DON_VI' | 'TRANG_THAI' | 'PHU_CAP'
+  loai: 'LUONG' | 'CHUC_DANH' | 'DON_VI' | 'TRANG_THAI' | 'PHU_CAP' | 'BO_NHIEM'
   truongThayDoi: string
   giaTriCu: string
   giaTriMoi: string

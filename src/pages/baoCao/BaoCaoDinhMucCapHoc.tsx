@@ -7,12 +7,14 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { type CapHoc, TEN_CAP, THU_TU_CAP, dsNamHoc, fmt, laCapHoc, lamTron1, namHocHienHanh } from '@/utils/dinhMuc'
 import type { ChucDanhTra } from '@/utils/dinhMuc'
 import {
-  type ChiSo, type DongBaoCao, MA_TOAN_CAP, TEN_CHI_SO, dungBaoCaoCapHoc, laSoKhac0, locVaDanhSo, trangExcelBaoCao,
+  type ChiSo, type DongBaoCao, CHI_SO_MAC_DINH, MA_TOAN_CAP, TAT_CA_CHI_SO, TEN_CHI_SO, TRUONG_CHI_SO,
+  dungBaoCaoCapHoc, laSoKhac0, locVaDanhSo, trangExcelBaoCao,
 } from '@/utils/baoCaoDinhMuc'
 import { xuatExcelA4 } from '@/utils/excelA4'
 
 const { Text } = Typography
 const CAP: CapHoc[] = ['MAM_NON', 'TIEU_HOC', 'THCS']
+const rongChiSo = (c: ChiSo) => (c === 'CL' ? 84 : c === 'CLG' ? 76 : c === 'DM' ? 72 : c === 'HD' ? 70 : 60)
 const MAU_THUA = '#cf1322'
 const MAU_THIEU = '#1d4ed8'
 
@@ -20,11 +22,12 @@ const MAU_THIEU = '#1d4ed8'
 export default function BaoCaoDinhMucCapHoc() {
   const donVis = useDanhMucStore((s) => s.donVis)
   const quyMos = useDanhMucStore((s) => s.quyMoTruongs)
+  const chiTieus = useDanhMucStore((s) => s.chiTieuBienChes)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const [cap, setCap] = useState<CapHoc>('MAM_NON')
   const [namHoc, setNamHoc] = useState(namHocHienHanh)
-  const [chiSo, setChiSo] = useState<ChiSo[]>(['DM', 'CM', 'CL'])
+  const [chiSo, setChiSo] = useState<ChiSo[]>(CHI_SO_MAC_DINH)
   const [anTrong, setAnTrong] = useState(true)
   const [chonTruong, setChonTruong] = useState<string[]>([])
   const [dangXuat, setDangXuat] = useState(false)
@@ -41,19 +44,19 @@ export default function BaoCaoDinhMucCapHoc() {
   const truongHien = chonTruong.length ? truongCap.filter((t) => chonTruong.includes(t.id)) : truongCap
 
   const bc = useMemo(
-    () => dungBaoCaoCapHoc(cap, namHoc, truongHien, quyMos, vienChucs, layCd),
+    () => dungBaoCaoCapHoc(cap, namHoc, truongHien, quyMos, vienChucs, layCd, chiTieus ?? []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cap, namHoc, truongHien.map((t) => t.id).join(','), quyMos, vienChucs, layCd],
+    [cap, namHoc, truongHien.map((t) => t.id).join(','), quyMos, vienChucs, layCd, chiTieus],
   )
   const dongHien = locVaDanhSo(bc.dong, anTrong)
   const chuaKhai = bc.cot.filter((c) => !c.daKhai)
 
-  const chiSoSapXep = (['DM', 'CM', 'CL'] as ChiSo[]).filter((c) => chiSo.includes(c))
+  const chiSoSapXep = TAT_CA_CHI_SO.filter((c) => chiSo.includes(c))
   const k = chiSoSapXep.length
 
   const oSo = (v: number | null | undefined, c: ChiSo) => {
     if (v == null) return <Text type="secondary">-</Text>
-    if (c === 'CL') {
+    if (c === 'CL' || c === 'CLG') {
       if (!laSoKhac0(v)) return <span style={{ color: '#16a34a' }}>0</span>
       return <b style={{ color: v > 0 ? MAU_THUA : MAU_THIEU }}>{v > 0 ? '+' : '-'}{fmt(Math.abs(v))}</b>
     }
@@ -83,7 +86,7 @@ export default function BaoCaoDinhMucCapHoc() {
       children: chiSoSapXep.map((c, j) => ({
         title: TEN_CHI_SO[c].ngan,
         key: `${n.id}-${c}`,
-        width: c === 'DM' ? 80 : 72,
+        width: rongChiSo(c),
         align: 'center' as const,
         onCell: (d: DongBaoCao) => {
           if (d.loai === 'muc') return { colSpan: 0 }
@@ -93,7 +96,7 @@ export default function BaoCaoDinhMucCapHoc() {
         render: (_: unknown, d: DongBaoCao) => {
           const v = d.gt[n.id] ?? {}
           if (d.loai === 'quyMo') return v.chu ?? (v.cm == null ? <Text type="secondary">-</Text> : v.cm.toLocaleString('vi-VN'))
-          return oSo(c === 'DM' ? v.dm : c === 'CM' ? v.cm : v.cl, c)
+          return oSo(v[TRUONG_CHI_SO[c]] as number | null | undefined, c)
         },
       })),
     })),
@@ -104,7 +107,7 @@ export default function BaoCaoDinhMucCapHoc() {
     try {
       const trangs = (tatCa ? CAP : [cap]).map((c) => {
         const ds = c === cap ? truongHien : truongTheoCap(c)
-        const b = dungBaoCaoCapHoc(c, namHoc, ds, quyMos, vienChucs, layCd)
+        const b = dungBaoCaoCapHoc(c, namHoc, ds, quyMos, vienChucs, layCd, chiTieus ?? [])
         return trangExcelBaoCao(c, namHoc, { cot: b.cot, dong: locVaDanhSo(b.dong, anTrong) }, chiSoSapXep)
       })
       await xuatExcelA4(`Tong-hop-dinh-muc-VTVL-${tatCa ? 'ca-3-cap' : TEN_CAP[cap].replace(/\s+/g, '-')}-${namHoc}`, trangs)
@@ -134,7 +137,7 @@ export default function BaoCaoDinhMucCapHoc() {
           <Checkbox.Group
             value={chiSo}
             onChange={(v) => v.length && setChiSo(v as ChiSo[])}
-            options={(['DM', 'CM', 'CL'] as ChiSo[]).map((c) => ({ value: c, label: TEN_CHI_SO[c].day }))}
+            options={TAT_CA_CHI_SO.map((c) => ({ value: c, label: TEN_CHI_SO[c].day }))}
           />
         </span>
         <span><Switch size="small" checked={anTrong} onChange={setAnTrong} /> <Text>Ẩn vị trí không có số liệu</Text></span>
@@ -155,11 +158,11 @@ export default function BaoCaoDinhMucCapHoc() {
         pagination={false}
         dataSource={dongHien}
         columns={columns}
-        scroll={{ x: 348 + nhomCot.length * chiSoSapXep.reduce((s, c) => s + (c === 'DM' ? 80 : 72), 0), y: 'calc(100vh - 330px)' }}
+        scroll={{ x: 348 + nhomCot.length * chiSoSapXep.reduce((s, c) => s + rongChiSo(c), 0), y: 'calc(100vh - 330px)' }}
         rowClassName={(d) => `bc-${d.loai}`}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Thừa ghi màu đỏ, thiếu ghi màu xanh; thừa/thiếu của nhóm chỉ so các vị trí có định mức. Cột Toàn cấp cộng các trường đang hiển thị. Nhóm IV và giáo viên dạy chuyên không tính định mức.
+        Giao và có mặt tính biên chế (ngân sách + sự nghiệp); dòng nhóm so với chỉ tiêu giao và định mức, dòng từng vị trí chỉ so định mức; ở cột toàn cấp, thừa/thiếu so giao chỉ cộng các trường đã được giao. Thừa ghi màu đỏ, thiếu ghi màu xanh. Cột Toàn cấp cộng các trường đang hiển thị. Tổ trưởng, tổ phó thuộc định mức giáo viên (không cộng lại); cấp dưỡng hợp đồng, ngoài danh mục VTVL và giáo viên dạy chuyên không tính định mức.
       </Text>
       <style>{`
         .bc-muc td { background: #dbeafe !important; font-weight: 700; }

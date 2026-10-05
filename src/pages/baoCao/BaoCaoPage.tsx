@@ -17,9 +17,9 @@ const { Title } = Typography
 
 export default function BaoCaoPage() {
   const { message } = App.useApp()
-  const { scopeDonViId, laQuanTri, isVHXH } = useAuth()
-  // Báo cáo định mức theo cấp học: chỉ Quản trị và Phòng VHXH (xem toàn phường)
-  const xemDinhMucCap = !scopeDonViId && (laQuanTri || isVHXH)
+  const { scopeDonViId, laQuanTri, isVHXH, isLanhDao } = useAuth()
+  // Báo cáo định mức theo cấp học: Quản trị, Phòng VHXH và Lãnh đạo (xem toàn phường)
+  const xemDinhMucCap = !scopeDonViId && (laQuanTri || isVHXH || isLanhDao)
   const [params] = useSearchParams()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const [filterLoai, setFilterLoai] = useState<string | undefined>()

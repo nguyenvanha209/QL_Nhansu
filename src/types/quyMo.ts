@@ -50,3 +50,41 @@ export interface QuyMoTruong {
   createdAt: string
   updatedAt: string
 }
+
+/** Nhóm giao chỉ tiêu theo khung VTVL (Sở Nội vụ Hải Phòng) và lao động ngoài danh mục */
+export type NhomChiTieu = 'QUAN_LY' | 'CHUYEN_MON' | 'HO_TRO' | 'NGOAI_DM'
+
+/** Chỉ tiêu một nhóm: biên chế chia theo nguồn kinh phí, cộng hợp đồng NĐ 235 */
+export interface OChiTieu {
+  nganSach?: number
+  suNghiep?: number
+  hd235?: number
+}
+
+/** Chỉ tiêu biên chế, hợp đồng Phòng VHXH (hoặc quản trị) giao cho một trường trong một năm học */
+export interface ChiTieuBienChe {
+  /** `${donViId}__${namHoc}` */
+  id: string
+  donViId: string
+  namHoc: string
+  nhom: Partial<Record<NhomChiTieu, OChiTieu>>
+  soQuyetDinh?: string
+  ngayQuyetDinh?: string
+  ghiChu?: string
+  createdAt: string
+  updatedAt: string
+  nguoiCapNhatId?: string
+  nguoiCapNhat?: string
+}
+
+/** Mỗi lần giao / sửa chỉ tiêu để lại một bản */
+export interface ChiTieuLichSu {
+  id: string
+  chiTieuId: string
+  donViId: string
+  namHoc: string
+  thoiGian: string
+  nguoiId?: string
+  nguoiTen?: string
+  noiDung: Pick<ChiTieuBienChe, 'nhom' | 'soQuyetDinh' | 'ngayQuyetDinh' | 'ghiChu'>
+}

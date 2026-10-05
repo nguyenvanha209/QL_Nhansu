@@ -12,7 +12,7 @@ import type {
   ChucVuDanhMuc,
 } from '@/types/danhMuc'
 import type { DonVi } from '@/types/donVi'
-import type { QuyMoTruong, QuyMoLichSu } from '@/types/quyMo'
+import type { QuyMoTruong, QuyMoLichSu, ChiTieuBienChe, ChiTieuLichSu } from '@/types/quyMo'
 import { layNoiDung, giongNhau } from '@/utils/quyMoLichSu'
 
 interface DanhMucState {
@@ -20,6 +20,9 @@ interface DanhMucState {
   quyMoTruongs: QuyMoTruong[]
   /** Mỗi lần lưu quy mô để lại một bản, giữ tối đa SO_BAN_LICH_SU_QUY_MO bản gần nhất cho mỗi trường và năm học */
   quyMoLichSu: QuyMoLichSu[]
+  /** Chỉ tiêu biên chế, hợp đồng giao theo trường và năm học (Phòng VHXH, quản trị giao) */
+  chiTieuBienChes: ChiTieuBienChe[]
+  chiTieuLichSu: ChiTieuLichSu[]
   chucDanhs: ChucDanhNgheNghiep[]
   viTriViecLams: ViTriViecLam[]
   bacLuongs: BacLuong[]
@@ -34,6 +37,8 @@ interface DanhMucState {
 
   /** Ghi đè theo id (một bản ghi cho mỗi trường, mỗi năm học) */
   luuQuyMo: (qm: Omit<QuyMoTruong, 'createdAt' | 'updatedAt'>) => void
+  /** Ghi đè theo id, mỗi lần lưu thêm một bản lịch sử */
+  luuChiTieu: (ct: Omit<ChiTieuBienChe, 'createdAt' | 'updatedAt'>) => void
 
   setChucDanhs: (v: ChucDanhNgheNghiep[]) => void
   addChucDanh: (d: Omit<ChucDanhNgheNghiep, 'id'>) => ChucDanhNgheNghiep
@@ -77,6 +82,8 @@ export const useDanhMucStore = create<DanhMucState>()(
       donVis: [],
       quyMoTruongs: [],
       quyMoLichSu: [],
+      chiTieuBienChes: [],
+      chiTieuLichSu: [],
       chucDanhs: [],
       viTriViecLams: [],
       bacLuongs: [],
@@ -123,6 +130,26 @@ export const useDanhMucStore = create<DanhMucState>()(
           const giu = new Set([...cuaBan, ...moi].sort((a, b) => b.thoiGian.localeCompare(a.thoiGian)).slice(0, SO_BAN_LICH_SU_QUY_MO).map((l) => l.id))
           const quyMoLichSu = [...lichSuCu, ...moi].filter((l) => l.quyMoId !== qm.id || giu.has(l.id))
           return { quyMoTruongs, quyMoLichSu }
+        }),
+
+      luuChiTieu: (ct) =>
+        set((s) => {
+          const ds = s.chiTieuBienChes ?? []
+          const cu = ds.find((x) => x.id === ct.id)
+          const t = now()
+          const ban: ChiTieuBienChe = { ...ct, createdAt: cu?.createdAt ?? t, updatedAt: t }
+          const ls: ChiTieuLichSu = {
+            id: nanoid(), chiTieuId: ct.id, donViId: ct.donViId, namHoc: ct.namHoc, thoiGian: t,
+            nguoiId: ct.nguoiCapNhatId, nguoiTen: ct.nguoiCapNhat,
+            noiDung: { nhom: ct.nhom, soQuyetDinh: ct.soQuyetDinh, ngayQuyetDinh: ct.ngayQuyetDinh, ghiChu: ct.ghiChu },
+          }
+          const lichSu = [...(s.chiTieuLichSu ?? []), ls]
+          const cuaBan = lichSu.filter((l) => l.chiTieuId === ct.id).sort((a, b) => b.thoiGian.localeCompare(a.thoiGian))
+          const bo = new Set(cuaBan.slice(SO_BAN_LICH_SU_QUY_MO).map((l) => l.id))
+          return {
+            chiTieuBienChes: cu ? ds.map((x) => (x.id === ct.id ? ban : x)) : [...ds, ban],
+            chiTieuLichSu: lichSu.filter((l) => !bo.has(l.id)),
+          }
         }),
 
       setChucDanhs: (v) => set({ chucDanhs: v }),

@@ -35,6 +35,10 @@ export const CONG_VIEC: { key: CongViecNhanVien; ten: string; nhom: NhomViTri }[
   { key: 'Y_TE', ten: 'Y tế trường học', nhom: 'NV_HO_TRO' },
   { key: 'TU_VAN', ten: 'Tư vấn học sinh (tâm lý học đường)', nhom: 'NV_HO_TRO' },
   { key: 'HO_TRO_KT', ten: 'Hỗ trợ giáo dục người khuyết tật', nhom: 'NV_HO_TRO' },
+  { key: 'LUU_TRU', ten: 'Lưu trữ', nhom: 'NV_HO_TRO' },
+  { key: 'QUAN_TRI_CS', ten: 'Quản trị công sở', nhom: 'NV_HO_TRO' },
+  { key: 'TCCB_TDKT', ten: 'Tổ chức cán bộ, thi đua khen thưởng', nhom: 'NV_HO_TRO' },
+  { key: 'CNTT_CDS', ten: 'Ứng dụng CNTT và chuyển đổi số', nhom: 'NV_HO_TRO' },
   { key: 'BAO_VE', ten: 'Bảo vệ', nhom: 'NV_PHUC_VU' },
   { key: 'LAO_CONG', ten: 'Lao công, tạp vụ', nhom: 'NV_PHUC_VU' },
   { key: 'NAU_AN', ten: 'Cấp dưỡng, nấu ăn', nhom: 'NV_NUOI_DUONG' },
@@ -121,6 +125,10 @@ const TU_KHOA: [RegExp, CongViecNhanVien][] = [
   [/y tế/, 'Y_TE'],
   [/tư vấn|tâm lý/, 'TU_VAN'],
   [/khuyết tật/, 'HO_TRO_KT'],
+  [/lưu trữ/, 'LUU_TRU'],
+  [/quản trị công sở/, 'QUAN_TRI_CS'],
+  [/tổ chức cán bộ|thi đua/, 'TCCB_TDKT'],
+  [/chuyển đổi số|công nghệ thông tin|cntt/, 'CNTT_CDS'],
 ]
 
 /** Đoán công việc cụ thể từ nhiệm vụ chính, rồi tên chức danh. Không chắc thì trả về undefined để trường tự chọn. */

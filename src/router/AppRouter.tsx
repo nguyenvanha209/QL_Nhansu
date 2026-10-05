@@ -9,7 +9,6 @@ import DashboardPage from '@/pages/DashboardPage'
 import VienChucListPage from '@/pages/vienChuc/VienChucListPage'
 import VienChucFormPage from '@/pages/vienChuc/VienChucFormPage'
 import VienChucDetailPage from '@/pages/vienChuc/VienChucDetailPage'
-import ViTriPage from '@/pages/viTri/ViTriPage'
 import HeSoLuongPage from '@/pages/luong/HeSoLuongPage'
 import RaSoatNgachBacPage from '@/pages/luong/RaSoatNgachBacPage'
 import PhuCapPage from '@/pages/luong/PhuCapPage'
@@ -47,7 +46,8 @@ export default function AppRouter() {
           <Route path="vien-chuc/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><VienChucDetailPage /></RoleGuard>} />
           <Route path="vien-chuc/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'write' }}><VienChucFormPage /></RoleGuard>} />
           <Route path="bang-tong-hop-luong" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'luong', action: 'read' }}><BangTongHopLuongPage /></RoleGuard>} />
-          <Route path="vi-tri" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'viTri', action: 'read' }}><ViTriPage /></RoleGuard>} />
+          {/* Trang Vị trí việc làm cũ đã gộp vào Định mức viên chức và Cơ cấu VTVL (chỉ tiêu giao theo nhóm VTVL) */}
+          <Route path="vi-tri" element={<Navigate to="/quy-mo" replace />} />
           <Route path="quy-mo" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'quyMo', action: 'read' }}><QuyMoDinhMucPage /></RoleGuard>} />
           <Route path="luong/he-so" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'luong', action: 'read' }}><HeSoLuongPage /></RoleGuard>} />
           <Route path="luong/ra-soat" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><RaSoatNgachBacPage /></RoleGuard>} />

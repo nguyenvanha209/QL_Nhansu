@@ -10,6 +10,7 @@ import {
 import { xuatExcelA4 } from '@/utils/excelA4'
 import type { VungBang } from '@/utils/excelA4'
 import { useNavigate } from 'react-router-dom'
+import ChiTieuBienCheCard from './ChiTieuBienCheCard'
 import { useAuth } from '@/hooks/useAuth'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -154,41 +155,129 @@ export default function QuyMoDinhMucPage() {
 
 // ───────────────────────────── Tổng hợp toàn phường ─────────────────────────────
 
+const NHOM_TH: { key: 'QUAN_LY' | 'CHUYEN_MON' | 'HO_TRO'; ten: string }[] = [
+  { key: 'QUAN_LY', ten: 'I. Lãnh đạo, quản lý' },
+  { key: 'CHUYEN_MON', ten: 'II. Chuyên môn nghiệp vụ' },
+  { key: 'HO_TRO', ten: 'III. Hỗ trợ' },
+]
+type ONhomTH = { dm: number | null; giao: number | null; cm: number; soGiao: number | null; soDm: number | null }
+type DongTH = {
+  key: string; loai: 'truong' | 'cap' | 'phuong'; ten: string; dv?: DonVi; cap?: CapHoc
+  qm?: QuyMoTruong; kq?: KetQuaDinhMuc; soTruong?: number
+  lop: number | null; hs: number | null
+  nhom: Record<'QUAN_LY' | 'CHUYEN_MON' | 'HO_TRO', ONhomTH>
+  hd235Giao: number | null; hd235CoMat: number
+}
+const congN = (a: number | null, b: number | null) => (a == null && b == null ? null : (a ?? 0) + (b ?? 0))
+
 function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: string; onChon: (id: string) => void }) {
   const quyMos = useDanhMucStore((s) => s.quyMoTruongs)
+  const chiTieus = useDanhMucStore((s) => s.chiTieuBienChes)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const cd = useTenChucDanh()
   const navigate = useNavigate()
-  const { laQuanTri, isVHXH } = useAuth()
+  const { laQuanTri, isVHXH, isLanhDao } = useAuth()
 
-  const rows = useMemo(() => truongs.map((dv) => {
+  // Mỗi trường, theo 3 nhóm VTVL: định mức, biên chế giao, biên chế có mặt, thừa/thiếu so giao và so định mức
+  const truongRows = useMemo<DongTH[]>(() => truongs.map((dv) => {
     const cap = dv.loai as CapHoc
     const qm = quyMos.find((q) => q.id === idQuyMo(dv.id, namHoc))
-    const kq = qm ? tinhDinhMuc(cap, qm, vienChucs.filter((v) => v.donViId === dv.id), cd.lay) : undefined
-    return { key: dv.id, dv, cap, qm, kq }
-  }), [truongs, quyMos, vienChucs, namHoc, cd])
+    const nhanSu = vienChucs.filter((v) => v.donViId === dv.id)
+    const kq = qm ? tinhDinhMuc(cap, qm, nhanSu, cd.lay) : undefined
+    const kqDem = kq ?? tinhDinhMuc(cap, quyMoTrong(dv.id, namHoc), nhanSu, cd.lay)
+    const ct = (chiTieus ?? []).find((x) => x.id === idQuyMo(dv.id, namHoc))
+    const daGiao = !!ct && Object.values(ct.nhom).some((o) => (o?.nganSach ?? 0) + (o?.suNghiep ?? 0) + (o?.hd235 ?? 0) > 0)
+    const nhom = Object.fromEntries(NHOM_TH.map(({ key }) => {
+      const t = kq?.tongNhom.find((x) => x.nhom === key)
+      const dm = kq && kq.tongLop && t?.apDungDinhMuc ? t.dinhMuc : null
+      const giao = daGiao ? (ct!.nhom[key]?.nganSach ?? 0) + (ct!.nhom[key]?.suNghiep ?? 0) : null
+      const o = kqDem.coMatNguon[key]
+      const cm = o.nganSach + o.suNghiep + o.bcChuaRoNguon
+      return [key, { dm, giao, cm, soGiao: giao == null ? null : cm - giao, soDm: dm == null ? null : cm - dm }]
+    })) as DongTH['nhom']
+    return {
+      key: dv.id, loai: 'truong' as const, ten: dv.ten, dv, cap, qm, kq,
+      lop: kq ? kq.tongLop : null, hs: kq ? kq.tongHS : null, nhom,
+      hd235Giao: daGiao ? Object.values(ct!.nhom).reduce((s, o) => s + (o?.hd235 ?? 0), 0) : null,
+      hd235CoMat: Object.values(kqDem.coMatNguon).reduce((s, o) => s + o.hd235, 0),
+    }
+  }), [truongs, quyMos, vienChucs, namHoc, cd, chiTieus])
 
-  const daKhai = rows.filter((r) => r.kq)
-  const tong = (f: (k: KetQuaDinhMuc) => number) => daKhai.reduce((s, r) => s + f(r.kq!), 0)
+  // Toàn phường trên cùng, rồi từng cấp: dòng cộng cấp đứng trước các trường của cấp đó
+  const rows = useMemo(() => {
+    const cong = (key: string, loai: 'cap' | 'phuong', ten: string, ds: DongTH[]): DongTH => ({
+      key, loai, ten, soTruong: ds.length,
+      lop: ds.reduce<number | null>((s, r) => congN(s, r.lop), null),
+      hs: ds.reduce<number | null>((s, r) => congN(s, r.hs), null),
+      nhom: Object.fromEntries(NHOM_TH.map(({ key: k }) => [k, {
+        dm: ds.reduce<number | null>((s, r) => congN(s, r.nhom[k].dm), null),
+        giao: ds.reduce<number | null>((s, r) => congN(s, r.nhom[k].giao), null),
+        cm: ds.reduce((s, r) => s + r.nhom[k].cm, 0),
+        soGiao: ds.reduce<number | null>((s, r) => congN(s, r.nhom[k].soGiao), null),
+        soDm: ds.reduce<number | null>((s, r) => congN(s, r.nhom[k].soDm), null),
+      }])) as DongTH['nhom'],
+      hd235Giao: ds.reduce<number | null>((s, r) => congN(s, r.hd235Giao), null),
+      hd235CoMat: ds.reduce((s, r) => s + r.hd235CoMat, 0),
+    })
+    const ra: DongTH[] = [cong('phuong', 'phuong', 'TOÀN PHƯỜNG', truongRows)]
+    for (const c of ['MAM_NON', 'TIEU_HOC', 'THCS'] as CapHoc[]) {
+      const ds = truongRows.filter((r) => r.cap === c)
+      if (ds.length) ra.push(cong(`cap-${c}`, 'cap', `Cấp ${TEN_CAP[c]}`, ds), ...ds)
+    }
+    return ra
+  }, [truongRows])
 
-  const xuat = () => exportToExcel(rows.map((r, i) => ({
-    'STT': i + 1,
-    'Trường': r.dv.ten,
-    'Cấp học': TEN_CAP[r.cap],
-    'Số lớp': r.kq?.tongLop ?? '',
-    'Số học sinh': r.kq?.tongHS ?? '',
-    'Bình quân HS/lớp': r.kq ? lamTron1(r.kq.binhQuan) : '',
-    'Hạng trường': r.kq ? HANG_TRUONG_LABELS[r.kq.hang] : '',
-    'Định mức giáo viên': r.kq ? lamTron1(r.kq.gvDinhMuc) : '',
-    'Giáo viên có mặt': r.kq?.gvCoMat ?? '',
-    'Thừa(+)/thiếu(-) giáo viên': r.kq ? lamTron1(r.kq.gvCoMat - r.kq.gvDinhMuc) : '',
-    'Định mức toàn trường (I-III)': r.kq ? lamTron1(r.kq.tongDinhMuc) : '',
-    'Có mặt tương ứng': r.kq?.coMatCoDinhMuc ?? '',
-    'Thừa(+)/thiếu(-) toàn trường': r.kq ? lamTron1(r.kq.coMatCoDinhMuc - r.kq.tongDinhMuc) : '',
-    'Giáo viên chưa phân môn': r.kq?.chuaPhanMon ?? '',
-    'Kiêm nhiệm THCS (cần / đã phân bổ)': r.kq?.phanBoKiem ? `${lamTron1(r.kq.phanBoKiem.tong)} / ${lamTron1(r.kq.phanBoKiem.daPhanBo)}${r.kq.phanBoKiem.khop ? '' : ' (lệch)'}` : '',
-    'Cập nhật': r.qm ? `${formatDatetime(r.qm.updatedAt)} - ${r.qm.nguoiCapNhat ?? ''}` : 'Chưa khai báo',
-  })), `Dinh-muc-toan-phuong-${namHoc}`, 'Tổng hợp')
+  const daKhai = truongRows.filter((r) => r.kq).length
+  const daGiao = truongRows.filter((r) => r.hd235Giao != null).length
+  const sttMap = new Map(truongRows.map((r, i) => [r.key, i + 1]))
+
+  const xuat = () => {
+    const dau: (string | number | null)[][] = [
+      ['ỦY BAN NHÂN DÂN PHƯỜNG GIA VIÊN'], [],
+      ['TỔNG HỢP ĐỊNH MỨC, CHỈ TIÊU BIÊN CHẾ VÀ CƠ CẤU VỊ TRÍ VIỆC LÀM CÁC TRƯỜNG'],
+      [`Năm học ${namHoc} - nhóm vị trí việc làm theo khung của Sở Nội vụ Hải Phòng; giao và có mặt tính biên chế (ngân sách + sự nghiệp)`], [],
+    ]
+    const r0 = dau.length
+    const cot5 = ['Định mức', 'Giao', 'Có mặt', 'Thừa/thiếu so giao', 'Thừa/thiếu so định mức']
+    const h1 = ['STT', 'Trường', 'Số lớp', 'Số học sinh', ...NHOM_TH.flatMap((n) => [n.ten, null, null, null, null]), 'Hợp đồng NĐ 235', null]
+    const h2 = [null, null, null, null, ...NHOM_TH.flatMap(() => cot5), 'Giao', 'Có mặt']
+    const soCot = h1.length
+    const gop = [
+      ...[0, 1, 2, 3].map((c) => ({ r1: r0, c1: c, r2: r0 + 1, c2: c })),
+      ...NHOM_TH.map((_, i) => ({ r1: r0, c1: 4 + i * 5, r2: r0, c2: 8 + i * 5 })),
+      { r1: r0, c1: soCot - 2, r2: r0, c2: soCot - 1 },
+    ]
+    const dong: (string | number | null)[][] = [...dau, h1, h2]
+    const dam: number[] = [0]
+    const nen: Record<number, string> = {}
+    const mauChu: Record<string, string> = {}
+    const so = (v: number | null) => (v == null ? '' : lamTron1(v))
+    for (const r of rows) {
+      const i = dong.length
+      dong.push([
+        r.loai === 'truong' ? sttMap.get(r.key) ?? '' : '', r.loai === 'truong' ? r.ten : `${r.ten} (${r.soTruong} trường)`, so(r.lop), so(r.hs),
+        ...NHOM_TH.flatMap(({ key }) => { const o = r.nhom[key]; return [so(o.dm), so(o.giao), o.cm, so(o.soGiao), so(o.soDm)] }),
+        so(r.hd235Giao), r.hd235CoMat,
+      ])
+      NHOM_TH.forEach(({ key }, j) => {
+        const cap: [number, number | null][] = [[7 + j * 5, r.nhom[key].soGiao], [8 + j * 5, r.nhom[key].soDm]]
+        for (const [c, v] of cap) if (v != null && lamTron1(v) !== 0) mauChu[`${i}:${c}`] = v > 0 ? 'FFCF1322' : 'FF1D4ED8'
+      })
+      if (r.loai !== 'truong') { dam.push(i); nen[i] = r.loai === 'phuong' ? 'FFC7D2FE' : 'FFE0E7FF' }
+    }
+    const cuoi = dong.length
+    dong.push([], ['Ghi chú: Giao và có mặt tính biên chế (ngân sách + sự nghiệp). Thừa (+) ghi màu đỏ, thiếu (-) ghi màu xanh. Tổ trưởng, tổ phó thuộc định mức giáo viên; ngoài danh mục VTVL (bảo vệ, phục vụ, lao công) không tính.'])
+    xuatExcelA4(`Tong-hop-dinh-muc-chi-tieu-${namHoc}`, [{
+      ten: 'Tổng hợp', dong, gop, rongCot: [5, 28, 7, 9, ...NHOM_TH.flatMap(() => [8, 7, 7, 9, 9]), 8, 8],
+      bang: [{ tu: r0, den: cuoi - 1, soDongTieuDe: 2, soCot }], tieuDe: [2], giua: [3], nghieng: [3, cuoi + 1],
+      dam, nen, mauChu, cotGiua: Array.from({ length: soCot }, (_, c) => c).filter((c) => c !== 1),
+      huong: 'ngang', motTrang: true, coChu: 10,
+    }]).catch(() => undefined)
+  }
+
+  const so = (v: number | null, nguyen = false) => (v == null ? <Text type="secondary">-</Text> : nguyen ? v.toLocaleString('vi-VN') : fmt(v))
+  const dam = (r: DongTH, x: React.ReactNode) => (r.loai === 'truong' ? x : <b>{x}</b>)
+  const lech = (v: number | null) => (v == null ? <Text type="secondary">-</Text> : <ChenhLech v={v} />)
 
   return (
     <>
@@ -196,50 +285,54 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
         type="info"
         showIcon
         style={{ marginBottom: 16 }}
-        title={`Đã khai báo quy mô năm học ${namHoc}: ${daKhai.length}/${rows.length} trường`}
-        description="Bấm tên trường để xem chi tiết định mức từng vị trí. Số có mặt đếm theo hồ sơ đang công tác; nhân viên bảo vệ, nấu ăn, phục vụ, lao công không tính định mức."
+        title={`Năm học ${namHoc}: đã khai quy mô ${daKhai}/${truongRows.length} trường, đã giao chỉ tiêu ${daGiao}/${truongRows.length} trường`}
+        description="Ba nhóm vị trí việc làm theo khung của Sở Nội vụ Hải Phòng. Giao và Có mặt tính biên chế (ngân sách + sự nghiệp); thừa/thiếu so với chỉ tiêu giao và so với định mức (thừa đỏ, thiếu xanh). Bấm tên trường để xem chi tiết và giao chỉ tiêu."
       />
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
-        {(laQuanTri || isVHXH) && (
+        {(laQuanTri || isVHXH || isLanhDao) && (
           <Button icon={<TableOutlined />} onClick={() => navigate('/bao-cao?tab=dinh-muc-cap')}>Báo cáo chi tiết theo cấp học</Button>
         )}
         <Button icon={<DownloadOutlined />} onClick={xuat}>Xuất Excel</Button>
       </div>
-      <Table
+      <Table<DongTH>
         size="small"
         bordered
         pagination={false}
         dataSource={rows}
-        scroll={{ x: 1150 }}
+        rowKey="key"
+        scroll={{ x: 1536 }}
+        rowClassName={(r) => (r.loai === 'phuong' ? 'th-phuong' : r.loai === 'cap' ? 'th-cap' : '')}
         columns={[
-          { title: 'STT', key: 'stt', width: 50, align: 'center' as const, render: (_: unknown, __: unknown, i: number) => i + 1 },
+          { title: 'STT', key: 'stt', width: 46, align: 'center', fixed: 'left', render: (_, r) => sttMap.get(r.key) ?? '' },
           {
-            title: 'Trường', key: 'ten', width: 200,
-            render: (_: unknown, r: (typeof rows)[number]) => <Button type="link" style={{ padding: 0, height: 'auto', whiteSpace: 'normal', textAlign: 'left' }} onClick={() => onChon(r.dv.id)}>{r.dv.ten}</Button>,
+            title: 'Trường', key: 'ten', width: 180, fixed: 'left',
+            render: (_, r) => r.loai === 'truong'
+              ? <Button type="link" style={{ padding: 0, height: 'auto', whiteSpace: 'normal', textAlign: 'left' }} onClick={() => onChon(r.dv!.id)}>{r.ten}</Button>
+              : <b>{r.ten} <Text type="secondary" style={{ fontWeight: 400, fontSize: 13 }}>({r.soTruong} trường)</Text></b>,
           },
-          { title: 'Số lớp', key: 'lop', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.tongLop ?? '-' },
-          { title: 'Học sinh', key: 'hs', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? r.kq.tongHS.toLocaleString('vi-VN') : '-' },
-          { title: 'BQ HS/lớp', key: 'bq', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.binhQuan) : '-' },
-          { title: 'Hạng', key: 'hang', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <Tag color="blue">{HANG_TRUONG_LABELS[r.kq.hang]}</Tag> : '-' },
-          {
-            title: 'Giáo viên',
+          { title: 'Số lớp', key: 'lop', width: 58, align: 'center', render: (_, r) => dam(r, so(r.lop, true)) },
+          { title: 'Học sinh', key: 'hs', width: 70, align: 'center', render: (_, r) => dam(r, so(r.hs, true)) },
+          ...NHOM_TH.map(({ key, ten }) => ({
+            title: ten,
             children: [
-              { title: 'Định mức', key: 'gvdm', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.gvDinhMuc) : '-' },
-              { title: 'Có mặt', key: 'gvcm', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.gvCoMat ?? '-' },
-              { title: 'Thừa/thiếu', key: 'gvcl', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <ChenhLech v={r.kq.gvCoMat - r.kq.gvDinhMuc} /> : '-' },
+              { title: 'Định mức', key: `${key}-dm`, width: 62, align: 'center' as const, render: (_: unknown, r: DongTH) => dam(r, so(r.nhom[key].dm)) },
+              { title: 'Giao', key: `${key}-g`, width: 50, align: 'center' as const, render: (_: unknown, r: DongTH) => dam(r, so(r.nhom[key].giao)) },
+              { title: 'Có mặt', key: `${key}-cm`, width: 56, align: 'center' as const, render: (_: unknown, r: DongTH) => dam(r, r.nhom[key].cm) },
+              { title: 'Thừa/thiếu so giao', key: `${key}-sg`, width: 70, align: 'center' as const, render: (_: unknown, r: DongTH) => lech(r.nhom[key].soGiao) },
+              { title: 'Thừa/thiếu so định mức', key: `${key}-sd`, width: 76, align: 'center' as const, render: (_: unknown, r: DongTH) => lech(r.nhom[key].soDm) },
+            ],
+          })),
+          {
+            title: 'Hợp đồng NĐ 235',
+            children: [
+              { title: 'Giao', key: 'hdg', width: 52, align: 'center', render: (_, r) => dam(r, so(r.hd235Giao)) },
+              { title: 'Có mặt', key: 'hdc', width: 58, align: 'center', render: (_, r) => dam(r, r.hd235CoMat) },
             ],
           },
           {
-            title: 'Toàn trường (vị trí có định mức)',
-            children: [
-              { title: 'Định mức', key: 'dm', width: 80, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? fmt(r.kq.tongDinhMuc) : '-' },
-              { title: 'Có mặt', key: 'cm', width: 70, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq?.coMatCoDinhMuc ?? '-' },
-              { title: 'Thừa/thiếu', key: 'cl', width: 85, align: 'center' as const, render: (_: unknown, r: (typeof rows)[number]) => r.kq ? <ChenhLech v={r.kq.coMatCoDinhMuc - r.kq.tongDinhMuc} /> : '-' },
-            ],
-          },
-          {
-            title: 'Khai báo', key: 'kb', width: 170,
-            render: (_: unknown, r: (typeof rows)[number]) => {
+            title: 'Khai báo', key: 'kb', width: 130,
+            render: (_, r) => {
+              if (r.loai !== 'truong') return null
               if (!r.qm) return <Tag color="default">Chưa khai báo</Tag>
               return (
                 <Space orientation="vertical" size={0}>
@@ -251,29 +344,14 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
                       Kiêm nhiệm {r.kq!.phanBoKiem.conLai > 0 ? `thiếu ${fmt(r.kq!.phanBoKiem.conLai)}` : `vượt ${fmt(-r.kq!.phanBoKiem.conLai)}`}
                     </Tag>
                   )}
-                  {r.kq!.phanBoKiem?.khop && r.kq!.phanBoKiem.soMonDieuChinh > 0 && <Tag color="purple" style={{ marginTop: 2 }}>Trường chỉnh kiêm nhiệm {r.kq!.phanBoKiem.soMonDieuChinh} môn</Tag>}
+                  {r.hd235Giao == null && <Tag style={{ marginTop: 2 }}>Chưa giao chỉ tiêu</Tag>}
                 </Space>
               )
             },
           },
         ]}
-        summary={() => daKhai.length > 0 && (
-          <Table.Summary.Row style={{ background: '#f8fafc', fontWeight: 600 }}>
-            <Table.Summary.Cell index={0} colSpan={2}>Toàn phường ({daKhai.length} trường đã khai báo)</Table.Summary.Cell>
-            <Table.Summary.Cell index={2} align="center">{tong((k) => k.tongLop)}</Table.Summary.Cell>
-            <Table.Summary.Cell index={3} align="center">{tong((k) => k.tongHS).toLocaleString('vi-VN')}</Table.Summary.Cell>
-            <Table.Summary.Cell index={4} />
-            <Table.Summary.Cell index={5} />
-            <Table.Summary.Cell index={6} align="center">{fmt(tong((k) => k.gvDinhMuc))}</Table.Summary.Cell>
-            <Table.Summary.Cell index={7} align="center">{tong((k) => k.gvCoMat)}</Table.Summary.Cell>
-            <Table.Summary.Cell index={8} align="center"><ChenhLech v={tong((k) => k.gvCoMat - k.gvDinhMuc)} /></Table.Summary.Cell>
-            <Table.Summary.Cell index={9} align="center">{fmt(tong((k) => k.tongDinhMuc))}</Table.Summary.Cell>
-            <Table.Summary.Cell index={10} align="center">{tong((k) => k.coMatCoDinhMuc)}</Table.Summary.Cell>
-            <Table.Summary.Cell index={11} align="center"><ChenhLech v={tong((k) => k.coMatCoDinhMuc - k.tongDinhMuc)} /></Table.Summary.Cell>
-            <Table.Summary.Cell index={12} />
-          </Table.Summary.Row>
-        )}
       />
+      <style>{'.th-phuong td { background: #c7d2fe !important; } .th-cap td { background: #e0e7ff !important; }'}</style>
     </>
   )
 }
@@ -432,7 +510,10 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
 
   const items = [
     { key: 'quyMo', label: 'Khai báo quy mô', children: <TheQuyMo cap={cap} nhap={nhap} kq={kq} coTheSua={coTheSua} hienHanh={hienHanh} namHoc={namHoc} donVi={donVi} datKhoi={datKhoi} setNhap={setNhap} /> },
-    { key: 'dinhMuc', label: 'Định mức & cơ cấu VTVL', children: <TheDinhMuc kq={kq} nhap={nhap} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} /> },
+    {
+      key: 'dinhMuc', label: 'Định mức, chỉ tiêu & cơ cấu VTVL',
+      children: <><ChiTieuBienCheCard donVi={donVi} namHoc={namHoc} kq={kq} /><TheDinhMuc kq={kq} nhap={nhap} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} /></>,
+    },
     {
       key: 'phanMon',
       label: (
@@ -767,14 +848,14 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
             render: (_, r) => {
               const t = tongCua(r)
               if (t) return t.apDungDinhMuc ? so(fmt(t.dinhMucTinh)) : null
-              return laDong(r) && (r.nhom === 'PHUC_VU' ? <Text type="secondary" style={{ fontSize: 13 }}>Không áp dụng</Text> : fmt(r.dinhMucTinh))
+              return laDong(r) && (r.khongDinhMuc || r.trongGv ? <Text type="secondary" style={{ fontSize: 13 }}>{r.trongGv ? 'Thuộc định mức GV' : 'Không áp dụng'}</Text> : fmt(r.dinhMucTinh))
             },
           },
           {
             title: <Tooltip title="Trường nhập khi có căn cứ riêng (VD điểm trường lẻ, học sinh khuyết tật). Để trống thì dùng định mức theo quy định.">Điều chỉnh</Tooltip>,
             key: 'tay', width: 100, align: 'center',
             render: (_, r) => {
-              if (!laDong(r) || r.nhom === 'PHUC_VU' || r.dongPhu) return null
+              if (!laDong(r) || r.khongDinhMuc || r.trongGv || r.dongPhu) return null
               if (r.phanBoKiem) {
                 const k = kq.phanBoKiem?.dong.find((d) => d.ma === r.ma)
                 return (
@@ -801,7 +882,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
           },
           {
             title: 'Định mức áp dụng', key: 'dm', width: 90, align: 'center',
-            render: (_, r) => tongCua(r) ? (tongCua(r)!.apDungDinhMuc ? so(fmt(tongCua(r)!.dinhMuc)) : null) : laDong(r) && r.nhom !== 'PHUC_VU' && (
+            render: (_, r) => tongCua(r) ? (tongCua(r)!.apDungDinhMuc ? so(fmt(tongCua(r)!.dinhMuc)) : null) : laDong(r) && !r.khongDinhMuc && !r.trongGv && (
               <Text strong>{fmt(r.dinhMuc)}{(r.dinhMucNhapTay != null || (r.phanBoKiem && kq.phanBoKiem?.dong.find((d) => d.ma === r.ma)?.nhapTay != null)) && <Tag color="purple" style={{ marginInlineStart: 4, fontSize: 11, lineHeight: '14px', padding: '0 3px' }}>tay</Tag>}</Text>
             ),
           },
@@ -818,7 +899,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
             render: (_, r) => {
               const t = tongCua(r)
               if (t) return t.apDungDinhMuc ? <ChenhLech v={t.chenhLech} /> : null
-              return laDong(r) && (r.nhom === 'PHUC_VU' ? null : <ChenhLech v={r.chenhLech} />)
+              return laDong(r) && (r.khongDinhMuc || r.trongGv ? null : <ChenhLech v={r.chenhLech} />)
             },
           },
         ]}
@@ -841,10 +922,10 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
               <Table.Summary.Cell index={9} align="center"><ChenhLech v={kq.coMatCoDinhMuc - kq.tongDinhMuc} /></Table.Summary.Cell>
             </Table.Summary.Row>
             <Table.Summary.Row style={{ background: '#f8fafc', fontWeight: 600 }}>
-              <Table.Summary.Cell index={0} colSpan={2}>Tổng lao động toàn trường (I-IV)</Table.Summary.Cell>
+              <Table.Summary.Cell index={0} colSpan={2}>Tổng lao động toàn trường (cả ngoài danh mục)</Table.Summary.Cell>
               <Table.Summary.Cell index={2}>
                 <Text type="secondary" style={{ fontSize: 13, fontWeight: 400 }}>
-                  {nhomIV ? `Gồm ${nhomIV.coMat} người nhóm IV (không tính định mức)` : ''}
+                  {nhomIV ? `Gồm ${nhomIV.coMat} người ngoài danh mục VTVL (không tính định mức)` : ''}
                 </Text>
               </Table.Summary.Cell>
               <Table.Summary.Cell index={3} colSpan={3} />
@@ -1211,10 +1292,10 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     if (t?.chenhLech != null) toMau(7, t.chenhLech)
     ds.forEach((d, i) => {
       aoa.push([
-        i + 1, d.ten, d.canCu, d.nhom === 'PHUC_VU' ? 'Không áp dụng' : so(d.dinhMuc),
-        d.coMatVC, d.coMatHD, d.coMat, d.nhom === 'PHUC_VU' ? '' : so(d.chenhLech),
+        i + 1, d.ten, d.canCu, d.trongGv ? 'Thuộc định mức GV' : d.khongDinhMuc ? 'Không áp dụng' : so(d.dinhMuc),
+        d.coMatVC, d.coMatHD, d.coMat, d.khongDinhMuc || d.trongGv ? '' : so(d.chenhLech),
       ])
-      if (d.nhom !== 'PHUC_VU' && d.chenhLech != null) toMau(7, d.chenhLech)
+      if (!d.khongDinhMuc && !d.trongGv && d.chenhLech != null) toMau(7, d.chenhLech)
     })
   }
   const coDm = kq.tongNhom.filter((t) => t.apDungDinhMuc)
@@ -1222,7 +1303,7 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     coDm.reduce((s, t) => s + t.coMatVC, 0), coDm.reduce((s, t) => s + t.coMatHD, 0), coDm.reduce((s, t) => s + t.coMat, 0), lamTron1(kq.coMatCoDinhMuc - kq.tongDinhMuc)])
   toMau(7, kq.coMatCoDinhMuc - kq.tongDinhMuc)
   dam.push(aoa.length - 1)
-  aoa.push(['', 'Tổng lao động toàn trường (I-IV)', '', '', kq.toanTruong.coMatVC, kq.toanTruong.coMatHD, kq.toanTruong.coMat, ''])
+  aoa.push(['', 'Tổng lao động toàn trường (cả ngoài danh mục)', '', '', kq.toanTruong.coMatVC, kq.toanTruong.coMatHD, kq.toanTruong.coMat, ''])
   dam.push(aoa.length - 1)
   ketThucBang()
   if (nhap.ghiChu) aoa.push([], [`Ghi chú: ${nhap.ghiChu}`])

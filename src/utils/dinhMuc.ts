@@ -116,13 +116,14 @@ export function tenMonDay(ma?: string): string | undefined {
   return ma
 }
 
-export type NhomDinhMuc = 'QUAN_LY' | 'CHUYEN_NGANH' | 'DUNG_CHUNG' | 'PHUC_VU'
+export type NhomDinhMuc = 'QUAN_LY' | 'CHUYEN_MON' | 'HO_TRO' | 'NGOAI_DM'
 
+/** Khung VTVL đơn vị sự nghiệp giáo dục cấp xã - Sở Nội vụ Hải Phòng (Phụ lục 1A mầm non, 1B tiểu học, 1C THCS) */
 export const NHOM_DINH_MUC: { key: NhomDinhMuc; ten: string }[] = [
   { key: 'QUAN_LY', ten: 'I. Vị trí việc làm lãnh đạo, quản lý' },
-  { key: 'CHUYEN_NGANH', ten: 'II. Vị trí việc làm chức danh nghề nghiệp chuyên ngành' },
-  { key: 'DUNG_CHUNG', ten: 'III. Vị trí việc làm chức danh nghề nghiệp chuyên môn dùng chung' },
-  { key: 'PHUC_VU', ten: 'IV. Vị trí việc làm hỗ trợ, phục vụ (không tính định mức)' },
+  { key: 'CHUYEN_MON', ten: 'II. Vị trí việc làm chuyên môn nghiệp vụ' },
+  { key: 'HO_TRO', ten: 'III. Vị trí việc làm hỗ trợ' },
+  { key: 'NGOAI_DM', ten: 'Ngoài danh mục VTVL (bảo vệ, phục vụ, lao công - không tính định mức)' },
 ]
 
 interface ViTri {
@@ -135,69 +136,102 @@ interface ViTri {
   canCu?: string
   /** Số người tối đa trường được điều chỉnh (VD kế toán 01 người/trường) */
   toiDa?: number
+  /** Không tính định mức biên chế (lao động hợp đồng, ngoài danh mục) */
+  khongDinhMuc?: boolean
+  /** Tổ trưởng, tổ phó: đếm người giữ chức vụ để theo dõi, số đã nằm trong định mức giáo viên */
+  trongGv?: boolean
 }
 
 const CBQL: ViTri[] = [
   { ma: 'HT', ten: 'Hiệu trưởng', nhom: 'QUAN_LY', coDinh: 1, canCu: '01 người/trường' },
   { ma: 'PHT', ten: 'Phó Hiệu trưởng', nhom: 'QUAN_LY' },
+  { ma: 'TO_TRUONG', ten: 'Tổ trưởng tổ chuyên môn và tương đương', nhom: 'QUAN_LY', trongGv: true, canCu: 'Thuộc định mức giáo viên - chỉ theo dõi số người giữ chức vụ' },
+  { ma: 'TO_PHO', ten: 'Tổ phó tổ chuyên môn và tương đương', nhom: 'QUAN_LY', trongGv: true, canCu: 'Thuộc định mức giáo viên - chỉ theo dõi số người giữ chức vụ' },
 ]
 
-const PHUC_VU: ViTri[] = [
-  { ma: 'NAU_AN', ten: 'Nhân viên nấu ăn', nhom: 'PHUC_VU' },
-  { ma: 'BAO_VE', ten: 'Nhân viên bảo vệ', nhom: 'PHUC_VU' },
-  { ma: 'LAO_CONG', ten: 'Nhân viên phục vụ, lao công', nhom: 'PHUC_VU' },
+const NGOAI_DM: ViTri[] = [
+  { ma: 'BAO_VE', ten: 'Nhân viên bảo vệ', nhom: 'NGOAI_DM', khongDinhMuc: true },
+  { ma: 'LAO_CONG', ten: 'Nhân viên phục vụ, lao công', nhom: 'NGOAI_DM', khongDinhMuc: true },
 ]
+const NAU_AN_NGOAI: ViTri = { ma: 'NAU_AN', ten: 'Nhân viên nấu ăn', nhom: 'NGOAI_DM', khongDinhMuc: true }
 
 const HO_TRO_KT: ViTri = {
-  ma: 'HO_TRO_KT', ten: 'Viên chức hỗ trợ giáo dục người khuyết tật', nhom: 'CHUYEN_NGANH',
+  ma: 'HO_TRO_KT', ten: 'Hỗ trợ giáo dục người khuyết tật', nhom: 'HO_TRO',
   coDinh: null, canCu: 'Tối đa 02 người, theo số học sinh khuyết tật học hòa nhập',
 }
-const nv = (ma: string, ten: string, coDinh: number | null, canCu?: string, nhom: NhomDinhMuc = 'DUNG_CHUNG', toiDa?: number): ViTri =>
-  ({ ma, ten, nhom, coDinh, canCu, toiDa })
+const nv = (ma: string, ten: string, coDinh: number | null, canCu?: string, toiDa?: number): ViTri =>
+  ({ ma, ten, nhom: 'HO_TRO', coDinh, canCu, toiDa })
+const KIEM = 'Kiêm nhiệm - nhập tay nếu được duyệt bố trí riêng'
+const KE_TOAN = nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 1)
+const Y_TE = nv('Y_TE', 'Y tế trường học', null, 'Khung bố trí cho các trường khu vực phía Tây Hải Phòng; trường khác kiêm nhiệm hoặc hợp đồng')
+const THU_QUY = nv('THU_QUY', 'Thủ quỹ', 0, KIEM)
+const LUU_TRU = nv('LUU_TRU', 'Lưu trữ', 0, KIEM)
+const QUAN_TRI_CS = nv('QUAN_TRI_CS', 'Quản trị công sở', 0, KIEM)
+const TCCB_TDKT = nv('TCCB_TDKT', 'Tổ chức cán bộ, thi đua khen thưởng', 0, KIEM)
+const CNTT_CDS = nv('CNTT_CDS', 'Ứng dụng công nghệ thông tin và chuyển đổi số', 0, KIEM)
 
 /** Mầm non: thư viện 01 người/phân hiệu (điểm trường), tối đa 03 */
 export const THU_VIEN_MN_TOI_DA = 3
 
 const VI_TRI: Record<CapHoc, ViTri[]> = {
+  // Phụ lục 1A
   MAM_NON: [
     ...CBQL,
-    { ma: 'GV_MN', ten: 'Giáo viên Mầm non', nhom: 'CHUYEN_NGANH', laGiaoVien: true },
-    HO_TRO_KT,
-    nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
-    nv('THU_VIEN', 'Thư viện', null, undefined, 'DUNG_CHUNG', THU_VIEN_MN_TOI_DA),
+    { ma: 'GV_MN', ten: 'Giáo viên mầm non', nhom: 'CHUYEN_MON', laGiaoVien: true },
+    KE_TOAN,
     nv('VAN_THU', 'Văn thư', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
-    nv('THU_QUY', 'Thủ quỹ', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
-    nv('Y_TE', 'Y tế trường học', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
-    ...PHUC_VU,
+    HO_TRO_KT,
+    Y_TE,
+    { ma: 'NAU_AN', ten: 'Cấp dưỡng trong cơ sở giáo dục', nhom: 'HO_TRO', khongDinhMuc: true, canCu: 'Lao động hợp đồng - không tính định mức biên chế' },
+    THU_QUY,
+    LUU_TRU,
+    nv('THU_VIEN', 'Thư viện', null, undefined, THU_VIEN_MN_TOI_DA),
+    TCCB_TDKT,
+    CNTT_CDS,
+    ...NGOAI_DM,
   ],
+  // Phụ lục 1B
   TIEU_HOC: [
     ...CBQL,
-    { ...VAN_HOA, nhom: 'CHUYEN_NGANH', laGiaoVien: true },
-    ...MON_TIEU_HOC.map((m): ViTri => ({ ma: m.ma, ten: m.ten, nhom: 'CHUYEN_NGANH', laGiaoVien: true })),
-    { ma: TPT.ma, ten: TPT.ten, nhom: 'CHUYEN_NGANH', laGiaoVien: true },
-    nv('GIAO_VU', 'Giáo vụ', 1, undefined, 'CHUYEN_NGANH'),
-    nv('TU_VAN', 'Tư vấn học sinh', 1, undefined, 'CHUYEN_NGANH'),
-    HO_TRO_KT,
-    nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
-    nv('THU_VIEN', 'Thư viện', 1, '01-02 người'),
+    { ...VAN_HOA, nhom: 'CHUYEN_MON', laGiaoVien: true },
+    ...MON_TIEU_HOC.map((m): ViTri => ({ ma: m.ma, ten: m.ten, nhom: 'CHUYEN_MON', laGiaoVien: true })),
+    { ma: TPT.ma, ten: TPT.ten, nhom: 'CHUYEN_MON', laGiaoVien: true },
+    KE_TOAN,
     nv('VAN_THU', 'Văn thư', 1),
-    nv('THIET_BI', 'Thiết bị', null, 'Bố trí kiêm nhiệm'),
-    nv('Y_TE', 'Y tế trường học', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
-    ...PHUC_VU,
+    HO_TRO_KT,
+    Y_TE,
+    nv('GIAO_VU', 'Giáo vụ', 1),
+    nv('TU_VAN', 'Tư vấn học sinh', 1),
+    THU_QUY,
+    LUU_TRU,
+    nv('THU_VIEN', 'Thư viện', 1, '01-02 người'),
+    QUAN_TRI_CS,
+    TCCB_TDKT,
+    CNTT_CDS,
+    nv('THIET_BI', 'Thiết bị', null, 'Không có trong khung tiểu học - bố trí kiêm nhiệm'),
+    NAU_AN_NGOAI,
+    ...NGOAI_DM,
   ],
+  // Phụ lục 1C
   THCS: [
     ...CBQL,
-    ...MON_THCS.map((m): ViTri => ({ ma: m.ma, ten: m.ten, nhom: 'CHUYEN_NGANH', laGiaoVien: true })),
-    { ma: TPT.ma, ten: TPT.ten, nhom: 'CHUYEN_NGANH', laGiaoVien: true },
-    nv('THIET_BI', 'Nhân viên thiết bị, thí nghiệm', 1, undefined, 'CHUYEN_NGANH'),
-    nv('GIAO_VU', 'Giáo vụ', 1, undefined, 'CHUYEN_NGANH'),
-    nv('TU_VAN', 'Tư vấn học sinh', 1, undefined, 'CHUYEN_NGANH'),
-    HO_TRO_KT,
-    nv('KE_TOAN', 'Kế toán', 1, '01 người/trường', 'DUNG_CHUNG', 1),
-    nv('THU_VIEN', 'Thư viện', 1, '01-02 người'),
+    ...MON_THCS.map((m): ViTri => ({ ma: m.ma, ten: m.ten, nhom: 'CHUYEN_MON', laGiaoVien: true })),
+    { ma: TPT.ma, ten: TPT.ten, nhom: 'CHUYEN_MON', laGiaoVien: true },
+    KE_TOAN,
     nv('VAN_THU', 'Văn thư', 1),
-    nv('Y_TE', 'Y tế trường học', null, 'Bố trí kiêm nhiệm hoặc hợp đồng'),
-    ...PHUC_VU,
+    HO_TRO_KT,
+    Y_TE,
+    nv('GIAO_VU', 'Giáo vụ', 1),
+    nv('TU_VAN', 'Tư vấn học sinh', 1),
+    nv('THIET_BI', 'Thiết bị - thí nghiệm', 1),
+    THU_QUY,
+    LUU_TRU,
+    nv('THU_VIEN', 'Thư viện', 1, '01-02 người'),
+    QUAN_TRI_CS,
+    TCCB_TDKT,
+    CNTT_CDS,
+    NAU_AN_NGOAI,
+    ...NGOAI_DM,
   ],
 }
 
@@ -226,6 +260,10 @@ export interface DongDinhMuc {
   toiDa?: number
   /** THCS: định mức môn = đứng lớp + kiêm nhiệm phân bổ (trường điều chỉnh ở bảng phân bổ) */
   phanBoKiem?: boolean
+  /** Không tính định mức biên chế (lao động hợp đồng, ngoài danh mục) */
+  khongDinhMuc?: boolean
+  /** Tổ trưởng, tổ phó: chỉ theo dõi, đã nằm trong định mức giáo viên - không cộng vào tổng */
+  trongGv?: boolean
 }
 
 /** THCS: một môn trong bảng phân bổ giáo viên kiêm nhiệm */
@@ -259,11 +297,11 @@ export interface PhanBoKiemNhiem {
   dong: DongPhanBoKiem[]
 }
 
-/** Cộng theo nhóm vị trí việc làm (I-IV) */
+/** Cộng theo nhóm vị trí việc làm (I-III và ngoài danh mục) */
 export interface TongNhom {
   nhom: NhomDinhMuc
   ten: string
-  /** Nhóm IV không áp dụng định mức */
+  /** Nhóm ngoài danh mục không áp dụng định mức */
   apDungDinhMuc: boolean
   dinhMucTinh: number
   dinhMuc: number
@@ -291,15 +329,20 @@ export interface KetQuaDinhMuc {
   gvCoMat: number
   tongDinhMuc: number
   tongCoMat: number
-  /** Có mặt ở các vị trí I-III có định mức, kể cả giáo viên chưa phân môn */
+  /** Có mặt ở các vị trí I-III có định mức, kể cả giáo viên chưa phân môn (tổ trưởng, tổ phó không đếm lại) */
   coMatCoDinhMuc: number
   chuaPhanMon: number
   /** Chỉ THCS */
   phanBoKiem?: PhanBoKiemNhiem
   tongNhom: TongNhom[]
-  /** Toàn trường, cả nhóm IV */
+  /** Toàn trường, cả ngoài danh mục */
   toanTruong: { coMatVC: number; coMatHD: number; coMat: number }
+  /** Có mặt theo nhóm và nguồn - đối chiếu chỉ tiêu biên chế, hợp đồng được giao */
+  coMatNguon: Record<NhomDinhMuc, CoMatNguon>
 }
+
+/** Biên chế (viên chức, tập sự) chia theo nguồn kinh phí; hợp đồng chia NĐ 235 và loại khác */
+export interface CoMatNguon { nganSach: number; suNghiep: number; bcChuaRoNguon: number; hd235: number; hdKhac: number }
 
 export const lamTron1 = (n: number) => Math.round(n * 10) / 10
 export const fmt = (n: number | null | undefined) =>
@@ -396,8 +439,8 @@ export function tinhDinhMuc(
   const canCu: Record<string, string> = {}
   const dienGiai: string[] = []
 
-  tinh.PHT = hang === 1 ? 2 : 1
-  canCu.PHT = `Hạng ${hang === 1 ? 'I' : hang === 2 ? 'II' : 'III'} (${tongLop} lớp): hạng I bố trí 02, hạng II-III bố trí 01`
+  tinh.PHT = hang === 3 ? 1 : 2
+  canCu.PHT = `Hạng ${hang === 1 ? 'I' : hang === 2 ? 'II' : 'III'} (${tongLop} lớp): hạng I, II bố trí 02, hạng III bố trí 01`
 
   if (cap === 'MAM_NON') {
     const t = THAM_SO.MAM_NON
@@ -507,19 +550,37 @@ export function tinhDinhMuc(
 
   // Đếm có mặt theo vị trí
   const dem = new Map<string, { vc: number; hd: number }>()
+  const nhomCuaMa = new Map(VI_TRI[cap].map((v) => [v.ma, v.nhom]))
+  const coMatNguon = Object.fromEntries(NHOM_DINH_MUC.map((n) => [n.key, { nganSach: 0, suNghiep: 0, bcChuaRoNguon: 0, hd235: 0, hdKhac: 0 }])) as Record<NhomDinhMuc, CoMatNguon>
   for (const vc of nhanSuTruong) {
     if (!duocTinhSoLieu(vc)) continue
     const ma = viTriCuaNguoi(vc, cap, layChucDanh(vc.chucDanhId))
+    const nhomNg: NhomDinhMuc = nhomCuaMa.get(ma) ?? (ma === CHUA_PHAN_MON ? 'CHUYEN_MON' : 'HO_TRO')
+    const o3 = coMatNguon[nhomNg]
+    if (laBienChe(vc)) {
+      if (vc.nguonKinhPhi === 'NGAN_SACH') o3.nganSach++
+      else if (vc.nguonKinhPhi === 'SU_NGHIEP') o3.suNghiep++
+      else o3.bcChuaRoNguon++
+    } else if (vc.loaiLaoDong === 'HOP_DONG_235') o3.hd235++
+    else o3.hdKhac++
     const o = dem.get(ma) ?? { vc: 0, hd: 0 }
     if (laBienChe(vc)) o.vc++
     else o.hd++
     dem.set(ma, o)
+    // Tổ trưởng, tổ phó: đếm thêm ở dòng chức vụ (người này vẫn tính ở vị trí giáo viên / nhân viên của mình)
+    const maTo = vc.chucVu === 'TTCM' ? 'TO_TRUONG' : vc.chucVu === 'TPCM' ? 'TO_PHO' : undefined
+    if (maTo) {
+      const t = dem.get(maTo) ?? { vc: 0, hd: 0 }
+      if (laBienChe(vc)) t.vc++
+      else t.hd++
+      dem.set(maTo, t)
+    }
   }
 
   const nhapTay = quyMo.dinhMucNhapTay ?? {}
   const taoDong = (vt: ViTri): DongDinhMuc => {
     const coMat = dem.get(vt.ma) ?? { vc: 0, hd: 0 }
-    const laPhucVu = vt.nhom === 'PHUC_VU'
+    const laPhucVu = !!vt.khongDinhMuc || !!vt.trongGv
     const dinhMucTinh = laPhucVu ? null : (tinh[vt.ma] ?? vt.coDinh ?? null)
     // Môn THCS: điều chỉnh qua bảng phân bổ kiêm nhiệm, không nhập thẳng định mức
     const pb = phanBoKiem?.dong.find((d) => d.ma === vt.ma)
@@ -535,32 +596,35 @@ export function tinhDinhMuc(
       dinhMucTinh,
       dinhMucNhapTay: tay,
       dinhMuc,
-      canCu: laPhucVu ? 'Không áp dụng định mức' : (canCu[vt.ma] ?? vt.canCu ?? (dinhMucTinh == null ? 'Không có công thức - nhập tay nếu có căn cứ' : '')),
+      canCu: vt.canCu && laPhucVu ? vt.canCu : laPhucVu ? 'Không áp dụng định mức' : (canCu[vt.ma] ?? vt.canCu ?? (dinhMucTinh == null ? 'Không có công thức - nhập tay nếu có căn cứ' : '')),
       coMatVC: coMat.vc,
       coMatHD: coMat.hd,
       coMat: tong,
       chenhLech: dinhMuc == null ? null : tong - dinhMuc,
       toiDa: vt.toiDa,
       phanBoKiem: !!pb,
+      khongDinhMuc: vt.khongDinhMuc,
+      trongGv: vt.trongGv,
     }
   }
 
   const dong: DongDinhMuc[] = []
   for (const nhom of NHOM_DINH_MUC) {
     for (const vt of VI_TRI[cap].filter((v) => v.nhom === nhom.key)) dong.push(taoDong(vt))
-    if (nhom.key === 'CHUYEN_NGANH' && cap !== 'MAM_NON' && dem.has(CHUA_PHAN_MON)) {
-      dong.push({ ...taoDong({ ma: CHUA_PHAN_MON, ten: 'Giáo viên chưa phân công môn', nhom: 'CHUYEN_NGANH', laGiaoVien: true }), canCu: 'Phân công môn ở thẻ "Phân công môn giảng dạy"', dongPhu: true })
+    if (nhom.key === 'CHUYEN_MON' && cap !== 'MAM_NON' && dem.has(CHUA_PHAN_MON)) {
+      dong.push({ ...taoDong({ ma: CHUA_PHAN_MON, ten: 'Giáo viên chưa phân công môn', nhom: 'CHUYEN_MON', laGiaoVien: true }), canCu: 'Phân công môn ở thẻ "Phân công môn giảng dạy"', dongPhu: true })
     }
-    if (nhom.key === 'DUNG_CHUNG') {
+    if (nhom.key === 'HO_TRO') {
       // Nhân viên có công việc không thuộc danh sách vị trí của cấp học này
       const maCoDinh = new Set(VI_TRI[cap].map((v) => v.ma))
       let khac = { vc: 0, hd: 0 }
       for (const [ma, o] of dem) {
+        if (ma === 'TO_TRUONG' || ma === 'TO_PHO') continue
         if (ma === NV_KHAC || (!maCoDinh.has(ma) && ma !== CHUA_PHAN_MON)) khac = { vc: khac.vc + o.vc, hd: khac.hd + o.hd }
       }
       if (khac.vc + khac.hd > 0) {
         dong.push({
-          ma: NV_KHAC, ten: 'Nhân viên khác / chưa rõ công việc', nhom: 'DUNG_CHUNG', laGiaoVien: false,
+          ma: NV_KHAC, ten: 'Nhân viên khác / chưa rõ công việc', nhom: 'HO_TRO', laGiaoVien: false,
           dinhMucTinh: null, dinhMuc: null, canCu: 'Khai "Công việc cụ thể" trong hồ sơ nhân viên',
           coMatVC: khac.vc, coMatHD: khac.hd, coMat: khac.vc + khac.hd, chenhLech: null, dongPhu: true,
         })
@@ -568,16 +632,18 @@ export function tinhDinhMuc(
     }
   }
 
-  const trongDinhMuc = dong.filter((d) => d.nhom !== 'PHUC_VU')
+  // Tổ trưởng, tổ phó đã đếm ở vị trí giáo viên của mình - bỏ khỏi mọi phép cộng để không đếm trùng
+  const dongTinh = dong.filter((d) => !d.trongGv)
+  const trongDinhMuc = dongTinh.filter((d) => d.nhom !== 'NGOAI_DM')
   const coDinhMuc = trongDinhMuc.filter((d) => d.dinhMuc != null)
   const gv = dong.filter((d) => d.laGiaoVien)
   const chuaPhanMon = (dem.get(CHUA_PHAN_MON)?.vc ?? 0) + (dem.get(CHUA_PHAN_MON)?.hd ?? 0)
   const cong = (ds: DongDinhMuc[], f: (d: DongDinhMuc) => number) => ds.reduce((s, d) => s + f(d), 0)
   const tongNhom: TongNhom[] = NHOM_DINH_MUC
-    .map((n) => ({ n, ds: dong.filter((d) => d.nhom === n.key) }))
+    .map((n) => ({ n, ds: dongTinh.filter((d) => d.nhom === n.key) }))
     .filter(({ ds }) => ds.length)
     .map(({ n, ds }) => {
-      const apDung = n.key !== 'PHUC_VU'
+      const apDung = n.key !== 'NGOAI_DM'
       // Giáo viên chưa phân môn nằm trong định mức giáo viên chung nên vẫn đem so sánh
       const soSanh = ds.filter((d) => d.dinhMuc != null || d.ma === CHUA_PHAN_MON)
       const coMat = cong(ds, (d) => d.coMat)
@@ -602,7 +668,8 @@ export function tinhDinhMuc(
     chuaPhanMon,
     phanBoKiem,
     tongNhom,
-    toanTruong: { coMatVC: cong(dong, (d) => d.coMatVC), coMatHD: cong(dong, (d) => d.coMatHD), coMat: cong(dong, (d) => d.coMat) },
+    toanTruong: { coMatVC: cong(dongTinh, (d) => d.coMatVC), coMatHD: cong(dongTinh, (d) => d.coMatHD), coMat: cong(dongTinh, (d) => d.coMat) },
+    coMatNguon,
   }
 }
 

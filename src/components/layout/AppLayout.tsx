@@ -8,7 +8,7 @@ import {
   DashboardOutlined, TeamOutlined, FileTextOutlined,
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
-  AuditOutlined, FundOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
+  AuditOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
   SolutionOutlined, WarningOutlined,
 } from '@ant-design/icons'
 import { useBoNhiem } from '@/hooks/useBoNhiem'
@@ -30,7 +30,6 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/luong/he-so': 'Hệ số lương',
   '/luong/ra-soat': 'Rà soát ngạch - bậc - hệ số',
   '/luong/phu-cap': 'Phụ cấp',
-  '/vi-tri': 'Vị trí việc làm',
   '/quy-mo': 'Định mức viên chức và Cơ cấu VTVL',
   '/de-xuat': 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
   '/chuyen-cong-tac': 'Chuyển công tác',
@@ -62,7 +61,6 @@ export default function AppLayout() {
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
     hasPermission('luong', 'read') && { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
     hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
-    hasPermission('viTri', 'read') && { key: '/vi-tri', icon: <FundOutlined />, label: 'Vị trí việc làm' },
     hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Định mức viên chức và Cơ cấu VTVL' },
     hasPermission('deXuat', 'read') && {
       key: '/de-xuat', icon: <FileTextOutlined />,

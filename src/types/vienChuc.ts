@@ -58,6 +58,7 @@ export interface BaoLuuPccv {
 
 export type CongViecNhanVien =
   | 'KE_TOAN' | 'VAN_THU' | 'THU_QUY' | 'THU_VIEN' | 'THIET_BI' | 'GIAO_VU' | 'Y_TE' | 'TU_VAN' | 'HO_TRO_KT'
+  | 'LUU_TRU' | 'QUAN_TRI_CS' | 'TCCB_TDKT' | 'CNTT_CDS'
   | 'BAO_VE' | 'LAO_CONG'
   | 'NAU_AN'
   | 'KHAC'

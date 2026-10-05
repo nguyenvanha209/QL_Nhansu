@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Table, Card, Select, Input, Space, Typography, Button, Tag, Tooltip } from 'antd'
 import { SearchOutlined, DownloadOutlined } from '@ant-design/icons'
-import * as XLSX from 'xlsx'
+import { exportToExcel } from '@/utils/exportExcel'
 import dayjs from 'dayjs'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -416,16 +416,12 @@ export default function BangTongHopLuongPage() {
       'Tổng HS lương 6 tháng đầu năm': r.tong6Thang,
       'Lương theo mức tiền (đ/tháng)': r.mucLuongTien || '',
     }))
-    const ws = XLSX.utils.json_to_sheet(exportRows)
-    ws['!cols'] = [
-      { wch: 5 }, { wch: 26 }, { wch: 13 }, { wch: 22 }, { wch: 13 },
-      { wch: 6 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
-      { wch: 18 }, { wch: 11 }, { wch: 13 }, { wch: 11 }, { wch: 11 },
-      { wch: 14 }, { wch: 14 }, { wch: 13 }, { wch: 14 }, { wch: 18 }, { wch: 18 },
-    ]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Bang TH Luong')
-    XLSX.writeFile(wb, `BangTongHopLuong_${donViTen}_${dayjs().format('YYYYMMDD')}.xlsx`)
+    exportToExcel(
+      exportRows,
+      `BangTongHopLuong_${donViTen}_${dayjs().format('YYYYMMDD')}`,
+      'Bang TH Luong',
+      ['BẢNG TỔNG HỢP HỆ SỐ LƯƠNG, PHỤ CẤP', filterDonVi ? donViTen : 'Các trường thuộc phường Gia Viên'],
+    )
   }
 
   return (

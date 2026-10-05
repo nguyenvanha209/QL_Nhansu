@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import * as XLSX from 'xlsx'
 import dayjs from 'dayjs'
+import { trangTuDanhSach, xuatExcelA4 } from '@/utils/excelA4'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
@@ -310,8 +311,8 @@ export function exportVienChucTemplate(
     }
   })
 
-  const ws = XLSX.utils.json_to_sheet(rows)
-  ws['!cols'] = [
+  // Dòng tiêu đề cột giữ ở dòng 1 để file sửa xong nhập lại được
+  const rongCot = [
     { wch: 24 }, { wch: 11 }, { wch: 24 }, { wch: 26 }, { wch: 12 },
     { wch: 9  }, { wch: 14 }, { wch: 13 }, { wch: 22 }, { wch: 28 },
     { wch: 30 }, { wch: 20 }, { wch: 14 }, { wch: 22 }, { wch: 25 }, { wch: 16 },
@@ -321,11 +322,11 @@ export function exportVienChucTemplate(
     { wch: 15 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 16 },
     { wch: 14 },
     { wch: 34 },
-  ]
+  ].map((c) => c.wch)
 
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Danh sách viên chức')
-  XLSX.writeFile(wb, `HoSo_VienChuc_${dayjs().format('YYYYMMDD_HHmm')}.xlsx`)
+  return xuatExcelA4(`HoSo_VienChuc_${dayjs().format('YYYYMMDD_HHmm')}`, [
+    { ...trangTuDanhSach(rows, 'Danh sách viên chức', { rongCot }), huong: 'ngang' },
+  ])
 }
 
 // ── Types nội bộ ─────────────────────────────────────────────────────────────

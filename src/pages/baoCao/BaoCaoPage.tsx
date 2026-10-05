@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Card, Tabs, Table, Button, Select, Space, Typography, Statistic, Row, Col, App } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -6,6 +7,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
+import BaoCaoDinhMucCapHoc from './BaoCaoDinhMucCapHoc'
 import { exportToExcel } from '@/utils/exportExcel'
 import { exportToPdf } from '@/utils/exportPdf'
 import { formatDate } from '@/utils/helpers'
@@ -15,7 +17,10 @@ const { Title } = Typography
 
 export default function BaoCaoPage() {
   const { message } = App.useApp()
-  const { scopeDonViId } = useAuth()
+  const { scopeDonViId, laQuanTri, isVHXH } = useAuth()
+  // Báo cáo định mức theo cấp học: chỉ Quản trị và Phòng VHXH (xem toàn phường)
+  const xemDinhMucCap = !scopeDonViId && (laQuanTri || isVHXH)
+  const [params] = useSearchParams()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const [filterLoai, setFilterLoai] = useState<string | undefined>()
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
@@ -112,7 +117,11 @@ export default function BaoCaoPage() {
         <Select placeholder="Loại hình lao động" style={{ width: 220 }} value={filterLoai} onChange={setFilterLoai} allowClear options={LOAI_LAO_DONG_OPTIONS} />
       </Space>
 
-      <Tabs items={[
+      <Tabs defaultActiveKey={params.get('tab') ?? undefined} items={[
+        ...(xemDinhMucCap ? [{
+          key: 'dinh-muc-cap', label: 'Định mức & cơ cấu VTVL theo cấp học',
+          children: <BaoCaoDinhMucCapHoc />,
+        }] : []),
         {
           key: '1', label: `Tổng hợp nhân sự (${enriched.length})`,
           children: (

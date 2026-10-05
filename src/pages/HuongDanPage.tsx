@@ -780,9 +780,9 @@ export default function HuongDanPage() {
               <tr><td><b>Đề xuất điều chỉnh hệ số lương - phụ cấp</b></td><td>Danh sách phiếu đã lập và trạng thái xử lý từng phiếu.</td></tr>
               <tr><td><b>Thông báo kết quả nâng lương</b></td><td>Hai kỳ mỗi năm (tháng 6 cho 6 tháng đầu năm, tháng 12 cho 6 tháng cuối năm), sau khi lãnh đạo phê duyệt phiếu (hồ sơ viên chức đã tự cập nhật), Phòng VH-XH tổng hợp ba loại thông báo theo mẫu: <i>nâng bậc lương thường xuyên</i> (kèm phụ cấp thâm niên vượt khung), <i>phụ cấp thâm niên nhà giáo lần đầu</i>, <i>nâng phụ cấp thâm niên nhà giáo</i>; nhập số, ngày, người ký rồi <b>Ban hành</b>, tải danh sách Excel (mỗi cấp học một trang) và thông báo Word. Kế toán, hiệu trưởng nhận thông báo phần cấp học của trường (dòng của trường tô vàng, có nhãn <i>Mới</i> trên menu và Tổng quan) để Hiệu trưởng ra quyết định theo thẩm quyền; Hiệu trưởng, Phó hiệu trưởng và giáo viên hạng I (mầm non, tiểu học, THCS) ghi chú <i>UBND phường ra QĐ</i>.</td></tr>
               <tr><td><b>Chuyển công tác</b></td><td>Lập đề nghị chuyển đi và tiếp nhận người chuyển đến. Số phiếu đang chờ hiện ngay trên tiêu đề trang.</td></tr>
-              <tr><td><b>Định mức viên chức và Cơ cấu VTVL</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức; kế toán tính 01 người/trường. Mầm non: thư viện tính 01 người/phân hiệu, tối đa 03 - khai <b>Số phân hiệu</b> ở thẻ Khai báo quy mô. Nút <b>Lịch sử khai báo</b> giữ 30 lần lưu gần nhất; khai nhầm hoặc mất số liệu thì bấm <b>Nạp vào form</b> ở bản cần lấy lại rồi Lưu quy mô.</td></tr>
+              <tr><td><b>Định mức viên chức và Cơ cấu VTVL</b></td><td>Kế toán khai báo số lớp, số học sinh từng khối của năm học; hệ thống tính hạng trường và định mức từng vị trí theo TT 19/2023 (mầm non), TT 20/2023 (tiểu học, THCS), so với số có mặt. Thẻ <b>Phân công môn giảng dạy</b> gán môn cho từng giáo viên, có nút gợi ý theo nhiệm vụ chính; trường mầm non là thẻ <b>Phân công nhóm, lớp</b>: gán giáo viên vào nhà trẻ, mẫu giáo 3, 4, 5 tuổi hoặc dạy chuyên, xem số giáo viên từng độ tuổi so với số nhóm, lớp × 2,5 (nhà trẻ) / × 2,2 (mẫu giáo) - chỉ để theo dõi, định mức chung của trường không đổi. Bảo vệ, nấu ăn, phục vụ, lao công không tính định mức; kế toán tính 01 người/trường. Mầm non: thư viện tính 01 người/phân hiệu, tối đa 03 - khai <b>Số phân hiệu</b> ở thẻ Khai báo quy mô. Nút <b>Lịch sử khai báo</b> giữ 30 lần lưu gần nhất; khai nhầm hoặc mất số liệu thì bấm <b>Nạp vào form</b> ở bản cần lấy lại rồi Lưu quy mô.</td></tr>
               <tr><td><b>Dự báo nghỉ hưu</b></td><td>Danh sách viên chức sắp đến tuổi nghỉ hưu (theo Nghị định 135/2020) để chủ động bố trí nhân sự.</td></tr>
-              <tr><td><b>Báo cáo</b></td><td>Các biểu tổng hợp phục vụ báo cáo cấp trên, lọc theo đơn vị và loại hình lao động.</td></tr>
+              <tr><td><b>Báo cáo</b></td><td>Các biểu tổng hợp phục vụ báo cáo cấp trên, lọc theo đơn vị và loại hình lao động. Quản trị và Phòng VHXH có thêm thẻ <b>Định mức &amp; cơ cấu VTVL theo cấp học</b>: mỗi cấp một bảng, các trường đặt cạnh nhau (định mức / có mặt / thừa-thiếu từng vị trí, có cột toàn cấp), chọn được trường, chỉ số cần xem, ẩn vị trí không có số liệu; xuất Excel từng cấp hoặc cả 3 cấp, mỗi cấp gọn một trang A4.</td></tr>
             </tbody>
           </table>
         </div>
@@ -823,6 +823,10 @@ export default function HuongDanPage() {
         </Paragraph>
         <Paragraph>
           Thanh điều hướng bên trái có thể thu gọn thành biểu tượng bằng nút ở cuối thanh, giúp mở rộng vùng hiển thị trên màn hình nhỏ.
+        </Paragraph>
+        <Paragraph>
+          <b>File Excel in được ngay:</b> mọi nút Xuất Excel đều ra file khổ A4, đã kẻ khung bảng, lề trái 1,5 cm, ba lề còn lại 1 cm,
+          co vừa chiều ngang một trang (bảng rộng tự chuyển giấy ngang), dòng tiêu đề cột lặp lại khi sang trang và có số trang ở chân trang - mở file là in.
         </Paragraph>
       </Section>
 

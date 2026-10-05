@@ -88,9 +88,21 @@ const MON_KIEM_THCS: MonHoc[] = [
 const TPT = { ma: 'TONG_PHU_TRACH', ten: 'Giáo viên Tổng phụ trách Đội', tenNgan: 'Tổng phụ trách' }
 const VAN_HOA = { ma: 'VAN_HOA', ten: 'Giáo viên Văn hóa', tenNgan: 'Văn hóa' }
 
-/** Lựa chọn "Môn giảng dạy" cho giáo viên theo cấp học. Mầm non không phân môn. */
+/**
+ * Mầm non không phân môn: phân công giáo viên theo nhóm, lớp độ tuổi (đúng các khối khai quy mô) hoặc dạy chuyên.
+ * Chỉ để theo dõi, lập danh sách - định mức giáo viên mầm non vẫn tính chung theo số nhóm, lớp (TT 19/2023).
+ */
+export const PHAN_CONG_MAM_NON = [
+  { ma: 'MN_NHA_TRE', ten: 'Nhà trẻ (nhóm trẻ)', khoi: 'NHA_TRE' },
+  { ma: 'MN_MG3', ten: 'Mẫu giáo 3 tuổi', khoi: 'MG3' },
+  { ma: 'MN_MG4', ten: 'Mẫu giáo 4 tuổi', khoi: 'MG4' },
+  { ma: 'MN_MG5', ten: 'Mẫu giáo 5 tuổi', khoi: 'MG5' },
+  { ma: 'MN_DAY_CHUYEN', ten: 'Dạy chuyên (năng khiếu, ngoại ngữ...)', khoi: undefined },
+] as const
+
+/** Lựa chọn "Môn giảng dạy" cho giáo viên theo cấp học (mầm non: nhóm, lớp phụ trách) */
 export const MON_GIANG_DAY: Record<CapHoc, { ma: string; ten: string }[]> = {
-  MAM_NON: [],
+  MAM_NON: PHAN_CONG_MAM_NON.map((m) => ({ ma: m.ma, ten: m.ten })),
   TIEU_HOC: [VAN_HOA, ...MON_TIEU_HOC, TPT].map((m) => ({ ma: m.ma, ten: m.tenNgan })),
   THCS: [...MON_THCS, TPT].map((m) => ({ ma: m.ma, ten: m.tenNgan })),
 }
@@ -641,8 +653,59 @@ function timMon(text: string | undefined, cap: 'TIEU_HOC' | 'THCS'): string | un
 
 /** Môn xuất hiện sớm nhất trong "Nhiệm vụ chính"; không thấy thì xét ô VTVL ghi bằng chữ, rồi "Trình độ chuyên môn" */
 export function goiYMonDay(vc: Pick<VienChuc, 'nhiemVuChinh' | 'trinhDoChuyenMon' | 'vtvl'>, cap: CapHoc): string | undefined {
-  if (cap === 'MAM_NON') return undefined
+  if (cap === 'MAM_NON') return timNhomLopMamNon(vc.nhiemVuChinh) ?? timNhomLopMamNon(vc.trinhDoChuyenMon)
   return timMon(vc.nhiemVuChinh, cap)
     ?? (laVtvlChuan(vc.vtvl) ? undefined : timMon(vc.vtvl, cap))
     ?? timMon(vc.trinhDoChuyenMon, cap)
+}
+
+/** Đoán nhóm, lớp phụ trách của giáo viên mầm non từ "Nhiệm vụ chính" (VD "Dạy lớp 4-5 tuổi", "Nhóm trẻ 24-36 tháng") */
+function timNhomLopMamNon(text?: string): string | undefined {
+  const t = (text ?? '').toLowerCase()
+  if (!t) return undefined
+  if (/nhà trẻ|nhóm trẻ|tháng/.test(t)) return 'MN_NHA_TRE'
+  if (/3\s*-\s*4\s*tuổi|mẫu giáo bé|lớp bé/.test(t)) return 'MN_MG3'
+  if (/4\s*-\s*5\s*tuổi|mẫu giáo nhỡ|lớp nhỡ/.test(t)) return 'MN_MG4'
+  if (/5\s*-\s*6\s*tuổi|mẫu giáo lớn|lớp lớn/.test(t)) return 'MN_MG5'
+  if (/(^|\D)3\s*tuổi/.test(t)) return 'MN_MG3'
+  if (/(^|\D)4\s*tuổi/.test(t)) return 'MN_MG4'
+  if (/(^|\D)5\s*tuổi/.test(t)) return 'MN_MG5'
+  if (/năng khiếu|tiếng anh|ngoại ngữ|âm nhạc|thể dục|chuyên/.test(t)) return 'MN_DAY_CHUYEN'
+  return undefined
+}
+
+/** Giáo viên đang tính số liệu của một trường */
+export function giaoVienCuaTruong(nhanSu: VienChuc[], layChucDanh: (id?: string) => ChucDanhTra | undefined): VienChuc[] {
+  return nhanSu.filter((v) => duocTinhSoLieu(v) && nhomNguoi(v, layChucDanh(v.chucDanhId)?.nhom) === 'GIAO_VIEN')
+}
+
+export const laPhanCongMamNon = (ma?: string) => !!ma && PHAN_CONG_MAM_NON.some((m) => m.ma === ma)
+
+export function demChuaPhanCongMN(nhanSu: VienChuc[], layChucDanh: (id?: string) => ChucDanhTra | undefined): number {
+  return giaoVienCuaTruong(nhanSu, layChucDanh).filter((v) => !laPhanCongMamNon(v.monDay)).length
+}
+
+export interface DongPhanCongMN {
+  ma: string
+  ten: string
+  soGv: number
+  /** Số nhóm, lớp của độ tuổi (theo quy mô đã khai) */
+  soLop?: number
+  /** Số giáo viên theo định mức của độ tuổi = số nhóm, lớp × 2,5 (nhà trẻ) hoặc × 2,2 (mẫu giáo) */
+  dinhMuc?: number
+}
+
+/** Mầm non: số giáo viên phân công từng nhóm, lớp độ tuổi so với định mức của độ tuổi đó (để theo dõi, không thay định mức chung) */
+export function thongKePhanCongMN(
+  nhanSu: VienChuc[], layChucDanh: (id?: string) => ChucDanhTra | undefined, quyMo?: QuyMoTruong,
+): { dong: DongPhanCongMN[]; chuaPhan: number; tongGv: number } {
+  const gvs = giaoVienCuaTruong(nhanSu, layChucDanh)
+  const t = THAM_SO.MAM_NON
+  const dong = PHAN_CONG_MAM_NON.map((m) => {
+    const soGv = gvs.filter((v) => v.monDay === m.ma).length
+    if (!m.khoi) return { ma: m.ma, ten: m.ten, soGv }
+    const soLop = quyMo?.khoi[m.khoi]?.soLop ?? 0
+    return { ma: m.ma, ten: m.ten, soGv, soLop, dinhMuc: soLop * (m.khoi === 'NHA_TRE' ? t.gvNhaTre : t.gvMauGiao) }
+  })
+  return { dong, chuaPhan: gvs.filter((v) => !laPhanCongMamNon(v.monDay)).length, tongGv: gvs.length }
 }

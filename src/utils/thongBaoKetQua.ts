@@ -1,4 +1,6 @@
-import * as XLSX from 'xlsx'
+import type * as XLSX from 'xlsx'
+import { xuatExcelA4 } from './excelA4'
+import type { TrangA4 } from './excelA4'
 import dayjs from 'dayjs'
 import type { DeXuatLuong } from '@/types/deXuat'
 import type { VienChuc } from '@/types/vienChuc'
@@ -213,7 +215,7 @@ function cauTrucBang(loai: LoaiThongBaoKQ, cap: CapHocTB): { tieuDe: (string | n
 
 /** Xuất danh sách kèm thông báo theo mẫu: mỗi cấp học một trang tính. `chiCap` để trường chỉ lấy cấp của mình. */
 export function xuatExcelThongBao(tb: ThongBaoKetQua, chiCap?: CapHocTB) {
-  const wb = XLSX.utils.book_new()
+  const trangs: TrangA4[] = []
   const loaiInfo = LOAI_THONG_BAO_KQ[tb.loai]
   const capCo = (['MAM_NON', 'TIEU_HOC', 'THCS'] as CapHocTB[]).filter((c) => (!chiCap || c === chiCap) && tb.dong.some((d) => d.cap === c))
   for (const cap of capCo) {
@@ -228,20 +230,31 @@ export function xuatExcelThongBao(tb: ThongBaoKetQua, chiCap?: CapHocTB) {
       [],
     ]
     const tieuDe = bang.tieuDe.map((r) => r.map((c) => (c === 'Nâng bậc lương năm ' ? `Nâng bậc lương năm ${tb.nam}` : c === 'Nâng phụ cấp thâm niên nhà giáo' ? `Nâng phụ cấp thâm niên nhà giáo ${tenKy(tb.ky, tb.nam).replace('6 tháng ', '')}` : c)))
-    const aoa = [...dau, ...tieuDe, ...ds.flatMap((d, i) => [bang.dong(d, i), ...(bang.dongPhu?.(d) ?? [])]), [], [`Tổng số: ${String(ds.length).padStart(2, '0')} người`]]
-    const ws = XLSX.utils.aoa_to_sheet(aoa)
+    const than = ds.flatMap((d, i) => [bang.dong(d, i), ...(bang.dongPhu?.(d) ?? [])])
+    const aoa = [...dau, ...tieuDe, ...than, [], [`Tổng số: ${String(ds.length).padStart(2, '0')} người`]]
     const lech = dau.length
-    ws['!merges'] = [
-      ...bang.merges.map((r) => ({ s: { r: r.s.r + lech, c: r.s.c }, e: { r: r.e.r + lech, c: r.e.c } })),
-      ...[0, 1, 2, 3].map((r) => ({ s: { r, c: 5 }, e: { r, c: bang.soCot - 1 } })),
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
-    ]
-    ws['!cols'] = Array.from({ length: bang.soCot }, (_, c) => ({ wch: c === 1 ? 24 : c === 0 ? 5 : 11 }))
-    XLSX.utils.book_append_sheet(wb, ws, tenCapNgan[cap] === 'MN' ? 'Mầm non' : tenCapNgan[cap] === 'TH' ? 'Tiểu học' : 'THCS')
+    const g = (r1: number, c1: number, r2: number, c2: number) => ({ r1, c1, r2, c2 })
+    trangs.push({
+      ten: tenCapNgan[cap] === 'MN' ? 'Mầm non' : tenCapNgan[cap] === 'TH' ? 'Tiểu học' : 'THCS',
+      dong: aoa,
+      gop: [
+        ...bang.merges.map((r) => g(r.s.r + lech, r.s.c, r.e.r + lech, r.e.c)),
+        ...[0, 1, 2, 3].map((r) => g(r, 5, r, bang.soCot - 1)),
+        g(0, 0, 0, 3), g(1, 0, 1, 3),
+      ],
+      rongCot: Array.from({ length: bang.soCot }, (_, c) => (c === 1 ? 24 : c === 0 ? 5 : 11)),
+      bang: [{ tu: lech, den: lech + tieuDe.length + than.length - 1, soDongTieuDe: tieuDe.length, soCot: bang.soCot }],
+      tieuDe: [0, 1, 2],
+      giua: [3],
+      nghieng: [3],
+      dam: [aoa.length - 1],
+      cotGiua: [0, 2],
+      huong: 'ngang',
+    })
   }
-  if (!capCo.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Không có viên chức trong danh sách']]), 'Danh sách')
+  if (!capCo.length) trangs.push({ ten: 'Danh sách', dong: [['Không có viên chức trong danh sách']] })
   const so = (tb.soThongBao || 'nhap').replace(/[\\/:*?"<>|]/g, '-')
-  XLSX.writeFile(wb, `DS-TB-${so}-${loaiInfo.tenNgan.replace(/\s+/g, '-')}-${tb.ky}-${tb.nam}${chiCap ? `-${tenCapNgan[chiCap]}` : ''}.xlsx`)
+  return xuatExcelA4(`DS-TB-${so}-${loaiInfo.tenNgan.replace(/\s+/g, '-')}-${tb.ky}-${tb.nam}${chiCap ? `-${tenCapNgan[chiCap]}` : ''}`, trangs)
 }
 
 const CAN_CU_CHUNG = [

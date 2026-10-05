@@ -5,9 +5,11 @@ import {
   Statistic, Row, Col, Tooltip, Empty, Segmented, Badge, Checkbox, Drawer,
 } from 'antd'
 import {
-  SaveOutlined, DownloadOutlined, ArrowLeftOutlined, BulbOutlined, SearchOutlined, UndoOutlined, HistoryOutlined,
+  SaveOutlined, DownloadOutlined, ArrowLeftOutlined, BulbOutlined, SearchOutlined, UndoOutlined, HistoryOutlined, TableOutlined,
 } from '@ant-design/icons'
-import * as XLSX from 'xlsx'
+import { xuatExcelA4 } from '@/utils/excelA4'
+import type { VungBang } from '@/utils/excelA4'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -25,6 +27,7 @@ import {
   type CapHoc, type DongDinhMuc, type KetQuaDinhMuc, type DongPhanBoKiem, type TongNhom,
   laCapHoc, TEN_CAP, THU_TU_CAP, KHOI, NHOM_DINH_MUC, MON_GIANG_DAY, CO_HAI_BUOI, KHOI_TIN_TU_CHON,
   namHocHienHanh, dsNamHoc, idQuyMo, tinhDinhMuc, tongQuyMo, goiYMonDay, tenMonDay, fmt, lamTron1, nhomNguoi,
+  demChuaPhanCongMN, thongKePhanCongMN,
 } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
@@ -155,6 +158,8 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
   const quyMos = useDanhMucStore((s) => s.quyMoTruongs)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const cd = useTenChucDanh()
+  const navigate = useNavigate()
+  const { laQuanTri, isVHXH } = useAuth()
 
   const rows = useMemo(() => truongs.map((dv) => {
     const cap = dv.loai as CapHoc
@@ -194,7 +199,10 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
         title={`Đã khai báo quy mô năm học ${namHoc}: ${daKhai.length}/${rows.length} trường`}
         description="Bấm tên trường để xem chi tiết định mức từng vị trí. Số có mặt đếm theo hồ sơ đang công tác; nhân viên bảo vệ, nấu ăn, phục vụ, lao công không tính định mức."
       />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
+        {(laQuanTri || isVHXH) && (
+          <Button icon={<TableOutlined />} onClick={() => navigate('/bao-cao?tab=dinh-muc-cap')}>Báo cáo chi tiết theo cấp học</Button>
+        )}
         <Button icon={<DownloadOutlined />} onClick={xuat}>Xuất Excel</Button>
       </div>
       <Table
@@ -427,8 +435,12 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
     { key: 'dinhMuc', label: 'Định mức & cơ cấu VTVL', children: <TheDinhMuc kq={kq} nhap={nhap} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} /> },
     {
       key: 'phanMon',
-      label: <Badge count={kq.chuaPhanMon} size="small" offset={[8, -2]}>Phân công môn giảng dạy</Badge>,
-      children: <ThePhanMon cap={cap} nhanSu={nhanSu} kq={kq} coTheSua={coTheSuaMon} donVi={donVi} />,
+      label: (
+        <Badge count={cap === 'MAM_NON' ? demChuaPhanCongMN(nhanSu, cd.lay) : kq.chuaPhanMon} size="small" offset={[8, -2]}>
+          {cap === 'MAM_NON' ? 'Phân công nhóm, lớp' : 'Phân công môn giảng dạy'}
+        </Badge>
+      ),
+      children: <ThePhanMon cap={cap} nhanSu={nhanSu} kq={kq} coTheSua={coTheSuaMon} donVi={donVi} nhap={nhap} />,
     },
   ]
 
@@ -973,9 +985,11 @@ function BangPhanBoKiem({ kq, coTheSua, datKiem }: {
 
 // ───────────────────────────── Thẻ: Phân công môn giảng dạy ─────────────────────────────
 
-function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
-  cap: CapHoc; nhanSu: VienChuc[]; kq: KetQuaDinhMuc; coTheSua: boolean; donVi: DonVi
+function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi, nhap }: {
+  cap: CapHoc; nhanSu: VienChuc[]; kq: KetQuaDinhMuc; coTheSua: boolean; donVi: DonVi; nhap: QuyMoTruong
 }) {
+  const laMN = cap === 'MAM_NON'
+  const tenPhanCong = laMN ? 'nhóm, lớp' : 'môn'
   const { message, modal } = App.useApp()
   const { currentUser } = useAuth()
   const updateVienChuc = useVienChucStore((s) => s.updateVienChuc)
@@ -994,9 +1008,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
     [nhanSu, cd],
   )
 
-  if (cap === 'MAM_NON') {
-    return <Alert type="info" showIcon title="Giáo viên mầm non không phân môn" description="Định mức giáo viên mầm non tính chung theo số nhóm trẻ, lớp mẫu giáo (TT 19/2023/TT-BGDĐT)." />
-  }
+  const tkMN = laMN ? thongKePhanCongMN(nhanSu, cd.lay, nhap) : undefined
 
   const chuaPhan = giaoViens.filter((v) => !hopLe(v.monDay))
   const goiY = chuaPhan.map((v) => ({ v, ma: goiYMonDay(v, cap) })).filter((x): x is { v: VienChuc; ma: string } => !!x.ma)
@@ -1010,7 +1022,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
     const demMon = new Map<string, number>()
     for (const g of goiY) demMon.set(g.ma, (demMon.get(g.ma) ?? 0) + 1)
     modal.confirm({
-      title: `Điền môn gợi ý cho ${goiY.length} giáo viên chưa phân công?`,
+      title: `Điền ${tenPhanCong} gợi ý cho ${goiY.length} giáo viên chưa phân công?`,
       width: 520,
       content: (
         <div>
@@ -1032,10 +1044,10 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
           goiY.map((g) => ({ id: g.v.id, patch: { monDay: g.ma } })),
           currentUser.id,
           currentUser.fullName,
-          `Phân công môn giảng dạy theo gợi ý cho ${goiY.length} giáo viên - ${donVi.ten}`,
+          `Phân công ${laMN ? 'nhóm, lớp phụ trách' : 'môn giảng dạy'} theo gợi ý cho ${goiY.length} giáo viên - ${donVi.ten}`,
           donVi.id,
         )
-        message.success(`Đã điền môn cho ${goiY.length} giáo viên`)
+        message.success(`Đã điền ${tenPhanCong} cho ${goiY.length} giáo viên`)
       },
     })
   }
@@ -1046,17 +1058,24 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
     <>
       <div style={{ marginBottom: 12 }}>
         <Text type="secondary" style={{ display: 'block', marginBottom: 6 }}>
-          Đã phân công {giaoViens.length - chuaPhan.length}/{giaoViens.length} giáo viên. Có mặt / định mức theo môn:
+          Đã phân công {giaoViens.length - chuaPhan.length}/{giaoViens.length} giáo viên.{' '}
+          {laMN
+            ? 'Số giáo viên phân công / định mức theo nhóm, lớp độ tuổi (số nhóm, lớp × 2,5 nhà trẻ hoặc × 2,2 mẫu giáo) - để theo dõi, định mức chung của trường không đổi:'
+            : 'Có mặt / định mức theo môn:'}
         </Text>
         <Space wrap size={[6, 6]}>
-          {gvDong.map((d) => {
-            const cl = d.chenhLech == null ? 0 : lamTron1(d.chenhLech)
-            return (
-              <Tag key={d.ma} color={cl < 0 ? 'error' : cl > 0 ? 'warning' : 'success'} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                {tenMonDay(d.ma) ?? d.ten}: {d.coMat} / {fmt(d.dinhMuc)}
-              </Tag>
-            )
-          })}
+          {(laMN
+            ? tkMN!.dong.map((d) => ({ ma: d.ma, ten: d.ten, coMat: d.soGv, dinhMuc: d.dinhMuc, cl: d.dinhMuc == null ? null : lamTron1(d.soGv - d.dinhMuc) }))
+            : gvDong.map((d) => ({ ma: d.ma, ten: tenMonDay(d.ma) ?? d.ten, coMat: d.coMat, dinhMuc: d.dinhMuc, cl: d.chenhLech == null ? 0 : lamTron1(d.chenhLech) }))
+          ).map((d) => (
+            <Tag
+              key={d.ma}
+              color={d.cl === 0 ? 'success' : d.cl == null ? 'default' : undefined}
+              style={{ ...(d.cl ? kieuChenhLech(d.cl > 0) : {}), fontWeight: d.cl ? 600 : undefined, fontVariantNumeric: 'tabular-nums' }}
+            >
+              {d.ten}: {d.coMat}{d.dinhMuc != null ? ` / ${fmt(d.dinhMuc)}` : ''}
+            </Tag>
+          ))}
         </Space>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -1067,7 +1086,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
           options={[{ value: 'tat-ca', label: `Tất cả (${giaoViens.length})` }, { value: 'chua', label: `Chưa phân công (${chuaPhan.length})` }]}
         />
         {coTheSua && goiY.length > 0 && (
-          <Button icon={<BulbOutlined />} onClick={apDungGoiY}>Gợi ý môn cho {goiY.length} giáo viên</Button>
+          <Button icon={<BulbOutlined />} onClick={apDungGoiY}>Gợi ý {tenPhanCong} cho {goiY.length} giáo viên</Button>
         )}
       </div>
       <Table
@@ -1083,7 +1102,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
           { title: 'Nhiệm vụ chính', dataIndex: 'nhiemVuChinh', key: 'nv', width: 180, ellipsis: true },
           { title: 'Trình độ chuyên môn', dataIndex: 'trinhDoChuyenMon', key: 'td', width: 180, ellipsis: true },
           {
-            title: 'Môn giảng dạy', key: 'mon', width: 200,
+            title: laMN ? 'Nhóm, lớp phụ trách' : 'Môn giảng dạy', key: 'mon', width: laMN ? 330 : 200,
             render: (_: unknown, v: VienChuc) => {
               const goiYMon = !hopLe(v.monDay) ? goiYMonDay(v, cap) : undefined
               if (!coTheSua) return hopLe(v.monDay) ? tenMonDay(v.monDay) : <Tag color="warning">Chưa phân công</Tag>
@@ -1092,9 +1111,9 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi }: {
                   <Select
                     size="small"
                     value={hopLe(v.monDay) ? v.monDay : undefined}
-                    placeholder="Chọn môn"
+                    placeholder={laMN ? 'Chọn nhóm, lớp' : 'Chọn môn'}
                     allowClear
-                    style={{ width: 130 }}
+                    style={{ width: laMN ? 250 : 130 }}
                     status={hopLe(v.monDay) ? undefined : 'warning'}
                     options={dsMon.map((m) => ({ value: m.ma, label: m.ten }))}
                     onChange={(ma?: string) => currentUser && updateVienChuc(v.id, { monDay: ma }, currentUser.id, currentUser.fullName)}
@@ -1130,6 +1149,15 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     ['I. QUY MÔ TRƯỜNG LỚP'],
   ]
   const haiBuoi = CO_HAI_BUOI[cap]
+  const bang: VungBang[] = []
+  const dam: number[] = []
+  const nen: Record<number, string> = {}
+  const mauChu: Record<string, string> = {}
+  const batDauBang = (soCot: number) => bang.push({ tu: aoa.length, den: aoa.length, soDongTieuDe: 1, soCot })
+  const ketThucBang = () => { bang[bang.length - 1].den = aoa.length - 1 }
+  // Thừa đỏ, thiếu xanh dương - giống trên màn hình
+  const toMau = (c: number, v: number | string) => { if (typeof v === 'number' && lamTron1(v) !== 0) mauChu[`${aoa.length - 1}:${c}`] = v > 0 ? 'FFCF1322' : 'FF1D4ED8' }
+  batDauBang(haiBuoi ? 6 : 4)
   aoa.push(haiBuoi
     ? ['Khối', 'Số lớp', 'Số học sinh', 'Số lớp học 2 buổi/ngày', 'Số HS học 2 buổi/ngày', 'Bình quân/lớp']
     : ['Nhóm, lớp', 'Số lớp', 'Số trẻ', 'Bình quân/lớp'])
@@ -1145,6 +1173,8 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
   aoa.push(haiBuoi
     ? ['Tổng', kq.tongLop, kq.tongHS, kq.tongLop2Buoi, kq.tongHS2Buoi, lamTron1(kq.binhQuan)]
     : ['Tổng', kq.tongLop, kq.tongHS, lamTron1(kq.binhQuan)])
+  dam.push(aoa.length - 1)
+  ketThucBang()
   if (cap === 'TIEU_HOC') {
     const tin = (nhap.khoiDayTinThem ?? []).map((k) => k.slice(1)).sort()
     aoa.push(['Khối dạy Tin học', tin.length ? `${tin.join(', ')}, 3, 4, 5` : '3, 4, 5'])
@@ -1153,12 +1183,18 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
   if (kq.phanBoKiem) {
     const pb = kq.phanBoKiem
     aoa.push(['PHÂN BỔ GIÁO VIÊN KIÊM NHIỆM THEO MÔN'])
+    dam.push(aoa.length - 1)
+    batDauBang(7)
     aoa.push(['Môn', 'Tiết/tuần', 'Đứng lớp', 'Kiêm nhiệm gợi ý', 'Trường điều chỉnh', 'Kiêm nhiệm áp dụng', 'Định mức môn'])
     for (const d of pb.dong) aoa.push([d.ten, lamTron1(d.tietTuan), lamTron1(d.dungLop), lamTron1(d.goiY), d.nhapTay != null ? lamTron1(d.nhapTay) : '', lamTron1(d.apDung), lamTron1(d.dinhMuc)])
     aoa.push(['Tổng', '', lamTron1(pb.dong.reduce((s, d) => s + d.dungLop, 0)), lamTron1(pb.tong), '', lamTron1(pb.daPhanBo), lamTron1(pb.dong.reduce((s, d) => s + d.dinhMuc, 0))])
+    dam.push(aoa.length - 1)
+    ketThucBang()
     aoa.push([pb.khop ? 'Tổng phân bổ khớp số cần phân bổ' : `Tổng phân bổ ${pb.conLai > 0 ? 'còn thiếu' : 'vượt'} ${lamTron1(Math.abs(pb.conLai))} giáo viên`], [])
   }
   aoa.push(['III. ĐỊNH MỨC VIÊN CHỨC VÀ CƠ CẤU THEO VỊ TRÍ VIỆC LÀM'])
+  dam.push(aoa.length - 1)
+  batDauBang(8)
   aoa.push(['STT', 'Vị trí việc làm', 'Căn cứ tính', 'Định mức', 'Có mặt - Viên chức', 'Có mặt - Hợp đồng', 'Có mặt - Tổng', 'Thừa (+)/Thiếu (-)'])
   for (const n of NHOM_DINH_MUC) {
     const ds = kq.dong.filter((d) => d.nhom === n.key)
@@ -1170,20 +1206,39 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
       t?.apDungDinhMuc ? lamTron1(t.dinhMuc) : '', t?.coMatVC ?? '', t?.coMatHD ?? '', t?.coMat ?? '',
       t?.chenhLech == null ? '' : lamTron1(t.chenhLech),
     ])
-    ds.forEach((d, i) => aoa.push([
-      i + 1, d.ten, d.canCu, d.nhom === 'PHUC_VU' ? 'Không áp dụng' : so(d.dinhMuc),
-      d.coMatVC, d.coMatHD, d.coMat, d.nhom === 'PHUC_VU' ? '' : so(d.chenhLech),
-    ]))
+    dam.push(aoa.length - 1)
+    nen[aoa.length - 1] = 'FFEEF2FF'
+    if (t?.chenhLech != null) toMau(7, t.chenhLech)
+    ds.forEach((d, i) => {
+      aoa.push([
+        i + 1, d.ten, d.canCu, d.nhom === 'PHUC_VU' ? 'Không áp dụng' : so(d.dinhMuc),
+        d.coMatVC, d.coMatHD, d.coMat, d.nhom === 'PHUC_VU' ? '' : so(d.chenhLech),
+      ])
+      if (d.nhom !== 'PHUC_VU' && d.chenhLech != null) toMau(7, d.chenhLech)
+    })
   }
   const coDm = kq.tongNhom.filter((t) => t.apDungDinhMuc)
   aoa.push(['', 'Tổng toàn trường - nhóm I-III (so với định mức)', '', lamTron1(kq.tongDinhMuc),
     coDm.reduce((s, t) => s + t.coMatVC, 0), coDm.reduce((s, t) => s + t.coMatHD, 0), coDm.reduce((s, t) => s + t.coMat, 0), lamTron1(kq.coMatCoDinhMuc - kq.tongDinhMuc)])
+  toMau(7, kq.coMatCoDinhMuc - kq.tongDinhMuc)
+  dam.push(aoa.length - 1)
   aoa.push(['', 'Tổng lao động toàn trường (I-IV)', '', '', kq.toanTruong.coMatVC, kq.toanTruong.coMatHD, kq.toanTruong.coMat, ''])
-  if (nhap.ghiChu) aoa.push([], ['Ghi chú:', nhap.ghiChu])
+  dam.push(aoa.length - 1)
+  ketThucBang()
+  if (nhap.ghiChu) aoa.push([], [`Ghi chú: ${nhap.ghiChu}`])
 
-  const ws = XLSX.utils.aoa_to_sheet(aoa)
-  ws['!cols'] = [{ wch: 6 }, { wch: 48 }, { wch: 46 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 }]
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Định mức')
-  XLSX.writeFile(wb, `Dinh-muc-${donVi.ma || donVi.id}-${namHoc}.xlsx`)
+  return xuatExcelA4(`Dinh-muc-${donVi.ma || donVi.id}-${namHoc}`, [{
+    ten: 'Định mức',
+    dong: aoa,
+    rongCot: [6, 40, 40, 11, 11, 11, 11, 12],
+    bang,
+    tieuDe: [3],
+    giua: [4],
+    nghieng: [4],
+    dam: [0, 1, 6, ...dam],
+    nen,
+    mauChu,
+    cotGiua: [0],
+    huong: 'ngang',
+  }])
 }

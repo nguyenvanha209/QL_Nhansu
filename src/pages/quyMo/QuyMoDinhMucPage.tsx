@@ -1200,7 +1200,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi, nhap }: {
           {
             title: laMN ? 'Nhóm, lớp phụ trách' : 'Môn giảng dạy', key: 'mon', width: laMN ? 330 : 220,
             // Chưa phân công xếp cuối khi sắp tăng dần
-            sorter: (a: VienChuc, b: VienChuc) => (hopLe(a.monDay) ? tenMonDay(a.monDay)! : '￿').localeCompare(hopLe(b.monDay) ? tenMonDay(b.monDay)! : '￿', 'vi'),
+            sorter: (a: VienChuc, b: VienChuc) => Number(!hopLe(a.monDay)) - Number(!hopLe(b.monDay)) || (tenMonDay(a.monDay) ?? '').localeCompare(tenMonDay(b.monDay) ?? '', 'vi'),
             render: (_: unknown, v: VienChuc) => {
               const goiYMon = !hopLe(v.monDay) ? goiYMonDay(v, cap) : undefined
               if (!coTheSua) return hopLe(v.monDay) ? tenMonDay(v.monDay) : <Tag color="warning">Chưa phân công</Tag>

@@ -91,7 +91,7 @@ export default function ChiTieuBienCheCard({ donVi, namHoc, kq }: { donVi: DonVi
     if (r.chiHopDong && truong !== 'hd235') return <Text type="secondary">-</Text>
     const v = nhap[r.nhom]?.[truong]
     return coTheGiao
-      ? <InputNumber size="small" min={0} value={v} onChange={(x) => dat(r.nhom!, truong, x)} style={{ width: 70 }} />
+      ? <InputNumber size="small" min={0} value={v} onChange={(x) => dat(r.nhom!, truong, x)} style={{ width: 62 }} />
       : (v ?? <Text type="secondary">-</Text>)
   }
 
@@ -125,9 +125,10 @@ export default function ChiTieuBienCheCard({ donVi, namHoc, kq }: { donVi: DonVi
       )}
       <Table<Dong>
         size="small" bordered pagination={false} rowKey="key" dataSource={data} scroll={{ x: 'max-content' }}
-        rowClassName={(r) => (r.nhom ? '' : 'ct-tong')}
+        className="bang-ke-ro"
+        rowClassName={(r) => (r.nhom ? `vt-n-${r.nhom}` : 'ct-tong')}
         columns={[
-          { title: 'Nhóm vị trí việc làm', key: 'ten', width: 210, render: (_, r) => (r.nhom ? r.ten : <b>{r.ten}</b>) },
+          { title: 'Nhóm vị trí việc làm', key: 'ten', width: 190, render: (_, r) => (r.nhom ? r.ten : <b>{r.ten}</b>) },
           {
             title: 'Định mức', key: 'dm', width: 80, align: 'center',
             render: (_, r) => (r.chiHopDong ? <Text type="secondary">-</Text> : r.nhom ? fmt(dmNhom(r.nhom)) : <b>{fmt(kq.tongLop ? kq.tongDinhMuc : null)}</b>),
@@ -135,29 +136,29 @@ export default function ChiTieuBienCheCard({ donVi, namHoc, kq }: { donVi: DonVi
           {
             title: 'Chỉ tiêu giao',
             children: [
-              { title: 'BC Ngân sách', key: 'ns', width: 92, align: 'center', render: (_, r) => oNhap(r, 'nganSach') },
-              { title: 'BC sự nghiệp', key: 'sn', width: 92, align: 'center', render: (_, r) => oNhap(r, 'suNghiep') },
+              { title: 'BC Ngân sách', key: 'ns', width: 80, align: 'center', render: (_, r) => oNhap(r, 'nganSach') },
+              { title: 'BC sự nghiệp', key: 'sn', width: 80, align: 'center', render: (_, r) => oNhap(r, 'suNghiep') },
               {
                 title: 'Biên chế', key: 'bc', width: 72, align: 'center',
                 onCell: () => ({ style: { background: '#f8fafc' } }),
                 render: (_, r) => (r.chiHopDong ? <Text type="secondary">-</Text> : <b>{(ct(r, 'nganSach') ?? 0) + (ct(r, 'suNghiep') ?? 0)}</b>),
               },
-              { title: 'Hợp đồng NĐ 235', key: 'hd', width: 92, align: 'center', render: (_, r) => oNhap(r, 'hd235') },
+              { title: 'Hợp đồng NĐ 235', key: 'hd', width: 80, align: 'center', render: (_, r) => oNhap(r, 'hd235') },
               { title: 'Tổng', key: 'tct', width: 64, align: 'center', render: (_, r) => <b>{r.nhom ? tongCT(nhap[r.nhom]) : cong((k) => tongCT(nhap[k]))}</b> },
             ],
           },
           {
             title: 'Có mặt',
             children: [
-              { title: 'BC Ngân sách', key: 'cns', width: 92, align: 'center', render: (_, r) => cm(r, (o) => o.nganSach) },
-              { title: 'BC sự nghiệp', key: 'csn', width: 92, align: 'center', render: (_, r) => cm(r, (o) => o.suNghiep) },
-              ...(coChuaRoNguon ? [{ title: 'Biên chế chưa rõ nguồn', key: 'ccr', width: 92, align: 'center' as const, render: (_: unknown, r: Dong) => cm(r, (o) => o.bcChuaRoNguon) }] : []),
+              { title: 'BC Ngân sách', key: 'cns', width: 80, align: 'center', render: (_, r) => cm(r, (o) => o.nganSach) },
+              { title: 'BC sự nghiệp', key: 'csn', width: 80, align: 'center', render: (_, r) => cm(r, (o) => o.suNghiep) },
+              ...(coChuaRoNguon ? [{ title: 'Biên chế chưa rõ nguồn', key: 'ccr', width: 80, align: 'center' as const, render: (_: unknown, r: Dong) => cm(r, (o) => o.bcChuaRoNguon) }] : []),
               {
                 title: 'Biên chế', key: 'cbc', width: 72, align: 'center',
                 onCell: () => ({ style: { background: '#f8fafc' } }),
                 render: (_, r) => <b>{cm(r, bienCheCm)}</b>,
               },
-              { title: 'Hợp đồng NĐ 235', key: 'chd', width: 92, align: 'center', render: (_, r) => cm(r, (o) => o.hd235) },
+              { title: 'Hợp đồng NĐ 235', key: 'chd', width: 80, align: 'center', render: (_, r) => cm(r, (o) => o.hd235) },
               { title: 'Hợp đồng khác', key: 'chk', width: 84, align: 'center', render: (_, r) => cm(r, (o) => o.hdKhac) },
             ],
           },

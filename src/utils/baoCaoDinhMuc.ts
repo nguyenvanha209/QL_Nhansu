@@ -9,6 +9,7 @@ import {
   idQuyMo, lamTron1, thongKePhanCongMN, tinhDinhMuc,
 } from './dinhMuc'
 import type { O, TrangA4, VungGop } from './excelA4'
+import { MAU_NHOM_VTVL } from './mauNhomVtvl'
 
 /** Định mức, Giao (biên chế), Có mặt (biên chế), Hợp đồng có mặt, thừa/thiếu so giao, thừa/thiếu so định mức */
 export type ChiSo = 'DM' | 'GIAO' | 'CM' | 'HD' | 'CLG' | 'CL'
@@ -46,6 +47,8 @@ export interface DongBaoCao {
   loai: 'muc' | 'quyMo' | 'nhom' | 'viTri' | 'tong'
   stt?: string | number
   ten: string
+  /** Nhóm VTVL của dòng (tô màu theo nhóm) */
+  nhom?: string
   /** Theo id trường và MA_TOAN_CAP */
   gt: Record<string, O3>
 }
@@ -135,13 +138,13 @@ export function dungBaoCaoCapHoc(
     }
     if (!viTri.length) continue
     // Dòng nhóm: so với chỉ tiêu giao và với định mức (biên chế); nhóm ngoài danh mục không có định mức, không giao biên chế
-    them({ key: `nhom-${n.key}`, loai: 'nhom', ten: n.ten }, (c) => {
+    them({ key: `nhom-${n.key}`, loai: 'nhom', ten: n.ten, nhom: n.key }, (c) => {
       const t = c.kq.tongNhom.find((x) => x.nhom === n.key)
       const dm = c.daKhai && c.kq.tongLop && t?.apDungDinhMuc ? t.dinhMuc : null
       return soSanh(dm, n.key === 'NGOAI_DM' ? null : giaoNhom(c.id, n.key), bcNhom(c, n.key), hdNhom(c, n.key))
     })
     // Dòng vị trí: chỉ so với định mức
-    viTri.forEach((v) => them({ key: `vt-${v.ma}`, loai: 'viTri', ten: v.ten }, (c) => {
+    viTri.forEach((v) => them({ key: `vt-${v.ma}`, loai: 'viTri', ten: v.ten, nhom: n.key }, (c) => {
       const d = c.kq.dong.find((x) => x.ma === v.ma)
       if (!d) return { cm: 0, hd: 0 }
       const dm = c.daKhai && !d.khongDinhMuc && !d.trongGv ? d.dinhMuc : null
@@ -254,7 +257,9 @@ export function trangExcelBaoCao(
       })
     })
     dong.push(hang)
-    if (d.loai === 'nhom' || d.loai === 'tong') { dam.push(r); nen[r] = d.loai === 'tong' ? 'FFE0E7FF' : 'FFF1F5F9' }
+    const mau = d.nhom ? MAU_NHOM_VTVL[d.nhom] : undefined
+    if (d.loai === 'nhom' || d.loai === 'tong') { dam.push(r); nen[r] = d.loai === 'tong' ? 'FFE0E7FF' : mau?.argbTieuDe ?? 'FFF1F5F9' }
+    else if (mau) nen[r] = mau.argbNen
   }
   const cuoi = dong.length
   dong.push([], ['Ghi chú: Giao và có mặt tính biên chế (ngân sách + sự nghiệp). Dòng nhóm so với chỉ tiêu giao và định mức; dòng từng vị trí chỉ so với định mức; cột toàn cấp: thừa/thiếu so giao chỉ cộng các trường đã được giao. Thừa (+) ghi màu đỏ, thiếu (-) ghi màu xanh. Tổ trưởng, tổ phó thuộc định mức giáo viên (không cộng lại); cấp dưỡng hợp đồng, ngoài danh mục VTVL và giáo viên dạy chuyên không tính định mức.'])
@@ -271,6 +276,7 @@ export function trangExcelBaoCao(
     nen,
     mauChu,
     cotGiua: [0, ...Array.from({ length: soCot - 2 }, (_, i) => i + 2)],
+    cotDauNhom: nhom.map((_, i) => 2 + i * k),
     huong: 'ngang',
     motTrang: true,
     coChu: 10,

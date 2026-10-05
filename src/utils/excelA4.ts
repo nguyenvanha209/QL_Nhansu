@@ -30,6 +30,10 @@ export interface TrangA4 {
   cotGiua?: number[]
   /** Nền màu cho dòng (ARGB, VD 'FFDBEAFE') */
   nen?: Record<number, string>
+  /** Nền màu theo cột cho thân bảng (ARGB) - dòng có nền riêng thì ưu tiên nền dòng */
+  nenCot?: Record<number, string>
+  /** Cột bắt đầu một nhóm cột: kẻ vạch trái đậm */
+  cotDauNhom?: number[]
   /** Chữ màu cho từng ô 'dòng:cột' (ARGB) */
   mauChu?: Record<string, string>
   huong?: 'doc' | 'ngang'
@@ -120,6 +124,8 @@ function dungTrang(wb: Workbook, t: TrangA4): Worksheet {
         cell.alignment = { wrapText: !tieuDe.has(r), vertical: 'middle', horizontal: tieuDe.has(r) || giua.has(r) ? 'center' : 'left' }
       }
       if (t.nen?.[r]) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: t.nen[r] } }
+      else if (b && !laTieuDeBang && t.nenCot?.[c]) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: t.nenCot[c] } }
+      if (b && t.cotDauNhom?.includes(c)) cell.border = { ...VIEN, left: { style: 'medium', color: { argb: 'FF475569' } } }
       if (typeof v === 'number') dinhDangSo(cell, v)
     }
     // Dòng trong bảng: đặt chiều cao theo số dòng chữ thực tế (Excel tự tính hay cao gấp đôi với chữ xuống dòng)

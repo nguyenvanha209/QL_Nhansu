@@ -11,6 +11,7 @@ import { xuatExcelA4 } from '@/utils/excelA4'
 import type { VungBang } from '@/utils/excelA4'
 import { useNavigate } from 'react-router-dom'
 import ChiTieuBienCheCard from './ChiTieuBienCheCard'
+import { MAU_NHOM_VTVL } from '@/utils/mauNhomVtvl'
 import { useAuth } from '@/hooks/useAuth'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -271,6 +272,8 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
       ten: 'Tổng hợp', dong, gop, rongCot: [5, 28, 7, 9, ...NHOM_TH.flatMap(() => [8, 7, 7, 9, 9]), 8, 8],
       bang: [{ tu: r0, den: cuoi - 1, soDongTieuDe: 2, soCot }], tieuDe: [2], giua: [3], nghieng: [3, cuoi + 1],
       dam, nen, mauChu, cotGiua: Array.from({ length: soCot }, (_, c) => c).filter((c) => c !== 1),
+      nenCot: Object.fromEntries(NHOM_TH.flatMap(({ key }, j) => [0, 1, 2, 3, 4].map((x) => [4 + j * 5 + x, MAU_NHOM_VTVL[key].argbNen]))),
+      cotDauNhom: [4, 9, 14, 19],
       huong: 'ngang', motTrang: true, coChu: 10,
     }]).catch(() => undefined)
   }
@@ -300,37 +303,48 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
         pagination={false}
         dataSource={rows}
         rowKey="key"
-        scroll={{ x: 1536 }}
+        className="bang-ke-ro"
+        scroll={{ x: 1344, y: 'calc(100vh - 300px)' }}
         rowClassName={(r) => (r.loai === 'phuong' ? 'th-phuong' : r.loai === 'cap' ? 'th-cap' : '')}
         columns={[
-          { title: 'STT', key: 'stt', width: 46, align: 'center', fixed: 'left', render: (_, r) => sttMap.get(r.key) ?? '' },
+          { title: 'STT', key: 'stt', width: 40, align: 'center', fixed: 'left', render: (_, r) => sttMap.get(r.key) ?? '' },
           {
-            title: 'Trường', key: 'ten', width: 180, fixed: 'left',
+            title: 'Trường', key: 'ten', width: 170, fixed: 'left',
             render: (_, r) => r.loai === 'truong'
               ? <Button type="link" style={{ padding: 0, height: 'auto', whiteSpace: 'normal', textAlign: 'left' }} onClick={() => onChon(r.dv!.id)}>{r.ten}</Button>
               : <b>{r.ten} <Text type="secondary" style={{ fontWeight: 400, fontSize: 13 }}>({r.soTruong} trường)</Text></b>,
           },
-          { title: 'Số lớp', key: 'lop', width: 58, align: 'center', render: (_, r) => dam(r, so(r.lop, true)) },
-          { title: 'Học sinh', key: 'hs', width: 70, align: 'center', render: (_, r) => dam(r, so(r.hs, true)) },
-          ...NHOM_TH.map(({ key, ten }) => ({
-            title: ten,
-            children: [
-              { title: 'Định mức', key: `${key}-dm`, width: 62, align: 'center' as const, render: (_: unknown, r: DongTH) => dam(r, so(r.nhom[key].dm)) },
-              { title: 'Giao', key: `${key}-g`, width: 50, align: 'center' as const, render: (_: unknown, r: DongTH) => dam(r, so(r.nhom[key].giao)) },
-              { title: 'Có mặt', key: `${key}-cm`, width: 56, align: 'center' as const, render: (_: unknown, r: DongTH) => dam(r, r.nhom[key].cm) },
-              { title: 'Thừa/thiếu so giao', key: `${key}-sg`, width: 70, align: 'center' as const, render: (_: unknown, r: DongTH) => lech(r.nhom[key].soGiao) },
-              { title: 'Thừa/thiếu so định mức', key: `${key}-sd`, width: 76, align: 'center' as const, render: (_: unknown, r: DongTH) => lech(r.nhom[key].soDm) },
-            ],
-          })),
+          { title: 'Số lớp', key: 'lop', width: 50, align: 'center', render: (_, r) => dam(r, so(r.lop, true)) },
+          { title: 'Học sinh', key: 'hs', width: 62, align: 'center', render: (_, r) => dam(r, so(r.hs, true)) },
+          // Mỗi nhóm VTVL một màu nền, vạch đậm bên trái cột đầu của nhóm
+          ...NHOM_TH.map(({ key, ten }) => {
+            const mau = MAU_NHOM_VTVL[key]
+            const o = (dau = false) => ({
+              onHeaderCell: () => ({ className: dau ? 'ke-nhom-dau' : undefined, style: { background: mau.tieuDe } }),
+              onCell: () => ({ className: dau ? 'ke-nhom-dau' : undefined, style: { background: mau.nen } }),
+            })
+            return {
+              title: <span style={{ color: mau.vien }}>{ten}</span>,
+              onHeaderCell: () => ({ className: 'ke-nhom-dau', style: { background: mau.tieuDe } }),
+              children: [
+                { title: 'Định mức', key: `${key}-dm`, width: 56, align: 'center' as const, ...o(true), render: (_: unknown, r: DongTH) => dam(r, so(r.nhom[key].dm)) },
+                { title: 'Giao', key: `${key}-g`, width: 46, align: 'center' as const, ...o(), render: (_: unknown, r: DongTH) => dam(r, so(r.nhom[key].giao)) },
+                { title: 'Có mặt', key: `${key}-cm`, width: 50, align: 'center' as const, ...o(), render: (_: unknown, r: DongTH) => dam(r, r.nhom[key].cm) },
+                { title: 'Thừa/ thiếu so giao', key: `${key}-sg`, width: 58, align: 'center' as const, ...o(), render: (_: unknown, r: DongTH) => lech(r.nhom[key].soGiao) },
+                { title: 'Thừa/ thiếu so định mức', key: `${key}-sd`, width: 62, align: 'center' as const, ...o(), render: (_: unknown, r: DongTH) => lech(r.nhom[key].soDm) },
+              ],
+            }
+          }),
           {
             title: 'Hợp đồng NĐ 235',
+            onHeaderCell: () => ({ className: 'ke-nhom-dau' }),
             children: [
-              { title: 'Giao', key: 'hdg', width: 52, align: 'center', render: (_, r) => dam(r, so(r.hd235Giao)) },
-              { title: 'Có mặt', key: 'hdc', width: 58, align: 'center', render: (_, r) => dam(r, r.hd235CoMat) },
+              { title: 'Giao', key: 'hdg', width: 46, align: 'center', onHeaderCell: () => ({ className: 'ke-nhom-dau' }), onCell: () => ({ className: 'ke-nhom-dau' }), render: (_, r) => dam(r, so(r.hd235Giao)) },
+              { title: 'Có mặt', key: 'hdc', width: 50, align: 'center', render: (_, r) => dam(r, r.hd235CoMat) },
             ],
           },
           {
-            title: 'Khai báo', key: 'kb', width: 130,
+            title: 'Khai báo', key: 'kb', width: 110,
             render: (_, r) => {
               if (r.loai !== 'truong') return null
               if (!r.qm) return <Tag color="default">Chưa khai báo</Tag>
@@ -759,7 +773,7 @@ function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, s
 
 type DongBang =
   | (DongDinhMuc & { key: string; loai: 'dong'; stt: number })
-  | { key: string; loai: 'nhom'; ten: string; tong?: TongNhom }
+  | { key: string; loai: 'nhom'; ten: string; tong?: TongNhom; nhomKey: string }
 
 const SO_LA_MA = ['I', 'II', 'III', 'IV']
 
@@ -776,7 +790,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
     const ds = kq.dong.filter((d) => d.nhom === n.key)
     if (!ds.length) continue
     // Số cộng của nhóm nằm ngay trên dòng tiêu đề nhóm, không có dòng tổng riêng
-    data.push({ key: `nhom-${n.key}`, loai: 'nhom', ten: n.ten, tong: kq.tongNhom.find((x) => x.nhom === n.key) })
+    data.push({ key: `nhom-${n.key}`, loai: 'nhom', ten: n.ten, tong: kq.tongNhom.find((x) => x.nhom === n.key), nhomKey: n.key })
     ds.forEach((d, i) => data.push({ ...d, key: d.ma, loai: 'dong', stt: i + 1 }))
   }
 
@@ -816,8 +830,9 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
         bordered
         pagination={false}
         dataSource={data}
-        scroll={{ x: 1100 }}
-        rowClassName={(r) => (r.loai === 'nhom' ? 'dm-nhom' : '')}
+        className="bang-ke-ro"
+        scroll={{ x: 1100, y: 'calc(100vh - 260px)' }}
+        rowClassName={(r) => (r.loai === 'nhom' ? `vt-n-${r.nhomKey} vt-tieu-de vt-nhom-dau` : `vt-n-${r.nhom}`)}
         columns={[
           {
             title: 'STT', key: 'stt', width: 50, align: 'center',
@@ -942,7 +957,6 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
         nhân viên theo "Công việc cụ thể". Viên chức gồm biên chế và tập sự; còn lại tính là hợp đồng.
         {daDoi && ' Số liệu đang tính theo bản chưa lưu.'}
       </Text>
-      <style>{'.dm-nhom > td { background: #eff6ff !important; }'}</style>
     </>
   )
 }

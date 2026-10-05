@@ -82,16 +82,18 @@ export default function BaoCaoDinhMucCapHoc() {
         </span>
       ),
       key: n.id,
-      onHeaderCell: () => ({ style: n.tong ? { background: '#e0e7ff' } : {} }),
+      onHeaderCell: () => ({ className: 'ke-nhom-dau', style: n.tong ? { background: '#e0e7ff' } : {} }),
       children: chiSoSapXep.map((c, j) => ({
+        onHeaderCell: () => ({ className: j === 0 ? 'ke-nhom-dau' : undefined }),
         title: TEN_CHI_SO[c].ngan,
         key: `${n.id}-${c}`,
         width: rongChiSo(c),
         align: 'center' as const,
         onCell: (d: DongBaoCao) => {
           if (d.loai === 'muc') return { colSpan: 0 }
-          if (d.loai === 'quyMo') return { colSpan: j === 0 ? k : 0 }
-          return n.tong ? { style: { background: '#f5f7ff' } } : {}
+          const dau = j === 0 ? 'ke-nhom-dau' : undefined
+          if (d.loai === 'quyMo') return { colSpan: j === 0 ? k : 0, className: dau }
+          return { className: dau, style: n.tong ? { background: '#f5f7ff' } : undefined }
         },
         render: (_: unknown, d: DongBaoCao) => {
           const v = d.gt[n.id] ?? {}
@@ -159,7 +161,8 @@ export default function BaoCaoDinhMucCapHoc() {
         dataSource={dongHien}
         columns={columns}
         scroll={{ x: 348 + nhomCot.length * chiSoSapXep.reduce((s, c) => s + rongChiSo(c), 0), y: 'calc(100vh - 330px)' }}
-        rowClassName={(d) => `bc-${d.loai}`}
+        className="bang-ke-ro"
+        rowClassName={(d) => (d.nhom ? (d.loai === 'nhom' ? `bc-nhom vt-n-${d.nhom} vt-tieu-de vt-nhom-dau` : `vt-n-${d.nhom}`) : `bc-${d.loai}`)}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Giao và có mặt tính biên chế (ngân sách + sự nghiệp); dòng nhóm so với chỉ tiêu giao và định mức, dòng từng vị trí chỉ so định mức; ở cột toàn cấp, thừa/thiếu so giao chỉ cộng các trường đã được giao. Thừa ghi màu đỏ, thiếu ghi màu xanh. Cột Toàn cấp cộng các trường đang hiển thị. Tổ trưởng, tổ phó thuộc định mức giáo viên (không cộng lại); cấp dưỡng hợp đồng, ngoài danh mục VTVL và giáo viên dạy chuyên không tính định mức.

@@ -147,3 +147,19 @@ body {
   font-weight: 600;
   color: #334155;
 }
+
+/* ── Bảng định mức, cơ cấu VTVL: kẻ dọc rõ, vạch đậm phân cách nhóm ── */
+.bang-ke-ro .ant-table-cell { border-inline-end-color: #cbd5e1 !important; border-bottom-color: #e2e8f0 !important; }
+.bang-ke-ro .ant-table-thead .ant-table-cell { border-bottom-color: #94a3b8 !important; font-weight: 600; }
+.bang-ke-ro .ant-table-container { border-inline-start-color: #cbd5e1 !important; border-top-color: #cbd5e1 !important; }
+.bang-ke-ro .ke-nhom-dau { border-inline-start: 2px solid #475569 !important; }
+.bang-ke-ro .ant-table-tbody > tr.vt-nhom-dau > td { border-top: 2px solid #475569 !important; }
+/* Màu nền theo nhóm VTVL (dòng): nhạt cho dòng vị trí, đậm hơn cho dòng tiêu đề nhóm */
+.vt-n-QUAN_LY > td { background: #eff6ff !important; }
+.vt-n-CHUYEN_MON > td { background: #f0fdf4 !important; }
+.vt-n-HO_TRO > td { background: #fffbeb !important; }
+.vt-n-NGOAI_DM > td { background: #f8fafc !important; }
+.vt-n-QUAN_LY.vt-tieu-de > td { background: #dbeafe !important; font-weight: 600; }
+.vt-n-CHUYEN_MON.vt-tieu-de > td { background: #dcfce7 !important; font-weight: 600; }
+.vt-n-HO_TRO.vt-tieu-de > td { background: #fef3c7 !important; font-weight: 600; }
+.vt-n-NGOAI_DM.vt-tieu-de > td { background: #e2e8f0 !important; font-weight: 600; }

@@ -1192,12 +1192,15 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi, nhap }: {
         scroll={{ x: 900 }}
         columns={[
           { title: 'STT', key: 'stt', width: 50, align: 'center' as const, render: (_: unknown, __: VienChuc, i: number) => i + 1 },
-          { title: 'Họ và tên', key: 'ten', width: 200, render: (_: unknown, v: VienChuc) => `${v.ho} ${v.ten}` },
-          { title: 'Mã ngạch', key: 'ngach', width: 100, render: (_: unknown, v: VienChuc) => <Text type="secondary" style={{ fontSize: 13 }}>{cd.ma(v.chucDanhId) ?? '-'}</Text> },
-          { title: 'Nhiệm vụ chính', dataIndex: 'nhiemVuChinh', key: 'nv', width: 180, ellipsis: true },
-          { title: 'Trình độ chuyên môn', dataIndex: 'trinhDoChuyenMon', key: 'td', width: 180, ellipsis: true },
+          // Bấm tiêu đề cột để sắp xếp
+          { title: 'Họ và tên', key: 'ten', width: 200, sorter: (a: VienChuc, b: VienChuc) => a.ten.localeCompare(b.ten, 'vi') || a.ho.localeCompare(b.ho, 'vi'), render: (_: unknown, v: VienChuc) => `${v.ho} ${v.ten}` },
+          { title: 'Mã ngạch', key: 'ngach', width: 110, sorter: (a: VienChuc, b: VienChuc) => (cd.ma(a.chucDanhId) ?? '').localeCompare(cd.ma(b.chucDanhId) ?? ''), render: (_: unknown, v: VienChuc) => <Text type="secondary" style={{ fontSize: 13 }}>{cd.ma(v.chucDanhId) ?? '-'}</Text> },
+          { title: 'Nhiệm vụ chính', dataIndex: 'nhiemVuChinh', key: 'nv', width: 190, ellipsis: true, sorter: (a: VienChuc, b: VienChuc) => (a.nhiemVuChinh ?? '').localeCompare(b.nhiemVuChinh ?? '', 'vi') },
+          { title: 'Trình độ chuyên môn', dataIndex: 'trinhDoChuyenMon', key: 'td', width: 190, ellipsis: true, sorter: (a: VienChuc, b: VienChuc) => (a.trinhDoChuyenMon ?? '').localeCompare(b.trinhDoChuyenMon ?? '', 'vi') },
           {
-            title: laMN ? 'Nhóm, lớp phụ trách' : 'Môn giảng dạy', key: 'mon', width: laMN ? 330 : 200,
+            title: laMN ? 'Nhóm, lớp phụ trách' : 'Môn giảng dạy', key: 'mon', width: laMN ? 330 : 220,
+            // Chưa phân công xếp cuối khi sắp tăng dần
+            sorter: (a: VienChuc, b: VienChuc) => (hopLe(a.monDay) ? tenMonDay(a.monDay)! : '￿').localeCompare(hopLe(b.monDay) ? tenMonDay(b.monDay)! : '￿', 'vi'),
             render: (_: unknown, v: VienChuc) => {
               const goiYMon = !hopLe(v.monDay) ? goiYMonDay(v, cap) : undefined
               if (!coTheSua) return hopLe(v.monDay) ? tenMonDay(v.monDay) : <Tag color="warning">Chưa phân công</Tag>

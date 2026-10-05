@@ -17,7 +17,7 @@ import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/
 import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen, toUpperName } from '@/utils/helpers'
 import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
-import { CONG_VIEC, NHOM_VI_TRI } from '@/utils/nhomViTri'
+import { CONG_VIEC, NHOM_VI_TRI, laToTruongNuoiDuong } from '@/utils/nhomViTri'
 import { MON_GIANG_DAY, laCapHoc } from '@/utils/dinhMuc'
 import { chonBanDangHuong, hoPhuCap, nhomTheoLoai } from '@/utils/phuCapDangHuong'
 import { ngayHopLe, tinhNgayNangTiep } from '@/utils/nangLuong'
@@ -209,6 +209,13 @@ export default function VienChucFormPage() {
 
   const watchDonViId = Form.useWatch('donViId', form)
   const watchChucVu = Form.useWatch('chucVu', form)
+  const watchCongViec = Form.useWatch('congViec', form)
+  const watchNhiemVu = Form.useWatch('nhiemVuChinh', form) as string | undefined
+  // Tổ trưởng, tổ phó tổ nuôi dưỡng: không hưởng PC chức vụ - không tự thêm, kế toán được gỡ dòng đã ghi nhầm
+  const cdDangChon = chucDanhs.find((c) => c.id === watchChucDanhIdRaw)
+  const toNuoiDuong = laToTruongNuoiDuong(
+    { vtvl: watchVtvl, chucVu: watchChucVu, congViec: watchCongViec, nhiemVuChinh: watchNhiemVu }, cdDangChon?.ten, cdDangChon?.nhom,
+  )
   // Tài khoản trường không có ô Đơn vị → lấy trường của tài khoản
   const loaiTruongForm = donVis.find((d) => d.id === (watchDonViId ?? scopeDonViId ?? vc?.donViId))?.loai
   const monOptions = laCapHoc(loaiTruongForm) ? MON_GIANG_DAY[loaiTruongForm].map((m) => ({ value: m.ma, label: m.ten })) : []
@@ -217,9 +224,9 @@ export default function VienChucFormPage() {
     const dv = donVis.find((d) => d.id === watchDonViId)
     if (!dv || !dv.soLop || dv.loai === 'OTHER') return null
     const hang = getHangTruong(dv.loai as LoaiDonVi, dv.soLop)
-    const heSo = getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, hang, watchChucVu as ChucVu)
+    const heSo = toNuoiDuong ? 0 : getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, hang, watchChucVu as ChucVu)
     return { hang, heSo, loai: dv.loai }
-  }, [watchDonViId, watchChucVu, donVis])
+  }, [watchDonViId, watchChucVu, donVis, toNuoiDuong])
 
   // ── Bảo lưu phụ cấp chức vụ khi sắp xếp (NĐ 178/2024, NĐ 67/2025) ──
   const pcChucVuId = loaiPhuCaps.find((p) => p.ma === 'PC_CHUC_VU')?.id
@@ -249,7 +256,7 @@ export default function VienChucFormPage() {
       const khac = ds.filter((x) => !x.startsWith(`${key}|`))
       return noiDung ? [...khac, `${key}|${noiDung}`] : khac
     })
-  const dongDaCoDb = (pc: any) => khoaPhuCap && !!pc?.id
+  const dongDaCoDb = (pc: any) => khoaPhuCap && !!pc?.id && !(toNuoiDuong && pc.loaiPhuCapId === pcChucVuId)
 
   useEffect(() => {
     if (!isEdit || !vc?.chucVu || watchChucVu || !pcChucVuId) { ghiCanLapPhieu('boCv', null); return }
@@ -261,6 +268,15 @@ export default function VienChucFormPage() {
     }
     form.setFieldValue('phuCaps', current.filter((pc) => pc?.loaiPhuCapId !== pcChucVuId))
   }, [watchChucVu, pcChucVuId])
+
+  // Vừa chuyển sang tổ trưởng/tổ phó tổ nuôi dưỡng: bỏ dòng PC chức vụ hệ thống vừa tự thêm (chưa lưu)
+  useEffect(() => {
+    if (!toNuoiDuong || !pcChucVuId) return
+    const current: any[] = form.getFieldValue('phuCaps') || []
+    if (current.some((pc) => pc?.loaiPhuCapId === pcChucVuId && !pc.id)) {
+      form.setFieldValue('phuCaps', current.filter((pc) => !(pc?.loaiPhuCapId === pcChucVuId && !pc.id)))
+    }
+  }, [toNuoiDuong, pcChucVuId])
 
   useEffect(() => {
     if (!pccvInfo || pccvInfo.heSo <= 0) return
@@ -388,6 +404,28 @@ export default function VienChucFormPage() {
    */
   const ghiPhuCap = (vcId: string, rows: any[], macDinhNgay: string, mocPctn?: string) => {
     if (khoaPhuCap) {
+      // Ngoại lệ: tổ trưởng, tổ phó tổ nuôi dưỡng không hưởng PC chức vụ - kế toán gỡ hoặc sửa được bản đã ghi
+      if (toNuoiDuong && pcChucVuId) {
+        for (const p of luongState.getActivePhuCaps(vcId).filter((x) => x.loaiPhuCapId === pcChucVuId)) {
+          const dong = rows.find((r) => r?.id === p.id)
+          if (dong && (dong.giaTri || 0) === p.giaTri) continue
+          if (dong && dong.giaTri > 0) {
+            luongState.addPhuCap({
+              vienChucId: vcId, loaiPhuCapId: pcChucVuId, giaTri: dong.giaTri,
+              ngayHieuLuc: dong.ngayHieuLuc ? dayjs(dong.ngayHieuLuc).format('YYYY-MM-DD') : macDinhNgay,
+              isActive: true, createdBy: currentUser?.id ?? 'system',
+            })
+          } else {
+            luongState.deactivatePhuCap(p.id)
+          }
+          luongState.addLichSuBienDong({
+            vienChucId: vcId, loai: 'PHU_CAP', truongThayDoi: 'PC chức vụ (tổ trưởng/tổ phó tổ nuôi dưỡng)',
+            giaTriCu: String(p.giaTri).replace('.', ','),
+            giaTriMoi: dong && dong.giaTri > 0 ? String(dong.giaTri).replace('.', ',') : 'Gỡ - không hưởng PC chức vụ',
+            ngayThayDoi: dayjs().format('YYYY-MM-DD'), nguoiThayDoiId: currentUser?.id ?? 'system',
+          })
+        }
+      }
       // Tài khoản trường: chỉ ghi phụ cấp loại (nhóm) người này chưa từng có; bản đã có giữ nguyên
       const dangCo = new Set(luongState.getActivePhuCaps(vcId).map((p) => hoPhuCap(p.loaiPhuCapId, loaiPhuCaps)))
       for (const pc of rows) {
@@ -879,7 +917,17 @@ export default function VienChucFormPage() {
               </div>
             </Col>
           )}
-          {pccvInfo && (
+          {toNuoiDuong ? (
+            <Col xs={24}>
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
+                title="Tổ trưởng, tổ phó tổ nuôi dưỡng không hưởng phụ cấp chức vụ (TT 33/2005 chỉ áp dụng cho tổ chuyên môn, tổ văn phòng)"
+                description="Hệ thống không tự thêm PC chức vụ. Nếu hồ sơ đang có dòng PC chức vụ ghi nhầm, bấm nút xoá ở dòng đó rồi Lưu - việc gỡ được ghi vào lịch sử biến động."
+              />
+            </Col>
+          ) : pccvInfo && pccvInfo.heSo > 0 && (
             <Col xs={24}>
               <Alert
                 type="info"
@@ -1177,7 +1225,10 @@ export default function VienChucFormPage() {
                           disabled={khoaDong}
                           // Dòng khai mới: không cho chọn loại người này đã có (đổi mức phải qua phiếu)
                           options={khoaPhuCap && !khoaDong
-                            ? phuCapOptions.map((o) => ({ ...o, disabled: daCoHo(o.value), label: daCoHo(o.value) ? `${o.label} (đã có - đổi qua phiếu)` : o.label }))
+                            ? phuCapOptions.map((o) => {
+                                const khoa = daCoHo(o.value) && !(toNuoiDuong && o.value === pcChucVuId)
+                                return { ...o, disabled: khoa, label: khoa ? `${o.label} (đã có - đổi qua phiếu)` : o.label }
+                              })
                             : phuCapOptions}
                           placeholder="Chọn loại phụ cấp"
                           showSearch

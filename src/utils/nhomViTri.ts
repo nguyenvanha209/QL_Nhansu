@@ -133,3 +133,16 @@ export function doanCongViec(nhiemVuChinh?: string, tenChucDanh?: string): CongV
   }
   return undefined
 }
+
+/**
+ * Tổ trưởng, tổ phó tổ nuôi dưỡng (nhân viên cấp dưỡng, nấu ăn ở trường mầm non) không hưởng phụ cấp chức vụ
+ * TT 33/2005 - phụ cấp này chỉ cho tổ trưởng, tổ phó tổ chuyên môn / tổ văn phòng. Hệ thống không tự thêm,
+ * và tài khoản trường được gỡ dòng PC chức vụ đã ghi nhầm.
+ */
+export function laToTruongNuoiDuong(
+  vc: Pick<VienChuc, 'vtvl' | 'chucVu' | 'congViec' | 'nhiemVuChinh'>, tenChucDanh?: string, nhomChucDanh?: NhomChucDanh,
+): boolean {
+  if (vc.chucVu !== 'TTCM' && vc.chucVu !== 'TPCM') return false
+  if (nhomCoBan(vc, nhomChucDanh) !== 'NHAN_VIEN') return false
+  return (vc.congViec ?? doanCongViec(vc.nhiemVuChinh, tenChucDanh)) === 'NAU_AN'
+}

@@ -12,11 +12,12 @@ import { exportToExcel } from '@/utils/exportExcel'
 import { ngayHopLe, tinhNgayNangTiep, laBacCuoi } from '@/utils/nangLuong'
 import { chonBanDangHuong, nhomTheoLoai } from '@/utils/phuCapDangHuong'
 import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
+import { laToTruongNuoiDuong } from '@/utils/nhomViTri'
 
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'NANG_LUONG_LECH' | 'PCCV_KHONG_CHUC_VU' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'NANG_LUONG_LECH' | 'PCCV_KHONG_CHUC_VU' | 'PCCV_TO_NUOI_DUONG' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -28,6 +29,7 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   PC_TRUNG: { ten: 'Phụ cấp ghi trùng', mau: 'red' },
   NANG_LUONG_LECH: { ten: 'Mốc / ngày nâng lương sai', mau: 'orange' },
   PCCV_KHONG_CHUC_VU: { ten: 'Có PC chức vụ nhưng không có chức vụ', mau: 'magenta' },
+  PCCV_TO_NUOI_DUONG: { ten: 'Tổ nuôi dưỡng đang hưởng PC chức vụ', mau: 'magenta' },
   CHUC_VU_LECH_VTVL: { ten: 'Chức vụ lệch vị trí việc làm', mau: 'magenta' },
   BL_PCCV_SAP_HET: { ten: 'Sắp hết bảo lưu PC chức vụ', mau: 'geekblue' },
   THIEU_CONG_VIEC: { ten: 'Chưa chọn công việc cụ thể', mau: 'cyan' },
@@ -144,6 +146,10 @@ export default function RaSoatNgachBacPage() {
       if (pccv && pccv.giaTri > 0 && !vc.chucVu && !dangBaoLuuPccv(vc)) {
         loi.push('PCCV_KHONG_CHUC_VU')
         chiTiet.push(`Đang hưởng PC chức vụ ${pccv.giaTri} nhưng hồ sơ không ghi chức vụ - khai chức vụ (tổ trưởng, tổ phó…) hoặc gỡ phụ cấp nếu đã thôi chức vụ`)
+      }
+      if (pccv && pccv.giaTri > 0 && !dangBaoLuuPccv(vc) && laToTruongNuoiDuong(vc, cd?.ten, cd?.nhom)) {
+        loi.push('PCCV_TO_NUOI_DUONG')
+        chiTiet.push(`Tổ trưởng/tổ phó tổ nuôi dưỡng không hưởng PC chức vụ (TT 33/2005 chỉ cho tổ chuyên môn, tổ văn phòng) nhưng đang ghi ${pccv.giaTri} - kế toán mở hồ sơ, xoá dòng PC chức vụ rồi Lưu`)
       }
       // VD Phó HT đã về làm giáo viên (VTVL Giáo viên) nhưng còn giữ chức vụ P.HT → vẫn hưởng PCCV Phó HT
       const laChucVuQuanLy = vc.chucVu === 'HT' || vc.chucVu === 'P.HT'

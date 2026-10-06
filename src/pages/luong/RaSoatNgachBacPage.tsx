@@ -20,7 +20,7 @@ import { CHUC_VU_LABELS } from '@/types/vienChuc'
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'NANG_LUONG_LECH' | 'PCCV_KHONG_CHUC_VU' | 'PCCV_LECH_CHUC_VU' | 'PCCV_TO_NUOI_DUONG' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'NANG_LUONG_LECH' | 'PCCV_KHONG_CHUC_VU' | 'PCCV_LECH_CHUC_VU' | 'PCCV_GHI_MUC_BAO_LUU' | 'BL_PCCV_KHAI_SAI' | 'PCCV_TO_NUOI_DUONG' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -33,6 +33,8 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   NANG_LUONG_LECH: { ten: 'Mốc / ngày nâng lương sai', mau: 'orange' },
   PCCV_KHONG_CHUC_VU: { ten: 'Có PC chức vụ nhưng không có chức vụ', mau: 'magenta' },
   PCCV_LECH_CHUC_VU: { ten: 'PC chức vụ khác bảng hệ số', mau: 'red' },
+  PCCV_GHI_MUC_BAO_LUU: { ten: 'PC chức vụ đang ghi mức bảo lưu', mau: 'gold' },
+  BL_PCCV_KHAI_SAI: { ten: 'Bảo lưu PC chức vụ khai chưa đúng', mau: 'volcano' },
   PCCV_TO_NUOI_DUONG: { ten: 'Tổ nuôi dưỡng đang hưởng PC chức vụ', mau: 'magenta' },
   CHUC_VU_LECH_VTVL: { ten: 'Chức vụ lệch vị trí việc làm', mau: 'magenta' },
   BL_PCCV_SAP_HET: { ten: 'Sắp hết bảo lưu PC chức vụ', mau: 'geekblue' },
@@ -157,13 +159,31 @@ export default function RaSoatNgachBacPage() {
       const dv = donViTheoId.get(vc.donViId)
       let pccvDung: number | undefined
       let pccvGoiY = ''
-      if (vc.chucVu && dv?.soLop && dv.loai !== 'OTHER' && !laToTruongNuoiDuong(vc, cd?.ten, cd?.nhom)) {
-        const dung = getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, getHangTruong(dv.loai as LoaiDonVi, dv.soLop), vc.chucVu)
-        if (dung > 0 && r2(pccv?.giaTri ?? 0) !== r2(dung)) {
+      const bl = vc.baoLuuPccv
+      const coHang = !!dv?.soLop && dv.loai !== 'OTHER'
+      const theoCv = vc.chucVu && coHang && !laToTruongNuoiDuong(vc, cd?.ten, cd?.nhom)
+        ? getPhuCapChucVuHeSo(dv!.loai as LoaiDonVi, getHangTruong(dv!.loai as LoaiDonVi, dv!.soLop!), vc.chucVu)
+        : 0
+      // Bảo lưu khai ngược / không có tác dụng (chức vụ cũ trùng chức vụ hiện tại, mức bảo lưu không cao hơn mức hiện tại)
+      if (bl && (bl.chucVuCu === vc.chucVu || (theoCv > 0 && r2(bl.heSo) <= r2(theoCv)))) {
+        loi.push('BL_PCCV_KHAI_SAI')
+        chiTiet.push(`Bảo lưu đang ghi chức vụ cũ ${CHUC_VU_LABELS[bl.chucVuCu] ?? (bl.chucVuCu || 'trống')}, hệ số ${String(bl.heSo).replace('.', ',')}${bl.chucVuCu === vc.chucVu ? ' - trùng chức vụ hiện tại' : ` - không cao hơn PC chức vụ hiện tại ${String(theoCv).replace('.', ',')}, không có tác dụng`}`)
+        pccvGoiY = 'Mở hồ sơ, mục Bảo lưu PC chức vụ: chọn đúng Chức vụ cũ (trước sắp xếp) và Hệ số PC chức vụ cũ theo quyết định rồi Lưu'
+      }
+      // Đã khai bảo lưu đúng nhưng dòng PC chức vụ vẫn để mức cũ: lương hiện vẫn đúng, chỉ cần đưa dòng PC chức vụ về mức theo chức vụ
+      const ghiMucBaoLuu = !!bl && dangBaoLuuPccv(vc) && !!pccv && theoCv > 0 && r2(pccv.giaTri) === r2(bl.heSo) && r2(pccv.giaTri) > r2(theoCv)
+      if (ghiMucBaoLuu) {
+        loi.push('PCCV_GHI_MUC_BAO_LUU')
+        chiTiet.push(`Dòng PC chức vụ đang ghi mức bảo lưu ${String(pccv!.giaTri).replace('.', ',')} (mức theo chức vụ hiện tại ${String(theoCv).replace('.', ',')}). Lương hiện vẫn đúng vì đã khai bảo lưu đến ${formatDate(bl!.denNgay)}`)
+        pccvGoiY = pccvGoiY || 'Không cần khai lại: mở hồ sơ, trong mục Bảo lưu PC chức vụ bấm "Đưa về mức theo chức vụ" rồi Lưu - để khi hết bảo lưu lương tự về đúng mức'
+      }
+      if (theoCv > 0 && !ghiMucBaoLuu) {
+        const dung = theoCv
+        if (r2(pccv?.giaTri ?? 0) !== r2(dung)) {
           pccvDung = dung
           loi.push('PCCV_LECH_CHUC_VU')
-          chiTiet.push(`Chức vụ ${CHUC_VU_LABELS[vc.chucVu] ?? vc.chucVu} (hạng ${getHangTruong(dv.loai as LoaiDonVi, dv.soLop)}): PC chức vụ đang ghi ${pccv ? String(pccv.giaTri).replace('.', ',') + ' từ ' + formatDate(pccv.ngayHieuLuc) : 'chưa có'}, bảng hệ số trên phần mềm là ${String(dung).replace('.', ',')}${dangBaoLuuPccv(vc) ? ' (đang có bảo lưu PCCV)' : ''}`)
-          pccvGoiY = 'Kế toán đối chiếu quyết định bổ nhiệm, phân công: nếu đã đổi chức vụ thì mở hồ sơ, bấm "Áp dụng mức theo chức vụ", chọn ngày hiệu lực theo quyết định rồi Lưu; nếu mức đang ghi đúng theo quyết định (bảo lưu do sắp xếp, quyết định riêng) hoặc chức vụ ghi sai thì sửa chức vụ / khai bảo lưu, hoặc báo Phòng VHXH'
+          chiTiet.push(`Chức vụ ${CHUC_VU_LABELS[vc.chucVu!] ?? vc.chucVu} (hạng ${getHangTruong(dv!.loai as LoaiDonVi, dv!.soLop!)}): PC chức vụ đang ghi ${pccv ? String(pccv.giaTri).replace('.', ',') + ' từ ' + formatDate(pccv.ngayHieuLuc) : 'chưa có'}, bảng hệ số trên phần mềm là ${String(dung).replace('.', ',')}${dangBaoLuuPccv(vc) ? ' (đang có bảo lưu PCCV)' : ''}`)
+          pccvGoiY = pccvGoiY || 'Kế toán đối chiếu quyết định bổ nhiệm, phân công: nếu đã đổi chức vụ thì mở hồ sơ, bấm "Áp dụng mức theo chức vụ", chọn ngày hiệu lực theo quyết định rồi Lưu; nếu là mức cũ được bảo lưu do sắp xếp thì bật mục Bảo lưu PC chức vụ (mức đang ghi được điền sẵn, không phải nhập lại); chức vụ ghi sai thì sửa chức vụ; quyết định riêng thì báo Phòng VHXH'
         }
       }
       if (pccv && pccv.giaTri > 0 && !vc.chucVu && !dangBaoLuuPccv(vc)) {

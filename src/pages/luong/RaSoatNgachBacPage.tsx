@@ -13,11 +13,14 @@ import { ngayHopLe, tinhNgayNangTiep, laBacCuoi } from '@/utils/nangLuong'
 import { chonBanDangHuong, nhomTheoLoai } from '@/utils/phuCapDangHuong'
 import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
 import { laToTruongNuoiDuong } from '@/utils/nhomViTri'
+import { getHangTruong, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
+import type { LoaiDonVi } from '@/types/donVi'
+import { CHUC_VU_LABELS } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
 
 // Các lỗi dữ liệu lương cần trường rà soát, xếp theo mức độ ảnh hưởng tới bảng lương
-type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'NANG_LUONG_LECH' | 'PCCV_KHONG_CHUC_VU' | 'PCCV_TO_NUOI_DUONG' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
+type LoaiLech = 'THIEU_NGACH' | 'THIEU_LUONG' | 'BAC_VUOT' | 'HE_SO_LECH' | 'NGACH_KHAC' | 'NHIEU_BAN_GHI_LUONG' | 'PC_TRUNG' | 'NANG_LUONG_LECH' | 'PCCV_KHONG_CHUC_VU' | 'PCCV_LECH_CHUC_VU' | 'PCCV_TO_NUOI_DUONG' | 'CHUC_VU_LECH_VTVL' | 'BL_PCCV_SAP_HET' | 'THIEU_CONG_VIEC' | 'TEN_LOI_FONT'
 
 const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   THIEU_NGACH: { ten: 'Chưa có mã ngạch', mau: 'red' },
@@ -29,6 +32,7 @@ const LECH_LABELS: Record<LoaiLech, { ten: string; mau: string }> = {
   PC_TRUNG: { ten: 'Phụ cấp ghi trùng', mau: 'red' },
   NANG_LUONG_LECH: { ten: 'Mốc / ngày nâng lương sai', mau: 'orange' },
   PCCV_KHONG_CHUC_VU: { ten: 'Có PC chức vụ nhưng không có chức vụ', mau: 'magenta' },
+  PCCV_LECH_CHUC_VU: { ten: 'PC chức vụ khác bảng hệ số', mau: 'red' },
   PCCV_TO_NUOI_DUONG: { ten: 'Tổ nuôi dưỡng đang hưởng PC chức vụ', mau: 'magenta' },
   CHUC_VU_LECH_VTVL: { ten: 'Chức vụ lệch vị trí việc làm', mau: 'magenta' },
   BL_PCCV_SAP_HET: { ten: 'Sắp hết bảo lưu PC chức vụ', mau: 'geekblue' },
@@ -55,6 +59,10 @@ interface DongRaSoat {
   loi: LoaiLech[]
   chiTiet: string[]
   goiY: string
+  /** PC chức vụ: mức đang ghi (bảng lương đang dùng) và mức đúng theo chức vụ, hạng trường */
+  pccvDang?: number
+  pccvDung?: number
+  chucVu?: string
 }
 
 const r2 = (n: number) => Math.round(n * 100) / 100
@@ -75,6 +83,7 @@ export default function RaSoatNgachBacPage() {
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort((a, b) => a.ten.localeCompare(b.ten, 'vi')), [allDonVis])
   const tenDonVi = useMemo(() => new Map(allDonVis.map((d) => [d.id, d.ten])), [allDonVis])
+  const donViTheoId = useMemo(() => new Map(allDonVis.map((d) => [d.id, d])), [allDonVis])
 
   const rows = useMemo<DongRaSoat[]>(() => {
     const cdTheoId = new Map(chucDanhs.map((c) => [c.id, c]))
@@ -142,7 +151,21 @@ export default function RaSoatNgachBacPage() {
         )
       }
       // Có dòng PC chức vụ mà hồ sơ không ghi chức vụ và không có bảo lưu còn hạn → dễ là hưởng sót sau khi thôi chức vụ
-      const pccv = pcChucVuId ? phuCaps.find((p) => p.vienChucId === vc.id && p.isActive && p.loaiPhuCapId === pcChucVuId) : undefined
+      // Lấy đúng bản bảng lương đang dùng (ngày hiệu lực mới nhất) khi còn bản trùng
+      const pccv = pcChucVuId ? chonBanDangHuong((pcDangHuong.get(vc.id) ?? []).filter((p) => p.loaiPhuCapId === pcChucVuId)) : undefined
+      // Mức PC chức vụ theo chức vụ và hạng trường (TT 33/2005) - bảng lương và thẻ phụ cấp phải dùng đúng mức này
+      const dv = donViTheoId.get(vc.donViId)
+      let pccvDung: number | undefined
+      let pccvGoiY = ''
+      if (vc.chucVu && dv?.soLop && dv.loai !== 'OTHER' && !laToTruongNuoiDuong(vc, cd?.ten, cd?.nhom)) {
+        const dung = getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, getHangTruong(dv.loai as LoaiDonVi, dv.soLop), vc.chucVu)
+        if (dung > 0 && r2(pccv?.giaTri ?? 0) !== r2(dung)) {
+          pccvDung = dung
+          loi.push('PCCV_LECH_CHUC_VU')
+          chiTiet.push(`Chức vụ ${CHUC_VU_LABELS[vc.chucVu] ?? vc.chucVu} (hạng ${getHangTruong(dv.loai as LoaiDonVi, dv.soLop)}): PC chức vụ đang ghi ${pccv ? String(pccv.giaTri).replace('.', ',') + ' từ ' + formatDate(pccv.ngayHieuLuc) : 'chưa có'}, bảng hệ số trên phần mềm là ${String(dung).replace('.', ',')}${dangBaoLuuPccv(vc) ? ' (đang có bảo lưu PCCV)' : ''}`)
+          pccvGoiY = 'Kế toán đối chiếu quyết định bổ nhiệm, phân công: nếu đã đổi chức vụ thì mở hồ sơ, bấm "Áp dụng mức theo chức vụ", chọn ngày hiệu lực theo quyết định rồi Lưu; nếu mức đang ghi đúng theo quyết định (bảo lưu do sắp xếp, quyết định riêng) hoặc chức vụ ghi sai thì sửa chức vụ / khai bảo lưu, hoặc báo Phòng VHXH'
+        }
+      }
       if (pccv && pccv.giaTri > 0 && !vc.chucVu && !dangBaoLuuPccv(vc)) {
         loi.push('PCCV_KHONG_CHUC_VU')
         chiTiet.push(`Đang hưởng PC chức vụ ${pccv.giaTri} nhưng hồ sơ không ghi chức vụ - khai chức vụ (tổ trưởng, tổ phó…) hoặc gỡ phụ cấp nếu đã thôi chức vụ`)
@@ -236,11 +259,12 @@ export default function RaSoatNgachBacPage() {
         soBac: bang.length || undefined,
         loi,
         chiTiet,
-        goiY: khop.length ? `Hệ số ${hs!.heSo.toFixed(2)} khớp ${khop.join('; ')}` : '',
+        goiY: [khop.length ? `Hệ số ${hs!.heSo.toFixed(2)} khớp ${khop.join('; ')}` : '', pccvGoiY].filter(Boolean).join('. '),
+        pccvDang: pccv?.giaTri, pccvDung, chucVu: vc.chucVu,
       })
     }
     return ketQua
-  }, [vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, chucDanhs, bacLuongs, scopeDonViId, tenDonVi])
+  }, [vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, chucDanhs, bacLuongs, scopeDonViId, tenDonVi, donViTheoId])
 
   const data = useMemo(() => rows.filter((r) =>
     (!filterDonVi || r.donViId === filterDonVi)
@@ -319,7 +343,7 @@ export default function RaSoatNgachBacPage() {
 
   return (
     <Card>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
         <Title level={4} style={{ margin: 0 }}>Rà soát ngạch - bậc - hệ số ({data.length})</Title>
         <Button icon={<FileExcelOutlined />} onClick={xuatExcel} disabled={!data.length}>Xuất Excel</Button>
       </div>

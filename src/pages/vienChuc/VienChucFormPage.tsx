@@ -22,7 +22,7 @@ import { MON_GIANG_DAY, laCapHoc } from '@/utils/dinhMuc'
 import { chonBanDangHuong, hoPhuCap, nhomTheoLoai } from '@/utils/phuCapDangHuong'
 import { ngayHopLe, tinhNgayNangTiep } from '@/utils/nangLuong'
 import type { PhuCapVienChuc } from '@/types/luong'
-import { tinhNgayHetBaoLuu, tenHienThiLoaiPhuCap, TEN_PCCV_BAO_LUU, TEN_HS_CHENH_LECH_BAO_LUU } from '@/utils/baoLuuPccv'
+import { tinhNgayHetBaoLuu, tenHienThiLoaiPhuCap, TEN_PCCV_BAO_LUU, TEN_HS_CHENH_LECH_BAO_LUU, dangBaoLuuPccv } from '@/utils/baoLuuPccv'
 import { lamMoiNgay } from '@/lib/supabase'
 import { formatDate } from '@/utils/helpers'
 
@@ -256,7 +256,12 @@ export default function VienChucFormPage() {
       const khac = ds.filter((x) => !x.startsWith(`${key}|`))
       return noiDung ? [...khac, `${key}|${noiDung}`] : khac
     })
-  const dongDaCoDb = (pc: any) => khoaPhuCap && !!pc?.id && !(toNuoiDuong && pc.loaiPhuCapId === pcChucVuId)
+  // PC chức vụ là mức theo chức vụ (TT 33/2005), không phải mức tuỳ chọn: khi chức vụ vừa đổi, hoặc mức đang ghi lệch với
+  // chức vụ hiện tại, dòng PC chức vụ mở khoá cho tài khoản trường và tự lấy mức theo chức vụ (ghi lịch sử khi lưu).
+  // Đang hưởng bảo lưu PCCV thì giữ nguyên - mức bảo lưu xử lý riêng ở mục Bảo lưu.
+  const pccvLech = isEdit && !!watchChucVu && !!pccvInfo && pccvInfo.heSo > 0 && pccvDangHuong !== pccvInfo.heSo && !dangBaoLuuPccv(vc ?? {})
+  const moKhoaPccv = toNuoiDuong || doiChucVu || pccvLech
+  const dongDaCoDb = (pc: any) => khoaPhuCap && !!pc?.id && !(moKhoaPccv && pc.loaiPhuCapId === pcChucVuId)
 
   useEffect(() => {
     if (!isEdit || !vc?.chucVu || watchChucVu || !pcChucVuId) { ghiCanLapPhieu('boCv', null); return }
@@ -292,6 +297,8 @@ export default function VienChucFormPage() {
     }
     if (idx >= 0) {
       if (current[idx].giaTri === pccvInfo.heSo) return
+      // Mới mở hồ sơ (chưa đổi chức vụ): không tự sửa mức đang ghi - chỉ cảnh báo, người dùng bấm "Áp dụng mức theo chức vụ"
+      if (current[idx].id && !doiChucVu) return
       const updated = [...current]
       // Mức mới tính từ hôm nay, không mang theo ngày hiệu lực của mức cũ
       updated[idx] = { ...updated[idx], giaTri: pccvInfo.heSo, ngayHieuLuc: dayjs() }
@@ -300,6 +307,14 @@ export default function VienChucFormPage() {
       form.setFieldValue('phuCaps', [...current, { loaiPhuCapId: pcChucVu.id, giaTri: pccvInfo.heSo, ngayHieuLuc: dayjs() }])
     }
   }, [pccvInfo, loaiPhuCaps])
+
+  const apDungPccvTheoChucVu = () => {
+    if (!pccvInfo || !pcChucVuId) return
+    const current: any[] = form.getFieldValue('phuCaps') || []
+    const idx = current.findIndex((pc) => pc?.loaiPhuCapId === pcChucVuId)
+    const dongMoi = { loaiPhuCapId: pcChucVuId, giaTri: pccvInfo.heSo, ngayHieuLuc: dayjs() }
+    form.setFieldValue('phuCaps', idx >= 0 ? current.map((pc, i) => (i === idx ? { ...pc, ...dongMoi } : pc)) : [...current, dongMoi])
+  }
 
   // Nhân viên không hưởng PC thâm niên → gỡ dòng phụ cấp này nếu đang có
   const watchPhuCaps = Form.useWatch('phuCaps', form) as { loaiPhuCapId?: string }[] | undefined
@@ -405,7 +420,7 @@ export default function VienChucFormPage() {
   const ghiPhuCap = (vcId: string, rows: any[], macDinhNgay: string, mocPctn?: string) => {
     if (khoaPhuCap) {
       // Ngoại lệ: tổ trưởng, tổ phó tổ nuôi dưỡng không hưởng PC chức vụ - kế toán gỡ hoặc sửa được bản đã ghi
-      if (toNuoiDuong && pcChucVuId) {
+      if (moKhoaPccv && pcChucVuId) {
         for (const p of luongState.getActivePhuCaps(vcId).filter((x) => x.loaiPhuCapId === pcChucVuId)) {
           const dong = rows.find((r) => r?.id === p.id)
           if (dong && (dong.giaTri || 0) === p.giaTri) continue
@@ -419,7 +434,8 @@ export default function VienChucFormPage() {
             luongState.deactivatePhuCap(p.id)
           }
           luongState.addLichSuBienDong({
-            vienChucId: vcId, loai: 'PHU_CAP', truongThayDoi: 'PC chức vụ (tổ trưởng/tổ phó tổ nuôi dưỡng)',
+            vienChucId: vcId, loai: 'PHU_CAP',
+            truongThayDoi: toNuoiDuong ? 'PC chức vụ (tổ trưởng/tổ phó tổ nuôi dưỡng)' : `PC chức vụ theo chức vụ ${tenChucVu(watchChucVu)}`,
             giaTriCu: String(p.giaTri).replace('.', ','),
             giaTriMoi: dong && dong.giaTri > 0 ? String(dong.giaTri).replace('.', ',') : 'Gỡ - không hưởng PC chức vụ',
             ngayThayDoi: dayjs().format('YYYY-MM-DD'), nguoiThayDoiId: currentUser?.id ?? 'system',
@@ -927,16 +943,31 @@ export default function VienChucFormPage() {
                 description="Hệ thống không tự thêm PC chức vụ. Nếu hồ sơ đang có dòng PC chức vụ ghi nhầm, bấm nút xoá ở dòng đó rồi Lưu - việc gỡ được ghi vào lịch sử biến động."
               />
             </Col>
-          ) : pccvInfo && pccvInfo.heSo > 0 && (
-            <Col xs={24}>
-              <Alert
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-                title={`Đã tự động thêm PC Chức vụ (hệ số +${pccvInfo.heSo.toFixed(2)} - ${HANG_TRUONG_LABELS[pccvInfo.hang]}, TT 33/2005) vào tổng hệ số lương`}
-              />
-            </Col>
-          )}
+          ) : pccvInfo && pccvInfo.heSo > 0 && (() => {
+            const dongCv = (watchPhuCaps ?? []).find((pc) => pc?.loaiPhuCapId === pcChucVuId) as { giaTri?: number } | undefined
+            const khop = dongCv?.giaTri === pccvInfo.heSo
+            const theoQd = `PC chức vụ theo chức vụ ${tenChucVu(watchChucVu)} (${HANG_TRUONG_LABELS[pccvInfo.hang]}, TT 33/2005): hệ số ${String(pccvInfo.heSo).replace('.', ',')}`
+            return (
+              <Col xs={24}>
+                <Alert
+                  type={khop ? 'info' : 'warning'}
+                  showIcon
+                  style={{ marginBottom: 16 }}
+                  title={khop
+                    ? `${theoQd} - đã ghi ở mục Phụ cấp${pccvDangHuong !== pccvInfo.heSo && isEdit ? ` (đổi từ ${String(pccvDangHuong).replace('.', ',')}, ghi lịch sử khi Lưu)` : ''}`
+                    : `${theoQd} - mục Phụ cấp đang ghi ${dongCv ? String(dongCv.giaTri).replace('.', ',') : 'chưa có'}`}
+                  description={khop && pccvDangHuong !== pccvInfo.heSo && isEdit
+                    ? 'Kiểm tra ngày hiệu lực của dòng PC chức vụ (mặc định hôm nay - sửa theo ngày quyết định phân công) rồi bấm Lưu.'
+                    : !khop && !dongDaCoDb((watchPhuCaps ?? []).find((pc) => pc?.loaiPhuCapId === pcChucVuId))
+                      ? 'Nếu mức theo chức vụ là đúng (VD vừa đổi chức vụ), bấm "Áp dụng mức theo chức vụ", sửa ngày hiệu lực theo quyết định rồi Lưu. Trường hợp đang hưởng bảo lưu do sắp xếp thì khai ở mục Bảo lưu.'
+                      : undefined}
+                  action={!khop && !dongDaCoDb((watchPhuCaps ?? []).find((pc) => pc?.loaiPhuCapId === pcChucVuId))
+                    ? <Button size="small" onClick={apDungPccvTheoChucVu}>Áp dụng mức theo chức vụ</Button>
+                    : undefined}
+                />
+              </Col>
+            )
+          })()}
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="ngayVaoNganh" label="Ngày vào ngành" rules={[{ required: true }]}>
               <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />

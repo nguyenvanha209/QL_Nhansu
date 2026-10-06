@@ -32,6 +32,7 @@ import { tinhNgayNangTiep } from '@/utils/nangLuong'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { ChucDanhNgheNghiep, LoaiPhuCap } from '@/types/danhMuc'
 import { lamMoiNgay } from '@/lib/supabase'
+import { chonBanDangHuong, hoPhuCap } from '@/utils/phuCapDangHuong'
 import type { DonVi } from '@/types/donVi'
 
 const { Text, Title } = Typography
@@ -171,13 +172,14 @@ function readLuong(
   const heSoRec = heSos.find((h) => h.vienChucId === vcId && h.isActive)
   const mine = phuCaps.filter((p) => p.vienChucId === vcId && p.isActive)
 
+  // Còn bản trùng thì lấy đúng bản bảng lương đang dùng (ngày hiệu lực mới nhất) - giống thẻ Phụ cấp và Bảng tổng hợp lương
   const byMa = (ma: string) => {
     const loai = loaiPhuCaps.find((l) => l.ma === ma)
-    const rec = loai ? mine.find((p) => p.loaiPhuCapId === loai.id) : undefined
+    const rec = loai ? chonBanDangHuong(mine.filter((p) => p.loaiPhuCapId === loai.id)) : undefined
     return { loai, rec }
   }
   const uuDaiLoaiIds = new Set(loaiPhuCaps.filter((l) => l.ma.startsWith(PC_UU_DAI_PREFIX)).map((l) => l.id))
-  const udRec = mine.find((p) => uuDaiLoaiIds.has(p.loaiPhuCapId))
+  const udRec = chonBanDangHuong(mine.filter((p) => uuDaiLoaiIds.has(p.loaiPhuCapId)))
   const udLoai = udRec ? loaiPhuCaps.find((l) => l.id === udRec.loaiPhuCapId) : undefined
 
   const vk  = byMa(PC_VUOT_KHUNG)
@@ -773,6 +775,14 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
           if (op.giaTri !== undefined) patch.giaTri = op.giaTri
           if (op.ngayHieuLuc) patch.ngayHieuLuc = op.ngayHieuLuc
           updatePhuCap(op.pcId, patch)
+          // Bản trùng cùng loại còn hiệu lực sẽ lấn bản vừa sửa trên bảng lương → đóng lại
+          const goc = useLuongStore.getState().phuCapVienChucs.find((p) => p.id === op.pcId)
+          if (goc) {
+            const ho = hoPhuCap(goc.loaiPhuCapId, loaiPhuCaps)
+            for (const p of useLuongStore.getState().phuCapVienChucs) {
+              if (p.id !== goc.id && p.isActive && p.vienChucId === goc.vienChucId && hoPhuCap(p.loaiPhuCapId, loaiPhuCaps) === ho) deactivatePhuCap(p.id)
+            }
+          }
         } else if (op.action === 'add' && op.loaiPhuCapId) {
           addPhuCap({
             vienChucId: rec.vcId,

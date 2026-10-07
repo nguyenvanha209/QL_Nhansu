@@ -5,7 +5,7 @@ import {
   Statistic, Row, Col, Tooltip, Empty, Segmented, Badge, Checkbox, Drawer,
 } from 'antd'
 import {
-  SaveOutlined, DownloadOutlined, ArrowLeftOutlined, BulbOutlined, SearchOutlined, UndoOutlined, HistoryOutlined, TableOutlined,
+  SaveOutlined, DownloadOutlined, ArrowLeftOutlined, BankOutlined, BulbOutlined, SearchOutlined, UndoOutlined, HistoryOutlined, TableOutlined,
 } from '@ant-design/icons'
 import { xuatExcelA4 } from '@/utils/excelA4'
 import type { VungBang } from '@/utils/excelA4'
@@ -20,7 +20,8 @@ import type { VienChuc } from '@/types/vienChuc'
 import type { DonVi } from '@/types/donVi'
 import type { QuyMoTruong, QuyMoLichSu, NoiDungQuyMo } from '@/types/quyMo'
 import { layNoiDung, soSanhNoiDung, tomTatNoiDung } from '@/utils/quyMoLichSu'
-import { choGhiXongVaKiemTra } from '@/lib/supabase'
+import { choGhiXongVaKiemTra, lamMoiNgay } from '@/lib/supabase'
+import LichSuQuyMoDrawer from '@/pages/thongTinTruong/LichSuQuyMoDrawer'
 import { HANG_TRUONG_LABELS, getHangTruong } from '@/utils/hangTruong'
 import { logAction } from '@/utils/auditLogger'
 import { exportToExcel } from '@/utils/exportExcel'
@@ -34,31 +35,15 @@ import {
 
 const { Title, Text } = Typography
 
-const NGUONG_HANG: Record<CapHoc, string> = {
-  MAM_NON: 'Hạng I từ 9 nhóm, lớp; hạng II từ 6 đến 8; hạng III từ 5 trở xuống',
-  TIEU_HOC: 'Hạng I từ 28 lớp; hạng II từ 18 đến 27; hạng III dưới 18',
-  THCS: 'Hạng I từ 28 lớp; hạng II từ 18 đến 27; hạng III dưới 18',
-}
-
-type TruongKhoi = 'soLop' | 'soHocSinh' | 'soLop2Buoi' | 'soHocSinh2Buoi'
-
 const quyMoTrong = (donViId: string, namHoc: string): QuyMoTruong => ({
   id: idQuyMo(donViId, namHoc), donViId, namHoc, khoi: {}, createdAt: '', updatedAt: '',
 })
 
-// So sánh phần người dùng nhập, bỏ qua thứ tự khóa và thông tin người cập nhật
+// So sánh phần điều chỉnh người dùng nhập ở trang này, bỏ qua thứ tự khoá
 function vanTay(q: QuyMoTruong | undefined, cap: CapHoc): string {
-  if (!q) return vanTay(quyMoTrong('', ''), cap)
   return JSON.stringify({
-    k: KHOI[cap].map((k) => {
-      const o = q.khoi[k.ma]
-      return [o?.soLop ?? 0, o?.soHocSinh ?? 0, ...(CO_HAI_BUOI[cap] ? [o?.soLop2Buoi ?? 0, o?.soHocSinh2Buoi ?? 0] : [])]
-    }),
-    b: cap === 'TIEU_HOC' ? [...(q.khoiDayTinThem ?? [])].sort() : [],
-    t: Object.entries(q.dinhMucNhapTay ?? {}).sort(([a], [b]) => a.localeCompare(b)),
-    kn: cap === 'THCS' ? Object.entries(q.kiemNhiemNhapTay ?? {}).sort(([a], [b]) => a.localeCompare(b)) : [],
-    d: cap === 'MAM_NON' ? q.soDiemTruong ?? 0 : 0,
-    g: (q.ghiChu ?? '').trim(),
+    t: Object.entries(q?.dinhMucNhapTay ?? {}).sort(([a], [b]) => a.localeCompare(b)),
+    kn: cap === 'THCS' ? Object.entries(q?.kiemNhiemNhapTay ?? {}).sort(([a], [b]) => a.localeCompare(b)) : [],
   })
 }
 
@@ -373,13 +358,13 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
 // ───────────────────────────── Chi tiết một trường ─────────────────────────────
 
 function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string; onBack?: () => void }) {
-  const { message, modal } = App.useApp()
+  const { message } = App.useApp()
+  const navigate = useNavigate()
   const { currentUser, hasPermission, scopeDonViId } = useAuth()
   const cap = donVi.loai as CapHoc
   const id = idQuyMo(donVi.id, namHoc)
   const quyMoDaLuu = useDanhMucStore((s) => s.quyMoTruongs.find((q) => q.id === id))
   const luuQuyMo = useDanhMucStore((s) => s.luuQuyMo)
-  const updateDonVi = useDanhMucStore((s) => s.updateDonVi)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const cd = useTenChucDanh()
   const nhanSu = useMemo(() => vienChucs.filter((v) => v.donViId === donVi.id), [vienChucs, donVi.id])
@@ -395,6 +380,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
   )
   const [moLichSu, setMoLichSu] = useState(false)
   const [goc, setGoc] = useState(quyMoDaLuu)
+  // Trang này chỉ sửa phần điều chỉnh định mức, kiêm nhiệm; số lớp, học sinh khai ở trang Thông tin trường
   const [nhap, setNhap] = useState<QuyMoTruong>(() => quyMoDaLuu ?? quyMoTrong(donVi.id, namHoc))
   const daDoi = vanTay(nhap, cap) !== vanTay(quyMoDaLuu, cap)
 
@@ -405,17 +391,12 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
     setGoc(quyMoDaLuu)
   }, [quyMoDaLuu])
 
-  const kq = useMemo(() => tinhDinhMuc(cap, nhap, nhanSu, cd.lay), [cap, nhap, nhanSu, cd])
-  const hienHanh = namHoc === namHocHienHanh()
-
-  const datKhoi = (ma: string, truong: TruongKhoi, v: number | null) =>
-    setNhap((q) => {
-      const moi = { ...(q.khoi[ma] ?? { soLop: 0, soHocSinh: 0 }), [truong]: v ?? 0 }
-      // Số học 2 buổi không vượt tổng của khối
-      if (moi.soLop2Buoi != null && moi.soLop2Buoi > moi.soLop) moi.soLop2Buoi = moi.soLop
-      if (moi.soHocSinh2Buoi != null && moi.soHocSinh2Buoi > moi.soHocSinh) moi.soHocSinh2Buoi = moi.soHocSinh
-      return { ...q, khoi: { ...q.khoi, [ma]: moi } }
-    })
+  // Quy mô luôn lấy bản đã lưu (kể cả khi máy khác vừa sửa), chỉ phần điều chỉnh lấy từ form
+  const quyMoTinh = useMemo<QuyMoTruong>(
+    () => ({ ...(quyMoDaLuu ?? quyMoTrong(donVi.id, namHoc)), dinhMucNhapTay: nhap.dinhMucNhapTay, kiemNhiemNhapTay: nhap.kiemNhiemNhapTay }),
+    [quyMoDaLuu, nhap.dinhMucNhapTay, nhap.kiemNhiemNhapTay, donVi.id, namHoc],
+  )
+  const kq = useMemo(() => tinhDinhMuc(cap, quyMoTinh, nhanSu, cd.lay), [cap, quyMoTinh, nhanSu, cd])
 
   const datNhapTay = (ma: string, v: number | null) =>
     setNhap((q) => {
@@ -443,90 +424,52 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
       return { ...q, kiemNhiemNhapTay: k, dinhMucNhapTay: t }
     })
 
-  /** Nạp một bản trong lịch sử vào form; chỉ có hiệu lực khi người dùng bấm "Lưu quy mô" */
+  /** Nạp phần điều chỉnh của một bản trong lịch sử vào form; chỉ có hiệu lực khi người dùng bấm "Lưu điều chỉnh" */
   const nap = (nd: NoiDungQuyMo) => {
-    setNhap((q) => ({ ...q, ...layNoiDung(nd), khoiDayTinThem: nd.khoiDayTinThem, dinhMucNhapTay: nd.dinhMucNhapTay, kiemNhiemNhapTay: nd.kiemNhiemNhapTay, soDiemTruong: nd.soDiemTruong, ghiChu: nd.ghiChu }))
+    const ban = JSON.parse(JSON.stringify(nd)) as NoiDungQuyMo
+    setNhap((q) => ({ ...q, dinhMucNhapTay: ban.dinhMucNhapTay, kiemNhiemNhapTay: ban.kiemNhiemNhapTay }))
     setMoLichSu(false)
-    message.info('Đã nạp bản này vào form. Kiểm tra lại rồi bấm "Lưu quy mô" để áp dụng.')
+    message.info('Đã nạp phần điều chỉnh định mức của bản này vào form. Kiểm tra lại rồi bấm "Lưu điều chỉnh" để áp dụng.')
   }
 
-  const luu = () => {
+  const luu = async () => {
     if (!currentUser) return
-    const { tongLop, tongHS } = tongQuyMo(nhap, cap)
-    const hangMoi = getHangTruong(cap, tongLop)
-    const hangCu = donVi.soLop ? getHangTruong(cap, donVi.soLop) : undefined
-    const capNhatSoLop = hienHanh && tongLop > 0 && tongLop !== donVi.soLop
-
-    const thucHien = async () => {
-      const khoi: QuyMoTruong['khoi'] = {}
-      for (const k of KHOI[cap]) {
-        const o = nhap.khoi[k.ma]
-        khoi[k.ma] = {
-          soLop: o?.soLop ?? 0,
-          soHocSinh: o?.soHocSinh ?? 0,
-          ...(CO_HAI_BUOI[cap] ? {
-            soLop2Buoi: Math.min(o?.soLop2Buoi ?? 0, o?.soLop ?? 0),
-            soHocSinh2Buoi: Math.min(o?.soHocSinh2Buoi ?? 0, o?.soHocSinh ?? 0),
-          } : {}),
-        }
-      }
-      const nhapTay = nhap.dinhMucNhapTay && Object.keys(nhap.dinhMucNhapTay).length ? nhap.dinhMucNhapTay : undefined
-      const kiemTay = cap === 'THCS' && nhap.kiemNhiemNhapTay && Object.keys(nhap.kiemNhiemNhapTay).length ? nhap.kiemNhiemNhapTay : undefined
-      const tinThem = cap === 'TIEU_HOC' ? (nhap.khoiDayTinThem ?? []).filter((k) => KHOI_TIN_TU_CHON.includes(k)) : []
-      luuQuyMo({
-        id, donViId: donVi.id, namHoc, khoi,
-        khoiDayTinThem: tinThem.length ? tinThem : undefined,
-        dinhMucNhapTay: nhapTay,
-        kiemNhiemNhapTay: kiemTay,
-        soDiemTruong: cap === 'MAM_NON' ? nhap.soDiemTruong || undefined : undefined,
-        ghiChu: nhap.ghiChu?.trim() || undefined,
-        nguoiCapNhatId: currentUser.id,
-        nguoiCapNhat: currentUser.fullName,
-      })
-      if (capNhatSoLop) updateDonVi(donVi.id, { soLop: tongLop })
-      logAction(currentUser.id, currentUser.fullName, 'UPDATE', 'DanhMuc', {
-        entityId: id,
-        donViId: donVi.id,
-        moTa: `Khai báo quy mô năm học ${namHoc} - ${donVi.ten}: ${tongLop} lớp, ${tongHS} học sinh`
-          + (capNhatSoLop ? `; số lớp xếp hạng ${donVi.soLop ?? 'chưa có'} → ${tongLop}` : ''),
-      })
-      // Chỉ báo "đã lưu" khi dữ liệu thực sự đã lên máy chủ; lỗi mạng thì nói rõ để người dùng không tắt máy
-      const kq = await choGhiXongVaKiemTra()
-      if (kq === 'loi') {
-        message.warning({
-          content: 'Đã lưu trên máy này nhưng CHƯA lên được máy chủ. Hệ thống đang tự thử lại - hãy kiểm tra mạng và không đóng trang.',
-          duration: 10,
-        })
-      } else {
-        message.success(capNhatSoLop ? 'Đã lưu quy mô lên máy chủ và cập nhật số lớp xếp hạng trường' : 'Đã lưu quy mô lên máy chủ')
-      }
+    const nhapTay = nhap.dinhMucNhapTay && Object.keys(nhap.dinhMucNhapTay).length ? nhap.dinhMucNhapTay : undefined
+    const kiemTay = cap === 'THCS' && nhap.kiemNhiemNhapTay && Object.keys(nhap.kiemNhiemNhapTay).length ? nhap.kiemNhiemNhapTay : undefined
+    // Lấy bản mới nhất trên máy chủ để giữ nguyên số liệu quy mô do trang Thông tin trường khai
+    await lamMoiNgay()
+    const moiNhat = useDanhMucStore.getState().quyMoTruongs.find((q) => q.id === id)
+    if (!moiNhat) {
+      message.error(`Năm học ${namHoc} chưa khai báo quy mô - khai ở trang Thông tin trường trước`)
+      return
     }
-
-    if (capNhatSoLop && hangCu && hangCu !== hangMoi) {
-      modal.confirm({
-        title: `Hạng trường đổi từ ${HANG_TRUONG_LABELS[hangCu]} sang ${HANG_TRUONG_LABELS[hangMoi]}`,
-        content: (
-          <div>
-            <p>Số lớp xếp hạng của {donVi.ten} đổi từ {donVi.soLop} thành {tongLop}.</p>
-            <p style={{ marginBottom: 0 }}>
-              Hạng trường là căn cứ phụ cấp chức vụ (TT 33/2005/TT-BGDĐT) và số phó hiệu trưởng.
-              Phụ cấp đang hưởng <b>không tự thay đổi</b>; khi chỉnh sửa hồ sơ hiệu trưởng, phó hiệu trưởng,
-              hệ thống sẽ đề xuất mức theo hạng mới.
-            </p>
-          </div>
-        ),
-        okText: 'Lưu',
-        cancelText: 'Hủy',
-        onOk: thucHien,
+    const { createdAt: _c, updatedAt: _u, ...giuNguyen } = moiNhat
+    luuQuyMo({
+      ...giuNguyen,
+      dinhMucNhapTay: nhapTay,
+      kiemNhiemNhapTay: kiemTay,
+      nguoiCapNhatId: currentUser.id,
+      nguoiCapNhat: currentUser.fullName,
+    })
+    logAction(currentUser.id, currentUser.fullName, 'UPDATE', 'DanhMuc', {
+      entityId: id,
+      donViId: donVi.id,
+      moTa: `Điều chỉnh định mức năm học ${namHoc} - ${donVi.ten}`,
+    })
+    // Chỉ báo "đã lưu" khi dữ liệu thực sự đã lên máy chủ; lỗi mạng thì nói rõ để người dùng không tắt máy
+    const kq = await choGhiXongVaKiemTra()
+    if (kq === 'loi') {
+      message.warning({
+        content: 'Đã lưu trên máy này nhưng CHƯA lên được máy chủ. Hệ thống đang tự thử lại - hãy kiểm tra mạng và không đóng trang.',
+        duration: 10,
       })
-    } else thucHien()
+    } else message.success('Đã lưu điều chỉnh định mức lên máy chủ')
   }
 
   const items = [
-    { key: 'quyMo', label: 'Khai báo quy mô', children: <TheQuyMo cap={cap} nhap={nhap} kq={kq} coTheSua={coTheSua} hienHanh={hienHanh} namHoc={namHoc} donVi={donVi} datKhoi={datKhoi} setNhap={setNhap} /> },
     {
       key: 'dinhMuc', label: 'Định mức, chỉ tiêu & cơ cấu VTVL',
-      children: <><ChiTieuBienCheCard donVi={donVi} namHoc={namHoc} kq={kq} /><TheDinhMuc kq={kq} nhap={nhap} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} /></>,
+      children: <><ChiTieuBienCheCard donVi={donVi} namHoc={namHoc} kq={kq} /><TheDinhMuc kq={kq} nhap={quyMoTinh} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} /></>,
     },
     {
       key: 'phanMon',
@@ -535,7 +478,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
           {cap === 'MAM_NON' ? 'Phân công nhóm, lớp' : 'Phân công môn giảng dạy'}
         </Badge>
       ),
-      children: <ThePhanMon cap={cap} nhanSu={nhanSu} kq={kq} coTheSua={coTheSuaMon} donVi={donVi} nhap={nhap} />,
+      children: <ThePhanMon cap={cap} nhanSu={nhanSu} kq={kq} coTheSua={coTheSuaMon} donVi={donVi} nhap={quyMoTinh} />,
     },
   ]
 
@@ -546,226 +489,46 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
           {onBack && <Button icon={<ArrowLeftOutlined />} onClick={onBack}>Toàn phường</Button>}
           <Text strong style={{ fontSize: 16 }}>{donVi.ten}</Text>
           <Tag>{TEN_CAP[cap]}</Tag>
-          {quyMoDaLuu
-            ? <Text type="secondary" style={{ fontSize: 13 }}>Cập nhật {formatDatetime(quyMoDaLuu.updatedAt)} - {quyMoDaLuu.nguoiCapNhat}</Text>
-            : <Tag color="warning">Chưa khai báo năm học {namHoc}</Tag>}
+          {quyMoDaLuu && kq.tongLop
+            ? (
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                Quy mô: {kq.tongLop} lớp, {kq.tongHS.toLocaleString('vi-VN')} {cap === 'MAM_NON' ? 'trẻ' : 'học sinh'} - {HANG_TRUONG_LABELS[kq.hang]}
+              </Text>
+            )
+            : <Tag color="warning">Chưa khai báo quy mô năm học {namHoc}</Tag>}
+          <Button size="small" icon={<BankOutlined />} onClick={() => navigate('/thong-tin-truong')}>
+            {quyMoDaLuu ? 'Xem, sửa quy mô ở Thông tin trường' : 'Khai báo ở Thông tin trường'}
+          </Button>
         </Space>
         <Space wrap>
           <Badge count={lichSu.length} size="small" color="#64748b" offset={[-4, 2]}>
             <Button icon={<HistoryOutlined />} onClick={() => setMoLichSu(true)}>Lịch sử khai báo</Button>
           </Badge>
-          <Button icon={<DownloadOutlined />} onClick={() => xuatExcelTruong(donVi, namHoc, cap, nhap, kq)} disabled={!kq.tongLop}>
+          <Button icon={<DownloadOutlined />} onClick={() => xuatExcelTruong(donVi, namHoc, cap, quyMoTinh, kq)} disabled={!kq.tongLop}>
             Xuất Excel
           </Button>
           {coTheSua && (
             <>
               {daDoi && <Button icon={<UndoOutlined />} onClick={() => setNhap(quyMoDaLuu ?? quyMoTrong(donVi.id, namHoc))}>Hoàn tác</Button>}
               <Button type="primary" icon={<SaveOutlined />} onClick={luu} disabled={!daDoi || !kq.tongLop}>
-                Lưu quy mô
+                Lưu điều chỉnh
               </Button>
             </>
           )}
         </Space>
       </div>
-      {daDoi && <Alert type="warning" showIcon style={{ marginBottom: 8 }} title="Có thay đổi chưa lưu - số liệu định mức đang tính theo bản đang nhập" />}
+      {daDoi && <Alert type="warning" showIcon style={{ marginBottom: 8 }} title="Có điều chỉnh chưa lưu - số liệu định mức đang tính theo bản đang nhập" />}
       <Tabs items={items} />
-      <LichSuQuyMoDrawer open={moLichSu} onClose={() => setMoLichSu(false)} lichSu={lichSu} cap={cap} coTheSua={coTheSua} onNap={nap} />
-    </>
-  )
-}
-
-// ───────────────────────────── Lịch sử khai báo quy mô ─────────────────────────────
-
-function LichSuQuyMoDrawer({ open, onClose, lichSu, cap, coTheSua, onNap }: {
-  open: boolean; onClose: () => void; lichSu: QuyMoLichSu[]; cap: CapHoc; coTheSua: boolean; onNap: (nd: NoiDungQuyMo) => void
-}) {
-  // lichSu đã sắp mới nhất trước; bản liền trước của dòng i là dòng i + 1
-  return (
-    <Drawer title="Lịch sử khai báo quy mô" size={760} open={open} onClose={onClose}>
-      <Alert
-        type="info"
-        showIcon
-        style={{ marginBottom: 12 }}
-        title="Mỗi lần bấm Lưu quy mô để lại một bản (tối đa 30 bản gần nhất)."
-        description='Bản nào khai nhầm hoặc bị mất số liệu, bấm "Nạp vào form" để lấy lại rồi kiểm tra và Lưu quy mô.'
+      <LichSuQuyMoDrawer
+        open={moLichSu}
+        onClose={() => setMoLichSu(false)}
+        lichSu={lichSu}
+        cap={cap}
+        coTheSua={coTheSua}
+        onNap={nap}
+        ghiChuNap="Ở trang này chỉ nạp lại phần điều chỉnh định mức, kiêm nhiệm; số lớp, học sinh nạp ở trang Thông tin trường."
       />
-      {lichSu.length === 0 ? (
-        <Empty description="Chưa có lịch sử. Bản đầu tiên sẽ xuất hiện sau lần lưu tiếp theo." />
-      ) : (
-        <Table<QuyMoLichSu>
-          size="small"
-          bordered
-          rowKey="id"
-          pagination={false}
-          dataSource={lichSu}
-          columns={[
-            {
-              title: 'Thời điểm', key: 'tg', width: 140,
-              render: (_, l, i) => (
-                <Space orientation="vertical" size={0}>
-                  <Text>{formatDatetime(l.thoiGian)}</Text>
-                  {i === 0 && <Tag color="blue" style={{ marginTop: 2 }}>Bản hiện tại</Tag>}
-                  {l.ghiChuBan && <Text type="secondary" style={{ fontSize: 12 }}>{l.ghiChuBan}</Text>}
-                </Space>
-              ),
-            },
-            { title: 'Người lưu', key: 'ng', width: 140, render: (_, l) => l.nguoiTen ?? '-' },
-            {
-              title: 'Nội dung', key: 'nd',
-              render: (_, l, i) => {
-                const doi = soSanhNoiDung(lichSu[i + 1]?.noiDung, l.noiDung, cap)
-                return (
-                  <Space orientation="vertical" size={2}>
-                    <Text strong>{tomTatNoiDung(l.noiDung, cap)}</Text>
-                    {doi.length > 0 && (
-                      <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, color: '#64748b' }}>
-                        {doi.slice(0, 8).map((d) => <li key={d}>{d}</li>)}
-                        {doi.length > 8 && <li>và {doi.length - 8} thay đổi khác</li>}
-                      </ul>
-                    )}
-                  </Space>
-                )
-              },
-            },
-            {
-              title: '', key: 'ac', width: 120, align: 'center',
-              render: (_, l, i) => coTheSua && i > 0
-                ? <Button size="small" onClick={() => onNap(l.noiDung)}>Nạp vào form</Button>
-                : null,
-            },
-          ]}
-        />
-      )}
-    </Drawer>
-  )
-}
-
-// ───────────────────────────── Thẻ: Khai báo quy mô ─────────────────────────────
-
-function TheQuyMo({ cap, nhap, kq, coTheSua, hienHanh, namHoc, donVi, datKhoi, setNhap }: {
-  cap: CapHoc; nhap: QuyMoTruong; kq: KetQuaDinhMuc; coTheSua: boolean; hienHanh: boolean; namHoc: string; donVi: DonVi
-  datKhoi: (ma: string, truong: TruongKhoi, v: number | null) => void
-  setNhap: Dispatch<SetStateAction<QuyMoTruong>>
-}) {
-  const haiBuoi = CO_HAI_BUOI[cap]
-  type DongKhoi = { key: string; ten: string; soLop: number; soHocSinh: number; soLop2Buoi: number; soHocSinh2Buoi: number }
-  const dongs: DongKhoi[] = KHOI[cap].map((k) => {
-    const x = nhap.khoi[k.ma]
-    return { key: k.ma, ten: k.ten, soLop: x?.soLop ?? 0, soHocSinh: x?.soHocSinh ?? 0, soLop2Buoi: x?.soLop2Buoi ?? 0, soHocSinh2Buoi: x?.soHocSinh2Buoi ?? 0 }
-  })
-  const o = (r: DongKhoi, truong: TruongKhoi) => {
-    const v = r[truong]
-    // Số học 2 buổi không vượt tổng của khối
-    const max = truong === 'soLop2Buoi' ? r.soLop : truong === 'soHocSinh2Buoi' ? r.soHocSinh : truong === 'soLop' ? 99 : 9999
-    return coTheSua
-      ? <InputNumber value={v} min={0} max={max} precision={0} onChange={(x) => datKhoi(r.key, truong, x)} style={{ width: 88 }} />
-      : <Text>{v.toLocaleString('vi-VN')}</Text>
-  }
-  const cot = (title: string, key: TruongKhoi) => ({
-    title, key, width: 104, align: 'center' as const, render: (_: unknown, r: DongKhoi) => o(r, key),
-  })
-
-  return (
-    <Row gutter={[24, 16]}>
-      <Col xs={24} xl={haiBuoi ? 16 : 14}>
-        <Table
-          size="small"
-          bordered
-          pagination={false}
-          dataSource={dongs}
-          scroll={{ x: haiBuoi ? 620 : undefined }}
-          columns={[
-            { title: cap === 'MAM_NON' ? 'Nhóm, lớp' : 'Khối', dataIndex: 'ten', key: 'ten', width: 90 },
-            ...(haiBuoi
-              ? [
-                  { title: 'Tổng số', children: [cot('Số lớp', 'soLop'), cot('Số học sinh', 'soHocSinh')] },
-                  { title: 'Trong đó học 2 buổi/ngày', children: [cot('Số lớp', 'soLop2Buoi'), cot('Số học sinh', 'soHocSinh2Buoi')] },
-                ]
-              : [cot('Số nhóm, lớp', 'soLop'), cot('Số trẻ', 'soHocSinh')]),
-            { title: 'Bình quân/lớp', key: 'bq', width: 90, align: 'center' as const, render: (_: unknown, r: DongKhoi) => r.soLop ? fmt(r.soHocSinh / r.soLop) : '-' },
-          ]}
-          summary={() => (
-            <Table.Summary.Row style={{ background: '#f8fafc', fontWeight: 600 }}>
-              <Table.Summary.Cell index={0}>Tổng</Table.Summary.Cell>
-              <Table.Summary.Cell index={1} align="center">{kq.tongLop}</Table.Summary.Cell>
-              <Table.Summary.Cell index={2} align="center">{kq.tongHS.toLocaleString('vi-VN')}</Table.Summary.Cell>
-              {haiBuoi && <Table.Summary.Cell index={3} align="center">{kq.tongLop2Buoi}</Table.Summary.Cell>}
-              {haiBuoi && <Table.Summary.Cell index={4} align="center">{kq.tongHS2Buoi.toLocaleString('vi-VN')}</Table.Summary.Cell>}
-              <Table.Summary.Cell index={haiBuoi ? 5 : 3} align="center">{kq.tongLop ? fmt(kq.binhQuan) : '-'}</Table.Summary.Cell>
-            </Table.Summary.Row>
-          )}
-        />
-        {haiBuoi && kq.tongLop > 0 && (
-          <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-            Học 1 buổi/ngày: {kq.tongLop - kq.tongLop2Buoi} lớp, {(kq.tongHS - kq.tongHS2Buoi).toLocaleString('vi-VN')} học sinh.
-            {cap === 'TIEU_HOC' && ' Định mức giáo viên: lớp 1 buổi 1,2 GV/lớp, lớp 2 buổi 1,5 GV/lớp.'}
-          </Text>
-        )}
-        {cap === 'TIEU_HOC' && kq.tongLop > 0 && kq.tongLop2Buoi === 0 && (
-          <Alert
-            type="warning"
-            showIcon
-            style={{ marginTop: 8 }}
-            title="Chưa nhập số lớp học 2 buổi/ngày - định mức đang tính toàn bộ là lớp 1 buổi (1,2 giáo viên/lớp)"
-          />
-        )}
-        {cap === 'MAM_NON' && (
-          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <Text>Số phân hiệu (điểm trường):</Text>
-            {coTheSua
-              ? <InputNumber value={nhap.soDiemTruong} min={1} max={20} precision={0} placeholder="1" onChange={(v) => setNhap((q) => ({ ...q, soDiemTruong: v ?? undefined }))} style={{ width: 88 }} />
-              : <Text strong>{nhap.soDiemTruong ?? 1}</Text>}
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              Căn cứ chỉ tiêu nhân viên thư viện: 01 người/phân hiệu, tối đa 03. Để trống tính là 01.
-            </Text>
-          </div>
-        )}
-        {cap === 'TIEU_HOC' && (
-          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <Text>Trường có dạy Tin học ở:</Text>
-            <Checkbox.Group
-              disabled={!coTheSua}
-              value={nhap.khoiDayTinThem ?? []}
-              onChange={(v) => setNhap((q) => ({ ...q, khoiDayTinThem: v as string[] }))}
-              options={KHOI_TIN_TU_CHON.map((k) => ({ value: k, label: `Khối ${k.slice(1)}` }))}
-            />
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              Khối 3-5 bắt buộc theo chương trình GDPT 2018; khối 1, 2 tính thêm 1 tiết/tuần nếu trường có dạy.
-            </Text>
-          </div>
-        )}
-        <div style={{ marginTop: 16 }}>
-          <Text strong>Ghi chú, căn cứ số liệu</Text>
-          {coTheSua
-            ? <Input.TextArea rows={2} value={nhap.ghiChu} onChange={(e) => setNhap((q) => ({ ...q, ghiChu: e.target.value }))} placeholder="VD: Theo kế hoạch tuyển sinh năm học 2026-2027 đã được phê duyệt" style={{ marginTop: 6 }} />
-            : <div style={{ marginTop: 4 }}><Text type="secondary">{nhap.ghiChu || '-'}</Text></div>}
-        </div>
-      </Col>
-      <Col xs={24} xl={haiBuoi ? 8 : 10}>
-        <Row gutter={[12, 12]}>
-          <Col span={12}><Card size="small"><Statistic title="Tổng số lớp" value={kq.tongLop} /></Card></Col>
-          <Col span={12}><Card size="small"><Statistic title={cap === 'MAM_NON' ? 'Tổng số trẻ' : 'Tổng học sinh'} value={kq.tongHS} groupSeparator="." /></Card></Col>
-          <Col span={12}><Card size="small"><Statistic title="Bình quân/lớp" value={kq.tongLop ? lamTron1(kq.binhQuan) : 0} precision={1} decimalSeparator="," /></Card></Col>
-          <Col span={12}><Card size="small"><Statistic title="Hạng trường" value={kq.tongLop ? HANG_TRUONG_LABELS[kq.hang] : '-'} /></Card></Col>
-        </Row>
-        <Alert
-          type="info"
-          showIcon
-          style={{ marginTop: 12 }}
-          title="Căn cứ xếp hạng trường"
-          description={
-            <div style={{ fontSize: 14 }}>
-              <div>{NGUONG_HANG[cap]} (TT 19/2023, TT 20/2023). Hạng trường quyết định số phó hiệu trưởng và phụ cấp chức vụ (TT 33/2005).</div>
-              <div style={{ marginTop: 6 }}>
-                {hienHanh
-                  ? <>Đây là năm học hiện hành: khi lưu, tổng số lớp sẽ thành số lớp xếp hạng của trường (hiện ghi {donVi.soLop ?? 'chưa có'} lớp - {donVi.soLop ? HANG_TRUONG_LABELS[getHangTruong(cap, donVi.soLop)] : 'chưa xếp hạng'}).</>
-                  : <>Năm học {namHoc} chỉ dùng để tính định mức, không thay đổi hạng trường hiện tại.</>}
-              </div>
-            </div>
-          }
-        />
-      </Col>
-    </Row>
+    </>
   )
 }
 
@@ -782,7 +545,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
   datKiem: (ma: string | null, v: number | null) => void; daDoi: boolean
 }) {
   if (!kq.tongLop) {
-    return <Empty description={`Chưa có số lớp - khai báo quy mô ở thẻ "Khai báo quy mô" để tính định mức`} />
+    return <Empty description={`Chưa có số lớp - khai báo quy mô năm học ở trang Thông tin trường (nút trên đầu trang) để tính định mức`} />
   }
 
   const data: DongBang[] = []

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Tabs, Table, Button, Modal, Form, Input, InputNumber, Select, Space, Popconfirm, Tag, Descriptions, Typography, Grid, App } from 'antd'
+import { Card, Tabs, Table, Button, Modal, Form, Input, InputNumber, Select, Space, Popconfirm, Tag, Descriptions, Typography, Grid, App, Tooltip } from 'antd'
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, BankOutlined, IdcardOutlined,
   DollarOutlined, ProfileOutlined, ApartmentOutlined, SolutionOutlined, FlagOutlined,
@@ -7,7 +7,8 @@ import {
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
 import { LOAI_DON_VI_LABELS } from '@/types/donVi'
-import { getHangTruong, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
+import { hangTruongTheoNamHoc, moTaHang, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
+import { namHocHienHanh } from '@/utils/dinhMuc'
 import { sapXepLoaiPhuCap, PCUD_MUC_CU } from '@/utils/phuCapThuTu'
 import { TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
@@ -30,7 +31,7 @@ export default function DanhMucPage() {
         style={{ minHeight: 520 }}
         tabBarStyle={isWide ? { width: 190, paddingTop: 12 } : undefined}
         items={[
-          { key: '1', label: <TabLabel icon={<BankOutlined />} text="Đơn vị trường" />, children: <TabPane title="Đơn vị trường" desc="Danh sách trường học trực thuộc, số lớp và hạng trường (dùng để tính phụ cấp chức vụ)."><DonViTab /></TabPane> },
+          { key: '1', label: <TabLabel icon={<BankOutlined />} text="Đơn vị trường" />, children: <TabPane title="Đơn vị trường" desc="Danh sách trường học trực thuộc. Số lớp, hạng trường và thông tin chung (địa chỉ, điện thoại, email) do trường khai ở trang Thông tin trường (nút trên đầu trang), theo từng năm học."><DonViTab /></TabPane> },
           { key: '2', label: <TabLabel icon={<IdcardOutlined />} text="Chức danh NN" />, children: <TabPane title="Chức danh nghề nghiệp" desc="Mã ngạch/hạng chức danh nghề nghiệp theo quy định, dùng khi xếp lương viên chức."><ChucDanhTab /></TabPane> },
           { key: '3', label: <TabLabel icon={<ProfileOutlined />} text="Loại phụ cấp" />, children: <TabPane title="Loại phụ cấp" desc="Các loại phụ cấp và công thức tính (% lương chính, % lương cơ sở, tiền mặt, hệ số)."><PhuCapTab /></TabPane> },
           { key: '4', label: <TabLabel icon={<DollarOutlined />} text="Mức lương cơ sở" />, children: <TabPane title="Mức lương cơ sở" desc="Mức lương cơ sở theo từng thời kỳ, lưu để tra cứu và tham chiếu văn bản."><LuongCoSoTab /></TabPane> },
@@ -55,14 +56,16 @@ function TabPane({ title, desc, children }: { title: string; desc: string; child
 
 function DonViTab() {
   const { message } = App.useApp()
-  const { donVis, addDonVi, updateDonVi } = useDanhMucStore()
+  const { donVis, addDonVi, updateDonVi, quyMoTruongs } = useDanhMucStore()
+  const namHoc = namHocHienHanh()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [form] = Form.useForm()
 
   const onSave = (values: any) => {
-    if (editing) { updateDonVi(editing.id, values); message.success('Đã cập nhật') }
-    else { addDonVi({ ...values, active: true }); message.success('Đã thêm') }
+    const { ma, ten, loai } = values
+    if (editing) { updateDonVi(editing.id, { ma, ten, loai }); message.success('Đã cập nhật') }
+    else { addDonVi({ ma, ten, loai, active: true }); message.success('Đã thêm') }
     setOpen(false); setEditing(null); form.resetFields()
   }
 
@@ -70,13 +73,12 @@ function DonViTab() {
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 80 },
     { title: 'Tên trường', dataIndex: 'ten', key: 'ten' },
     { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 90, render: (v: string) => LOAI_DON_VI_LABELS[v as keyof typeof LOAI_DON_VI_LABELS] ?? v },
-    { title: 'Số lớp', dataIndex: 'soLop', key: 'sl', width: 75, align: 'center' as const, render: (v: number) => v ?? '-' },
     {
-      title: 'Hạng trường', key: 'hang', width: 95, align: 'center' as const,
+      title: `Hạng trường (năm học ${namHoc})`, key: 'hang', width: 120, align: 'center' as const,
       render: (_: any, r: any) => {
-        if (!r.soLop || r.loai === 'OTHER') return '-'
-        const hang = getHangTruong(r.loai, r.soLop)
-        return <Tag color={hang === 1 ? 'gold' : hang === 2 ? 'blue' : 'default'}>{HANG_TRUONG_LABELS[hang]}</Tag>
+        const h = hangTruongTheoNamHoc(r, quyMoTruongs, namHoc)
+        if (!h) return r.loai === 'OTHER' ? '-' : <Text type="secondary" style={{ fontSize: 13 }}>Chưa khai quy mô</Text>
+        return <Tooltip title={moTaHang(h)}><Tag color={h.hang === 1 ? 'gold' : h.hang === 2 ? 'blue' : 'default'}>{HANG_TRUONG_LABELS[h.hang]}</Tag></Tooltip>
       },
     },
     { title: 'Trạng thái', dataIndex: 'active', key: 'ac', width: 100, render: (v: boolean) => <Tag color={v ? 'green' : 'default'}>{v ? 'Hoạt động' : 'Dừng'}</Tag> },
@@ -100,10 +102,6 @@ function DonViTab() {
           <Form.Item name="loai" label="Loại" rules={[{ required: true }]}>
             <Select options={Object.entries(LOAI_DON_VI_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
           </Form.Item>
-          <Form.Item name="soLop" label="Số lớp" tooltip="Dùng xếp hạng trường → phụ cấp chức vụ. Tự cập nhật khi trường lưu quy mô năm học hiện hành ở trang Định mức viên chức và Cơ cấu VTVL.">
-            <InputNumber min={1} max={100} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="diaChi" label="Địa chỉ"><Input /></Form.Item>
         </Form>
       </Modal>
     </>

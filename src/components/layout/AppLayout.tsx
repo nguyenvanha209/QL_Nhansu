@@ -9,7 +9,7 @@ import {
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
   AuditOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
-  SolutionOutlined, WarningOutlined,
+  SolutionOutlined, WarningOutlined, BankOutlined,
 } from '@ant-design/icons'
 import { useBoNhiem } from '@/hooks/useBoNhiem'
 import { useAuth } from '@/hooks/useAuth'
@@ -41,6 +41,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/nguoi-dung': 'Tài khoản người dùng',
   '/admin/nhat-ky': 'Nhật ký thao tác',
   '/huong-dan': 'Hướng dẫn sử dụng',
+  '/thong-tin-truong': 'Thông tin trường',
   '/tai-khoan': 'Thông tin tài khoản',
 }
 
@@ -199,6 +200,19 @@ export default function AppLayout() {
           />
           <Space size={8}>
             <ChiBaoDongBo />
+            {hasPermission('quyMo', 'read') && (
+              <Tooltip title="Thông tin chung và quy mô trường lớp từng năm học (căn cứ hạng trường, phụ cấp chức vụ, định mức)">
+                <Button
+                  type={location.pathname === '/thong-tin-truong' ? 'primary' : 'text'}
+                  ghost={location.pathname === '/thong-tin-truong'}
+                  icon={<BankOutlined />}
+                  onClick={() => navigate('/thong-tin-truong')}
+                  style={{ borderRadius: 8 }}
+                >
+                  <span className="hd-btn-label">Thông tin trường</span>
+                </Button>
+              </Tooltip>
+            )}
             <Tooltip title="Hướng dẫn sử dụng">
               <Button
                 type="text"

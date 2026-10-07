@@ -42,3 +42,45 @@ const PCCV: Record<string, Record<HangTruong, Record<string, number>>> = {
 export function getPhuCapChucVuHeSo(loai: LoaiDonVi, hang: HangTruong, chucVu: ChucVu): number {
   return PCCV[loai]?.[hang]?.[chucVu] ?? 0
 }
+
+// ───────────────────────────── Hạng trường theo năm học ─────────────────────────────
+// Số lớp lấy từ quy mô trường khai báo từng năm học (trang Thông tin trường), không còn
+// dùng một con số chung ở Danh mục. Năm học cần xét chưa khai báo thì dùng năm học gần
+// nhất trước đó đã khai; không có năm trước thì dùng năm sau gần nhất - luôn ghi rõ đang
+// theo năm học nào để người xem biết.
+
+export interface HangTheoNamHoc {
+  hang: HangTruong
+  tongLop: number
+  /** Năm học có quy mô được dùng */
+  namHoc: string
+  /** Năm học cần xét (khác `namHoc` khi năm đó chưa khai báo) */
+  namHocCanXet: string
+}
+
+type QuyMoRutGon = { donViId: string; namHoc: string; khoi: Record<string, { soLop?: number }> }
+
+const tongLopQuyMo = (q: QuyMoRutGon) => Object.values(q.khoi ?? {}).reduce((s, o) => s + (o?.soLop ?? 0), 0)
+
+export function hangTruongTheoNamHoc(
+  donVi: { id: string; loai: LoaiDonVi } | undefined,
+  quyMos: QuyMoRutGon[],
+  namHoc: string,
+): HangTheoNamHoc | null {
+  if (!donVi || donVi.loai === 'OTHER') return null
+  const cuaTruong = quyMos
+    .filter((q) => q.donViId === donVi.id && tongLopQuyMo(q) > 0)
+    .sort((a, b) => a.namHoc.localeCompare(b.namHoc))
+  if (!cuaTruong.length) return null
+  const q = cuaTruong.find((x) => x.namHoc === namHoc)
+    ?? [...cuaTruong].reverse().find((x) => x.namHoc < namHoc)
+    ?? cuaTruong[0]
+  const tongLop = tongLopQuyMo(q)
+  return { hang: getHangTruong(donVi.loai, tongLop), tongLop, namHoc: q.namHoc, namHocCanXet: namHoc }
+}
+
+/** VD "Hạng I - 32 lớp, năm học 2026-2027" (kèm "chưa khai năm học X" khi phải dùng năm khác) */
+export function moTaHang(h: HangTheoNamHoc): string {
+  return `${HANG_TRUONG_LABELS[h.hang]} - ${h.tongLop} lớp, năm học ${h.namHoc}`
+    + (h.namHoc !== h.namHocCanXet ? ` (năm học ${h.namHocCanXet} chưa khai báo quy mô)` : '')
+}

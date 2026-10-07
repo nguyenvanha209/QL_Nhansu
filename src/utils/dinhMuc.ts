@@ -25,9 +25,16 @@ export function namHocHienHanh(d = new Date()): string {
   return d.getMonth() >= 8 ? `${y}-${y + 1}` : `${y - 1}-${y}`
 }
 
+/** Năm học đầu tiên khai báo quy mô trên phần mềm */
+export const NAM_HOC_DAU = '2026-2027'
+
+/** Các năm học chọn được: từ năm học đầu tiên đến năm học sau năm hiện hành */
 export function dsNamHoc(): string[] {
-  const y = Number(namHocHienHanh().slice(0, 4))
-  return [`${y - 1}-${y}`, `${y}-${y + 1}`, `${y + 1}-${y + 2}`]
+  const dau = Number(NAM_HOC_DAU.slice(0, 4))
+  const cuoi = Number(namHocHienHanh().slice(0, 4)) + 1
+  const ra: string[] = []
+  for (let y = dau; y <= cuoi; y++) ra.push(`${y}-${y + 1}`)
+  return ra
 }
 
 export const idQuyMo = (donViId: string, namHoc: string) => `${donViId}__${namHoc}`

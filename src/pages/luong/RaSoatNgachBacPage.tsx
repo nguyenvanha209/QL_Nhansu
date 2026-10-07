@@ -13,7 +13,8 @@ import { ngayHopLe, tinhNgayNangTiep, laBacCuoi } from '@/utils/nangLuong'
 import { chonBanDangHuong, nhomTheoLoai } from '@/utils/phuCapDangHuong'
 import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
 import { laToTruongNuoiDuong } from '@/utils/nhomViTri'
-import { getHangTruong, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
+import { getPhuCapChucVuHeSo, hangTruongTheoNamHoc, moTaHang } from '@/utils/hangTruong'
+import { namHocHienHanh } from '@/utils/dinhMuc'
 import type { LoaiDonVi } from '@/types/donVi'
 import { CHUC_VU_LABELS } from '@/types/vienChuc'
 
@@ -81,6 +82,7 @@ export default function RaSoatNgachBacPage() {
   const phuCaps = useLuongStore((s) => s.phuCapVienChucs)
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const allDonVis = useDanhMucStore((s) => s.donVis)
+  const quyMoTruongs = useDanhMucStore((s) => s.quyMoTruongs)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort((a, b) => a.ten.localeCompare(b.ten, 'vi')), [allDonVis])
@@ -160,9 +162,10 @@ export default function RaSoatNgachBacPage() {
       let pccvDung: number | undefined
       let pccvGoiY = ''
       const bl = vc.baoLuuPccv
-      const coHang = !!dv?.soLop && dv.loai !== 'OTHER'
-      const theoCv = vc.chucVu && coHang && !laToTruongNuoiDuong(vc, cd?.ten, cd?.nhom)
-        ? getPhuCapChucVuHeSo(dv!.loai as LoaiDonVi, getHangTruong(dv!.loai as LoaiDonVi, dv!.soLop!), vc.chucVu)
+      // Hạng trường theo quy mô năm học hiện hành (trang Thông tin trường)
+      const hangTruong = hangTruongTheoNamHoc(dv, quyMoTruongs, namHocHienHanh())
+      const theoCv = vc.chucVu && hangTruong && !laToTruongNuoiDuong(vc, cd?.ten, cd?.nhom)
+        ? getPhuCapChucVuHeSo(dv!.loai as LoaiDonVi, hangTruong.hang, vc.chucVu)
         : 0
       // Bảo lưu khai ngược / không có tác dụng (chức vụ cũ trùng chức vụ hiện tại, mức bảo lưu không cao hơn mức hiện tại)
       if (bl && (bl.chucVuCu === vc.chucVu || (theoCv > 0 && r2(bl.heSo) <= r2(theoCv)))) {
@@ -182,7 +185,7 @@ export default function RaSoatNgachBacPage() {
         if (r2(pccv?.giaTri ?? 0) !== r2(dung)) {
           pccvDung = dung
           loi.push('PCCV_LECH_CHUC_VU')
-          chiTiet.push(`Chức vụ ${CHUC_VU_LABELS[vc.chucVu!] ?? vc.chucVu} (hạng ${getHangTruong(dv!.loai as LoaiDonVi, dv!.soLop!)}): PC chức vụ đang ghi ${pccv ? String(pccv.giaTri).replace('.', ',') + ' từ ' + formatDate(pccv.ngayHieuLuc) : 'chưa có'}, bảng hệ số trên phần mềm là ${String(dung).replace('.', ',')}${dangBaoLuuPccv(vc) ? ' (đang có bảo lưu PCCV)' : ''}`)
+          chiTiet.push(`Chức vụ ${CHUC_VU_LABELS[vc.chucVu!] ?? vc.chucVu} (${moTaHang(hangTruong!)}): PC chức vụ đang ghi ${pccv ? String(pccv.giaTri).replace('.', ',') + ' từ ' + formatDate(pccv.ngayHieuLuc) : 'chưa có'}, bảng hệ số trên phần mềm là ${String(dung).replace('.', ',')}${dangBaoLuuPccv(vc) ? ' (đang có bảo lưu PCCV)' : ''}`)
           pccvGoiY = pccvGoiY || 'Kế toán đối chiếu quyết định bổ nhiệm, phân công: nếu đã đổi chức vụ thì mở hồ sơ, bấm "Áp dụng mức theo chức vụ", chọn ngày hiệu lực theo quyết định rồi Lưu; nếu là mức cũ được bảo lưu do sắp xếp thì bật mục Bảo lưu PC chức vụ (mức đang ghi được điền sẵn, không phải nhập lại); chức vụ ghi sai thì sửa chức vụ; quyết định riêng thì báo Phòng VHXH'
         }
       }
@@ -284,7 +287,7 @@ export default function RaSoatNgachBacPage() {
       })
     }
     return ketQua
-  }, [vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, chucDanhs, bacLuongs, scopeDonViId, tenDonVi, donViTheoId])
+  }, [vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, chucDanhs, bacLuongs, scopeDonViId, tenDonVi, donViTheoId, quyMoTruongs])
 
   const data = useMemo(() => rows.filter((r) =>
     (!filterDonVi || r.donViId === filterDonVi)

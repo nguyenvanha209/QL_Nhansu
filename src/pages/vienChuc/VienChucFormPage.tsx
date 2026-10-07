@@ -13,7 +13,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_DANG_DUNG, LOAI_LAO_DONG_OPTIONS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, laVienChucBienChe, nhanLuongTheoTien } from '@/types/vienChuc'
 import { chucDanhHopLeVoiVtvl } from '@/utils/vtvlRules'
 import type { ChucVu, LoaiLaoDong, HinhThucLuong } from '@/types/vienChuc'
-import { getHangTruong, getPhuCapChucVuHeSo, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
+import { getPhuCapChucVuHeSo, HANG_TRUONG_LABELS, hangTruongTheoNamHoc, moTaHang } from '@/utils/hangTruong'
+import { namHocHienHanh } from '@/utils/dinhMuc'
 import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen, toUpperName } from '@/utils/helpers'
 import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
@@ -221,10 +222,11 @@ export default function VienChucFormPage() {
   const pccvInfo = useMemo(() => {
     if (!watchDonViId || !watchChucVu) return null
     const dv = donVis.find((d) => d.id === watchDonViId)
-    if (!dv || !dv.soLop || dv.loai === 'OTHER') return null
-    const hang = getHangTruong(dv.loai as LoaiDonVi, dv.soLop)
-    const heSo = toNuoiDuong ? 0 : getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, hang, watchChucVu as ChucVu)
-    return { hang, heSo, loai: dv.loai }
+    // Hạng trường theo quy mô năm học hiện hành (trang Thông tin trường)
+    const h = hangTruongTheoNamHoc(dv, useDanhMucStore.getState().quyMoTruongs, namHocHienHanh())
+    if (!dv || !h) return null
+    const heSo = toNuoiDuong ? 0 : getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, h.hang, watchChucVu as ChucVu)
+    return { hang: h.hang, heSo, loai: dv.loai, moTa: moTaHang(h) }
   }, [watchDonViId, watchChucVu, donVis, toNuoiDuong])
 
   // ── Bảo lưu phụ cấp chức vụ khi sắp xếp (NĐ 178/2024, NĐ 67/2025) ──
@@ -312,8 +314,9 @@ export default function VienChucFormPage() {
   /** Chức vụ có hệ số PC chức vụ bằng mức đang ghi ở trường này - gợi ý "chức vụ cũ" khi mức cũ còn nằm ở dòng PC chức vụ */
   const goiYChucVuCu = (heSo: number): string | undefined => {
     const dv = donVis.find((d) => d.id === (watchDonViId ?? vc?.donViId))
-    if (!dv?.soLop || dv.loai === 'OTHER' || !heSo) return undefined
-    const hang = getHangTruong(dv.loai as LoaiDonVi, dv.soLop)
+    const h = hangTruongTheoNamHoc(dv, useDanhMucStore.getState().quyMoTruongs, namHocHienHanh())
+    if (!dv || !h || !heSo) return undefined
+    const hang = h.hang
     return ['HT', 'P.HT', 'TTCM', 'TPCM'].find((cv) => cv !== watchChucVu && getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, hang, cv as ChucVu) === heSo)
   }
   const batBaoLuu = (bat: boolean) => {
@@ -1011,7 +1014,7 @@ export default function VienChucFormPage() {
           ) : pccvInfo && pccvInfo.heSo > 0 && (() => {
             const dongCv = (watchPhuCaps ?? []).find((pc) => pc?.loaiPhuCapId === pcChucVuId) as { giaTri?: number } | undefined
             const khop = dongCv?.giaTri === pccvInfo.heSo
-            const theoQd = `PC chức vụ theo chức vụ ${tenChucVu(watchChucVu)} (${HANG_TRUONG_LABELS[pccvInfo.hang]}, TT 33/2005): hệ số ${String(pccvInfo.heSo).replace('.', ',')}`
+            const theoQd = `PC chức vụ theo chức vụ ${tenChucVu(watchChucVu)} (${pccvInfo.moTa}; TT 33/2005): hệ số ${String(pccvInfo.heSo).replace('.', ',')}`
             return (
               <Col xs={24}>
                 <Alert

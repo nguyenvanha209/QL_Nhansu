@@ -7,8 +7,15 @@ export interface DonVi {
   ma: string
   ten: string
   loai: LoaiDonVi
+  /**
+   * Không dùng nữa: số lớp, hạng trường nay lấy từ quy mô từng năm học (trang Thông tin trường).
+   * Giữ lại để đọc dữ liệu cũ, không ghi mới.
+   */
   soLop?: number
+  /** Thông tin chung - trường tự cập nhật ở trang Thông tin trường */
   diaChi?: string
+  soDienThoai?: string
+  email?: string
   hieuTruong?: string
   chiTieuBienCheNganSach?: number
   chiTieuBienCheSuNghiep?: number

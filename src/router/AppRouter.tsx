@@ -29,6 +29,7 @@ const HuongDanPage = lazy(() => import('@/pages/HuongDanPage'))
 const ChuyenCongTacPage = lazy(() => import('@/pages/chuyenCongTac/ChuyenCongTacPage'))
 const QuyMoDinhMucPage = lazy(() => import('@/pages/quyMo/QuyMoDinhMucPage'))
 const ThongBaoKetQuaPage = lazy(() => import('@/pages/thongBao/ThongBaoKetQuaPage'))
+const ThongTinTruongPage = lazy(() => import('@/pages/thongTinTruong/ThongTinTruongPage'))
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth()
@@ -51,6 +52,7 @@ export default function AppRouter() {
           <Route path="bang-tong-hop-luong" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'luong', action: 'read' }}><BangTongHopLuongPage /></RoleGuard>} />
           {/* Trang Vị trí việc làm cũ đã gộp vào Định mức viên chức và Cơ cấu VTVL (chỉ tiêu giao theo nhóm VTVL) */}
           <Route path="vi-tri" element={<Navigate to="/quy-mo" replace />} />
+          <Route path="thong-tin-truong" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'quyMo', action: 'read' }}><ThongTinTruongPage /></RoleGuard>} />
           <Route path="quy-mo" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'quyMo', action: 'read' }}><QuyMoDinhMucPage /></RoleGuard>} />
           <Route path="luong/he-so" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'luong', action: 'read' }}><HeSoLuongPage /></RoleGuard>} />
           <Route path="luong/ra-soat" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><RaSoatNgachBacPage /></RoleGuard>} />

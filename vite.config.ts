@@ -39,5 +39,21 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rolldownOptions: {
+      output: {
+        // Thư viện tách gói riêng: ít thay đổi giữa các lần cập nhật phần mềm nên trình duyệt giữ lại
+        // trong bộ nhớ đệm, không phải tải lại; thư viện nặng (biểu đồ, PDF, Excel) chỉ tải khi trang cần.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/, priority: 30 },
+            { name: 'antd', test: /[\\/]node_modules[\\/](antd|@ant-design|@rc-component|rc-[^\\/]+|@emotion)[\\/]/, priority: 20 },
+            { name: 'supabase', test: /[\\/]node_modules[\\/]@supabase[\\/]/, priority: 20 },
+            { name: 'bieu-do', test: /[\\/]node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor)[\\/]/, priority: 20 },
+            { name: 'pdf', test: /[\\/]node_modules[\\/](jspdf|jspdf-autotable)[\\/]/, priority: 20 },
+            { name: 'xlsx', test: /[\\/]node_modules[\\/]xlsx[\\/]/, priority: 20 },
+          ],
+        },
+      },
+    },
   },
 })

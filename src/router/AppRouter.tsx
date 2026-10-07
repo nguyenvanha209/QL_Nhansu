@@ -1,31 +1,34 @@
+import { lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import RoleGuard from '@/components/common/RoleGuard'
-import ThongBaoKetQuaPage from '@/pages/thongBao/ThongBaoKetQuaPage'
 import { useAuth } from '@/hooks/useAuth'
 
 import LoginPage from '@/pages/LoginPage'
-import DashboardPage from '@/pages/DashboardPage'
-import VienChucListPage from '@/pages/vienChuc/VienChucListPage'
-import VienChucFormPage from '@/pages/vienChuc/VienChucFormPage'
-import VienChucDetailPage from '@/pages/vienChuc/VienChucDetailPage'
-import HeSoLuongPage from '@/pages/luong/HeSoLuongPage'
-import RaSoatNgachBacPage from '@/pages/luong/RaSoatNgachBacPage'
-import PhuCapPage from '@/pages/luong/PhuCapPage'
-import BangTongHopLuongPage from '@/pages/luong/BangTongHopLuongPage'
-import DeXuatListPage from '@/pages/deXuat/DeXuatListPage'
-import TaoDeXuatPage from '@/pages/deXuat/TaoDeXuatPage'
-import DeXuatDetailPage from '@/pages/deXuat/DeXuatDetailPage'
-import DuBaoNghiHuuPage from '@/pages/duBao/DuBaoNghiHuuPage'
-import TheoDoiBoNhiemPage from '@/pages/boNhiem/TheoDoiBoNhiemPage'
-import BaoCaoPage from '@/pages/baoCao/BaoCaoPage'
-import DanhMucPage from '@/pages/admin/DanhMucPage'
-import UserManagePage from '@/pages/admin/UserManagePage'
-import AuditLogPage from '@/pages/admin/AuditLogPage'
-import AccountSettingsPage from '@/pages/account/AccountSettingsPage'
-import HuongDanPage from '@/pages/HuongDanPage'
-import ChuyenCongTacPage from '@/pages/chuyenCongTac/ChuyenCongTacPage'
-import QuyMoDinhMucPage from '@/pages/quyMo/QuyMoDinhMucPage'
+
+// Mỗi trang là một gói mã riêng, chỉ tải khi mở trang đó (lần đầu vào phần mềm không phải tải mã của cả 22 trang)
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
+const VienChucListPage = lazy(() => import('@/pages/vienChuc/VienChucListPage'))
+const VienChucFormPage = lazy(() => import('@/pages/vienChuc/VienChucFormPage'))
+const VienChucDetailPage = lazy(() => import('@/pages/vienChuc/VienChucDetailPage'))
+const HeSoLuongPage = lazy(() => import('@/pages/luong/HeSoLuongPage'))
+const RaSoatNgachBacPage = lazy(() => import('@/pages/luong/RaSoatNgachBacPage'))
+const PhuCapPage = lazy(() => import('@/pages/luong/PhuCapPage'))
+const BangTongHopLuongPage = lazy(() => import('@/pages/luong/BangTongHopLuongPage'))
+const DeXuatListPage = lazy(() => import('@/pages/deXuat/DeXuatListPage'))
+const TaoDeXuatPage = lazy(() => import('@/pages/deXuat/TaoDeXuatPage'))
+const DeXuatDetailPage = lazy(() => import('@/pages/deXuat/DeXuatDetailPage'))
+const DuBaoNghiHuuPage = lazy(() => import('@/pages/duBao/DuBaoNghiHuuPage'))
+const TheoDoiBoNhiemPage = lazy(() => import('@/pages/boNhiem/TheoDoiBoNhiemPage'))
+const BaoCaoPage = lazy(() => import('@/pages/baoCao/BaoCaoPage'))
+const DanhMucPage = lazy(() => import('@/pages/admin/DanhMucPage'))
+const UserManagePage = lazy(() => import('@/pages/admin/UserManagePage'))
+const AuditLogPage = lazy(() => import('@/pages/admin/AuditLogPage'))
+const AccountSettingsPage = lazy(() => import('@/pages/account/AccountSettingsPage'))
+const HuongDanPage = lazy(() => import('@/pages/HuongDanPage'))
+const ChuyenCongTacPage = lazy(() => import('@/pages/chuyenCongTac/ChuyenCongTacPage'))
+const QuyMoDinhMucPage = lazy(() => import('@/pages/quyMo/QuyMoDinhMucPage'))
+const ThongBaoKetQuaPage = lazy(() => import('@/pages/thongBao/ThongBaoKetQuaPage'))
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth()

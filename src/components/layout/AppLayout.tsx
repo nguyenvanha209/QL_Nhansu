@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   Layout, Menu, Avatar, Dropdown, Badge, Space, Typography, Button, theme, Tooltip,
-  Breadcrumb,
+  Breadcrumb, Spin,
 } from 'antd'
 import {
   DashboardOutlined, TeamOutlined, FileTextOutlined,
@@ -248,7 +248,10 @@ export default function AppLayout() {
 
         <Content style={{ margin: 16, flex: 1, overflow: 'auto', minHeight: 0 }}>
           <div className="qlvc-content-fade">
-            <Outlet />
+            {/* Trang tải theo nhu cầu: trong lúc tải mã trang vẫn giữ menu, đầu trang */}
+            <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spin size="large" /></div>}>
+              <Outlet />
+            </Suspense>
           </div>
         </Content>
         <Footer style={{

@@ -840,8 +840,8 @@ export default function VienChucFormPage() {
                 name="monDay"
                 label={loaiTruongForm === 'MAM_NON' ? 'Nhóm, lớp phụ trách' : 'Môn giảng dạy'}
                 tooltip={loaiTruongForm === 'MAM_NON'
-                  ? 'Nhóm, lớp độ tuổi giáo viên phụ trách - để theo dõi và lập danh sách ở trang Định mức viên chức và Cơ cấu VTVL'
-                  : 'Căn cứ đối chiếu định mức giáo viên theo từng môn (TT 20/2023/TT-BGDĐT) ở trang Định mức viên chức và Cơ cấu VTVL'}
+                  ? 'Nhóm, lớp độ tuổi giáo viên phụ trách - để theo dõi và lập danh sách ở trang Cơ cấu VTVL và định mức VC'
+                  : 'Căn cứ đối chiếu định mức giáo viên theo từng môn (TT 20/2023/TT-BGDĐT) ở trang Cơ cấu VTVL và định mức VC'}
               >
                 <Select options={monOptions} placeholder={loaiTruongForm === 'MAM_NON' ? 'Chọn nhóm, lớp' : 'Chọn môn giảng dạy'} allowClear showSearch optionFilterProp="label" />
               </Form.Item>

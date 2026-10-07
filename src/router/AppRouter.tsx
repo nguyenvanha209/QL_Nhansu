@@ -50,7 +50,7 @@ export default function AppRouter() {
           <Route path="vien-chuc/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><VienChucDetailPage /></RoleGuard>} />
           <Route path="vien-chuc/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'write' }}><VienChucFormPage /></RoleGuard>} />
           <Route path="bang-tong-hop-luong" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'luong', action: 'read' }}><BangTongHopLuongPage /></RoleGuard>} />
-          {/* Trang Vị trí việc làm cũ đã gộp vào Định mức viên chức và Cơ cấu VTVL (chỉ tiêu giao theo nhóm VTVL) */}
+          {/* Trang Vị trí việc làm cũ đã gộp vào Cơ cấu VTVL và định mức VC (chỉ tiêu giao theo nhóm VTVL) */}
           <Route path="vi-tri" element={<Navigate to="/quy-mo" replace />} />
           <Route path="thong-tin-truong" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'quyMo', action: 'read' }}><ThongTinTruongPage /></RoleGuard>} />
           <Route path="quy-mo" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'quyMo', action: 'read' }}><QuyMoDinhMucPage /></RoleGuard>} />

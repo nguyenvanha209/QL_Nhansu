@@ -9,8 +9,9 @@ import {
 } from '@ant-design/icons'
 import { xuatExcelA4 } from '@/utils/excelA4'
 import type { VungBang } from '@/utils/excelA4'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import ChiTieuBienCheCard from './ChiTieuBienCheCard'
+import BaoCaoDinhMucCapHoc from './BaoCaoDinhMucCapHoc'
 import { MAU_NHOM_VTVL } from '@/utils/mauNhomVtvl'
 import { useAuth } from '@/hooks/useAuth'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -77,8 +78,13 @@ function useTenChucDanh() {
 }
 
 export default function QuyMoDinhMucPage() {
-  const { scopeDonViId } = useAuth()
+  const { scopeDonViId, laQuanTri, isVHXH, isLanhDao } = useAuth()
   const donVis = useDanhMucStore((s) => s.donVis)
+  const [params, setParams] = useSearchParams()
+  // Báo cáo chi tiết theo cấp học (trước đây ở trang Báo cáo): Quản trị, Phòng VHXH, Lãnh đạo
+  const xemCapHoc = laQuanTri || isVHXH || isLanhDao
+  const the = xemCapHoc && params.get('tab') === 'cap-hoc' ? 'cap-hoc' : 'tong-hop'
+  const chonThe = (k: string) => setParams(k === 'cap-hoc' ? { tab: 'cap-hoc' } : {}, { replace: true })
   const [namHoc, setNamHoc] = useState(namHocHienHanh)
   const [chon, setChon] = useState<string | undefined>()
 
@@ -96,9 +102,9 @@ export default function QuyMoDinhMucPage() {
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <div>
-          <Title level={4} style={{ margin: 0 }}>Định mức viên chức và Cơ cấu VTVL</Title>
+          <Title level={4} style={{ margin: 0 }}>Cơ cấu VTVL và định mức VC</Title>
           <Text type="secondary">
-            Khai báo số lớp, số học sinh từng khối; tính định mức theo TT 19/2023/TT-BGDĐT (mầm non) và TT 20/2023/TT-BGDĐT (tiểu học, THCS)
+            Cơ cấu vị trí việc làm theo khung của Sở Nội vụ Hải Phòng; định mức viên chức tính theo TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS) từ quy mô khai ở trang Thông tin trường
           </Text>
         </div>
         <Space wrap>
@@ -133,7 +139,14 @@ export default function QuyMoDinhMucPage() {
       ) : scopeDonViId ? (
         <Empty description="Đơn vị của tài khoản không phải trường mầm non, tiểu học hoặc THCS" />
       ) : (
-        <TongHopPhuong truongs={truongs} namHoc={namHoc} onChon={setChon} />
+        <Tabs
+          activeKey={the}
+          onChange={chonThe}
+          items={[
+            { key: 'tong-hop', label: 'Tổng hợp toàn phường', children: <TongHopPhuong truongs={truongs} namHoc={namHoc} onChon={setChon} onXemCapHoc={xemCapHoc ? () => chonThe('cap-hoc') : undefined} /> },
+            ...(xemCapHoc ? [{ key: 'cap-hoc', label: 'Báo cáo chi tiết theo cấp học', children: <BaoCaoDinhMucCapHoc namHoc={namHoc} /> }] : []),
+          ]}
+        />
       )}
     </Card>
   )
@@ -156,7 +169,7 @@ type DongTH = {
 }
 const congN = (a: number | null, b: number | null) => (a == null && b == null ? null : (a ?? 0) + (b ?? 0))
 
-function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: string; onChon: (id: string) => void }) {
+function TongHopPhuong({ truongs, namHoc, onChon, onXemCapHoc }: { truongs: DonVi[]; namHoc: string; onChon: (id: string) => void; onXemCapHoc?: () => void }) {
   const quyMos = useDanhMucStore((s) => s.quyMoTruongs)
   const chiTieus = useDanhMucStore((s) => s.chiTieuBienChes)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
@@ -277,8 +290,8 @@ function TongHopPhuong({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: 
         description="Ba nhóm vị trí việc làm theo khung của Sở Nội vụ Hải Phòng. Giao và Có mặt tính biên chế (ngân sách + sự nghiệp); thừa/thiếu so với chỉ tiêu giao và so với định mức (thừa đỏ, thiếu xanh). Bấm tên trường để xem chi tiết và giao chỉ tiêu."
       />
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
-        {(laQuanTri || isVHXH || isLanhDao) && (
-          <Button icon={<TableOutlined />} onClick={() => navigate('/bao-cao?tab=dinh-muc-cap')}>Báo cáo chi tiết theo cấp học</Button>
+        {onXemCapHoc && (
+          <Button icon={<TableOutlined />} onClick={onXemCapHoc}>Báo cáo chi tiết theo cấp học</Button>
         )}
         <Button icon={<DownloadOutlined />} onClick={xuat}>Xuất Excel</Button>
       </div>

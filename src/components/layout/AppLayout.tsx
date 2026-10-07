@@ -30,7 +30,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/luong/he-so': 'Hệ số lương',
   '/luong/ra-soat': 'Rà soát ngạch - bậc - hệ số',
   '/luong/phu-cap': 'Phụ cấp',
-  '/quy-mo': 'Định mức viên chức và Cơ cấu VTVL',
+  '/quy-mo': 'Cơ cấu VTVL và định mức VC',
   '/de-xuat': 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
   '/chuyen-cong-tac': 'Chuyển công tác',
   '/thong-bao-ket-qua': 'Thông báo kết quả nâng lương',
@@ -62,7 +62,7 @@ export default function AppLayout() {
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
     hasPermission('luong', 'read') && { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
     hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
-    hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Định mức viên chức và Cơ cấu VTVL' },
+    hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL và định mức VC' },
     hasPermission('deXuat', 'read') && {
       key: '/de-xuat', icon: <FileTextOutlined />,
       label: 'Đề xuất điều chỉnh hệ số lương - phụ cấp',

@@ -19,14 +19,13 @@ const MAU_THUA = '#cf1322'
 const MAU_THIEU = '#1d4ed8'
 
 /** Báo cáo tổng hợp định mức và cơ cấu VTVL theo cấp học: các trường cùng cấp đặt cạnh nhau trong một bảng */
-export default function BaoCaoDinhMucCapHoc() {
+export default function BaoCaoDinhMucCapHoc({ namHoc }: { namHoc: string }) {
   const donVis = useDanhMucStore((s) => s.donVis)
   const quyMos = useDanhMucStore((s) => s.quyMoTruongs)
   const chiTieus = useDanhMucStore((s) => s.chiTieuBienChes)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const [cap, setCap] = useState<CapHoc>('MAM_NON')
-  const [namHoc, setNamHoc] = useState(namHocHienHanh)
   const [chiSo, setChiSo] = useState<ChiSo[]>(CHI_SO_MAC_DINH)
   const [anTrong, setAnTrong] = useState(true)
   const [chonTruong, setChonTruong] = useState<string[]>([])
@@ -126,7 +125,6 @@ export default function BaoCaoDinhMucCapHoc() {
           onChange={(v) => { setCap(v); setChonTruong([]) }}
           options={CAP.map((c) => ({ value: c, label: TEN_CAP[c] }))}
         />
-        <Select value={namHoc} onChange={setNamHoc} style={{ width: 200 }} options={dsNamHoc().map((n) => ({ value: n, label: `Năm học ${n}` }))} />
         <Select
           mode="multiple" allowClear maxTagCount="responsive" placeholder={`Tất cả ${truongCap.length} trường`}
           value={chonTruong} onChange={setChonTruong} style={{ minWidth: 280, maxWidth: 520 }}

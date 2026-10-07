@@ -7,7 +7,6 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
-import BaoCaoDinhMucCapHoc from './BaoCaoDinhMucCapHoc'
 import { exportToExcel } from '@/utils/exportExcel'
 import { exportToPdf } from '@/utils/exportPdf'
 import { formatDate } from '@/utils/helpers'
@@ -19,7 +18,6 @@ export default function BaoCaoPage() {
   const { message } = App.useApp()
   const { scopeDonViId, laQuanTri, isVHXH, isLanhDao } = useAuth()
   // Báo cáo định mức theo cấp học: Quản trị, Phòng VHXH và Lãnh đạo (xem toàn phường)
-  const xemDinhMucCap = !scopeDonViId && (laQuanTri || isVHXH || isLanhDao)
   const [params] = useSearchParams()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
   const [filterLoai, setFilterLoai] = useState<string | undefined>()
@@ -118,10 +116,6 @@ export default function BaoCaoPage() {
       </Space>
 
       <Tabs defaultActiveKey={params.get('tab') ?? undefined} items={[
-        ...(xemDinhMucCap ? [{
-          key: 'dinh-muc-cap', label: 'Định mức & cơ cấu VTVL theo cấp học',
-          children: <BaoCaoDinhMucCapHoc />,
-        }] : []),
         {
           key: '1', label: `Tổng hợp nhân sự (${enriched.length})`,
           children: (

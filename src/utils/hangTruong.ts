@@ -27,14 +27,16 @@ const PCCV: Record<string, Record<HangTruong, Record<string, number>>> = {
     2: { HT: 0.35, 'P.HT': 0.25, TTCM: 0.20, TPCM: 0.15 },
     3: { HT: 0.25, 'P.HT': 0.15, TTCM: 0.20, TPCM: 0.15 },
   },
+  // 07/10/2026: sửa P.HT tiểu học (trước ghi 0,35/0,25/0,20), P.HT THCS hạng I, II (0,40/0,30) và tổ trưởng,
+  // tổ phó THCS hạng I (0,25/0,20) - đối chiếu TT 33/2005 và mức các trường đang hưởng thực tế
   TIEU_HOC: {
-    1: { HT: 0.50, 'P.HT': 0.35, TTCM: 0.20, TPCM: 0.15 },
-    2: { HT: 0.40, 'P.HT': 0.25, TTCM: 0.20, TPCM: 0.15 },
-    3: { HT: 0.30, 'P.HT': 0.20, TTCM: 0.20, TPCM: 0.15 },
+    1: { HT: 0.50, 'P.HT': 0.40, TTCM: 0.20, TPCM: 0.15 },
+    2: { HT: 0.40, 'P.HT': 0.30, TTCM: 0.20, TPCM: 0.15 },
+    3: { HT: 0.30, 'P.HT': 0.25, TTCM: 0.20, TPCM: 0.15 },
   },
   THCS: {
-    1: { HT: 0.55, 'P.HT': 0.40, TTCM: 0.25, TPCM: 0.20 },
-    2: { HT: 0.45, 'P.HT': 0.30, TTCM: 0.20, TPCM: 0.15 },
+    1: { HT: 0.55, 'P.HT': 0.45, TTCM: 0.20, TPCM: 0.15 },
+    2: { HT: 0.45, 'P.HT': 0.35, TTCM: 0.20, TPCM: 0.15 },
     3: { HT: 0.35, 'P.HT': 0.25, TTCM: 0.20, TPCM: 0.15 },
   },
 }

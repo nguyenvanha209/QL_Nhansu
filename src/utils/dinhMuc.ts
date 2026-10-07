@@ -374,7 +374,7 @@ export function chiaTheoTyLe(tong: number, trongSo: number[]): number[] {
   return nguyen.map((n) => n / 10)
 }
 
-const laBienChe = (vc: VienChuc) => vc.loaiLaoDong === 'VIEN_CHUC' || vc.loaiLaoDong === 'TAP_SU'
+export const laBienChe = (vc: VienChuc) => vc.loaiLaoDong === 'VIEN_CHUC' || vc.loaiLaoDong === 'TAP_SU'
 
 const VTVL_CHUAN = ['CBQL', 'GIAO_VIEN', 'NHAN_VIEN']
 const laVtvlChuan = (vtvl?: string) => !!vtvl && VTVL_CHUAN.includes(vtvl)
@@ -401,6 +401,20 @@ export function viTriCuaNguoi(vc: VienChuc, cap: CapHoc, chucDanh?: ChucDanhTra)
   }
   const cv = vc.congViec ?? doanCongViec(vc.nhiemVuChinh, chucDanh?.ten)
   return cv && cv !== 'KHAC' ? cv : NV_KHAC
+}
+
+/**
+ * Các dòng của bảng định mức mà một người được đếm "có mặt" - cùng quy tắc với tinhDinhMuc:
+ * dòng vị trí của mình (công việc ngoài khung cấp học dồn về "Nhân viên khác"), tổ trưởng / tổ phó
+ * đếm thêm ở dòng chức vụ. `nhom` là nhóm VTVL của dòng vị trí chính (để lọc theo dòng nhóm).
+ */
+export function dongCuaNguoi(vc: VienChuc, cap: CapHoc, chucDanh?: ChucDanhTra): { ma: string[]; nhom: NhomDinhMuc } {
+  const goc = viTriCuaNguoi(vc, cap, chucDanh)
+  const vt = VI_TRI[cap].find((v) => v.ma === goc)
+  const ma = [vt || goc === CHUA_PHAN_MON ? goc : NV_KHAC]
+  if (vc.chucVu === 'TTCM') ma.push('TO_TRUONG')
+  else if (vc.chucVu === 'TPCM') ma.push('TO_PHO')
+  return { ma, nhom: vt?.nhom ?? (goc === CHUA_PHAN_MON ? 'CHUYEN_MON' : 'HO_TRO') }
 }
 
 /** Số tiết/tuần của môn theo khối; Tin học tiểu học cộng khối 1, 2 nếu trường có dạy */

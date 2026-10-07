@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import {
   Card, Typography, Select, Table, Tag, Tabs, InputNumber, Button, Space, Alert, App, Input,
-  Statistic, Row, Col, Tooltip, Empty, Segmented, Badge, Checkbox, Drawer,
+  Statistic, Row, Col, Tooltip, Empty, Segmented, Badge, Checkbox, Drawer, Modal,
 } from 'antd'
 import {
   SaveOutlined, DownloadOutlined, ArrowLeftOutlined, BankOutlined, BulbOutlined, SearchOutlined, UndoOutlined, HistoryOutlined, TableOutlined,
@@ -16,7 +16,7 @@ import { MAU_NHOM_VTVL } from '@/utils/mauNhomVtvl'
 import { useAuth } from '@/hooks/useAuth'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
-import { duocTinhSoLieu } from '@/types/vienChuc'
+import { duocTinhSoLieu, CHUC_VU_LABELS, LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
 import type { DonVi } from '@/types/donVi'
 import type { QuyMoTruong, QuyMoLichSu, NoiDungQuyMo } from '@/types/quyMo'
@@ -28,10 +28,10 @@ import { logAction } from '@/utils/auditLogger'
 import { exportToExcel } from '@/utils/exportExcel'
 import { formatDatetime } from '@/utils/helpers'
 import {
-  type CapHoc, type DongDinhMuc, type KetQuaDinhMuc, type DongPhanBoKiem, type TongNhom,
+  type CapHoc, type ChucDanhTra, type DongDinhMuc, type KetQuaDinhMuc, type DongPhanBoKiem, type TongNhom,
   laCapHoc, TEN_CAP, THU_TU_CAP, KHOI, NHOM_DINH_MUC, MON_GIANG_DAY, CO_HAI_BUOI, KHOI_TIN_TU_CHON,
   namHocHienHanh, dsNamHoc, idQuyMo, tinhDinhMuc, tongQuyMo, goiYMonDay, tenMonDay, fmt, lamTron1, nhomNguoi,
-  demChuaPhanCongMN, thongKePhanCongMN,
+  demChuaPhanCongMN, thongKePhanCongMN, dongCuaNguoi, laBienChe,
 } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
@@ -482,7 +482,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
   const items = [
     {
       key: 'dinhMuc', label: 'Định mức, chỉ tiêu & cơ cấu VTVL',
-      children: <><ChiTieuBienCheCard donVi={donVi} namHoc={namHoc} kq={kq} /><TheDinhMuc kq={kq} nhap={quyMoTinh} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} /></>,
+      children: <><ChiTieuBienCheCard donVi={donVi} namHoc={namHoc} kq={kq} /><TheDinhMuc kq={kq} nhap={quyMoTinh} coTheSua={coTheSua} datNhapTay={datNhapTay} datKiem={datKiem} daDoi={daDoi} nhanSu={nhanSu} layCd={cd.lay} tenTruong={donVi.ten} /></>,
     },
     {
       key: 'phanMon',
@@ -553,10 +553,13 @@ type DongBang =
 
 const SO_LA_MA = ['I', 'II', 'III', 'IV']
 
-function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
+function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi, nhanSu, layCd, tenTruong }: {
   kq: KetQuaDinhMuc; nhap: QuyMoTruong; coTheSua: boolean; datNhapTay: (ma: string, v: number | null) => void
   datKiem: (ma: string | null, v: number | null) => void; daDoi: boolean
+  nhanSu: VienChuc[]; layCd: (id?: string) => (ChucDanhTra & { ma?: string }) | undefined; tenTruong: string
 }) {
+  const [xemDs, setXemDs] = useState<XemDanhSach | null>(null)
+
   if (!kq.tongLop) {
     return <Empty description={`Chưa có số lớp - khai báo quy mô năm học ở trang Thông tin trường (nút trên đầu trang) để tính định mức`} />
   }
@@ -577,6 +580,17 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
   const soNhom = (nhom: string) => SO_LA_MA[NHOM_DINH_MUC.findIndex((n) => n.key === nhom)] ?? ''
   const tt = kq.toanTruong
   const nhomIV = kq.tongNhom.find((t) => !t.apDungDinhMuc)
+  /** Số có mặt bấm được: mở danh sách người ở vị trí (hoặc nhóm) đó */
+  const moDs = (r: DongBang, loai: LoaiDs, hien: React.ReactNode, soNguoi: number) => {
+    if (!soNguoi) return hien
+    const tieuDe = r.loai === 'nhom' ? r.ten : r.ten
+    const xem = () => setXemDs(r.loai === 'nhom' ? { nhom: r.nhomKey, tieuDe, loai } : { ma: r.ma, tieuDe, loai })
+    return (
+      <Tooltip title="Bấm để xem danh sách">
+        <a onClick={xem} style={{ display: 'inline-block', minWidth: 24 }}>{hien}</a>
+      </Tooltip>
+    )
+  }
   const ngoai = kq.tongNhom.reduce((s, t) => s + t.coMatNgoai, 0)
 
   return (
@@ -680,9 +694,9 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
           {
             title: 'Có mặt',
             children: [
-              { title: 'Viên chức', key: 'vc', width: 75, align: 'center', render: (_, r) => (tongCua(r) ? so(tongCua(r)!.coMatVC) : laDong(r) && (r.coMatVC || '')) },
-              { title: 'Hợp đồng', key: 'hd', width: 75, align: 'center', render: (_, r) => (tongCua(r) ? so(tongCua(r)!.coMatHD) : laDong(r) && (r.coMatHD || '')) },
-              { title: 'Tổng', key: 'cm', width: 65, align: 'center', render: (_, r) => (tongCua(r) ? so(tongCua(r)!.coMat) : laDong(r) && <Text strong>{r.coMat}</Text>) },
+              { title: 'Viên chức', key: 'vc', width: 75, align: 'center', render: (_, r) => (tongCua(r) ? moDs(r, 'vc', so(tongCua(r)!.coMatVC), tongCua(r)!.coMatVC) : laDong(r) && moDs(r, 'vc', r.coMatVC || '', r.coMatVC)) },
+              { title: 'Hợp đồng', key: 'hd', width: 75, align: 'center', render: (_, r) => (tongCua(r) ? moDs(r, 'hd', so(tongCua(r)!.coMatHD), tongCua(r)!.coMatHD) : laDong(r) && moDs(r, 'hd', r.coMatHD || '', r.coMatHD)) },
+              { title: 'Tổng', key: 'cm', width: 65, align: 'center', render: (_, r) => (tongCua(r) ? moDs(r, 'tat', so(tongCua(r)!.coMat), tongCua(r)!.coMat) : laDong(r) && moDs(r, 'tat', <Text strong>{r.coMat}</Text>, r.coMat)) },
             ],
           },
           {
@@ -731,9 +745,82 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi }: {
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Có mặt đếm theo hồ sơ đang công tác tại trường: cán bộ quản lý theo chức vụ, giáo viên theo môn được phân công,
         nhân viên theo "Công việc cụ thể". Viên chức gồm biên chế và tập sự; còn lại tính là hợp đồng.
+        Bấm vào số có mặt để xem danh sách người ở vị trí đó.
         {daDoi && ' Số liệu đang tính theo bản chưa lưu.'}
       </Text>
+      <DanhSachViTri xem={xemDs} onClose={() => setXemDs(null)} cap={kq.cap} nhanSu={nhanSu} layCd={layCd} tenTruong={tenTruong} />
     </>
+  )
+}
+
+// ───────────────────────────── Danh sách người theo vị trí ─────────────────────────────
+
+type LoaiDs = 'vc' | 'hd' | 'tat'
+type XemDanhSach = { ma?: string; nhom?: string; tieuDe: string; loai: LoaiDs }
+const TEN_LOAI_DS: Record<LoaiDs, string> = { vc: 'viên chức', hd: 'hợp đồng', tat: 'tất cả' }
+
+function DanhSachViTri({ xem, onClose, cap, nhanSu, layCd, tenTruong }: {
+  xem: XemDanhSach | null; onClose: () => void; cap: CapHoc; nhanSu: VienChuc[]
+  layCd: (id?: string) => (ChucDanhTra & { ma?: string }) | undefined; tenTruong: string
+}) {
+  const navigate = useNavigate()
+  const { hasPermission } = useAuth()
+  const [loai, setLoai] = useState<LoaiDs>('tat')
+  useEffect(() => { if (xem) setLoai(xem.loai) }, [xem])
+
+  // Cùng quy tắc đếm với bảng định mức (dongCuaNguoi), nên số người khớp số trên bảng
+  const ds = useMemo(() => {
+    if (!xem) return []
+    return nhanSu
+      .filter((v) => duocTinhSoLieu(v))
+      .filter((v) => {
+        const d = dongCuaNguoi(v, cap, layCd(v.chucDanhId))
+        return xem.ma ? d.ma.includes(xem.ma) : d.nhom === xem.nhom
+      })
+      .filter((v) => (loai === 'tat' ? true : loai === 'vc' ? laBienChe(v) : !laBienChe(v)))
+      .sort((a, b) => a.ten.localeCompare(b.ten, 'vi') || a.ho.localeCompare(b.ho, 'vi'))
+  }, [xem, nhanSu, cap, layCd, loai])
+
+  const xemHoSo = hasPermission('vienChuc', 'read')
+  return (
+    <Modal
+      open={!!xem}
+      onCancel={onClose}
+      footer={null}
+      width={900}
+      title={xem ? `${xem.tieuDe} - ${tenTruong}` : ''}
+      destroyOnHidden
+    >
+      <Space style={{ marginBottom: 12 }} wrap>
+        <Segmented<LoaiDs>
+          value={loai}
+          onChange={setLoai}
+          options={(['tat', 'vc', 'hd'] as LoaiDs[]).map((k) => ({ value: k, label: TEN_LOAI_DS[k][0].toUpperCase() + TEN_LOAI_DS[k].slice(1) }))}
+        />
+        <Text type="secondary">{ds.length} người</Text>
+      </Space>
+      <Table<VienChuc>
+        size="small"
+        bordered
+        rowKey="id"
+        pagination={false}
+        dataSource={ds}
+        scroll={{ x: 'max-content', y: 460 }}
+        columns={[
+          { title: 'STT', key: 'stt', width: 50, align: 'center', render: (_, __, i) => i + 1 },
+          {
+            title: 'Họ và tên', key: 'ten', width: 190,
+            render: (_, v) => xemHoSo
+              ? <a onClick={() => { onClose(); navigate(`/vien-chuc/${v.id}`) }}>{v.ho} {v.ten}</a>
+              : `${v.ho} ${v.ten}`,
+          },
+          { title: 'Mã ngạch', key: 'ngach', width: 100, render: (_, v) => <Text type="secondary" style={{ fontSize: 13 }}>{layCd(v.chucDanhId)?.ma ?? '-'}</Text> },
+          { title: 'Chức vụ', key: 'cv', width: 110, render: (_, v) => (v.chucVu ? CHUC_VU_LABELS[v.chucVu] ?? v.chucVu : '') },
+          { title: 'Loại hình', key: 'lh', width: 170, render: (_, v) => <Tag color={laBienChe(v) ? 'blue' : 'default'} style={{ marginInlineEnd: 0 }}>{LOAI_LAO_DONG_LABELS[v.loaiLaoDong] ?? v.loaiLaoDong}</Tag> },
+          { title: 'Nhiệm vụ chính', dataIndex: 'nhiemVuChinh', key: 'nv', width: 220, ellipsis: true },
+        ]}
+      />
+    </Modal>
   )
 }
 

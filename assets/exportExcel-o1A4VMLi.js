@@ -1,0 +1,1 @@
+import{n as e,t}from"./excelA4-CK2dCfK_.js";function n(n,r,i=`Dữ liệu`,a){return e(r,[t(n,i,{tieuDe:a})]).catch(e=>{console.error(`[xuat excel]`,e),alert(`Không xuất được file Excel. Tải lại trang rồi thử lại.`)})}export{n as t};

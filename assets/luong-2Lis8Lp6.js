@@ -1,0 +1,1 @@
+var e={TUYEN_DUNG:`Khai báo lần đầu / Tuyển dụng`,NANG_BAC:`Nâng bậc thường xuyên`,NANG_TRUOC_HAN:`Nâng bậc trước hạn`,DIEU_CHINH:`Điều chỉnh`,CHUYEN_NGACH:`Chuyển ngạch/chức danh`};export{e as t};

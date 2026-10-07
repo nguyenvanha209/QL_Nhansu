@@ -1,4 +1,4 @@
-import { supabase, napPhienDangNhap } from './supabase'
+import { supabase, napPhienDangNhap, dayGhiNgay } from './supabase'
 
 // Mật khẩu không còn nằm trong ql-users. Chúng được băm bcrypt và lưu ở bảng
 // mat_khau trên Supabase - bảng này bật RLS và không có policy nào, nên không
@@ -11,6 +11,8 @@ export const emailDangNhap = (username: string) =>
 
 /** Đăng xuất phiên máy chủ (không chờ - mất mạng vẫn đăng xuất được ở máy) */
 export function dangXuatMayChu() {
+  // Lệnh ghi đang chờ gom (VD nhật ký đăng xuất) phải gửi trước khi mất phiên
+  dayGhiNgay()
   supabase?.auth.signOut().catch(() => {})
 }
 

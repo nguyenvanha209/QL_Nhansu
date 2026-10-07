@@ -482,9 +482,66 @@ function xepHangGhi(name: string, value: string, daXoa: DaXoa) {
   xepViecGhi(name, value, daXoaGop, 0)
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// Gom các lần ghi liên tiếp
+//
+// Mỗi thay đổi trong store là một lần setItem. Nhập Excel vài trăm dòng, sửa hàng
+// loạt... gọi hàng nghìn lần liền nhau, và trước đây lần nào cũng so cả kho để
+// tìm bản ghi bị xoá rồi xếp một lệnh ghi lên máy chủ → giao diện đơ, gửi mạng
+// hàng nghìn lượt. Nay vẫn lưu vào máy ngay, còn việc gửi lên máy chủ đợi tới khi
+// ngớt thay đổi (tối đa 1,5 giây) rồi gửi MỘT lần bằng nội dung mới nhất.
+// Bản ghi bị xoá được tính bằng cách so bản trước lần thay đổi đầu tiên với bản
+// lúc gửi. Lệnh đang chờ gom vẫn tính là "đang ghi" (chỉ báo, cảnh báo đóng
+// trang, hoãn làm mới từ máy chủ đều giữ như cũ).
+// ───────────────────────────────────────────────────────────────────────────
+
+const CHO_GOM_MS = 300
+const CHO_GOM_TOI_DA_MS = 1500
+const choGom = new Map<string, { truoc: string | null; batDau: number; hen: number }>()
+
+function henGhi(name: string, truoc: string | null) {
+  const c = choGom.get(name)
+  if (c) {
+    window.clearTimeout(c.hen)
+    const conLai = Math.max(0, c.batDau + CHO_GOM_TOI_DA_MS - Date.now())
+    c.hen = window.setTimeout(() => dayGhi(name), Math.min(CHO_GOM_MS, conLai))
+    return
+  }
+  soLenhDangGhi++
+  capNhatTrangThaiGhi()
+  choGom.set(name, { truoc, batDau: Date.now(), hen: window.setTimeout(() => dayGhi(name), CHO_GOM_MS) })
+}
+
+function dayGhi(name: string) {
+  const c = choGom.get(name)
+  if (!c) return
+  window.clearTimeout(c.hen)
+  choGom.delete(name)
+  // Nội dung MỚI NHẤT trên máy, không phải bản lúc hẹn: trong lúc chờ, máy có thể vừa hợp nhất dữ liệu người khác
+  const value = localStorage.getItem(name)
+  if (value !== null) xepHangGhi(name, value, timDaXoa(c.truoc, value))
+  soLenhDangGhi--
+  capNhatTrangThaiGhi()
+}
+
+/** Gửi ngay mọi lệnh ghi đang chờ gom (trước khi chờ ghi xong, đóng/ẩn trang, đăng xuất) */
+export function dayGhiNgay() {
+  for (const name of [...choGom.keys()]) dayGhi(name)
+}
+
+if (typeof window !== 'undefined') {
+  // Ẩn hoặc đóng tab: gửi luôn, không đợi hết thời gian gom
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') dayGhiNgay() })
+  window.addEventListener('pagehide', dayGhiNgay)
+}
+
 /** Chờ mọi lệnh ghi đang xếp hàng xong */
 export async function choGhiXong() {
-  while (soLenhDangGhi > 0) await Promise.all([...hangCho.values()])
+  dayGhiNgay()
+  while (soLenhDangGhi > 0) {
+    await Promise.all([...hangCho.values()])
+    dayGhiNgay()
+  }
 }
 
 // id đang có trong toàn bộ kho ở máy này (để nhận ra bản ghi chuyển mảnh, không phải bị xoá)
@@ -834,15 +891,23 @@ const hybridStorage: StateStorage = {
   getItem: (name: string): string | null => localStorage.getItem(name),
 
   setItem: (name: string, value: string): void => {
-    // Phải đọc bản cũ TRƯỚC khi ghi đè, để biết lần này người dùng xóa hẳn
-    // bản ghi nào - dùng khi hợp nhất lúc có xung đột.
-    const daXoa = supabase && !dangDongBo ? timDaXoa(localStorage.getItem(name), value) : {}
-    localStorage.setItem(name, value)
     // Chưa đăng nhập máy chủ thì chỉ lưu trên máy (máy chủ không nhận ghi từ người chưa đăng nhập)
-    if (supabase && !dangDongBo && coPhien) xepHangGhi(name, value, daXoa)
+    const guiMayChu = !!supabase && !dangDongBo && coPhien
+    // Phải giữ bản cũ TRƯỚC khi ghi đè, để biết người dùng xóa hẳn bản ghi nào -
+    // dùng khi hợp nhất lúc có xung đột. Đang chờ gom thì bản cũ đã giữ từ lần đầu.
+    const truoc = guiMayChu && !choGom.has(name) ? localStorage.getItem(name) : null
+    localStorage.setItem(name, value)
+    if (guiMayChu) henGhi(name, truoc)
   },
 
   removeItem: (name: string): void => {
+    const c = choGom.get(name)
+    if (c) {
+      window.clearTimeout(c.hen)
+      choGom.delete(name)
+      soLenhDangGhi--
+      capNhatTrangThaiGhi()
+    }
     localStorage.removeItem(name)
     if (supabase && !dangDongBo && coPhien) {
       supabase.from('app_state').delete().eq('key', name).then(({ error }) => {

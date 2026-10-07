@@ -27,7 +27,7 @@ export default function BaoCaoDinhMucCapHoc({ namHoc }: { namHoc: string }) {
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const [cap, setCap] = useState<CapHoc>('MAM_NON')
   const [chiSo, setChiSo] = useState<ChiSo[]>(CHI_SO_MAC_DINH)
-  const [anTrong, setAnTrong] = useState(true)
+  const [anTrong, setAnTrong] = useState(false) // Mặc định hiện đủ khung VTVL như bảng của từng trường (VD tiểu học 13 vị trí hỗ trợ)
   const [chonTruong, setChonTruong] = useState<string[]>([])
   const [dangXuat, setDangXuat] = useState(false)
 

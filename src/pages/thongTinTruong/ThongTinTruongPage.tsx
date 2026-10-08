@@ -54,9 +54,9 @@ function vanTay(q: NhapQuyMo, cap: CapHoc): string {
 function useHieuTruong() {
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   return useMemo(() => {
-    const m = new Map<string, string>()
+    const m = new Map<string, { ten: string; dienThoai?: string }>()
     for (const v of vienChucs) {
-      if (v.chucVu === 'HT' && duocTinhSoLieu(v) && !m.has(v.donViId)) m.set(v.donViId, `${v.ho} ${v.ten}`)
+      if (v.chucVu === 'HT' && duocTinhSoLieu(v) && !m.has(v.donViId)) m.set(v.donViId, { ten: `${v.ho} ${v.ten}`, dienThoai: v.dienThoai?.trim() || undefined })
     }
     return m
   }, [vienChucs])
@@ -127,17 +127,57 @@ export default function ThongTinTruongPage() {
 
 // ───────────────────────────── Tổng hợp các trường ─────────────────────────────
 
+type DongTT = {
+  key: string
+  loai: 'phuong' | 'cap' | 'truong'
+  ten: string
+  dv?: DonVi
+  cap?: CapHoc
+  qm?: QuyMoTruong
+  stt?: number
+  tongLop: number
+  tongHS: number
+  /** Dòng tổng: số trường, số trường đã khai, số trường theo hạng */
+  soTruong?: number
+  soDaKhai?: number
+  theoHang?: Record<1 | 2 | 3, number>
+}
+
 function TongHop({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: string; onChon: (id: string) => void }) {
   const quyMoTruongs = useDanhMucStore((s) => s.quyMoTruongs)
   const hieuTruong = useHieuTruong()
 
-  const dongs = useMemo(() => truongs.map((dv) => {
-    const cap = dv.loai as CapHoc
-    const qm = quyMoTruongs.find((q) => q.id === idQuyMo(dv.id, namHoc))
-    const t = qm ? tongQuyMo(qm, cap) : undefined
-    return { dv, cap, qm, tongLop: t?.tongLop ?? 0, tongHS: t?.tongHS ?? 0 }
-  }), [truongs, quyMoTruongs, namHoc])
-  const chuaKhai = dongs.filter((d) => !d.tongLop)
+  const { dongs, chuaKhai } = useMemo(() => {
+    const truongRows: DongTT[] = truongs.map((dv) => {
+      const cap = dv.loai as CapHoc
+      const qm = quyMoTruongs.find((q) => q.id === idQuyMo(dv.id, namHoc))
+      const t = qm ? tongQuyMo(qm, cap) : undefined
+      return { key: dv.id, loai: 'truong', ten: dv.ten, dv, cap, qm, tongLop: t?.tongLop ?? 0, tongHS: t?.tongHS ?? 0 }
+    })
+    // Dòng cộng: toàn phường ở đầu, mỗi cấp một dòng ngay trên các trường của cấp
+    const cong = (key: string, loai: 'phuong' | 'cap', ten: string, ds: DongTT[], cap?: CapHoc): DongTT => {
+      const theoHang = { 1: 0, 2: 0, 3: 0 } as Record<1 | 2 | 3, number>
+      for (const d of ds) if (d.tongLop) theoHang[getHangTruong(d.cap!, d.tongLop)]++
+      return {
+        key, loai, ten, cap,
+        tongLop: ds.reduce((s, d) => s + d.tongLop, 0),
+        tongHS: ds.reduce((s, d) => s + d.tongHS, 0),
+        soTruong: ds.length, soDaKhai: ds.filter((d) => d.tongLop).length, theoHang,
+      }
+    }
+    const ra: DongTT[] = [cong('__phuong', 'phuong', 'TOÀN PHƯỜNG', truongRows)]
+    for (const cap of (Object.keys(THU_TU_CAP) as CapHoc[]).sort((a, b) => THU_TU_CAP[a] - THU_TU_CAP[b])) {
+      const ds = truongRows.filter((d) => d.cap === cap)
+      if (!ds.length) continue
+      ra.push(cong(`__cap_${cap}`, 'cap', `Cấp ${TEN_CAP[cap]}`, ds, cap))
+      ds.forEach((d, i) => ra.push({ ...d, stt: i + 1 }))
+    }
+    return { dongs: ra, chuaKhai: truongRows.filter((d) => !d.tongLop) }
+  }, [truongs, quyMoTruongs, namHoc])
+
+  const laTong = (r: DongTT) => r.loai !== 'truong'
+  const dam = (r: DongTT, x: React.ReactNode) => (laTong(r) ? <b>{x}</b> : x)
+  const mauHang = (h: 1 | 2 | 3) => (h === 1 ? 'gold' : h === 2 ? 'blue' : 'default')
 
   return (
     <>
@@ -146,39 +186,61 @@ function TongHop({ truongs, namHoc, onChon }: { truongs: DonVi[]; namHoc: string
           type="warning"
           showIcon
           style={{ marginBottom: 12 }}
-          title={`${chuaKhai.length}/${dongs.length} trường chưa khai báo quy mô năm học ${namHoc}`}
-          description={chuaKhai.map((d) => d.dv.ten).join(', ')}
+          title={`${chuaKhai.length}/${truongs.length} trường chưa khai báo quy mô năm học ${namHoc}`}
+          description={chuaKhai.map((d) => d.ten).join(', ')}
         />
       )}
-      <Table
+      <Table<DongTT>
         size="small"
         bordered
-        rowKey={(r) => r.dv.id}
+        rowKey="key"
         pagination={false}
         dataSource={dongs}
         scroll={{ x: 'max-content' }}
-        onRow={(r) => ({ onClick: () => onChon(r.dv.id), style: { cursor: 'pointer' } })}
+        onRow={(r) => (r.loai === 'truong'
+          ? { onClick: () => onChon(r.dv!.id), style: { cursor: 'pointer' } }
+          : { style: { background: r.loai === 'phuong' ? '#e0e7ff' : '#f1f5f9' } })}
         columns={[
-          { title: 'STT', key: 'stt', width: 50, align: 'center', render: (_, __, i) => i + 1 },
-          { title: 'Trường', key: 'ten', render: (_, r) => <a>{r.dv.ten}</a> },
-          { title: 'Cấp học', key: 'cap', width: 90, render: (_, r) => TEN_CAP[r.cap] },
-          { title: 'Số lớp', key: 'lop', width: 75, align: 'center', render: (_, r) => r.tongLop || '-' },
-          { title: 'Học sinh', key: 'hs', width: 85, align: 'center', render: (_, r) => (r.tongHS ? r.tongHS.toLocaleString('vi-VN') : '-') },
+          { title: 'STT', key: 'stt', width: 50, align: 'center', render: (_, r) => r.stt ?? '' },
           {
-            title: 'Hạng trường', key: 'hang', width: 100, align: 'center',
+            title: 'Trường', key: 'ten',
+            render: (_, r) => (laTong(r)
+              ? <span><b>{r.ten}</b> <Text type="secondary" style={{ fontSize: 13 }}>({r.soTruong} trường)</Text></span>
+              : <a>{r.ten}</a>),
+          },
+          { title: 'Cấp học', key: 'cap', width: 90, render: (_, r) => (r.loai === 'truong' ? TEN_CAP[r.cap!] : '') },
+          { title: 'Số lớp', key: 'lop', width: 75, align: 'center', render: (_, r) => dam(r, r.tongLop || '-') },
+          { title: 'Học sinh', key: 'hs', width: 85, align: 'center', render: (_, r) => dam(r, r.tongHS ? r.tongHS.toLocaleString('vi-VN') : '-') },
+          { title: 'Bình quân/lớp', key: 'bq', width: 90, align: 'center', render: (_, r) => dam(r, r.tongLop ? fmt(r.tongHS / r.tongLop) : '-') },
+          {
+            title: 'Hạng trường', key: 'hang', width: 150, align: 'center',
             render: (_, r) => {
+              if (laTong(r)) {
+                const h = r.theoHang!
+                const ds = ([1, 2, 3] as const).filter((k) => h[k])
+                return ds.length
+                  ? <Space size={4} wrap style={{ justifyContent: 'center' }}>{ds.map((k) => <Tag key={k} color={mauHang(k)} style={{ marginInlineEnd: 0 }}>{HANG_TRUONG_LABELS[k]}: {h[k]}</Tag>)}</Space>
+                  : '-'
+              }
               if (!r.tongLop) return '-'
-              const hang = getHangTruong(r.cap, r.tongLop)
-              return <Tag color={hang === 1 ? 'gold' : hang === 2 ? 'blue' : 'default'} style={{ marginInlineEnd: 0 }}>{HANG_TRUONG_LABELS[hang]}</Tag>
+              const hang = getHangTruong(r.cap!, r.tongLop)
+              return <Tag color={mauHang(hang)} style={{ marginInlineEnd: 0 }}>{HANG_TRUONG_LABELS[hang]}</Tag>
             },
           },
-          { title: 'Hiệu trưởng (theo hồ sơ)', key: 'ht', width: 190, render: (_, r) => hieuTruong.get(r.dv.id) ?? <Text type="secondary">-</Text> },
-          { title: 'Điện thoại', key: 'dt', width: 120, render: (_, r) => r.dv.soDienThoai || <Text type="secondary">-</Text> },
+          { title: 'Hiệu trưởng (theo hồ sơ)', key: 'ht', width: 190, render: (_, r) => (r.loai === 'truong' ? hieuTruong.get(r.dv!.id)?.ten ?? <Text type="secondary">-</Text> : '') },
+          { title: 'ĐT hiệu trưởng', key: 'dtht', width: 120, render: (_, r) => (r.loai === 'truong' ? hieuTruong.get(r.dv!.id)?.dienThoai ?? <Text type="secondary">-</Text> : '') },
+          { title: 'Điện thoại trường', key: 'dt', width: 120, render: (_, r) => (r.loai === 'truong' ? r.dv!.soDienThoai || <Text type="secondary">-</Text> : '') },
           {
             title: 'Khai báo', key: 'kb', width: 170,
-            render: (_, r) => r.qm && r.tongLop
-              ? <Text type="secondary" style={{ fontSize: 13 }}>{formatDatetime(r.qm.updatedAt)}</Text>
-              : <Tag color="warning">Chưa khai báo</Tag>,
+            render: (_, r) => {
+              if (laTong(r)) {
+                const du = r.soDaKhai === r.soTruong
+                return <Tag color={du ? 'success' : 'warning'} style={{ marginInlineEnd: 0 }}>Đã khai {r.soDaKhai}/{r.soTruong}</Tag>
+              }
+              return r.qm && r.tongLop
+                ? <Text type="secondary" style={{ fontSize: 13 }}>{formatDatetime(r.qm.updatedAt)}</Text>
+                : <Tag color="warning">Chưa khai báo</Tag>
+            },
           },
         ]}
       />
@@ -249,10 +311,14 @@ function ThongTinChung({ donVi }: { donVi: DonVi }) {
       <Descriptions size="small" column={{ xs: 1, md: 2 }} bordered>
         <Descriptions.Item label="Tên trường">{donVi.ten}</Descriptions.Item>
         <Descriptions.Item label="Mã">{donVi.ma}</Descriptions.Item>
-        <Descriptions.Item label={<Tooltip title="Lấy từ hồ sơ nhân sự: người đang công tác có chức vụ Hiệu trưởng">Hiệu trưởng</Tooltip>}>
-          {hieuTruong ?? <Text type="secondary">Chưa có hồ sơ ghi chức vụ Hiệu trưởng</Text>}
+        <Descriptions.Item label={<Tooltip title="Lấy từ hồ sơ nhân sự: người đang công tác có chức vụ Hiệu trưởng (điện thoại theo hồ sơ)">Hiệu trưởng</Tooltip>}>
+          {hieuTruong
+            ? <>{hieuTruong.ten}{hieuTruong.dienThoai
+                ? <Text type="secondary"> - ĐT: <a href={`tel:${hieuTruong.dienThoai.replace(/\s/g, '')}`}>{hieuTruong.dienThoai}</a></Text>
+                : <Text type="secondary"> - hồ sơ chưa ghi điện thoại</Text>}</>
+            : <Text type="secondary">Chưa có hồ sơ ghi chức vụ Hiệu trưởng</Text>}
         </Descriptions.Item>
-        <Descriptions.Item label="Điện thoại">
+        <Descriptions.Item label="Điện thoại trường">
           {sua ? <Input value={nhap.soDienThoai} maxLength={30} onChange={(e) => setNhap({ ...nhap, soDienThoai: e.target.value })} /> : donVi.soDienThoai || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="Địa chỉ">

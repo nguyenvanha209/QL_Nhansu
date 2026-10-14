@@ -211,34 +211,70 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
     { title: <Tooltip title="Đang xếp lương A2.2, khi chuyển bậc 4 được xếp sang bảng A2.1 - hệ số có thể tăng">A2.2 → A2.1</Tooltip>, key: 'a22', width: 72, align: 'center', render: (_, r) => o(r, { a22: true }, 'Chuyển A2.2 sang A2.1') },
   ]
 
-  const xuatBang = () => {
-    const rows = dongs.map((r) => {
+  /** Một sheet: dòng tổng cấp + các trường của cấp, cột là các mã có ở cấp đó, dòng tương đương ở cuối */
+  const hangSheet = (truongCap: DonVi[], tenTong: string) => {
+    const nguoiCap = nguoi.filter((n) => truongCap.some((t) => t.id === n.truong.id))
+    const thuTu = { QUAN_LY: 0, GIAO_VIEN: 1, NHAN_VIEN: 2 } as Record<string, number>
+    const maCap = [...new Map(nguoiCap.filter((n) => n.cd).map((n) => [n.cd!.id, n.cd!])).values()]
+      .sort((x, y) => (thuTu[x.nhom] ?? 3) - (thuTu[y.nhom] ?? 3) || x.ma.localeCompare(y.ma))
+    const coKhongMa = nguoiCap.some((n) => !n.cd)
+    const coChua = nguoiCap.some((n) => n.bac == null)
+    const dongSheet: Dong[] = [
+      ...(truongCap.length > 1 ? [{ key: 'tong', loai: 'cap' as const, ten: tenTong, nguoi: nguoiCap }] : []),
+      ...truongCap.map((t, i) => ({ key: t.id, loai: 'truong' as const, ten: t.ten, stt: i + 1, nguoi: nguoiCap.filter((n) => n.truong.id === t.id) })),
+    ]
+    const rows = dongSheet.map((r) => {
       const d: Record<string, string | number> = { STT: r.stt ?? '', 'Trường': r.ten, 'Tổng VC': r.nguoi.length }
-      for (const cd of cacMa) d[`${cd.ma} (${cd.bangLuong})`] = loc1(r.nguoi, { cdId: cd.id }).length || ''
-      if (khongMa) d['Chưa có mã'] = loc1(r.nguoi, { cdId: '' }).length || ''
+      for (const cd of maCap) d[`${cd.ma} (${cd.bangLuong})`] = loc1(r.nguoi, { cdId: cd.id }).length || ''
+      if (coKhongMa) d['Chưa có mã'] = loc1(r.nguoi, { cdId: '' }).length || ''
       for (const b of CAC_BAC) {
         const n = loc1(r.nguoi, { bac: b }).length
         d[`Bậc ${b}`] = n || ''
         d[`Bậc ${b} (%)`] = n ? phanTram(n, r.nguoi.length) : ''
       }
-      if (soChuaBac) d['Chưa xác định bậc'] = loc1(r.nguoi, { bac: 'CHUA' }).length || ''
+      if (coChua) d['Chưa xác định bậc'] = loc1(r.nguoi, { bac: 'CHUA' }).length || ''
       d['Ngoài khung'] = loc1(r.nguoi, { ngoaiKhung: true }).length || ''
       d['A2.2 → A2.1'] = loc1(r.nguoi, { a22: true }).length || ''
       return d
     })
     // Dòng cuối: mã CDNN chuyển tương đương sang bậc nào, bậc nào gồm các mã nào
     const td: Record<string, string | number> = { STT: '', 'Trường': 'Chuyển tương đương mã CDNN → bậc', 'Tổng VC': '' }
-    for (const cd of cacMa) td[`${cd.ma} (${cd.bangLuong})`] = bacTheoBangLuong(cd.bangLuong) ? `Bậc ${bacTheoBangLuong(cd.bangLuong)}` : 'Chưa rõ'
-    if (khongMa) td['Chưa có mã'] = ''
-    for (const b of CAC_BAC) { td[`Bậc ${b}`] = maCuaBac(b).map((c) => c.ma).join(', '); td[`Bậc ${b} (%)`] = '' }
-    if (soChuaBac) td['Chưa xác định bậc'] = ''
+    for (const cd of maCap) td[`${cd.ma} (${cd.bangLuong})`] = bacTheoBangLuong(cd.bangLuong) ? `Bậc ${bacTheoBangLuong(cd.bangLuong)}` : 'Chưa rõ'
+    if (coKhongMa) td['Chưa có mã'] = ''
+    for (const b of CAC_BAC) {
+      td[`Bậc ${b}`] = maCap.filter((cd) => bacTheoBangLuong(cd.bangLuong) === b).map((c) => c.ma).join(', ')
+      td[`Bậc ${b} (%)`] = ''
+    }
+    if (coChua) td['Chưa xác định bậc'] = ''
     td['Ngoài khung'] = ''
     td['A2.2 → A2.1'] = ''
     rows.push(td)
-    exportToExcel(rows, 'Chuc_danh_bac_nghe_nghiep', 'Chức danh - bậc NN', [
-      'THỐNG KÊ VIÊN CHỨC THEO MÃ CHỨC DANH NGHỀ NGHIỆP VÀ BẬC NGHỀ NGHIỆP DỰ KIẾN',
-      'Theo Nghị định 232/2026/NĐ-CP - số liệu dự kiến, chờ hướng dẫn chuyển xếp',
-    ])
+    return rows
+  }
+
+  const [dangXuatBang, setDangXuatBang] = useState(false)
+  // Mỗi cấp học một sheet (mầm non, tiểu học, THCS) - theo các trường đang lọc
+  const xuatBang = async () => {
+    setDangXuatBang(true)
+    try {
+      const trangs = (['MAM_NON', 'TIEU_HOC', 'THCS'] as CapHoc[])
+        .map((cap) => ({ cap, ds: truongHien.filter((t) => t.loai === cap) }))
+        .filter((x) => x.ds.length)
+        .map(({ cap, ds }) => trangTuDanhSach(
+          hangSheet(ds, `TỔNG CẤP ${TEN_CAP[cap].toUpperCase()}`),
+          ds.length === 1 && !nhieuTruong ? ds[0].ten.slice(0, 31) : TEN_CAP[cap],
+          { tieuDe: [
+            `THỐNG KÊ VIÊN CHỨC THEO MÃ CHỨC DANH NGHỀ NGHIỆP VÀ BẬC NGHỀ NGHIỆP DỰ KIẾN - ${ds.length === 1 && !nhieuTruong ? ds[0].ten.toUpperCase() : `CẤP ${TEN_CAP[cap].toUpperCase()}`}`,
+            'Theo Nghị định 232/2026/NĐ-CP - số liệu dự kiến, chờ hướng dẫn chuyển xếp',
+          ] },
+        ))
+      await xuatExcelA4('Chuc_danh_bac_nghe_nghiep', trangs)
+    } catch (e) {
+      console.error('[xuat excel]', e)
+      alert('Không xuất được file Excel. Tải lại trang rồi thử lại.')
+    } finally {
+      setDangXuatBang(false)
+    }
   }
 
   return (
@@ -273,7 +309,9 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
             </Tag>
           )}
         </Space>
-        <Button icon={<FileExcelOutlined />} onClick={xuatBang}>Xuất Excel</Button>
+        <Tooltip title={nhieuTruong ? 'Mỗi cấp học một sheet' : undefined}>
+          <Button icon={<FileExcelOutlined />} onClick={xuatBang} loading={dangXuatBang}>Xuất Excel{nhieuTruong ? ' (mỗi cấp 1 sheet)' : ''}</Button>
+        </Tooltip>
       </Space>
       <Table<Dong>
         size="small"

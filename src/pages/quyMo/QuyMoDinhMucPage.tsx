@@ -12,6 +12,7 @@ import type { VungBang } from '@/utils/excelA4'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ChiTieuBienCheCard from './ChiTieuBienCheCard'
 import BaoCaoDinhMucCapHoc from './BaoCaoDinhMucCapHoc'
+import ChucDanhBacNgheNghiep from './ChucDanhBacNgheNghiep'
 import { MAU_NHOM_VTVL } from '@/utils/mauNhomVtvl'
 import { useAuth } from '@/hooks/useAuth'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -83,8 +84,9 @@ export default function QuyMoDinhMucPage() {
   const [params, setParams] = useSearchParams()
   // Báo cáo chi tiết theo cấp học (trước đây ở trang Báo cáo): Quản trị, Phòng VHXH, Lãnh đạo
   const xemCapHoc = laQuanTri || isVHXH || isLanhDao
-  const the = xemCapHoc && params.get('tab') === 'cap-hoc' ? 'cap-hoc' : 'tong-hop'
-  const chonThe = (k: string) => setParams(k === 'cap-hoc' ? { tab: 'cap-hoc' } : {}, { replace: true })
+  const theUrl = params.get('tab')
+  const the = xemCapHoc && (theUrl === 'cap-hoc' || theUrl === 'chuc-danh') ? theUrl : 'tong-hop'
+  const chonThe = (k: string) => setParams(k === 'tong-hop' ? {} : { tab: k }, { replace: true })
   const [namHoc, setNamHoc] = useState(namHocHienHanh)
   const [chon, setChon] = useState<string | undefined>()
 
@@ -144,7 +146,10 @@ export default function QuyMoDinhMucPage() {
           onChange={chonThe}
           items={[
             { key: 'tong-hop', label: 'Tổng hợp toàn phường', children: <TongHopPhuong truongs={truongs} namHoc={namHoc} onChon={setChon} onXemCapHoc={xemCapHoc ? () => chonThe('cap-hoc') : undefined} /> },
-            ...(xemCapHoc ? [{ key: 'cap-hoc', label: 'Báo cáo chi tiết theo cấp học', children: <BaoCaoDinhMucCapHoc namHoc={namHoc} /> }] : []),
+            ...(xemCapHoc ? [
+              { key: 'cap-hoc', label: 'Báo cáo chi tiết theo cấp học', children: <BaoCaoDinhMucCapHoc namHoc={namHoc} /> },
+              { key: 'chuc-danh', label: 'Chức danh & bậc nghề nghiệp (NĐ 232)', children: <ChucDanhBacNgheNghiep truongs={truongs} /> },
+            ] : []),
           ]}
         />
       )}
@@ -493,6 +498,7 @@ function ChiTietTruong({ donVi, namHoc, onBack }: { donVi: DonVi; namHoc: string
       ),
       children: <ThePhanMon cap={cap} nhanSu={nhanSu} kq={kq} coTheSua={coTheSuaMon} donVi={donVi} nhap={quyMoTinh} />,
     },
+    { key: 'chucDanh', label: 'Chức danh & bậc nghề nghiệp (NĐ 232)', children: <ChucDanhBacNgheNghiep truongs={[donVi]} /> },
   ]
 
   return (

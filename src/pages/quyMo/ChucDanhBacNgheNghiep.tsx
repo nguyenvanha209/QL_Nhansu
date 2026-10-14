@@ -17,6 +17,7 @@ import type { DonVi } from '@/types/donVi'
 import type { ChucDanhNgheNghiep } from '@/types/danhMuc'
 import { type CapHoc, type NhomDinhMuc, TEN_CAP, THU_TU_CAP, laBienChe, nhomNguoi, viTriCuaNguoi, dongCuaNguoi, danhSachViTri } from '@/utils/dinhMuc'
 import { exportToExcel } from '@/utils/exportExcel'
+import { trangTuDanhSach, xuatExcelA4 } from '@/utils/excelA4'
 
 const { Text } = Typography
 
@@ -385,6 +386,30 @@ type DongVT = {
   khung?: string; nguoi: NguoiTinh[]
 }
 
+/** Dòng bảng theo vị trí việc làm của một nhóm người (thứ tự, tên vị trí theo bảng Cơ cấu VTVL) */
+function dungDongVT(ds: NguoiTinh[]): DongVT[] {
+  // Thứ tự, tên vị trí theo bảng Cơ cấu VTVL của các cấp học có trong phạm vi (cùng mã ở nhiều cấp thì gộp)
+  const caps = [...new Set(ds.map((n) => n.cap))].sort((a, b) => THU_TU_CAP[a] - THU_TU_CAP[b])
+  const viTri = new Map<string, { ten: string; nhom: NhomDinhMuc }>()
+  for (const c of caps) for (const v of danhSachViTri(c)) if (!viTri.has(v.ma)) viTri.set(v.ma, { ten: v.ten, nhom: v.nhom })
+  const ra: DongVT[] = []
+  for (const nhom of ['QUAN_LY', 'CHUYEN_MON', 'HO_TRO', 'NGOAI_DM'] as NhomDinhMuc[]) {
+    const cuaNhom = ds.filter((n) => n.nhomVT === nhom)
+    if (!cuaNhom.length) continue
+    ra.push({ key: `n-${nhom}`, loai: 'nhom', ten: TEN_NHOM_VT[nhom], nhom, nguoi: cuaNhom })
+    let stt = 0
+    for (const [ma, v] of viTri) {
+      if (v.nhom !== nhom) continue
+      const ng = cuaNhom.filter((n) => n.maVT === ma)
+      if (!ng.length) continue
+      const khung = [...new Set(ng.map((n) => (n.khung ? `${n.khung[0]}-${n.khung[1]}` : '')).filter(Boolean))].join('; ')
+      ra.push({ key: `v-${ma}`, loai: 'viTri', ten: v.ten, stt: ++stt, nhom, khung, nguoi: ng })
+    }
+  }
+  ra.push({ key: 'tong', loai: 'tong', ten: 'TỔNG CỘNG', nguoi: ds })
+  return ra
+}
+
 function BangViTri({ nguoi, truongs, onXem }: {
   nguoi: NguoiTinh[]; truongs: DonVi[]; onXem: (tieuDe: string, ds: NguoiTinh[]) => void
 }) {
@@ -392,28 +417,7 @@ function BangViTri({ nguoi, truongs, onXem }: {
   const ds = useMemo(() => (chonTruong ? nguoi.filter((n) => n.truong.id === chonTruong) : nguoi), [nguoi, chonTruong])
   const pham = chonTruong ? truongs.find((t) => t.id === chonTruong)?.ten ?? '' : truongs.length > 1 ? 'các trường đang lọc' : truongs[0]?.ten ?? ''
 
-  const dongs = useMemo(() => {
-    // Thứ tự, tên vị trí theo bảng Cơ cấu VTVL của các cấp học có trong phạm vi (cùng mã ở nhiều cấp thì gộp)
-    const caps = [...new Set(ds.map((n) => n.cap))].sort((a, b) => THU_TU_CAP[a] - THU_TU_CAP[b])
-    const viTri = new Map<string, { ten: string; nhom: NhomDinhMuc }>()
-    for (const c of caps) for (const v of danhSachViTri(c)) if (!viTri.has(v.ma)) viTri.set(v.ma, { ten: v.ten, nhom: v.nhom })
-    const ra: DongVT[] = []
-    for (const nhom of ['QUAN_LY', 'CHUYEN_MON', 'HO_TRO', 'NGOAI_DM'] as NhomDinhMuc[]) {
-      const cuaNhom = ds.filter((n) => n.nhomVT === nhom)
-      if (!cuaNhom.length) continue
-      ra.push({ key: `n-${nhom}`, loai: 'nhom', ten: TEN_NHOM_VT[nhom], nhom, nguoi: cuaNhom })
-      let stt = 0
-      for (const [ma, v] of viTri) {
-        if (v.nhom !== nhom) continue
-        const ng = cuaNhom.filter((n) => n.maVT === ma)
-        if (!ng.length) continue
-        const khung = [...new Set(ng.map((n) => (n.khung ? `${n.khung[0]}-${n.khung[1]}` : '')).filter(Boolean))].join('; ')
-        ra.push({ key: `v-${ma}`, loai: 'viTri', ten: v.ten, stt: ++stt, nhom, khung, nguoi: ng })
-      }
-    }
-    ra.push({ key: 'tong', loai: 'tong', ten: 'TỔNG CỘNG', nguoi: ds })
-    return ra
-  }, [ds])
+  const dongs = useMemo(() => dungDongVT(ds), [ds])
 
   const o = (r: DongVT, loc: (n: NguoiTinh) => boolean, tieuDe: string, tyLe = false) => {
     const d = r.nguoi.filter(loc)
@@ -428,20 +432,51 @@ function BangViTri({ nguoi, truongs, onXem }: {
   }
   const coChuaBac = ds.some((n) => n.bac == null)
 
-  const xuat = () => exportToExcel(dongs.map((r) => {
+  const coChuaBacAll = nguoi.some((n) => n.bac == null)
+  const hangExcel = (ds2: DongVT[]) => ds2.map((r) => {
     const d: Record<string, string | number> = { STT: r.stt ?? '', 'Vị trí việc làm': r.ten, 'Khung bậc': r.khung ?? '', 'Tổng VC': r.nguoi.length }
     for (const b of CAC_BAC) {
       const n = r.nguoi.filter((x) => x.bac === b).length
       d[`Bậc ${b}`] = n || ''
       d[`Bậc ${b} (%)`] = n ? phanTram(n, r.nguoi.length) : ''
     }
-    if (coChuaBac) d['Chưa xác định'] = r.nguoi.filter((x) => x.bac == null).length || ''
+    if (coChuaBacAll) d['Chưa xác định'] = r.nguoi.filter((x) => x.bac == null).length || ''
     d['Ngoài khung'] = r.nguoi.filter((x) => x.ngoaiKhung).length || ''
     return d
-  }), 'Bac_nghe_nghiep_theo_VTVL', 'Bậc NN theo VTVL', [
-    'DỰ KIẾN XẾP BẬC NGHỀ NGHIỆP THEO VỊ TRÍ VIỆC LÀM',
-    `${pham} - theo Nghị định 232/2026/NĐ-CP, số liệu dự kiến`,
-  ])
+  })
+  // Tên sheet Excel: tối đa 31 ký tự, không chứa : \ / ? * [ ], không trùng
+  const tenSheet = (ten: string, daDung: Set<string>) => {
+    const goc = ten.replace(/[:\\/?*[\]]/g, ' ').replace(/^Trường\s+/i, '').slice(0, 31).trim() || 'Trang'
+    let t = goc, i = 2
+    while (daDung.has(t)) t = `${goc.slice(0, 28)} ${i++}`
+    daDung.add(t)
+    return t
+  }
+  const tieuDe = (pv: string) => ['DỰ KIẾN XẾP BẬC NGHỀ NGHIỆP THEO VỊ TRÍ VIỆC LÀM', `${pv} - theo Nghị định 232/2026/NĐ-CP, số liệu dự kiến`]
+  const [dangXuat, setDangXuat] = useState(false)
+  const xuat = async () => {
+    setDangXuat(true)
+    try {
+      const daDung = new Set<string>()
+      const truongXuat = chonTruong ? truongs.filter((t) => t.id === chonTruong) : truongs
+      const trangs = [
+        // Sheet đầu: phạm vi đang xem (toàn phường / cấp) khi xuất nhiều trường
+        ...(truongXuat.length > 1 ? [trangTuDanhSach(hangExcel(dungDongVT(nguoi)), tenSheet('Tổng hợp', daDung), { tieuDe: tieuDe('Tổng hợp các trường') })] : []),
+        // Mỗi trường một sheet
+        ...truongXuat.map((t) => trangTuDanhSach(
+          hangExcel(dungDongVT(nguoi.filter((n) => n.truong.id === t.id))),
+          tenSheet(t.ten, daDung),
+          { tieuDe: tieuDe(t.ten) },
+        )),
+      ]
+      await xuatExcelA4('Bac_nghe_nghiep_theo_VTVL', trangs)
+    } catch (e) {
+      console.error('[xuat excel]', e)
+      alert('Không xuất được file Excel. Tải lại trang rồi thử lại.')
+    } finally {
+      setDangXuat(false)
+    }
+  }
 
   return (
     <>
@@ -460,7 +495,9 @@ function BangViTri({ nguoi, truongs, onXem }: {
               options={truongs.map((t) => ({ value: t.id, label: t.ten }))}
             />
           )}
-          <Button icon={<FileExcelOutlined />} onClick={xuat}>Xuất Excel</Button>
+          <Tooltip title={chonTruong ? undefined : 'Sheet đầu là tổng hợp, sau đó mỗi trường một sheet'}>
+            <Button icon={<FileExcelOutlined />} onClick={xuat} loading={dangXuat}>Xuất Excel{!chonTruong && truongs.length > 1 ? ' (mỗi trường 1 sheet)' : ''}</Button>
+          </Tooltip>
         </Space>
       </div>
       <Table<DongVT>

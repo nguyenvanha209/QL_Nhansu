@@ -2,7 +2,7 @@
 // khi chuyển theo Nghị định 232/2026/NĐ-CP (vị trí việc làm của viên chức, hiệu lực 01/7/2026).
 // Quy tắc chuyển (Điều 18): theo loại bảng lương của chức danh đang giữ - B → bậc 1, A0 → bậc 2, A1 → bậc 3,
 // A2 → bậc 4 (A2.2 chuyển sang bảng A2.1), A3 → bậc 5; hệ số giữ nguyên trừ trường hợp A2.2.
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Alert, Button, Modal, Segmented, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import { FileExcelOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -22,6 +22,8 @@ const { Text } = Typography
 
 type Bac = 1 | 2 | 3 | 4 | 5
 const CAC_BAC: Bac[] = [1, 2, 3, 4, 5]
+const MAU_BAC: Record<Bac, string> = { 1: 'default', 2: 'cyan', 3: 'blue', 4: 'geekblue', 5: 'purple' }
+const phanTram = (a: number, b: number) => (b ? `${(Math.round((a / b) * 1000) / 10).toLocaleString('vi-VN')}%` : '')
 
 /** Bậc nghề nghiệp dự kiến theo loại bảng lương của chức danh đang giữ (Điều 18 NĐ 232/2026) */
 export function bacTheoBangLuong(bangLuong?: string): Bac | null {
@@ -148,12 +150,19 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
     && (!l.ngoaiKhung || n.ngoaiKhung)
     && (!l.a22 || !!n.a22))
 
-  const o = (r: Dong, l: LocCot, tieuDe: string) => {
+  const o = (r: Dong, l: LocCot, tieuDe: string, tyLe = false) => {
     const ds = loc1(r.nguoi, l)
     if (!ds.length) return <Text type="secondary">-</Text>
     const so = r.loai === 'truong' ? ds.length : <b>{ds.length}</b>
-    return <a onClick={() => setXem({ tieuDe: `${tieuDe} - ${r.ten}`, ds })}>{so}</a>
+    return (
+      <span style={{ whiteSpace: 'nowrap' }}>
+        <a onClick={() => setXem({ tieuDe: `${tieuDe} - ${r.ten}`, ds })}>{so}</a>
+        {tyLe && <Text type="secondary" style={{ fontSize: 12 }}> ({phanTram(ds.length, r.nguoi.length)})</Text>}
+      </span>
+    )
   }
+  /** Mã chức danh tương đương từng bậc (dòng cuối bảng) */
+  const maCuaBac = (b: Bac) => cacMa.filter((cd) => bacTheoBangLuong(cd.bangLuong) === b)
 
   const tongA22 = nguoiHien.filter((n) => n.a22)
   const chenhA22 = tongA22.reduce((s, n) => s + (n.a22!.heSo - (n.heSo ?? 0)), 0)
@@ -188,7 +197,7 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
     {
       title: 'Bậc nghề nghiệp dự kiến (NĐ 232/2026)',
       children: [
-        ...CAC_BAC.map((b) => ({ title: `Bậc ${b}`, key: `b${b}`, width: 58, align: 'center' as const, render: (_: unknown, r: Dong) => o(r, { bac: b }, `Bậc ${b} dự kiến`) })),
+        ...CAC_BAC.map((b) => ({ title: `Bậc ${b}`, key: `b${b}`, width: 86, align: 'center' as const, render: (_: unknown, r: Dong) => o(r, { bac: b }, `Bậc ${b} dự kiến`, true) })),
         ...(soChuaBac ? [{ title: 'Chưa xác định', key: 'bchua', width: 76, align: 'center' as const, render: (_: unknown, r: Dong) => o(r, { bac: 'CHUA' }, 'Chưa xác định bậc') }] : []),
       ],
     },
@@ -201,12 +210,25 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
       const d: Record<string, string | number> = { STT: r.stt ?? '', 'Trường': r.ten, 'Tổng VC': r.nguoi.length }
       for (const cd of cacMa) d[`${cd.ma} (${cd.bangLuong})`] = loc1(r.nguoi, { cdId: cd.id }).length || ''
       if (khongMa) d['Chưa có mã'] = loc1(r.nguoi, { cdId: '' }).length || ''
-      for (const b of CAC_BAC) d[`Bậc ${b}`] = loc1(r.nguoi, { bac: b }).length || ''
+      for (const b of CAC_BAC) {
+        const n = loc1(r.nguoi, { bac: b }).length
+        d[`Bậc ${b}`] = n || ''
+        d[`Bậc ${b} (%)`] = n ? phanTram(n, r.nguoi.length) : ''
+      }
       if (soChuaBac) d['Chưa xác định bậc'] = loc1(r.nguoi, { bac: 'CHUA' }).length || ''
       d['Ngoài khung'] = loc1(r.nguoi, { ngoaiKhung: true }).length || ''
       d['A2.2 → A2.1'] = loc1(r.nguoi, { a22: true }).length || ''
       return d
     })
+    // Dòng cuối: mã CDNN chuyển tương đương sang bậc nào, bậc nào gồm các mã nào
+    const td: Record<string, string | number> = { STT: '', 'Trường': 'Chuyển tương đương mã CDNN → bậc', 'Tổng VC': '' }
+    for (const cd of cacMa) td[`${cd.ma} (${cd.bangLuong})`] = bacTheoBangLuong(cd.bangLuong) ? `Bậc ${bacTheoBangLuong(cd.bangLuong)}` : 'Chưa rõ'
+    if (khongMa) td['Chưa có mã'] = ''
+    for (const b of CAC_BAC) { td[`Bậc ${b}`] = maCuaBac(b).map((c) => c.ma).join(', '); td[`Bậc ${b} (%)`] = '' }
+    if (soChuaBac) td['Chưa xác định bậc'] = ''
+    td['Ngoài khung'] = ''
+    td['A2.2 → A2.1'] = ''
+    rows.push(td)
     exportToExcel(rows, 'Chuc_danh_bac_nghe_nghiep', 'Chức danh - bậc NN', [
       'THỐNG KÊ VIÊN CHỨC THEO MÃ CHỨC DANH NGHỀ NGHIỆP VÀ BẬC NGHỀ NGHIỆP DỰ KIẾN',
       'Theo Nghị định 232/2026/NĐ-CP - số liệu dự kiến, chờ hướng dẫn chuyển xếp',
@@ -256,6 +278,31 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
         columns={columns}
         scroll={{ x: 'max-content', y: 'calc(100vh - 300px)' }}
         onRow={(r) => (r.loai === 'truong' ? {} : { style: { background: r.loai === 'phuong' ? '#e0e7ff' : '#f1f5f9' } })}
+        summary={() => {
+          // 3 cột đầu (STT, Trường, Tổng VC) gộp làm ô tiêu đề; các ô sau đánh chỉ số từ 3
+          let i = 3
+          const cell = (n: React.ReactNode) => <Table.Summary.Cell index={i++} align="center">{n}</Table.Summary.Cell>
+          const nho = (x: React.ReactNode) => <Text style={{ fontSize: 12 }}>{x}</Text>
+          return (
+            <Table.Summary>
+              <Table.Summary.Row style={{ background: '#fef9c3' }}>
+                <Table.Summary.Cell index={0} colSpan={3}><b>Chuyển tương đương mã CDNN → bậc nghề nghiệp</b></Table.Summary.Cell>
+                {cacMa.map((cd) => {
+                  const b = bacTheoBangLuong(cd.bangLuong)
+                  return <Fragment key={cd.id}>{cell(b ? <Tag color={MAU_BAC[b]} style={{ marginInlineEnd: 0 }}>Bậc {b}</Tag> : nho('Chưa rõ'))}</Fragment>
+                })}
+                {khongMa && cell(nho('-'))}
+                {CAC_BAC.map((b) => {
+                  const ma = maCuaBac(b)
+                  return <Fragment key={b}>{cell(ma.length ? nho(<Tooltip title={ma.map((c) => `${c.ma} ${c.ten}`).join('; ')}>{ma.map((c) => c.ma).join(', ')}</Tooltip>) : nho('-'))}</Fragment>
+                })}
+                {soChuaBac > 0 && cell(nho('-'))}
+                {cell(null)}
+                {cell(nho('A2.2 → A2.1'))}
+              </Table.Summary.Row>
+            </Table.Summary>
+          )
+        }}
       />
       <DanhSach xem={xem} onClose={() => setXem(null)} xemHoSo={hasPermission('vienChuc', 'read')} moHoSo={(id) => { setXem(null); navigate(`/vien-chuc/${id}`) }} />
     </>

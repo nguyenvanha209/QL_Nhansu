@@ -3,7 +3,7 @@
 // Quy tắc chuyển (Điều 18): theo loại bảng lương của chức danh đang giữ - B → bậc 1, A0 → bậc 2, A1 → bậc 3,
 // A2 → bậc 4 (A2.2 chuyển sang bảng A2.1), A3 → bậc 5; hệ số giữ nguyên trừ trường hợp A2.2.
 import { Fragment, useMemo, useState } from 'react'
-import { Alert, Button, Modal, Segmented, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import { Button, Modal, Segmented, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import { FileExcelOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useNavigate } from 'react-router-dom'
@@ -279,19 +279,6 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
 
   return (
     <>
-      <Alert
-        type="info"
-        showIcon
-        style={{ marginBottom: 12 }}
-        title="Bậc nghề nghiệp dự kiến theo Nghị định 232/2026/NĐ-CP - chỉ để tham khảo, chờ phê duyệt vị trí việc làm và hướng dẫn chuyển xếp (hạn chậm nhất 01/7/2027)"
-        description={(
-          <ul style={{ margin: 0, paddingLeft: 18 }}>
-            <li>Chỉ tính viên chức (biên chế, tập sự) đang công tác. Bậc dự kiến theo loại lương của chức danh đang giữ: B → bậc 1, A0 → bậc 2, A1 → bậc 3, A2 → bậc 4, A3 → bậc 5; hệ số giữ nguyên.</li>
-            <li>Đang xếp A2.2 (giáo viên mầm non hạng I, tiểu học/THCS hạng II) chuyển sang bảng A2.1: xếp bậc có hệ số bằng hoặc cao hơn gần nhất. Khung bậc: giáo viên mầm non 2-4, tiểu học/THCS 3-4; nhân viên theo vị trí (kế toán, văn thư 1-4; y tế, thủ quỹ 1-3; giáo vụ, thiết bị 2-3...).</li>
-            <li>Bấm vào số để xem danh sách người.</li>
-          </ul>
-        )}
-      />
       <Space wrap style={{ marginBottom: 12, justifyContent: 'space-between', width: '100%' }}>
         <Space wrap>
           {nhieuTruong && (

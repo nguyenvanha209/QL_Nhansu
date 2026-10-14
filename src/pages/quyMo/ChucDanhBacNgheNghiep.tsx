@@ -3,7 +3,7 @@
 // Quy tắc chuyển (Điều 18): theo loại bảng lương của chức danh đang giữ - B → bậc 1, A0 → bậc 2, A1 → bậc 3,
 // A2 → bậc 4 (A2.2 chuyển sang bảng A2.1), A3 → bậc 5; hệ số giữ nguyên trừ trường hợp A2.2.
 import { Fragment, useMemo, useState } from 'react'
-import { Alert, Button, Modal, Segmented, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import { Alert, Button, Modal, Segmented, Select, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import { FileExcelOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useNavigate } from 'react-router-dom'
@@ -15,7 +15,7 @@ import { duocTinhSoLieu } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
 import type { DonVi } from '@/types/donVi'
 import type { ChucDanhNgheNghiep } from '@/types/danhMuc'
-import { type CapHoc, TEN_CAP, THU_TU_CAP, laBienChe, nhomNguoi, viTriCuaNguoi } from '@/utils/dinhMuc'
+import { type CapHoc, type NhomDinhMuc, TEN_CAP, THU_TU_CAP, laBienChe, nhomNguoi, viTriCuaNguoi, dongCuaNguoi, danhSachViTri } from '@/utils/dinhMuc'
 import { exportToExcel } from '@/utils/exportExcel'
 
 const { Text } = Typography
@@ -67,6 +67,9 @@ interface NguoiTinh {
   khung?: [Bac, Bac]
   ngoaiKhung: boolean
   a22?: { bac: number; heSo: number; vuotKhung: boolean }
+  /** Vị trí theo bảng Cơ cấu VTVL (mã dòng, nhóm) */
+  maVT: string
+  nhomVT: NhomDinhMuc
 }
 
 type LocCot = { cdId?: string; bac?: Bac | 'CHUA'; ngoaiKhung?: boolean; a22?: boolean }
@@ -104,7 +107,9 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
       const viTri = nhom === 'NHAN_VIEN' ? (TEN_VT_NV[ma] ?? 'Nhân viên khác') : `Giáo viên ${TEN_CAP[cap].toLowerCase()}${nhom === 'CBQL' ? ' (CBQL)' : ''}`
       const heSo = heSoTheoVc.get(vc.id)
       const laA22 = (cd?.bangLuong ?? '').toUpperCase().replace(/\s/g, '') === 'A2.2'
+      const dvt = dongCuaNguoi(vc, cap, cd)
       ra.push({
+        maVT: dvt.ma[0], nhomVT: dvt.nhom,
         vc, truong, cap, cd, heSo, bac, viTri, khung,
         ngoaiKhung: !!(bac && khung && (bac < khung[0] || bac > khung[1])),
         a22: laA22 && heSo != null ? heSoA21DuKien(heSo) : undefined,
@@ -304,6 +309,7 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
           )
         }}
       />
+      <BangViTri nguoi={nguoiHien} truongs={truongHien} onXem={(tieuDe, ds) => setXem({ tieuDe, ds })} />
       <DanhSach xem={xem} onClose={() => setXem(null)} xemHoSo={hasPermission('vienChuc', 'read')} moHoSo={(id) => { setXem(null); navigate(`/vien-chuc/${id}`) }} />
     </>
   )
@@ -362,5 +368,126 @@ function DanhSach({ xem, onClose, xemHoSo, moHoSo }: {
         ]}
       />
     </Modal>
+  )
+}
+
+// ───────────────────────────── Bảng 2: bậc dự kiến theo vị trí việc làm ─────────────────────────────
+
+const TEN_NHOM_VT: Record<NhomDinhMuc, string> = {
+  QUAN_LY: 'I. Lãnh đạo, quản lý',
+  CHUYEN_MON: 'II. Chuyên môn nghiệp vụ',
+  HO_TRO: 'III. Hỗ trợ',
+  NGOAI_DM: 'Ngoài danh mục VTVL',
+}
+
+type DongVT = {
+  key: string; loai: 'nhom' | 'viTri' | 'tong'; ten: string; stt?: number; nhom?: NhomDinhMuc
+  khung?: string; nguoi: NguoiTinh[]
+}
+
+function BangViTri({ nguoi, truongs, onXem }: {
+  nguoi: NguoiTinh[]; truongs: DonVi[]; onXem: (tieuDe: string, ds: NguoiTinh[]) => void
+}) {
+  const [chonTruong, setChonTruong] = useState<string | undefined>()
+  const ds = useMemo(() => (chonTruong ? nguoi.filter((n) => n.truong.id === chonTruong) : nguoi), [nguoi, chonTruong])
+  const pham = chonTruong ? truongs.find((t) => t.id === chonTruong)?.ten ?? '' : truongs.length > 1 ? 'các trường đang lọc' : truongs[0]?.ten ?? ''
+
+  const dongs = useMemo(() => {
+    // Thứ tự, tên vị trí theo bảng Cơ cấu VTVL của các cấp học có trong phạm vi (cùng mã ở nhiều cấp thì gộp)
+    const caps = [...new Set(ds.map((n) => n.cap))].sort((a, b) => THU_TU_CAP[a] - THU_TU_CAP[b])
+    const viTri = new Map<string, { ten: string; nhom: NhomDinhMuc }>()
+    for (const c of caps) for (const v of danhSachViTri(c)) if (!viTri.has(v.ma)) viTri.set(v.ma, { ten: v.ten, nhom: v.nhom })
+    const ra: DongVT[] = []
+    for (const nhom of ['QUAN_LY', 'CHUYEN_MON', 'HO_TRO', 'NGOAI_DM'] as NhomDinhMuc[]) {
+      const cuaNhom = ds.filter((n) => n.nhomVT === nhom)
+      if (!cuaNhom.length) continue
+      ra.push({ key: `n-${nhom}`, loai: 'nhom', ten: TEN_NHOM_VT[nhom], nhom, nguoi: cuaNhom })
+      let stt = 0
+      for (const [ma, v] of viTri) {
+        if (v.nhom !== nhom) continue
+        const ng = cuaNhom.filter((n) => n.maVT === ma)
+        if (!ng.length) continue
+        const khung = [...new Set(ng.map((n) => (n.khung ? `${n.khung[0]}-${n.khung[1]}` : '')).filter(Boolean))].join('; ')
+        ra.push({ key: `v-${ma}`, loai: 'viTri', ten: v.ten, stt: ++stt, nhom, khung, nguoi: ng })
+      }
+    }
+    ra.push({ key: 'tong', loai: 'tong', ten: 'TỔNG CỘNG', nguoi: ds })
+    return ra
+  }, [ds])
+
+  const o = (r: DongVT, loc: (n: NguoiTinh) => boolean, tieuDe: string, tyLe = false) => {
+    const d = r.nguoi.filter(loc)
+    if (!d.length) return <Text type="secondary">-</Text>
+    const so = r.loai === 'viTri' ? d.length : <b>{d.length}</b>
+    return (
+      <span style={{ whiteSpace: 'nowrap' }}>
+        <a onClick={() => onXem(`${r.ten} - ${tieuDe} - ${pham}`, d)}>{so}</a>
+        {tyLe && <Text type="secondary" style={{ fontSize: 12 }}> ({phanTram(d.length, r.nguoi.length)})</Text>}
+      </span>
+    )
+  }
+  const coChuaBac = ds.some((n) => n.bac == null)
+
+  const xuat = () => exportToExcel(dongs.map((r) => {
+    const d: Record<string, string | number> = { STT: r.stt ?? '', 'Vị trí việc làm': r.ten, 'Khung bậc': r.khung ?? '', 'Tổng VC': r.nguoi.length }
+    for (const b of CAC_BAC) {
+      const n = r.nguoi.filter((x) => x.bac === b).length
+      d[`Bậc ${b}`] = n || ''
+      d[`Bậc ${b} (%)`] = n ? phanTram(n, r.nguoi.length) : ''
+    }
+    if (coChuaBac) d['Chưa xác định'] = r.nguoi.filter((x) => x.bac == null).length || ''
+    d['Ngoài khung'] = r.nguoi.filter((x) => x.ngoaiKhung).length || ''
+    return d
+  }), 'Bac_nghe_nghiep_theo_VTVL', 'Bậc NN theo VTVL', [
+    'DỰ KIẾN XẾP BẬC NGHỀ NGHIỆP THEO VỊ TRÍ VIỆC LÀM',
+    `${pham} - theo Nghị định 232/2026/NĐ-CP, số liệu dự kiến`,
+  ])
+
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '20px 0 8px' }}>
+        <Text strong style={{ fontSize: 15 }}>Dự kiến xếp bậc nghề nghiệp theo vị trí việc làm (bảng Cơ cấu VTVL)</Text>
+        <Space wrap>
+          {truongs.length > 1 && (
+            <Select
+              value={chonTruong}
+              onChange={setChonTruong}
+              allowClear
+              placeholder="Tất cả các trường đang lọc"
+              style={{ width: 260 }}
+              showSearch
+              optionFilterProp="label"
+              options={truongs.map((t) => ({ value: t.id, label: t.ten }))}
+            />
+          )}
+          <Button icon={<FileExcelOutlined />} onClick={xuat}>Xuất Excel</Button>
+        </Space>
+      </div>
+      <Table<DongVT>
+        size="small"
+        bordered
+        rowKey="key"
+        pagination={false}
+        dataSource={dongs}
+        scroll={{ x: 'max-content' }}
+        onRow={(r) => (r.loai === 'nhom'
+          ? { className: `vt-n-${r.nhom}`, style: { fontWeight: 600 } }
+          : r.loai === 'tong' ? { style: { background: '#e0e7ff' } } : { className: `vt-n-${r.nhom}` })}
+        columns={[
+          { title: 'STT', key: 'stt', width: 46, align: 'center', render: (_, r) => r.stt ?? '' },
+          { title: 'Vị trí việc làm', key: 'ten', width: 260, render: (_, r) => (r.loai === 'viTri' ? r.ten : <b style={{ color: '#1e3a8a' }}>{r.ten}</b>) },
+          { title: <Tooltip title="Khung bậc nghề nghiệp của vị trí (Phụ lục II, III NĐ 232/2026)">Khung bậc</Tooltip>, key: 'kh', width: 80, align: 'center', render: (_, r) => r.khung || '' },
+          { title: 'Tổng VC', key: 'tong', width: 64, align: 'center', render: (_, r) => o(r, () => true, 'tất cả') },
+          {
+            title: 'Bậc nghề nghiệp dự kiến',
+            children: [
+              ...CAC_BAC.map((b) => ({ title: `Bậc ${b}`, key: `b${b}`, width: 92, align: 'center' as const, render: (_: unknown, r: DongVT) => o(r, (n) => n.bac === b, `bậc ${b}`, true) })),
+              ...(coChuaBac ? [{ title: 'Chưa xác định', key: 'bc', width: 80, align: 'center' as const, render: (_: unknown, r: DongVT) => o(r, (n) => n.bac == null, 'chưa xác định bậc') }] : []),
+            ],
+          },
+          { title: <Tooltip title="Bậc dự kiến nằm ngoài khung bậc của vị trí">Ngoài khung</Tooltip>, key: 'nk', width: 72, align: 'center', render: (_, r) => o(r, (n) => n.ngoaiKhung, 'ngoài khung bậc') },
+        ]}
+      />
+    </>
   )
 }

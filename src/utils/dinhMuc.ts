@@ -403,6 +403,15 @@ export function viTriCuaNguoi(vc: VienChuc, cap: CapHoc, chucDanh?: ChucDanhTra)
   return cv && cv !== 'KHAC' ? cv : NV_KHAC
 }
 
+/** Danh sách vị trí việc làm của cấp học theo bảng Cơ cấu VTVL (bỏ dòng tổ trưởng, tổ phó - đã đếm ở vị trí của người đó) */
+export function danhSachViTri(cap: CapHoc): { ma: string; ten: string; nhom: NhomDinhMuc }[] {
+  return [
+    ...VI_TRI[cap].filter((v) => !v.trongGv).map((v) => ({ ma: v.ma, ten: v.ten, nhom: v.nhom })),
+    { ma: CHUA_PHAN_MON, ten: 'Giáo viên chưa phân công môn', nhom: 'CHUYEN_MON' },
+    { ma: NV_KHAC, ten: 'Nhân viên khác / chưa rõ công việc', nhom: 'HO_TRO' },
+  ]
+}
+
 /**
  * Các dòng của bảng định mức mà một người được đếm "có mặt" - cùng quy tắc với tinhDinhMuc:
  * dòng vị trí của mình (công việc ngoài khung cấp học dồn về "Nhân viên khác"), tổ trưởng / tổ phó

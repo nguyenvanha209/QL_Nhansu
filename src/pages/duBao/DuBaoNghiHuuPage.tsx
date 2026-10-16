@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Card, Table, Select, Space, Tag, Typography, Statistic, Row, Col } from 'antd'
+import { Card, Table, Select, Space, Tag, Typography, Statistic, Row, Col, Tabs } from 'antd'
+import { useSearchParams } from 'react-router-dom'
+import DaNghiHuu from './DaNghiHuu'
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -82,10 +84,11 @@ export default function DuBaoNghiHuuPage() {
     },
   ]
 
-  return (
-    <Card>
-      <Title level={4} style={{ marginBottom: 16 }}>Dự báo nghỉ hưu</Title>
+  const [params, setParams] = useSearchParams()
+  const the = params.get('tab') === 'da-nghi' ? 'da-nghi' : 'du-bao'
 
+  const duBao = (
+    <>
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col xs={24} sm={8}><Statistic title={`Nghỉ hưu trong ${years} năm`} value={data.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: data.length > 0 ? '#f5222d' : '#52c41a' } }} /></Col>
         <Col xs={24} sm={8}><Statistic title="Cần chuẩn bị gấp (≤ 6 tháng)" value={urgentCount} styles={{ content: { color: urgentCount > 0 ? '#fa8c16' : '#52c41a' } }} /></Col>
@@ -105,6 +108,20 @@ export default function DuBaoNghiHuuPage() {
         size="small"
         scroll={{ x: 1250 }}
         pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} viên chức dự kiến nghỉ hưu` }}
+      />
+    </>
+  )
+
+  return (
+    <Card>
+      <Title level={4} style={{ marginBottom: 8 }}>Dự báo nghỉ hưu</Title>
+      <Tabs
+        activeKey={the}
+        onChange={(k) => setParams(k === 'da-nghi' ? { tab: 'da-nghi' } : {}, { replace: true })}
+        items={[
+          { key: 'du-bao', label: 'Dự báo nghỉ hưu', children: duBao },
+          { key: 'da-nghi', label: 'Viên chức đã nghỉ hưu', children: <DaNghiHuu /> },
+        ]}
       />
     </Card>
   )

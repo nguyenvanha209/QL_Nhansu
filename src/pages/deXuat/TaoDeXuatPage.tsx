@@ -15,6 +15,7 @@ import PhuCapDieuChinhField from '@/components/PhuCapDieuChinhField'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import { isDangCongTac, nhanLuongTheoTien, duocTinhSoLieu } from '@/types/vienChuc'
 import { xuatExcelKiemTraDeXuat } from '@/utils/danhSachKiemTraDeXuat'
+import { soSanhTruong } from '@/utils/dinhMuc'
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
 import { laDienPhuCapThamNien, nhomCoBan } from '@/utils/nhomViTri'
 import MinhChungField from '@/components/MinhChungField'
@@ -44,7 +45,7 @@ export default function TaoDeXuatPage() {
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
   // Người nhận lương theo mức tiền không nâng bậc/hệ số → không đưa vào đề xuất
   const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && !nhanLuongTheoTien(v)), [allVienChucs])
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)

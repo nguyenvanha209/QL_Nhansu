@@ -19,6 +19,7 @@ import type { ChiTietDeXuat, HoSoTruocHan } from '@/types/deXuat'
 import type { VienChuc } from '@/types/vienChuc'
 import { duocTinhSoLieu } from '@/types/vienChuc'
 import { formatDate } from '@/utils/helpers'
+import { soSanhTruong } from '@/utils/dinhMuc'
 import { ghiChuVuotTyLe, xuatExcelDanhSachTruong } from '@/utils/danhSachTruocHan'
 import { cotSTT, BANG_CHUAN } from '@/utils/cotBang'
 import {
@@ -64,7 +65,7 @@ export default function HoSoTruocHanPage() {
   const nguoiTaiLen = currentUser?.fullName ?? ''
   const duocSua = !editId || (!!dxSua && dxSua.loai === 'NANG_TRUOC_HAN' && (dxSua.trangThai === 'NHAP' || dxSua.trangThai === 'YEU_CAU_BO_SUNG')
     && (!scopeDonViId || dxSua.donViId === scopeDonViId))
-  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER'), [donVis])
+  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER').sort(soSanhTruong), [donVis])
   const donVi = donVis.find((d) => d.id === donViId)
 
   const cdTheoId = useMemo(() => new Map(chucDanhs.map((c) => [c.id, c])), [chucDanhs])

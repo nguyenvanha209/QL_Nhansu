@@ -19,6 +19,10 @@ export const laCapHoc = (loai?: LoaiDonVi): loai is CapHoc =>
 export const TEN_CAP: Record<CapHoc, string> = { MAM_NON: 'Mầm non', TIEU_HOC: 'Tiểu học', THCS: 'THCS' }
 export const THU_TU_CAP: Record<CapHoc, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3 }
 
+/** Sắp xếp trường: mầm non → tiểu học → THCS (đơn vị khác cuối), trong mỗi cấp theo tên A B C */
+export const soSanhTruong = (a: { loai: string; ten: string }, b: { loai: string; ten: string }) =>
+  (THU_TU_CAP[a.loai as CapHoc] ?? 9) - (THU_TU_CAP[b.loai as CapHoc] ?? 9) || a.ten.localeCompare(b.ten, 'vi')
+
 /** Năm học bắt đầu từ tháng 9 */
 export function namHocHienHanh(d = new Date()): string {
   const y = d.getFullYear()

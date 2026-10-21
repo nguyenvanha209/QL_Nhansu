@@ -13,6 +13,7 @@ import { BANG_CHUAN, cotGiua, cotNgay, cotSTT, phanTrang } from '@/utils/cotBang
 import { formatDate } from '@/utils/helpers'
 import { ngayDu5Nam } from '@/utils/pctnLanDau'
 import { xuatExcelA4, trangTuDanhSach } from '@/utils/excelA4'
+import { soSanhTruong } from '@/utils/dinhMuc'
 
 const { Text } = Typography
 
@@ -62,7 +63,8 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
   const [buoc, setBuoc] = useState<Buoc | 'DA_TRINH'>('CHO_VHXH')
   const [truong, setTruong] = useState<string | undefined>()
 
-  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER'), [donVis])
+  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER').sort(soSanhTruong), [donVis])
+  const thuTuTruong = useMemo(() => new Map(truongs.map((t, i) => [t.id, i])), [truongs])
   const tenTruong = (id: string) => donVis.find((d) => d.id === id)?.ten ?? id
   const phieu = useMemo(() => deXuats.filter((d) => d.loai === loai && namCuaPhieu(d) === nam), [deXuats, loai, nam])
   const duPhieu = (bs: Buoc[]) => phieu.filter((d) => bs.includes(buocCua(d.trangThai)))
@@ -82,12 +84,12 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
     const bs: Buoc[] = buoc === 'DA_TRINH' ? ['CHO_HT', 'CHO_VHXH', 'CHO_LD', 'DA_DUYET'] : [buoc]
     return duPhieu(bs)
       .filter((d) => !truong || d.donViId === truong)
-      .sort((a, b) => tenTruong(a.donViId).localeCompare(tenTruong(b.donViId), 'vi'))
+      .sort((a, b) => (thuTuTruong.get(a.donViId) ?? 999) - (thuTuTruong.get(b.donViId) ?? 999))
       .flatMap((dx) => dx.chiTiet.map((ct) => {
         const vc = vcTheoId.get(ct.vienChucId)
         return { key: `${dx.id}_${ct.vienChucId}`, dx, ct, ten: vc ? `${vc.ho} ${vc.ten}` : ct.vienChucId, truong: tenTruong(dx.donViId) }
       }))
-  }, [phieu, buoc, truong, vcTheoId])
+  }, [phieu, buoc, truong, vcTheoId, thuTuTruong])
 
   const tenThamDinh = (r: DongNguoi) => (r.ct.thamDinh === 'KHONG_DONG_Y' ? 'Không đồng ý' : r.ct.thamDinh === 'DONG_Y' ? 'Đồng ý'
     : loai === 'NANG_TRUOC_HAN' || ['NHAP', 'CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET'].includes(r.dx.trangThai) ? 'Chưa thẩm định' : 'Đồng ý')

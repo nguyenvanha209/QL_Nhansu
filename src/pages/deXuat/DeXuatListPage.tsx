@@ -9,6 +9,7 @@ import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import TongHopHoSoNangLuong from '@/components/TongHopHoSoNangLuong'
 import { formatDate } from '@/utils/helpers'
+import { soSanhTruong } from '@/utils/dinhMuc'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, LOAI_DE_XUAT_DIEU_CHINH } from '@/types/deXuat'
 import type { TrangThaiDeXuat, LoaiDeXuat } from '@/types/deXuat'
 
@@ -142,7 +143,7 @@ export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
       <Space wrap style={{ marginBottom: 12 }}>
         <Select placeholder="Lọc trạng thái" style={{ width: 220 }} value={filterStatus} onChange={setFilterStatus} allowClear options={ALL_STATUSES.map((s) => ({ value: s, label: TRANG_THAI_LABELS[s] }))} />
         {!scopeDonViId && (
-          <Select placeholder="Lọc đơn vị" style={{ width: 200 }} value={filterDonVi} onChange={setFilterDonVi} allowClear options={donVis.filter((d) => d.active).map((d) => ({ value: d.id, label: d.ten }))} />
+          <Select placeholder="Lọc đơn vị" style={{ width: 200 }} value={filterDonVi} onChange={setFilterDonVi} allowClear options={donVis.filter((d) => d.active).sort(soSanhTruong).map((d) => ({ value: d.id, label: d.ten }))} />
         )}
       </Space>
 

@@ -19,6 +19,7 @@ import { danhSachTraLuong, soSuatToiDa } from '@/utils/nangTruocHan'
 import { logAction } from '@/utils/auditLogger'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import TongHopHoSoNangLuong from '@/components/TongHopHoSoNangLuong'
+import { soSanhTruong } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
 
@@ -38,7 +39,7 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
   const [nam, setNam] = useState(dayjs().year())
   const [the, setThe] = useState(params.get('tab') === 'muc' ? 'muc' : 'ho-so')
 
-  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER' && (!scopeDonViId || d.id === scopeDonViId)), [donVis, scopeDonViId])
+  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER' && (!scopeDonViId || d.id === scopeDonViId)).sort(soSanhTruong), [donVis, scopeDonViId])
   const hoSoNam = useMemo(() => deXuats.filter((d) => d.loai === 'NANG_TRUOC_HAN' && (d.namXet ?? Number(d.ngayDeXuat?.slice(0, 4))) === nam && (!scopeDonViId || d.donViId === scopeDonViId)), [deXuats, nam, scopeDonViId])
 
   // Mỗi trường một dòng: hồ sơ (nếu có), số người đề nghị, tỷ lệ

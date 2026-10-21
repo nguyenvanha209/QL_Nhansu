@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { khoCucBo } from './khoCucBo'
+import { khoCucBo, soGhiPhienBan, soDanhDauChuaGui, laKhoDuLieu } from './khoCucBo'
 import { createJSONStorage } from 'zustand/middleware'
 import type { StateStorage } from 'zustand/middleware'
 
@@ -63,7 +63,15 @@ if (supabase) {
 const phienBanMayChu = new Map<string, string>()
 
 export function ghiNhanPhienBan(key: string, updatedAt: string | null) {
-  if (updatedAt) phienBanMayChu.set(key, updatedAt)
+  if (!updatedAt) return
+  phienBanMayChu.set(key, updatedAt)
+  // Sổ trên máy: bản cất trên máy đang khớp phiên bản này (lần mở sau khỏi tải lại nếu máy chủ không đổi)
+  soGhiPhienBan(key, updatedAt)
+}
+
+function boPhienBan(key: string) {
+  phienBanMayChu.delete(key)
+  soGhiPhienBan(key, null)
 }
 
 type XuLyXungDot = (key: string) => void
@@ -353,7 +361,7 @@ export const tachKhoa = (khoa: string) => {
 // Đây chính là chỗ tiết kiệm: sửa một trường thì 10 mảnh còn lại không phải ghi.
 const manhDaGhi = new Map<string, string>()
 
-function chiaTrangThai(ten: string, khoi: KhoiTrangThai): Map<string, KhoiTrangThai> {
+export function chiaTrangThai(ten: string, khoi: KhoiTrangThai): Map<string, KhoiTrangThai> {
   const chiaTheo = cauHinhChia.get(ten)!
   const state = khoi.state ?? {}
   const ra = new Map<string, Record<string, unknown>>()
@@ -449,6 +457,8 @@ function xepViecGhi(name: string, value: string, daXoa: DaXoa, lanThuLai: number
     const conMoiHon = choGhiLai.get(name)?.value !== value
     if (ok) {
       if (!conMoiHon) choGhiLai.delete(name)
+      // Mọi thay đổi của kho đã lên máy chủ → bản trên máy khớp máy chủ
+      if (!conMoiHon && !choGom.has(name)) soDanhDauChuaGui(name, false)
       return
     }
     // Lệnh mới hơn đã xếp hàng thì tự nó sẽ thử; chỉ hẹn lại khi đây vẫn là bản mới nhất
@@ -645,7 +655,7 @@ async function donODangCu(name: string) {
     console.warn(`[Supabase] Chưa dọn được ô cũ "${name}" -`, error.message)
     return
   }
-  phienBanMayChu.delete(name)
+  boPhienBan(name)
   console.info(`[Supabase] Đã dọn ô cũ "${name}" sau khi chia thành từng mảnh.`)
 }
 
@@ -898,6 +908,9 @@ const hybridStorage: StateStorage = {
     // dùng khi hợp nhất lúc có xung đột. Đang chờ gom thì bản cũ đã giữ từ lần đầu.
     const truoc = guiMayChu && !choGom.has(name) ? khoCucBo.getItem(name) : null
     khoCucBo.setItem(name, value)
+    // Thay đổi tại máy (không phải nạp từ máy chủ): đánh dấu chưa gửi cho tới khi ghi lên máy chủ xong.
+    // Còn dấu này lúc mở trang lần sau thì kho đó tải lại toàn bộ từ máy chủ như trước.
+    if (!dangDongBo && laKhoDuLieu(name)) soDanhDauChuaGui(name, true)
     if (guiMayChu) henGhi(name, truoc)
   },
 
@@ -913,7 +926,7 @@ const hybridStorage: StateStorage = {
     if (supabase && !dangDongBo && coPhien) {
       supabase.from('app_state').delete().eq('key', name).then(({ error }) => {
         if (error) console.warn('[Supabase] Lỗi khi xoá', name, '-', error.message)
-        else phienBanMayChu.delete(name)
+        else boPhienBan(name)
       })
     }
   },

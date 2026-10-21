@@ -1,8 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
 import './index.css'
 import { choGhiXong } from './lib/supabase'
+import { khoiTaoKhoCucBo } from './lib/khoCucBo'
 
 // Sau mỗi lần cập nhật phần mềm, các gói mã trang cũ bị thay tên. Máy đang mở bản cũ mà bấm sang
 // trang chưa tải sẽ không tìm thấy gói → tải lại trang để lấy bản mới (mỗi phiên chỉ thử 1 lần để
@@ -21,8 +21,15 @@ window.addEventListener('load', () => {
   setTimeout(() => { try { sessionStorage.removeItem('ql-tai-lai-ban-moi') } catch { /* bỏ qua */ } }, 10_000)
 })
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+// Dữ liệu cất trên máy (IndexedDB) phải lên bộ nhớ TRƯỚC khi tạo các store - store đọc kho ngay khi được
+// nạp - nên App (và các store) chỉ nạp sau bước này. Lỗi thì khoCucBo tự quay về localStorage.
+const root = ReactDOM.createRoot(document.getElementById('root')!)
+khoiTaoKhoCucBo()
+  .finally(async () => {
+    const { default: App } = await import('./App')
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>,
+    )
+  })

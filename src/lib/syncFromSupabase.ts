@@ -1,7 +1,7 @@
-import { khoCucBo } from './khoCucBo'
+import { khoCucBo, dangDungIndexedDb, soDoc, ngheThayDoiTuTabKhac } from './khoCucBo'
 import {
   supabase, ghiNhanPhienBan, ghiNhanBanGoc, ghiNhanManhDaCo, datCoDangDongBo, dangKyNapLai,
-  dangKyChiaKho, laKhoChia, tachKhoa, gopCacManh, KHOA_GOC,
+  dangKyChiaKho, laKhoChia, tachKhoa, gopCacManh, KHOA_GOC, chiaTrangThai, khoaManh,
 } from './supabase'
 import type { KhoiTrangThai } from './supabase'
 import { useUserStore } from '@/store/userStore'
@@ -71,6 +71,53 @@ if (typeof window !== 'undefined') {
     datCoDangDongBo(true)
     Promise.resolve(KHO_THEO_KHOA[e.key].persist.rehydrate()).finally(() => datCoDangDongBo(false))
   })
+  // Dữ liệu cất trong IndexedDB không phát sự kiện "storage" → tab kia báo qua BroadcastChannel
+  ngheThayDoiTuTabKhac((k) => {
+    if (!KHO_THEO_KHOA[k]) return
+    datCoDangDongBo(true)
+    Promise.resolve(KHO_THEO_KHOA[k].persist.rehydrate()).finally(() => datCoDangDongBo(false))
+  })
+}
+
+type DongMayChu = { key: string; value: unknown; updated_at: string }
+
+const docKhoi = (ten: string): KhoiTrangThai | null => {
+  try {
+    return JSON.parse(khoCucBo.getItem(ten) ?? 'null') as KhoiTrangThai | null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Chọn các ô cần tải từ máy chủ; ô còn lại dùng lại bản cất trên máy.
+ * Một kho được dùng lại khi: trên máy có bản cất, không còn thay đổi chưa gửi, và MỌI ô của kho trên máy chủ
+ * vẫn đúng phiên bản bản cất đang khớp. Kho chia mảnh còn phải có đúng tập mảnh như máy chủ (không còn ô cũ
+ * chưa chia) - có mảnh nào đổi thì tải lại cả kho, tránh lệch mảnh làm bản ghi đã xoá sống lại.
+ * Không dùng IndexedDB (không có sổ phiên bản) thì tải hết như trước.
+ */
+function chonOCanTai(ds: { key: string; updated_at: string }[]): { tai: string[]; dungLai: Map<string, KhoiTrangThai> } {
+  const dungLai = new Map<string, KhoiTrangThai>() // tên kho → bản trên máy
+  if (!dangDungIndexedDb()) return { tai: ds.map((r) => r.key), dungLai }
+  const { phienBan, chuaGui } = soDoc()
+  const theoTen = new Map<string, { key: string; updated_at: string }[]>()
+  for (const r of ds) {
+    const { ten } = tachKhoa(r.key)
+    if (!theoTen.has(ten)) theoTen.set(ten, [])
+    theoTen.get(ten)!.push(r)
+  }
+  const tai: string[] = []
+  for (const [ten, oCuaKho] of theoTen) {
+    const khoi = KHO_THEO_KHOA[ten] && !chuaGui.has(ten) ? docKhoi(ten) : null
+    let dung = !!khoi && oCuaKho.every((r) => phienBan[r.key] === r.updated_at)
+    if (dung && laKhoChia(ten)) {
+      const manhMay = new Set([...chiaTrangThai(ten, khoi!).keys()].map((m) => khoaManh(ten, m)))
+      dung = oCuaKho.every((r) => r.key !== ten && manhMay.has(r.key)) && manhMay.size === oCuaKho.length
+    }
+    if (dung) dungLai.set(ten, khoi!)
+    else tai.push(...oCuaKho.map((r) => r.key))
+  }
+  return { tai, dungLai }
 }
 
 export type SyncResult =
@@ -86,14 +133,27 @@ export async function syncFromSupabase(): Promise<SyncResult> {
   if (!supabase) return 'disabled'
 
   try {
-    // updated_at là phiên bản dùng cho khoá lạc quan khi ghi ngược lên.
-    const { data, error } = await supabase.from('app_state').select('key, value, updated_at')
+    // Trước hết chỉ hỏi phiên bản từng ô (vài trăm byte); updated_at là phiên bản dùng cho khoá lạc quan khi ghi.
+    const { data: dsPhienBan, error } = await supabase.from('app_state').select('key, updated_at')
 
     if (error) {
       console.error('[Supabase] Không đọc được app_state:', error.message)
       return 'error'
     }
-    if (!data || data.length === 0) return 'empty'
+    if (!dsPhienBan || dsPhienBan.length === 0) return 'empty'
+
+    // Chỉ tải những ô đã đổi so với bản cất trên máy
+    const { tai, dungLai } = chonOCanTai(dsPhienBan.filter((r) => r.key !== 'ql-auth') as { key: string; updated_at: string }[])
+    let data: DongMayChu[] = []
+    if (tai.length) {
+      const { data: moi, error: e2 } = await supabase.from('app_state').select('key, value, updated_at').in('key', tai)
+      if (e2 || !moi) {
+        console.error('[Supabase] Không đọc được app_state:', e2?.message)
+        return 'error'
+      }
+      data = moi as DongMayChu[]
+    }
+    console.info(`[Supabase] Mở trang: tải ${tai.length} ô, dùng lại bản trên máy ${dungLai.size} kho`)
 
     // Khoá ghi trong lúc rehydrate, nếu không việc nạp lại state có thể kích
     // hoạt lệnh ghi ngược lên máy chủ ngay giữa chừng.
@@ -131,6 +191,18 @@ export async function syncFromSupabase(): Promise<SyncResult> {
           // (ghi thừa làm mọi máy khác phải tải lại toàn bộ)
           ghiNhanManhDaCo(ten)
         }
+      }
+
+      // Kho dùng lại bản trên máy: ghi nhận phiên bản và bản gốc như vừa đọc từ máy chủ (nội dung đã khớp)
+      for (const r of dsPhienBan) {
+        const { ten } = tachKhoa(r.key)
+        const khoi = dungLai.get(ten)
+        if (!khoi) continue
+        ghiNhanPhienBan(r.key, r.updated_at)
+      }
+      for (const [ten, khoi] of dungLai) {
+        ghiNhanBanGoc(ten, khoi.state, true)
+        if (laKhoChia(ten)) ghiNhanManhDaCo(ten)
       }
 
       await Promise.all(STORES.map((s) => s.persist.rehydrate()))

@@ -1,30 +1,203 @@
 // Bộ nhớ trên máy (thay cho gọi thẳng localStorage)
 //
-// localStorage chỉ có khoảng 5 MB mỗi trang trên trình duyệt điện thoại (iPhone: mọi trình duyệt dùng lõi
-// WebKit; nhiều máy Android cũng vậy). Dữ liệu phần mềm đã vượt mức này nên trên điện thoại lệnh ghi báo
-// QuotaExceededError → đăng nhập xong vẫn báo "Không tải được dữ liệu từ máy chủ".
+// localStorage chỉ có khoảng 5 MB mỗi trang trên điện thoại (iPhone: mọi trình duyệt dùng lõi WebKit; nhiều
+// máy Android cũng vậy) - dữ liệu phần mềm đã vượt mức này, đăng nhập xong báo "Không tải được dữ liệu".
 //
-// Lớp này đọc/ghi như localStorage nhưng khi hết chỗ:
-// - dời các kho dữ liệu lớn (ql-*) khỏi localStorage sang bộ nhớ của phiên đang mở để giải phóng chỗ,
-//   nhờ vậy các khoá nhỏ (phiên đăng nhập, mốc thao tác...) vẫn ghi được;
-// - khoá nào vẫn không vừa thì giữ trong bộ nhớ phiên.
-// Phần mềm vẫn chạy đầy đủ, mọi thay đổi vẫn ghi lên máy chủ; chỉ khác là lần mở sau phải tải lại dữ liệu
-// từ máy chủ (vốn vẫn làm mỗi lần mở trang).
+// Nay 8 kho dữ liệu (hồ sơ, lương, danh mục...) cất trong IndexedDB - có trên mọi trình duyệt, dung lượng
+// hàng trăm MB. Khi mở trang, toàn bộ được đọc lên bộ nhớ một lần (khoiTaoKhoCucBo, trước khi tạo các store),
+// sau đó đọc/ghi đồng bộ trên bộ nhớ như localStorage, phần ghi xuống IndexedDB chạy nền (gom 300 ms).
+// Kèm theo là "sổ phiên bản": phiên bản máy chủ (updated_at) mà bản cất trên máy đang khớp, và kho nào còn
+// thay đổi chưa lên máy chủ - để lần mở sau chỉ tải những phần đã đổi (xem syncFromSupabase).
+//
+// Các khoá nhỏ (phiên đăng nhập, mốc thao tác, thông báo đã xem) vẫn ở localStorage để các tab dùng chung.
+// Trình duyệt không mở được IndexedDB (rất hiếm) thì quay về localStorage như trước, hết chỗ thì giữ trong
+// bộ nhớ phiên; khi đó mỗi lần mở trang tải lại toàn bộ.
 
-const boNhoPhien = new Map<string, string>()
+/** Các kho dữ liệu (tên persist của store) - cất IndexedDB */
+const KHO_DU_LIEU = new Set([
+  'ql-users', 'ql-danh-muc', 'ql-vien-chuc', 'ql-luong', 'ql-de-xuat', 'ql-chuyen-cong-tac', 'ql-nhat-ky', 'ql-thong-bao',
+])
+export const laKhoDuLieu = (k: string) => KHO_DU_LIEU.has(k)
+
+const TEN_DB = 'ql-nhansu'
+const BANG = 'kho'
+const KHOA_SO = '__so_phien_ban__'
+
+const boNho = new Map<string, string>()
+let db: IDBDatabase | null = null
+let dungIdb = false
 let daHetCho = false
+
+// ───────────────────────────── Sổ phiên bản ─────────────────────────────
+
+interface SoPhienBan {
+  /** Khoá trên máy chủ (app_state.key) → updated_at mà bản trên máy đang khớp */
+  phienBan: Record<string, string>
+  /** Kho còn thay đổi trên máy chưa lên máy chủ */
+  chuaGui: string[]
+}
+let so: SoPhienBan = { phienBan: {}, chuaGui: [] }
+
+// ───────────────────────────── IndexedDB ─────────────────────────────
+
+const choGhi = new Map<string, string | null>() // null = xoá
+let henGhi: number | undefined
+let dangGhi: Promise<void> = Promise.resolve()
+
+function moDb(): Promise<IDBDatabase> {
+  return new Promise((ok, loi) => {
+    if (typeof indexedDB === 'undefined') return loi(new Error('Không có IndexedDB'))
+    const yc = indexedDB.open(TEN_DB, 1)
+    yc.onupgradeneeded = () => { if (!yc.result.objectStoreNames.contains(BANG)) yc.result.createObjectStore(BANG) }
+    yc.onsuccess = () => {
+      const d = yc.result
+      // Tab khác cần nâng cấp / xoá cơ sở dữ liệu (bản phần mềm mới) → nhả kết nối, không chặn tab đó.
+      // Tab này vẫn chạy trên bộ nhớ; phần chưa ghi xuống máy thì lần mở sau tải lại từ máy chủ.
+      d.onversionchange = () => {
+        d.close()
+        if (db === d) db = null
+      }
+      ok(d)
+    }
+    yc.onerror = () => loi(yc.error)
+    yc.onblocked = () => loi(new Error('IndexedDB bị chặn'))
+  })
+}
+
+function docHet(d: IDBDatabase): Promise<Map<string, string>> {
+  return new Promise((ok, loi) => {
+    const ra = new Map<string, string>()
+    const tx = d.transaction(BANG, 'readonly')
+    const yc = tx.objectStore(BANG).openCursor()
+    yc.onsuccess = () => {
+      const c = yc.result
+      if (!c) return
+      if (typeof c.value === 'string') ra.set(String(c.key), c.value)
+      c.continue()
+    }
+    tx.oncomplete = () => ok(ra)
+    tx.onerror = () => loi(tx.error)
+  })
+}
+
+/** Ghi mọi thay đổi đang chờ trong MỘT giao dịch (dữ liệu và sổ phiên bản lên cùng lúc hoặc cùng không) */
+function xaGhi(): Promise<void> {
+  window.clearTimeout(henGhi)
+  henGhi = undefined
+  if (!db || !choGhi.size) return dangGhi
+  const lo = [...choGhi]
+  choGhi.clear()
+  const d = db
+  dangGhi = dangGhi.then(() => new Promise<void>((ok) => {
+    try {
+      const tx = d.transaction(BANG, 'readwrite')
+      const st = tx.objectStore(BANG)
+      for (const [k, v] of lo) {
+        if (v == null) st.delete(k)
+        else st.put(v, k)
+      }
+      tx.oncomplete = () => ok()
+      tx.onerror = tx.onabort = () => {
+        console.warn('[Bộ nhớ máy] Ghi IndexedDB không thành công -', tx.error)
+        ok()
+      }
+    } catch (e) {
+      console.warn('[Bộ nhớ máy] Ghi IndexedDB không thành công -', e)
+      ok()
+    }
+  }))
+  return dangGhi
+}
+
+function henXa() {
+  if (henGhi === undefined) henGhi = window.setTimeout(() => { void xaGhi() }, 300)
+}
+
+function luuSo() {
+  if (!dungIdb) return
+  choGhi.set(KHOA_SO, JSON.stringify(so))
+  henXa()
+}
+
+// ───────────────────────────── Đồng bộ giữa các tab ─────────────────────────────
+// IndexedDB không có sự kiện "storage" như localStorage → báo cho tab khác qua BroadcastChannel.
+
+type NgheTab = (k: string) => void
+const ngheTab = new Set<NgheTab>()
+const kenh: BroadcastChannel | null = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ql-nhansu-kho') : null
+if (kenh) {
+  kenh.onmessage = (e: MessageEvent<{ k: string; v: string | null }>) => {
+    const { k, v } = e.data ?? {}
+    if (!k || !dungIdb) return
+    if (v == null) boNho.delete(k)
+    else boNho.set(k, v)
+    ngheTab.forEach((fn) => fn(k))
+  }
+}
+/** Tab khác vừa lưu một kho dữ liệu (để nạp lại store) */
+export function ngheThayDoiTuTabKhac(fn: NgheTab) {
+  ngheTab.add(fn)
+  return () => { ngheTab.delete(fn) }
+}
+
+// ───────────────────────────── Khởi tạo ─────────────────────────────
+
+const hetGio = <T>(p: Promise<T>, ms: number) =>
+  Promise.race([p, new Promise<never>((_, loi) => setTimeout(() => loi(new Error('Hết thời gian')), ms))])
+
+/**
+ * Gọi MỘT lần trước khi tạo các store (main.tsx): đọc IndexedDB lên bộ nhớ, chuyển dữ liệu cũ từ
+ * localStorage sang. Lỗi thì giữ cách cũ (localStorage), không chặn việc mở phần mềm.
+ */
+export async function khoiTaoKhoCucBo(): Promise<void> {
+  try {
+    db = await hetGio(moDb(), 4000)
+    const daCo = await hetGio(docHet(db), 8000)
+    for (const [k, v] of daCo) {
+      if (k === KHOA_SO) {
+        try {
+          const doc = JSON.parse(v) as Partial<SoPhienBan>
+          so = { phienBan: doc.phienBan ?? {}, chuaGui: doc.chuaGui ?? [] }
+        } catch { /* sổ hỏng: coi như chưa có */ }
+      } else if (laKhoDuLieu(k)) boNho.set(k, v)
+    }
+    // Chuyển dữ liệu đang cất ở localStorage (bản trước) sang IndexedDB rồi mới xoá
+    const cu: string[] = []
+    for (const k of KHO_DU_LIEU) {
+      const v = goi(() => localStorage.getItem(k), null)
+      if (v == null) continue
+      cu.push(k)
+      if (!boNho.has(k)) { boNho.set(k, v); choGhi.set(k, v) }
+    }
+    dungIdb = true
+    if (choGhi.size) {
+      // Bản lấy từ localStorage chưa có sổ phiên bản → lần đầu vẫn tải toàn bộ từ máy chủ
+      so = { phienBan: {}, chuaGui: [] }
+      choGhi.set(KHOA_SO, JSON.stringify(so))
+    }
+    await xaGhi()
+    for (const k of cu) goi(() => localStorage.removeItem(k), undefined)
+  } catch (e) {
+    console.warn('[Bộ nhớ máy] Không dùng được IndexedDB, dùng localStorage -', e)
+    db = null
+    dungIdb = false
+    boNho.clear()
+  }
+}
+
+/** Đang cất dữ liệu bằng IndexedDB (có sổ phiên bản để chỉ tải phần đổi) */
+export const dangDungIndexedDb = () => dungIdb
+
+// Ẩn/đóng tab: ghi ngay phần đang chờ
+if (typeof window !== 'undefined') {
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void xaGhi() })
+  window.addEventListener('pagehide', () => { void xaGhi() })
+}
+
+// ───────────────────────────── Đọc / ghi ─────────────────────────────
 
 const laHetCho = (e: unknown) =>
   e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014)
-
-/** Kho dữ liệu lớn được phép dời sang bộ nhớ phiên khi hết chỗ (không dời phiên đăng nhập) */
-const laKhoDuLieu = (k: string) => k.startsWith('ql-') && k !== 'ql-auth'
-
-/**
- * Kho chỉ giữ trong bộ nhớ phiên, không lưu localStorage: nhật ký thao tác (tối đa 5.000 dòng, vài MB) chỉ để
- * xem ở trang Nhật ký, mỗi lần mở trang vẫn tải từ máy chủ. Bỏ khỏi localStorage để dành chỗ cho hồ sơ, lương.
- */
-const CHI_BO_NHO = new Set(['ql-nhat-ky'])
 
 function goi<T>(fn: () => T, macDinh: T): T {
   try {
@@ -34,45 +207,43 @@ function goi<T>(fn: () => T, macDinh: T): T {
   }
 }
 
-/** Dời các kho dữ liệu lớn nhất khỏi localStorage sang bộ nhớ phiên */
-function giaiPhongCho(): boolean {
-  const ds = goi(() => Object.keys(localStorage), [] as string[])
-    .filter(laKhoDuLieu)
-    .map((k) => ({ k, v: goi(() => localStorage.getItem(k), null) }))
-    .filter((x): x is { k: string; v: string } => x.v != null)
-    .sort((a, b) => b.v.length - a.v.length)
-  if (!ds.length) return false
-  for (const { k, v } of ds) {
-    boNhoPhien.set(k, v)
+/** Chế độ localStorage hết chỗ: dời các kho dữ liệu lớn sang bộ nhớ phiên để giải phóng chỗ */
+function giaiPhongCho() {
+  for (const k of KHO_DU_LIEU) {
+    const v = goi(() => localStorage.getItem(k), null)
+    if (v == null) continue
+    boNho.set(k, v)
     goi(() => localStorage.removeItem(k), undefined)
   }
-  return true
 }
 
 export const khoCucBo = {
   getItem(k: string): string | null {
-    if (boNhoPhien.has(k)) return boNhoPhien.get(k)!
+    if (boNho.has(k)) return boNho.get(k)!
+    if (dungIdb && laKhoDuLieu(k)) return null
     return goi(() => localStorage.getItem(k), null)
   },
 
   setItem(k: string, v: string): void {
-    if (CHI_BO_NHO.has(k)) {
-      boNhoPhien.set(k, v)
+    if (dungIdb && laKhoDuLieu(k)) {
+      boNho.set(k, v)
+      choGhi.set(k, v)
+      henXa()
+      kenh?.postMessage({ k, v })
       return
     }
-    // Kho đã dời sang bộ nhớ phiên thì giữ luôn ở đó, khỏi thử ghi lại (tránh lỗi lặp lại mỗi lần lưu)
-    if (boNhoPhien.has(k) && laKhoDuLieu(k)) {
-      boNhoPhien.set(k, v)
+    // Chế độ localStorage: kho đã dời sang bộ nhớ phiên thì giữ luôn ở đó
+    if (boNho.has(k) && laKhoDuLieu(k)) {
+      boNho.set(k, v)
       return
     }
     try {
       localStorage.setItem(k, v)
-      boNhoPhien.delete(k)
+      boNho.delete(k)
       return
     } catch (e) {
       if (!laHetCho(e)) {
-        // Trình duyệt chặn localStorage (chế độ riêng tư...) → giữ trong bộ nhớ phiên
-        boNhoPhien.set(k, v)
+        boNho.set(k, v)
         return
       }
     }
@@ -81,9 +252,8 @@ export const khoCucBo = {
       console.warn('[Bộ nhớ máy] localStorage hết chỗ - dữ liệu lớn giữ trong bộ nhớ phiên, mỗi lần mở trang tải lại từ máy chủ')
     }
     if (laKhoDuLieu(k)) {
-      // Bản cũ của chính khoá này không còn đúng, bỏ đi để lần mở sau không đọc nhầm
       goi(() => localStorage.removeItem(k), undefined)
-      boNhoPhien.set(k, v)
+      boNho.set(k, v)
       giaiPhongCho()
       return
     }
@@ -91,20 +261,52 @@ export const khoCucBo = {
     giaiPhongCho()
     try {
       localStorage.setItem(k, v)
-      boNhoPhien.delete(k)
+      boNho.delete(k)
     } catch {
-      boNhoPhien.set(k, v)
+      boNho.set(k, v)
     }
   },
 
   removeItem(k: string): void {
-    boNhoPhien.delete(k)
+    boNho.delete(k)
+    if (dungIdb && laKhoDuLieu(k)) {
+      choGhi.set(k, null)
+      henXa()
+      kenh?.postMessage({ k, v: null })
+      return
+    }
     goi(() => localStorage.removeItem(k), undefined)
   },
 }
 
-/** Có đang phải giữ dữ liệu trong bộ nhớ phiên vì máy hết chỗ không */
-export const dangThieuBoNho = () => daHetCho
+// ───────────────────────────── Sổ phiên bản (dùng ở tầng đồng bộ) ─────────────────────────────
 
-// Máy đã lưu nhật ký vào localStorage từ trước: dọn ngay khi mở trang để giải phóng chỗ
-for (const k of CHI_BO_NHO) goi(() => localStorage.removeItem(k), undefined)
+/** Bản trên máy của khoá `key` (app_state.key) đang khớp phiên bản máy chủ `updatedAt` */
+export function soGhiPhienBan(key: string, updatedAt: string | null) {
+  if (!dungIdb) return
+  if (updatedAt == null) {
+    if (!(key in so.phienBan)) return
+    delete so.phienBan[key]
+  } else {
+    if (so.phienBan[key] === updatedAt) return
+    so.phienBan[key] = updatedAt
+  }
+  luuSo()
+}
+
+/** Đánh dấu kho còn / hết thay đổi chưa lên máy chủ */
+export function soDanhDauChuaGui(ten: string, chuaGui: boolean) {
+  if (!dungIdb) return
+  const co = so.chuaGui.includes(ten)
+  if (co === chuaGui) return
+  so.chuaGui = chuaGui ? [...so.chuaGui, ten] : so.chuaGui.filter((x) => x !== ten)
+  luuSo()
+}
+
+/** Đọc sổ: phiên bản máy chủ mà bản trên máy đang khớp, và kho còn thay đổi chưa gửi */
+export function soDoc(): { phienBan: Readonly<Record<string, string>>; chuaGui: ReadonlySet<string> } {
+  return { phienBan: so.phienBan, chuaGui: new Set(so.chuaGui) }
+}
+
+/** Có đang phải giữ dữ liệu trong bộ nhớ phiên vì localStorage hết chỗ không */
+export const dangThieuBoNho = () => daHetCho

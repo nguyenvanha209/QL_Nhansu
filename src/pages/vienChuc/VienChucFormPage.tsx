@@ -1063,7 +1063,7 @@ export default function VienChucFormPage() {
             <Form.Item
               name="batDauBhxhGd"
               label="Bắt đầu đóng BHXH trong ngành giáo dục"
-              tooltip="Tháng bắt đầu giảng dạy, giáo dục có đóng BHXH bắt buộc (theo sổ / quá trình đóng BHXH) - căn cứ tính đủ 5 năm xếp phụ cấp thâm niên nhà giáo lần đầu. CBQL, giáo viên cần khai; nhân viên không hưởng PCTN."
+              tooltip="Tháng bắt đầu đóng BHXH bắt buộc trong ngành giáo dục (theo sổ / quá trình đóng BHXH) - mọi người đều khai (biên chế, hợp đồng). Với CBQL, giáo viên là căn cứ tính đủ 5 năm xếp phụ cấp thâm niên nhà giáo lần đầu."
             >
               <DatePicker picker="month" format="MM/YYYY" placeholder="Tháng/năm" style={{ width: '100%' }} />
             </Form.Item>

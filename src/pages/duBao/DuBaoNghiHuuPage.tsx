@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { calcRetirementDate, calcPensionStartDate, getDaysUntilRetirement, getMonthsUntilRetirement, moTaTuoiNghiHuu } from '@/utils/retirement'
 import { formatDate } from '@/utils/helpers'
 import { isDangCongTac } from '@/types/vienChuc'
+import { laBienChe } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
 
@@ -20,7 +21,7 @@ export default function DuBaoNghiHuuPage() {
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
 
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && laBienChe(v) && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
@@ -114,7 +115,8 @@ export default function DuBaoNghiHuuPage() {
 
   return (
     <Card>
-      <Title level={4} style={{ marginBottom: 8 }}>Dự báo nghỉ hưu</Title>
+      <Title level={4} style={{ marginBottom: 0 }}>Dự báo nghỉ hưu</Title>
+      <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Chỉ tính viên chức biên chế (viên chức, tập sự); không tính lao động hợp đồng.</Text>
       <Tabs
         activeKey={the}
         onChange={(k) => setParams(k === 'da-nghi' ? { tab: 'da-nghi' } : {}, { replace: true })}

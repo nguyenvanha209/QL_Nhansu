@@ -10,6 +10,7 @@ import type { VienChuc } from '@/types/vienChuc'
 import { calcRetirementDate, calcPensionStartDate, moTaTuoiNghiHuu } from '@/utils/retirement'
 import { formatDate } from '@/utils/helpers'
 import { exportToExcel } from '@/utils/exportExcel'
+import { laBienChe } from '@/utils/dinhMuc'
 
 const { Text } = Typography
 
@@ -55,7 +56,8 @@ export default function DaNghiHuu() {
         namNghiHuu: Number(ngayNghiHuu.slice(0, 4)) || 0,
       }
     }
-    const trongPhamVi = allVienChucs.filter((v) => v.active && (!scopeDonViId || v.donViId === scopeDonViId))
+    // Chỉ viên chức biên chế (viên chức, tập sự)
+    const trongPhamVi = allVienChucs.filter((v) => v.active && laBienChe(v) && (!scopeDonViId || v.donViId === scopeDonViId))
     const daNghi = trongPhamVi.filter((v) => v.trangThai === 'NGHI_HUU').map(lam)
     // Đã qua thời điểm nghỉ hưu nhưng hồ sơ vẫn đang công tác
     const quaTuoi = trongPhamVi.filter((v) => isDangCongTac(v) && v.ngaySinh).map(lam).filter((r) => r.ngayNghiHuu && r.ngayNghiHuu <= homNay)

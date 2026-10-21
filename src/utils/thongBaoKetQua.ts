@@ -55,22 +55,28 @@ export function tongHopDanhSach(loai: LoaiThongBaoKQ, nam: number, ky: KyXet, ng
     if (!PHIEU_DUA_VAO.includes(dx.trangThai)) continue
     // Lần đầu: phiếu "Xếp phụ cấp thâm niên lần đầu" (phiếu nâng PCTN cũ có mức cũ 0% cũng tính là lần đầu)
     const dungLoai = loai === 'NANG_LUONG_TX' ? dx.loai === 'NANG_BAC'
+      : loai === 'NANG_TRUOC_HAN' ? dx.loai === 'NANG_TRUOC_HAN'
       : loai === 'PCTN_LAN_DAU' ? dx.loai === 'PCTN_LAN_DAU' || dx.loai === 'PHU_CAP_THAM_NIEN'
       : dx.loai === 'PHU_CAP_THAM_NIEN'
     if (!dungLoai) continue
+    // Nâng trước thời hạn: theo năm xét của hồ sơ (mốc hưởng mới có thể sang năm sau)
+    const laTruocHan = loai === 'NANG_TRUOC_HAN'
+    if (laTruocHan && (dx.namXet ?? Number(dx.ngayDeXuat?.slice(0, 4))) !== nam) continue
     const dv = dvTheoId.get(dx.donViId)
     if (!dv || !LA_CAP(dv.loai)) continue
 
     for (const ct of dx.chiTiet) {
       const key = `${dx.id}__${ct.vienChucId}`
       if (daCo.has(key) || !ct.ngayHieuLuc) continue
+      // Người Phòng VHXH không đồng ý thì không đưa vào thông báo (hồ sơ lương cũng không cập nhật)
+      if (ct.thamDinh === 'KHONG_DONG_Y') continue
       const lanDau = dx.loai === 'PCTN_LAN_DAU' || !(ct.pctnCu && ct.pctnCu > 0)
       if (loai === 'PCTN_LAN_DAU' && !lanDau) continue
       if (loai === 'PCTN_NANG' && lanDau) continue
       // Lần đầu có thể truy lĩnh từ trước (mốc hưởng cũ hơn kỳ); hai loại còn lại theo mốc hưởng trong kỳ
       const ngayXet = ct.lanDau?.quaTrinh.length ? ct.lanDau.quaTrinh[ct.lanDau.quaTrinh.length - 1].mocXet : ct.ngayHieuLuc
-      if (ngayXet > den) continue
-      if (loai !== 'PCTN_LAN_DAU' && ct.ngayHieuLuc < tu) continue
+      if (!laTruocHan && ngayXet > den) continue
+      if (!laTruocHan && loai !== 'PCTN_LAN_DAU' && ct.ngayHieuLuc < tu) continue
 
       const vc = vcTheoId.get(ct.vienChucId)
       const cd = cdTheoId.get(ct.chucDanhMoiId || ct.chucDanhCuId || vc?.chucDanhId || '')
@@ -90,7 +96,14 @@ export function tongHopDanhSach(loai: LoaiThongBaoKQ, nam: number, ky: KyXet, ng
         // Hiệu trưởng, Phó hiệu trưởng và giáo viên hạng I do UBND phường ra quyết định; còn lại Hiệu trưởng ra quyết định
         ghiChu: laCBQL || laGvHangI(cd) ? 'UBND phường ra QĐ' : undefined,
       }
-      if (loai === 'NANG_LUONG_TX') {
+      if (laTruocHan) {
+        const tt = ct.thanhTich
+        Object.assign(dong, {
+          bacCu: ct.bacCu, heSoCu: ct.heSoCu, mocCu: ct.ngayHieuLucCu, ngayDenHan: ct.ngayDenHanCu,
+          bacMoi: ct.bacMoi, heSoMoi: ct.heSoMoi, mocMoi: ct.ngayHieuLuc, soThangTruocHan: ct.soThangTruocHan,
+          thanhTich: [tt?.hinhThuc, tt?.soQd || tt?.ngayQd ? `(QĐ số ${tt?.soQd ?? '...'} ngày ${tt?.ngayQd ? formatDate(tt.ngayQd) : '...'})` : '', tt?.noiDung].filter(Boolean).join(' '),
+        })
+      } else if (loai === 'NANG_LUONG_TX') {
         const vuotKhung = ct.tnvkMoi != null
         Object.assign(dong, {
           laVuotKhung: vuotKhung,
@@ -184,6 +197,19 @@ function cauTrucBang(loai: LoaiThongBaoKQ, cap: CapHocTB): { tieuDe: (string | n
       },
     }
   }
+  if (loai === 'NANG_TRUOC_HAN') {
+    return {
+      soCot: 15,
+      tieuDe: [
+        ['STT', 'Họ và tên', 'Ngày sinh', 'Chức vụ', TEN_CAP_TB[cap].cot, 'Lương đang hưởng', null, null, null, 'Thành tích xuất sắc (hình thức khen thưởng, số, ngày quyết định)', 'Thời gian nâng trước (tháng)', 'Nâng bậc lương trước thời hạn', null, null, 'Ghi chú'],
+        [null, null, null, null, null, 'Mã chức danh nghề nghiệp', 'Bậc', 'Hệ số lương', 'Thời điểm tính nâng bậc lương', null, null, 'Bậc', 'Hệ số lương', 'Thời điểm hưởng', null],
+        ['A', 'B', 'C', 'D', 'E', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+      ],
+      merges: [m(0, 0, 1, 0), m(0, 1, 1, 1), m(0, 2, 1, 2), m(0, 3, 1, 3), m(0, 4, 1, 4), m(0, 5, 0, 8), m(0, 9, 1, 9), m(0, 10, 1, 10), m(0, 11, 0, 13), m(0, 14, 1, 14)],
+      dong: (d, i) => [i + 1, d.hoTen, ngay(d.ngaySinh), d.chucVu, d.donViNgan, d.maChucDanh, d.bacCu ?? '', hs(d.heSoCu), ngay(d.mocCu),
+        d.thanhTich ?? '', d.soThangTruocHan ?? '', d.bacMoi ?? '', hs(d.heSoMoi), ngay(d.mocMoi), d.ghiChu ?? ''],
+    }
+  }
   if (loai === 'PCTN_LAN_DAU') {
     return {
       soCot: 14,
@@ -222,7 +248,7 @@ export function xuatExcelThongBao(tb: ThongBaoKetQua, chiCap?: CapHocTB) {
   for (const cap of capCo) {
     const ds = tb.dong.filter((d) => d.cap === cap)
     const bang = cauTrucBang(tb.loai, cap)
-    const tieuDeDs = tb.loai === 'PCTN_LAN_DAU' ? `${loaiInfo.tieuDeDs} - Năm ${tb.nam}` : `${loaiInfo.tieuDeDs} ${tenKy(tb.ky, tb.nam)}`
+    const tieuDeDs = tb.loai === 'PCTN_LAN_DAU' || tb.loai === 'NANG_TRUOC_HAN' ? `${loaiInfo.tieuDeDs} - Năm ${tb.nam}` : `${loaiInfo.tieuDeDs} ${tenKy(tb.ky, tb.nam)}`
     const dau: (string | number | null)[][] = [
       ['ỦY BAN NHÂN DÂN', null, null, null, null, 'DANH SÁCH'],
       ['PHƯỜNG GIA VIÊN', null, null, null, null, tieuDeDs],
@@ -296,6 +322,23 @@ export function noiDungThongBao(tb: ThongBaoKetQua): { tieuDe: string; canCu: st
         'Căn cứ Thông báo này, UBND phường yêu cầu:',
         '1. Thủ trưởng các đơn vị sự nghiệp công lập ban hành Quyết định nâng bậc lương thường xuyên đối với viên chức theo thẩm quyền và gửi Quyết định về UBND phường (qua Phòng Văn hóa - Xã hội) để tổng hợp, theo dõi.',
         '2. Phòng Văn hóa - Xã hội phường tham mưu, giúp Chủ tịch UBND phường ban hành Quyết định nâng bậc lương thường xuyên đối với viên chức quản lý theo thẩm quyền.',
+        'UBND phường thông báo để các đơn vị, cá nhân biết, thực hiện./.',
+      ],
+    }
+  }
+  if (tb.loai === 'NANG_TRUOC_HAN') {
+    return {
+      tieuDe: `Viên chức được nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ năm ${tb.nam}`,
+      canCu: [...CAN_CU_CHUNG,
+        'Căn cứ Nghị định số 204/2004/NĐ-CP ngày 14/12/2004 của Chính phủ về chế độ tiền lương đối với cán bộ, công chức, viên chức; Căn cứ Thông tư số 08/2013/TT-BNV ngày 31/7/2013 của Bộ Nội vụ hướng dẫn thực hiện chế độ nâng bậc lương thường xuyên và nâng bậc lương trước thời hạn đối với cán bộ, công chức, viên chức và người lao động; Thông tư 03/2021/TT-BNV ngày 29/6/2021 của Bộ Nội vụ sửa đổi, bổ sung chế độ nâng bậc lương thường xuyên, nâng bậc lương trước thời hạn và chế độ phụ cấp thâm niên vượt khung đối với cán bộ, công chức, viên chức và người lao động;',
+        CAN_CU_QD_HP],
+      doan: [
+        `Xét Tờ trình, Biên bản họp Hội đồng xét nâng bậc lương trước thời hạn của các trường mầm non, tiểu học, THCS thuộc phường và kết quả thẩm định hồ sơ của Phòng Văn hóa - Xã hội, UBND phường Gia Viên thông báo viên chức được nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ năm ${tb.nam}, cụ thể như sau:`,
+        `Số viên chức được nâng bậc lương trước thời hạn năm ${tb.nam} là ${d.tong} người (Trong đó: Cán bộ quản lý: ${d.cbql} người, Giáo viên: ${d.gv} người, Nhân viên: ${d.nv} người).`,
+        '(Có danh sách kèm theo Thông báo này)',
+        'Căn cứ Thông báo này, UBND phường yêu cầu:',
+        '1. Thủ trưởng các đơn vị sự nghiệp công lập ban hành Quyết định nâng bậc lương trước thời hạn đối với viên chức theo thẩm quyền và gửi Quyết định về UBND phường (qua Phòng Văn hóa - Xã hội) để tổng hợp, theo dõi.',
+        '2. Phòng Văn hóa - Xã hội phường tham mưu, giúp Chủ tịch UBND phường ban hành Quyết định nâng bậc lương trước thời hạn đối với viên chức quản lý theo thẩm quyền.',
         'UBND phường thông báo để các đơn vị, cá nhân biết, thực hiện./.',
       ],
     }

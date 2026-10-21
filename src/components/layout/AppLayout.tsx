@@ -9,7 +9,7 @@ import {
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
   AuditOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
-  SolutionOutlined, WarningOutlined, BankOutlined,
+  SolutionOutlined, WarningOutlined, BankOutlined, RiseOutlined,
 } from '@ant-design/icons'
 import { useBoNhiem } from '@/hooks/useBoNhiem'
 import { useAuth } from '@/hooks/useAuth'
@@ -43,6 +43,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/nhat-ky': 'Nhật ký thao tác',
   '/huong-dan': 'Hướng dẫn sử dụng',
   '/thong-tin-truong': 'Thông tin trường',
+  '/nang-truoc-han': 'Nâng lương trước thời hạn',
   '/tai-khoan': 'Thông tin tài khoản',
 }
 
@@ -51,6 +52,7 @@ export default function AppLayout() {
   const { currentUser, logout, scopeDonViId, hasPermission } = useAuth()
   const soThongBaoMoi = useThongBaoMoi()
   const soDeXuatCho = useDeXuatCanXuLy()
+  const soTruocHanCho = useDeXuatCanXuLy('NANG_TRUOC_HAN')
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -70,6 +72,11 @@ export default function AppLayout() {
       label: <Badge count={soDeXuatCho} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Đề xuất điều chỉnh hệ số lương - phụ cấp</span></Badge>,
       title: soDeXuatCho ? `Đề xuất điều chỉnh hệ số lương - phụ cấp: ${soDeXuatCho} phiếu chờ bạn xử lý` : 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
+    },
+    hasPermission('deXuat', 'read') && {
+      key: '/nang-truoc-han', icon: <RiseOutlined />,
+      label: <Badge count={soTruocHanCho} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Nâng lương trước thời hạn</span></Badge>,
+      title: soTruocHanCho ? `Nâng lương trước thời hạn: ${soTruocHanCho} hồ sơ chờ bạn xử lý` : 'Nâng lương trước thời hạn',
     },
     hasPermission('deXuat', 'read') && {
       key: '/thong-bao-ket-qua', icon: <NotificationOutlined />,

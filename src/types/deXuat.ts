@@ -65,7 +65,60 @@ export interface ChiTietDeXuat {
   tnvkMoi?: number
   /** Phiếu xếp phụ cấp thâm niên lần đầu: phần kế toán khai báo; pctnMoi / ngayHieuLuc lấy theo mức cuối của quá trình */
   lanDau?: KhaiPctnLanDau
+  /** Nâng bậc lương trước thời hạn: thành tích xuất sắc làm căn cứ (TT 08/2013, TT 03/2021) */
+  thanhTich?: ThanhTichTruocHan
+  /** Số tháng được nâng trước (theo Quy chế của trường, tối đa 12) */
+  soThangTruocHan?: number
+  /** Phòng VHXH thẩm định từng người - người không đồng ý không được ghi hồ sơ khi phê duyệt */
+  thamDinh?: 'DONG_Y' | 'KHONG_DONG_Y'
+  yKienThamDinh?: string
 }
+
+/** Thành tích xuất sắc làm căn cứ nâng bậc lương trước thời hạn */
+export interface ThanhTichTruocHan {
+  /** id mức trong bảng "Mức nâng trước hạn theo thành tích" (nếu chọn từ bảng) */
+  mucId?: string
+  /** Hình thức khen thưởng / danh hiệu, VD "Bằng khen của Chủ tịch UBND thành phố" */
+  hinhThuc: string
+  soQd?: string
+  ngayQd?: string
+  /** Cơ quan, người ký quyết định */
+  coQuan?: string
+  /** Nội dung thành tích (năm học, lĩnh vực…) */
+  noiDung?: string
+}
+
+/** Hồ sơ chung của đợt xét nâng lương trước thời hạn */
+export interface HoSoTruocHan {
+  /** Tờ trình của trường */
+  toTrinh?: MinhChung[]
+  /** Biên bản họp Hội đồng xét nâng lương trước thời hạn của trường */
+  bienBan?: MinhChung[]
+  /** Quy chế nâng bậc lương trước thời hạn của trường */
+  quyChe?: MinhChung[]
+  /** Số người trong danh sách trả lương (xếp lương theo hệ số) lúc lập hồ sơ - căn cứ tỷ lệ 10% */
+  soNguoiTraLuong?: number
+}
+
+/** Một mức trong bảng gợi ý "hình thức khen → số tháng nâng trước" (Phòng VHXH khai, trường sửa theo Quy chế) */
+export interface MucNangTruocHan {
+  id: string
+  ten: string
+  soThang: number
+  thuTu: number
+  active: boolean
+}
+
+/**
+ * Gợi ý mặc định (Phòng VHXH sửa được): Thông tư 08/2013 không quy định số tháng theo hình thức khen - điểm e
+ * khoản 1 Điều 3 giao Quy chế của từng đơn vị (tối đa 12 tháng). Đây chỉ là mức gợi ý phổ biến.
+ */
+export const MUC_NANG_TRUOC_HAN_MAC_DINH: MucNangTruocHan[] = [
+  { id: 'mth_1', ten: 'Huân chương các loại; danh hiệu Chiến sĩ thi đua toàn quốc; Nhà giáo Nhân dân, Nhà giáo Ưu tú', soThang: 12, thuTu: 1, active: true },
+  { id: 'mth_2', ten: 'Bằng khen của Thủ tướng Chính phủ; Chiến sĩ thi đua cấp tỉnh, thành phố', soThang: 9, thuTu: 2, active: true },
+  { id: 'mth_3', ten: 'Bằng khen của Bộ trưởng, Chủ tịch UBND thành phố; Chiến sĩ thi đua cơ sở', soThang: 6, thuTu: 3, active: true },
+  { id: 'mth_4', ten: 'Giấy khen của Chủ tịch UBND phường, Thủ trưởng đơn vị', soThang: 3, thuTu: 4, active: true },
+]
 
 /** Dòng phụ cấp thâm niên vượt khung (người ở bậc cuối) trong phiếu nâng bậc thường xuyên */
 export const laDongVuotKhung = (r: Pick<ChiTietDeXuat, 'tnvkMoi'>) => r.tnvkMoi != null
@@ -89,6 +142,9 @@ export interface DeXuatLuong {
   ghiChuDeXuat?: string
   /** Minh chứng chung của phiếu (quyết định, biên bản xét, danh sách…) */
   minhChung?: MinhChung[]
+  /** Nâng lương trước thời hạn: năm xét và hồ sơ chung (tờ trình, biên bản Hội đồng, quy chế) */
+  namXet?: number
+  hoSoTruocHan?: HoSoTruocHan
 
   nguoiDuyetHTId?: string
   ngayDuyetHT?: string

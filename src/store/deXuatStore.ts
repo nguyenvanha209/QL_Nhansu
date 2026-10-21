@@ -57,6 +57,8 @@ interface DeXuatState {
   getAll: (donViId?: string | null) => DeXuatLuong[]
   getById: (id: string) => DeXuatLuong | undefined
   getCountByStatus: (trangThai: TrangThaiDeXuat, donViId?: string | null) => number
+  /** Phòng VHXH thẩm định từng người (nâng lương trước thời hạn) */
+  thamDinhNguoi: (id: string, vienChucId: string, ketQua: 'DONG_Y' | 'KHONG_DONG_Y' | undefined, yKien?: string) => void
 
   submitDeXuat: (id: string, actorId: string, actorName: string) => void
   duyetHieuTruong: (id: string, ketQua: 'DONG_Y' | 'TU_CHOI' | 'YEU_CAU_BO_SUNG', ghiChu: string, actorId: string, actorName: string) => void
@@ -133,6 +135,14 @@ export const useDeXuatStore = create<DeXuatState>()(
         get()
           .getAll(donViId)
           .filter((d) => d.trangThai === trangThai).length,
+
+      thamDinhNguoi: (id, vienChucId, ketQua, yKien) => {
+        const dx = get().getById(id)
+        if (!dx) return
+        get().updateDeXuat(id, {
+          chiTiet: dx.chiTiet.map((ct) => (ct.vienChucId === vienChucId ? { ...ct, thamDinh: ketQua, yKienThamDinh: yKien } : ct)),
+        })
+      },
 
       submitDeXuat: (id, actorId, actorName) => {
         get().updateDeXuat(id, { trangThai: 'CHO_HIEU_TRUONG_DUYET', buocHienTai: 2, ngayDeXuat: now().slice(0, 10), nguoiDeXuatId: actorId })
@@ -285,6 +295,8 @@ export const useDeXuatStore = create<DeXuatState>()(
           const loaiTnvk = useDanhMucStore.getState().loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN_VK')
 
           dx.chiTiet.forEach((ct: ChiTietDeXuat) => {
+            // Nâng trước thời hạn: người Phòng VHXH không đồng ý thì không ghi hồ sơ
+            if (ct.thamDinh === 'KHONG_DONG_Y') return
             // Người ở bậc cuối: giữ bản lương, ghi phụ cấp thâm niên vượt khung mới;
             // lần xét tiếp theo sau 1 năm (+1%) nên dời ngày nâng lương tiếp theo thêm 1 năm
             if (laDongVuotKhung(ct)) {
@@ -336,7 +348,8 @@ export const useDeXuatStore = create<DeXuatState>()(
               ...(cur?.heSoBaoLuu ? { heSoBaoLuu: cur.heSoBaoLuu } : {}),
               ngayHieuLuc: ct.ngayHieuLuc,
               ngayNangLuongTiepTheo: ngayTiepTheo.toISOString().slice(0, 10),
-              lyDo: 'NANG_BAC' as LyDoNangLuong,
+              // Ghi đúng lý do để nhận ra "không nâng trước hạn hai lần liên tiếp" (TT 03/2021)
+              lyDo: (dx.loai === 'NANG_TRUOC_HAN' ? 'NANG_TRUOC_HAN' : 'NANG_BAC') as LyDoNangLuong,
               deXuatId: id,
               isActive: true,
               createdBy: actorId,
@@ -350,9 +363,9 @@ export const useDeXuatStore = create<DeXuatState>()(
             addLichSuBienDong({
               vienChucId: ct.vienChucId,
               loai: 'LUONG',
-              truongThayDoi: 'Hệ số lương',
+              truongThayDoi: dx.loai === 'NANG_TRUOC_HAN' ? 'Hệ số lương (nâng trước thời hạn)' : 'Hệ số lương',
               giaTriCu: cur ? `Bậc ${cur.bac} - Hệ số ${cur.heSo}` : '',
-              giaTriMoi: `Bậc ${ct.bacMoi} - Hệ số ${ct.heSoMoi}`,
+              giaTriMoi: `Bậc ${ct.bacMoi} - Hệ số ${ct.heSoMoi}${dx.loai === 'NANG_TRUOC_HAN' && ct.soThangTruocHan ? ` (trước ${ct.soThangTruocHan} tháng${ct.thanhTich?.hinhThuc ? ` - ${ct.thanhTich.hinhThuc}` : ''})` : ''}`,
               ngayThayDoi: ct.ngayHieuLuc,
               nguoiThayDoiId: actorId,
               deXuatId: id,

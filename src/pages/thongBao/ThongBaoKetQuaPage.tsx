@@ -24,7 +24,9 @@ import { danhDauDaXem, daXemThongBao } from '@/utils/thongBaoDaXem'
 
 const { Title, Text, Paragraph } = Typography
 
-const CAC_LOAI: LoaiThongBaoKQ[] = ['NANG_LUONG_TX', 'PCTN_LAN_DAU', 'PCTN_NANG']
+const CAC_LOAI: LoaiThongBaoKQ[] = ['NANG_LUONG_TX', 'PCTN_LAN_DAU', 'PCTN_NANG', 'NANG_TRUOC_HAN']
+/** Nâng lương trước thời hạn: mỗi năm một đợt - không theo kỳ 6 tháng */
+const kyCua = (l: LoaiThongBaoKQ, ky: KyXet): KyXet => (l === 'NANG_TRUOC_HAN' ? 'NAM' : ky)
 const CAC_CAP: CapHocTB[] = ['MAM_NON', 'TIEU_HOC', 'THCS']
 const kyHienHanh = (): { nam: number; ky: KyXet } => {
   const d = dayjs()
@@ -89,7 +91,7 @@ function QuanLyThongBao() {
         activeKey={loai}
         onChange={(k) => setLoai(k as LoaiThongBaoKQ)}
         items={CAC_LOAI.map((l) => {
-          const tb = thongBaos.find((t) => t.id === idThongBao(l, nam, ky))
+          const tb = thongBaos.find((t) => t.id === idThongBao(l, nam, kyCua(l, ky)))
           return {
             key: l,
             label: (
@@ -100,7 +102,7 @@ function QuanLyThongBao() {
                   : tb ? <Tag color="gold" style={{ marginInlineEnd: 0 }}>Nháp</Tag> : null}
               </Space>
             ),
-            children: <LapThongBao key={`${l}-${nam}-${ky}`} loai={l} nam={nam} ky={ky} />,
+            children: <LapThongBao key={`${l}-${nam}-${kyCua(l, ky)}`} loai={l} nam={nam} ky={kyCua(l, ky)} />,
           }
         })}
       />
@@ -229,7 +231,7 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
             <Col span={6}><Statistic title="Tổng số" value={dem.tong} /></Col>
             <Col span={6}><Statistic title="CBQL" value={dem.cbql} /></Col>
             <Col span={6}><Statistic title="Giáo viên" value={dem.gv} /></Col>
-            {loai === 'NANG_LUONG_TX' && <Col span={6}><Statistic title="Nhân viên" value={dem.nv} /></Col>}
+            {(loai === 'NANG_LUONG_TX' || loai === 'NANG_TRUOC_HAN') && <Col span={6}><Statistic title="Nhân viên" value={dem.nv} /></Col>}
           </Row>
         </Col>
       </Row>
@@ -305,7 +307,27 @@ function BangDanhSach({ tb, sua, onDoi, onXoa, chiCap, truongMinh }: {
   const hs = (n?: number) => (n == null ? '' : n.toFixed(2))
   const truongCot = { title: 'Trường', dataIndex: 'donViNgan', key: 'dv', width: 130 }
 
-  const cotRieng = tb.loai === 'NANG_LUONG_TX'
+  const cotRieng = tb.loai === 'NANG_TRUOC_HAN'
+    ? [
+        { title: 'Chức vụ', dataIndex: 'chucVu', key: 'cv', width: 110 },
+        truongCot,
+        { title: 'Mã CDNN', dataIndex: 'maChucDanh', key: 'ma', width: 95 },
+        {
+          title: 'Đang hưởng', key: 'cu', width: 160,
+          render: (_: unknown, r: DongBang) => la(r) && (
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}>Bậc {r.bacCu} - {hs(r.heSoCu)}<div style={{ fontSize: 13, color: '#64748b' }}>từ {formatDate(r.mocCu ?? '')}</div></span>
+          ),
+        },
+        { title: 'Thành tích', dataIndex: 'thanhTich', key: 'tt', width: 260 },
+        { title: 'Nâng trước', key: 'st', width: 85, render: (_: unknown, r: DongBang) => la(r) && `${r.soThangTruocHan ?? ''} tháng` },
+        {
+          title: 'Nâng trước thời hạn', key: 'moi', width: 160,
+          render: (_: unknown, r: DongBang) => la(r) && (
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}><b>Bậc {r.bacMoi} - {hs(r.heSoMoi)}</b><div style={{ fontSize: 13, color: '#64748b' }}>từ {formatDate(r.mocMoi ?? '')}</div></span>
+          ),
+        },
+      ]
+    : tb.loai === 'NANG_LUONG_TX'
     ? [
         { title: 'Chức vụ', dataIndex: 'chucVu', key: 'cv', width: 110 },
         truongCot,

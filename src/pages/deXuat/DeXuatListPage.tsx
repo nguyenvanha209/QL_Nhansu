@@ -19,7 +19,8 @@ export default function DeXuatListPage() {
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission, isCBTruong, isLanhDao } = useAuth()
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
-  const deXuats = useMemo(() => allDeXuats.filter((d) => !scopeDonViId || d.donViId === scopeDonViId), [allDeXuats, scopeDonViId])
+  // Hồ sơ nâng lương trước thời hạn nằm ở mục riêng
+  const deXuats = useMemo(() => allDeXuats.filter((d) => d.loai !== 'NANG_TRUOC_HAN' && (!scopeDonViId || d.donViId === scopeDonViId)), [allDeXuats, scopeDonViId])
   const donVis = useDanhMucStore((s) => s.donVis)
   const [filterStatus, setFilterStatus] = useState<TrangThaiDeXuat | undefined>()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)

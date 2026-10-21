@@ -3,8 +3,9 @@
 // Ba loại theo mẫu: (1) nâng bậc lương thường xuyên kèm phụ cấp thâm niên vượt khung,
 // (2) phụ cấp thâm niên nhà giáo lần đầu, (3) nâng phụ cấp thâm niên nhà giáo.
 
-export type LoaiThongBaoKQ = 'NANG_LUONG_TX' | 'PCTN_LAN_DAU' | 'PCTN_NANG'
-export type KyXet = 'H1' | 'H2'
+export type LoaiThongBaoKQ = 'NANG_LUONG_TX' | 'PCTN_LAN_DAU' | 'PCTN_NANG' | 'NANG_TRUOC_HAN'
+/** H1, H2: 6 tháng đầu / cuối năm; NAM: cả năm (nâng lương trước thời hạn - mỗi năm một đợt) */
+export type KyXet = 'H1' | 'H2' | 'NAM'
 export type CapHocTB = 'MAM_NON' | 'TIEU_HOC' | 'THCS'
 
 export const LOAI_THONG_BAO_KQ: Record<LoaiThongBaoKQ, { ten: string; tenNgan: string; tieuDeTb: string; tieuDeDs: string }> = {
@@ -26,6 +27,12 @@ export const LOAI_THONG_BAO_KQ: Record<LoaiThongBaoKQ, { ten: string; tenNgan: s
     tieuDeTb: 'Viên chức đủ điều kiện nâng phụ cấp thâm niên nhà giáo',
     tieuDeDs: 'Viên chức đủ điều kiện nâng phụ cấp thâm niên nhà giáo',
   },
+  NANG_TRUOC_HAN: {
+    ten: 'Nâng bậc lương trước thời hạn do lập thành tích xuất sắc',
+    tenNgan: 'Nâng lương trước hạn',
+    tieuDeTb: 'Viên chức được nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ',
+    tieuDeDs: 'Nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ',
+  },
 }
 
 export const TEN_CAP_TB: Record<CapHocTB, { danhSach: string; cot: string; thuTu: number }> = {
@@ -34,10 +41,12 @@ export const TEN_CAP_TB: Record<CapHocTB, { danhSach: string; cot: string; thuTu
   THCS: { danhSach: 'Các trường THCS', cot: 'Trường THCS', thuTu: 3 },
 }
 
-export const tenKy = (ky: KyXet, nam: number) => `6 tháng ${ky === 'H1' ? 'đầu' : 'cuối'} năm ${nam}`
-export const khoangKy = (ky: KyXet, nam: number) => (ky === 'H1'
-  ? { tu: `${nam}-01-01`, den: `${nam}-06-30` }
-  : { tu: `${nam}-07-01`, den: `${nam}-12-31` })
+export const tenKy = (ky: KyXet, nam: number) => (ky === 'NAM' ? `năm ${nam}` : `6 tháng ${ky === 'H1' ? 'đầu' : 'cuối'} năm ${nam}`)
+export const khoangKy = (ky: KyXet, nam: number) => (ky === 'NAM'
+  ? { tu: `${nam}-01-01`, den: `${nam}-12-31` }
+  : ky === 'H1'
+    ? { tu: `${nam}-01-01`, den: `${nam}-06-30` }
+    : { tu: `${nam}-07-01`, den: `${nam}-12-31` })
 
 /** Một dòng trong danh sách kèm thông báo - chụp lại số liệu lúc tổng hợp để thông báo đã ban hành không đổi theo hồ sơ */
 export interface DongThongBao {
@@ -84,6 +93,13 @@ export interface DongThongBao {
   thangBatDauBhxh?: string
   /** Lần đầu: các mức hưởng (truy lĩnh nhiều năm thì nhiều dòng) */
   quaTrinh?: { tyLe: number; mocXet: string; thoiGianHuong: string }[]
+
+  // (4) Nâng bậc lương trước thời hạn
+  /** Thành tích: hình thức khen, số và ngày quyết định */
+  thanhTich?: string
+  soThangTruocHan?: number
+  /** Ngày đến hạn nâng bậc thường xuyên (trước khi nâng trước hạn) */
+  ngayDenHan?: string
 }
 
 export interface ThongBaoKetQua {

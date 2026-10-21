@@ -30,6 +30,8 @@ const ChuyenCongTacPage = lazy(() => import('@/pages/chuyenCongTac/ChuyenCongTac
 const QuyMoDinhMucPage = lazy(() => import('@/pages/quyMo/QuyMoDinhMucPage'))
 const ThongBaoKetQuaPage = lazy(() => import('@/pages/thongBao/ThongBaoKetQuaPage'))
 const ThongTinTruongPage = lazy(() => import('@/pages/thongTinTruong/ThongTinTruongPage'))
+const NangTruocHanPage = lazy(() => import('@/pages/truocHan/NangTruocHanPage'))
+const HoSoTruocHanPage = lazy(() => import('@/pages/truocHan/HoSoTruocHanPage'))
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth()
@@ -62,6 +64,10 @@ export default function AppRouter() {
           <Route path="de-xuat/new" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><TaoDeXuatPage /></RoleGuard>} />
           <Route path="de-xuat/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><DeXuatDetailPage /></RoleGuard>} />
           <Route path="de-xuat/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><TaoDeXuatPage /></RoleGuard>} />
+          <Route path="nang-truoc-han" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><NangTruocHanPage /></RoleGuard>} />
+          <Route path="nang-truoc-han/new" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><HoSoTruocHanPage /></RoleGuard>} />
+          <Route path="nang-truoc-han/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><DeXuatDetailPage /></RoleGuard>} />
+          <Route path="nang-truoc-han/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><HoSoTruocHanPage /></RoleGuard>} />
           <Route path="thong-bao-ket-qua" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><ThongBaoKetQuaPage /></RoleGuard>} />
           <Route path="bo-nhiem" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><TheoDoiBoNhiemPage /></RoleGuard>} />
           <Route path="du-bao"element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'duBao', action: 'read' }}><DuBaoNghiHuuPage /></RoleGuard>} />

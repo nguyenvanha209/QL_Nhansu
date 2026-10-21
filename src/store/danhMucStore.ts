@@ -12,6 +12,8 @@ import type {
   ChucVuDanhMuc,
 } from '@/types/danhMuc'
 import type { DonVi } from '@/types/donVi'
+import type { MucNangTruocHan } from '@/types/deXuat'
+import { MUC_NANG_TRUOC_HAN_MAC_DINH } from '@/types/deXuat'
 import type { QuyMoTruong, QuyMoLichSu, ChiTieuBienChe, ChiTieuLichSu } from '@/types/quyMo'
 import { layNoiDung, giongNhau } from '@/utils/quyMoLichSu'
 
@@ -30,6 +32,8 @@ interface DanhMucState {
   loaiPhuCaps: LoaiPhuCap[]
   vtvls: VtvlDanhMuc[]
   chucVus: ChucVuDanhMuc[]
+  /** Bảng gợi ý hình thức khen → số tháng nâng lương trước thời hạn (Phòng VHXH khai; trường sửa theo Quy chế) */
+  mucNangTruocHans: MucNangTruocHan[]
 
   setDonVis: (v: DonVi[]) => void
   addDonVi: (d: Omit<DonVi, 'id' | 'createdAt'>) => DonVi
@@ -61,6 +65,7 @@ interface DanhMucState {
   updateLoaiPhuCap: (id: string, patch: Partial<LoaiPhuCap>) => void
 
   setVtvls: (v: VtvlDanhMuc[]) => void
+  setMucNangTruocHans: (v: MucNangTruocHan[]) => void
   addVtvl: (d: Omit<VtvlDanhMuc, 'id'>) => VtvlDanhMuc
   updateVtvl: (id: string, patch: Partial<VtvlDanhMuc>) => void
 
@@ -90,6 +95,7 @@ export const useDanhMucStore = create<DanhMucState>()(
       mucLuongCosos: [],
       loaiPhuCaps: [],
       vtvls: [],
+      mucNangTruocHans: MUC_NANG_TRUOC_HAN_MAC_DINH,
       chucVus: [],
 
       setDonVis: (v) => set({ donVis: v }),
@@ -204,6 +210,7 @@ export const useDanhMucStore = create<DanhMucState>()(
         })),
 
       setVtvls: (v) => set({ vtvls: v }),
+      setMucNangTruocHans: (v) => set({ mucNangTruocHans: v }),
       addVtvl: (d) => {
         const item: VtvlDanhMuc = { ...d, id: nanoid() }
         set((s) => ({ vtvls: [...s.vtvls, item] }))

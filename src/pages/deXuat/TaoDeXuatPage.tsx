@@ -591,7 +591,8 @@ export default function TaoDeXuatPage() {
           </Form.Item>
           <Form.Item name="loai" label="Loại đề xuất" rules={[{ required: true }]} style={{ minWidth: 220 }}>
             <Select
-              options={Object.entries(LOAI_DE_XUAT_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+              // Nâng lương trước thời hạn có mục riêng (hồ sơ tờ trình, biên bản Hội đồng, thẩm định từng người)
+              options={Object.entries(LOAI_DE_XUAT_LABELS).filter(([k]) => k !== 'NANG_TRUOC_HAN' || loaiDeXuat === 'NANG_TRUOC_HAN').map(([k, v]) => ({ value: k, label: v }))}
               onChange={doiLoai}
             />
           </Form.Item>

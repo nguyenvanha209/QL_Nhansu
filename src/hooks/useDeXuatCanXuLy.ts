@@ -6,8 +6,9 @@ import { useDeXuatStore } from '@/store/deXuatStore'
  * Số phiếu đề xuất đang chờ CHÍNH người dùng này xử lý (số nhỏ trên menu) - cùng quy tắc với nút duyệt ở
  * trang chi tiết phiếu: hiệu trưởng duyệt phiếu của trường, Phòng VHXH thẩm định, lãnh đạo phê duyệt cuối;
  * người lập phiếu (trường) còn phải trình bản nháp của mình và sửa phiếu bị yêu cầu bổ sung.
+ * `pham`: 'NANG_TRUOC_HAN' chỉ đếm hồ sơ nâng lương trước thời hạn (menu riêng); mặc định đếm các phiếu đề xuất còn lại.
  */
-export function useDeXuatCanXuLy(): number {
+export function useDeXuatCanXuLy(pham: 'DE_XUAT' | 'NANG_TRUOC_HAN' = 'DE_XUAT'): number {
   const deXuats = useDeXuatStore((s) => s.deXuats)
   const { currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong } = useAuth()
 
@@ -16,6 +17,7 @@ export function useDeXuatCanXuLy(): number {
     const coQuyenDuyet = hasPermission('deXuat', 'approve')
     const coQuyenLap = hasPermission('deXuat', 'write')
     return deXuats.filter((d) => {
+      if ((d.loai === 'NANG_TRUOC_HAN') !== (pham === 'NANG_TRUOC_HAN')) return false
       switch (d.trangThai) {
         case 'CHO_HIEU_TRUONG_DUYET':
           return laQuanTri || (isHieuTruong && coQuyenDuyet && d.donViId === scopeDonViId)
@@ -32,5 +34,5 @@ export function useDeXuatCanXuLy(): number {
           return false
       }
     }).length
-  }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong])
+  }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong, pham])
 }

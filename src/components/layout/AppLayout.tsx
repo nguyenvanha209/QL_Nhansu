@@ -17,6 +17,7 @@ import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { ROLE_LABELS } from '@/types/auth'
 import ChiBaoDongBo from './ChiBaoDongBo'
 import { useThongBaoMoi } from '@/hooks/useThongBaoMoi'
+import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
 
 const { Header, Sider, Content, Footer } = Layout
 const { Text } = Typography
@@ -49,6 +50,7 @@ export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { currentUser, logout, scopeDonViId, hasPermission } = useAuth()
   const soThongBaoMoi = useThongBaoMoi()
+  const soDeXuatCho = useDeXuatCanXuLy()
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -65,8 +67,8 @@ export default function AppLayout() {
     hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL và định mức VC' },
     hasPermission('deXuat', 'read') && {
       key: '/de-xuat', icon: <FileTextOutlined />,
-      label: 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
-      title: 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
+      label: <Badge count={soDeXuatCho} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Đề xuất điều chỉnh hệ số lương - phụ cấp</span></Badge>,
+      title: soDeXuatCho ? `Đề xuất điều chỉnh hệ số lương - phụ cấp: ${soDeXuatCho} phiếu chờ bạn xử lý` : 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('deXuat', 'read') && {

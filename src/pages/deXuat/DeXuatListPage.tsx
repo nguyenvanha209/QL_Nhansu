@@ -5,6 +5,7 @@ import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
+import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT } from '@/types/deXuat'
 import type { TrangThaiDeXuat, LoaiDeXuat } from '@/types/deXuat'
@@ -14,6 +15,7 @@ const { Title, Text } = Typography
 const ALL_STATUSES: TrangThaiDeXuat[] = ['NHAP', 'CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET', 'CHO_PHE_DUYET', 'DA_PHE_DUYET', 'TU_CHOI', 'YEU_CAU_BO_SUNG']
 
 export default function DeXuatListPage() {
+  const soCho = useDeXuatCanXuLy()
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission, isCBTruong, isLanhDao } = useAuth()
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
@@ -59,7 +61,10 @@ export default function DeXuatListPage() {
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>{TEN_CHUC_NANG_DE_XUAT}</Title>
+        <Space size={8} wrap>
+          <Title level={4} style={{ margin: 0 }}>{TEN_CHUC_NANG_DE_XUAT}</Title>
+          {soCho > 0 && <Tag color="red" style={{ marginInlineEnd: 0 }}>{soCho} phiếu chờ bạn xử lý</Tag>}
+        </Space>
         {canCreate && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/de-xuat/new')}>Tạo đề xuất</Button>
         )}

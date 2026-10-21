@@ -17,7 +17,8 @@ import type { DonVi } from '@/types/donVi'
 import type { ChucDanhNgheNghiep } from '@/types/danhMuc'
 import { type CapHoc, type NhomDinhMuc, TEN_CAP, THU_TU_CAP, laBienChe, nhomNguoi, viTriCuaNguoi, dongCuaNguoi, danhSachViTri } from '@/utils/dinhMuc'
 import { exportToExcel } from '@/utils/exportExcel'
-import { trangTuDanhSach, xuatExcelA4 } from '@/utils/excelA4'
+import { trangTuDanhSach, xuatExcelA4, ganDongTong, ganCotTinh } from '@/utils/excelA4'
+import type { TrangA4 } from '@/utils/excelA4'
 
 const { Text } = Typography
 
@@ -77,6 +78,35 @@ type LocCot = { cdId?: string; bac?: Bac | 'CHUA'; ngoaiKhung?: boolean; a22?: b
 type Dong = {
   key: string; loai: 'phuong' | 'cap' | 'truong'; ten: string; stt?: number; soTruong?: number
   nguoi: NguoiTinh[]
+}
+
+/**
+ * Công thức cho trang Excel dựng từ danh sách (trangTuDanhSach): `loaiDong[i]` là loại dòng dữ liệu thứ i.
+ * - 'tong': SUM các dòng 'nhom' (nếu có) hoặc các dòng 'thuong'; 'nhom': SUM các dòng 'thuong' ngay sau nó.
+ * - Cột "Bậc b (%)" = Bậc b / Tổng VC, định dạng %.
+ * Mỗi công thức chỉ ghi khi cho đúng con số phần mềm đã tính (lưới an toàn của excelA4).
+ */
+function ganCongThucTrang(trang: TrangA4, soTieuDe: number, loaiDong: ('tong' | 'nhom' | 'thuong' | 'bo')[]) {
+  const lech = soTieuDe + 2
+  const tenCot = (trang.dong[lech - 1] ?? []).map((x) => String(x ?? ''))
+  const ci = (ten: string) => tenCot.indexOf(ten)
+  const cotSo = tenCot.map((t, c) => (c >= 2 && !t.endsWith('(%)') && t !== 'STT' && t !== 'Khung bậc' ? c : -1)).filter((c) => c >= 0)
+  const d = (i: number) => lech + i
+  const thuong = loaiDong.flatMap((l, i) => (l === 'thuong' ? [d(i)] : []))
+  const nhom: { r: number; con: number[] }[] = []
+  loaiDong.forEach((l, i) => {
+    if (l === 'nhom') nhom.push({ r: d(i), con: [] })
+    else if (l === 'thuong' && nhom.length) nhom[nhom.length - 1].con.push(d(i))
+  })
+  for (const g of nhom) ganDongTong(trang.dong, g.r, g.con, cotSo)
+  loaiDong.forEach((l, i) => { if (l === 'tong') ganDongTong(trang.dong, d(i), nhom.length ? nhom.map((g) => g.r) : thuong, cotSo) })
+  const coSo = loaiDong.flatMap((l, i) => (l === 'bo' ? [] : [d(i)]))
+  const cTong = ci('Tổng VC')
+  for (const b of CAC_BAC) {
+    const cPct = ci(`Bậc ${b} (%)`), cBac = ci(`Bậc ${b}`)
+    if (cPct < 0 || cBac < 0 || cTong < 0) continue
+    ganCotTinh(trang.dong, cPct, coSo, (o) => `IF(${o(cTong)}=0,"",${o(cBac)}/${o(cTong)})`, (so) => (so(cTong) ? so(cBac) / so(cTong) : null), { dinhDang: '0.0%', ghiDe: true })
+  }
 }
 
 export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] }) {
@@ -260,14 +290,19 @@ export default function ChucDanhBacNgheNghiep({ truongs }: { truongs: DonVi[] })
       const trangs = (['MAM_NON', 'TIEU_HOC', 'THCS'] as CapHoc[])
         .map((cap) => ({ cap, ds: truongHien.filter((t) => t.loai === cap) }))
         .filter((x) => x.ds.length)
-        .map(({ cap, ds }) => trangTuDanhSach(
+        .map(({ cap, ds }) => {
+          const trang = trangTuDanhSach(
           hangSheet(ds, `TỔNG CẤP ${TEN_CAP[cap].toUpperCase()}`),
           ds.length === 1 && !nhieuTruong ? ds[0].ten.slice(0, 31) : TEN_CAP[cap],
           { tieuDe: [
             `THỐNG KÊ VIÊN CHỨC THEO MÃ CHỨC DANH NGHỀ NGHIỆP VÀ BẬC NGHỀ NGHIỆP DỰ KIẾN - ${ds.length === 1 && !nhieuTruong ? ds[0].ten.toUpperCase() : `CẤP ${TEN_CAP[cap].toUpperCase()}`}`,
             'Theo Nghị định 232/2026/NĐ-CP - số liệu dự kiến, chờ hướng dẫn chuyển xếp',
           ] },
-        ))
+          )
+          // Dòng tổng cấp = SUM các trường; % = bậc / tổng; dòng tương đương cuối (chữ) bỏ qua
+          ganCongThucTrang(trang, 2, [...(ds.length > 1 ? ['tong' as const] : []), ...ds.map(() => 'thuong' as const), 'bo'])
+          return trang
+        })
       await xuatExcelA4('Chuc_danh_bac_nghe_nghiep', trangs)
     } catch (e) {
       console.error('[xuat excel]', e)
@@ -479,6 +514,12 @@ function BangViTri({ nguoi, truongs, onXem }: {
   }
   const tieuDe = (pv: string) => ['DỰ KIẾN XẾP BẬC NGHỀ NGHIỆP THEO VỊ TRÍ VIỆC LÀM', `${pv} - theo Nghị định 232/2026/NĐ-CP, số liệu dự kiến`]
   const [dangXuat, setDangXuat] = useState(false)
+  // Trang Excel một phạm vi: dòng nhóm = SUM vị trí, tổng = SUM nhóm, % = bậc / tổng VC
+  const trangVT = (ds2: DongVT[], ten: string, pv: string) => {
+    const trang = trangTuDanhSach(hangExcel(ds2), ten, { tieuDe: tieuDe(pv) })
+    ganCongThucTrang(trang, 2, ds2.map((r) => (r.loai === 'viTri' ? 'thuong' : r.loai)))
+    return trang
+  }
   const xuat = async () => {
     setDangXuat(true)
     try {
@@ -486,13 +527,9 @@ function BangViTri({ nguoi, truongs, onXem }: {
       const truongXuat = chonTruong ? truongs.filter((t) => t.id === chonTruong) : truongs
       const trangs = [
         // Sheet đầu: phạm vi đang xem (toàn phường / cấp) khi xuất nhiều trường
-        ...(truongXuat.length > 1 ? [trangTuDanhSach(hangExcel(dungDongVT(nguoi)), tenSheet('Tổng hợp', daDung), { tieuDe: tieuDe('Tổng hợp các trường') })] : []),
+        ...(truongXuat.length > 1 ? [trangVT(dungDongVT(nguoi), tenSheet('Tổng hợp', daDung), 'Tổng hợp các trường')] : []),
         // Mỗi trường một sheet
-        ...truongXuat.map((t) => trangTuDanhSach(
-          hangExcel(dungDongVT(nguoi.filter((n) => n.truong.id === t.id))),
-          tenSheet(t.ten, daDung),
-          { tieuDe: tieuDe(t.ten) },
-        )),
+        ...truongXuat.map((t) => trangVT(dungDongVT(nguoi.filter((n) => n.truong.id === t.id)), tenSheet(t.ten, daDung), t.ten)),
       ]
       await xuatExcelA4('Bac_nghe_nghiep_theo_VTVL', trangs)
     } catch (e) {

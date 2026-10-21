@@ -1,6 +1,6 @@
 import type * as XLSX from 'xlsx'
-import { xuatExcelA4 } from './excelA4'
-import type { TrangA4 } from './excelA4'
+import { xuatExcelA4, ganCotTinh, lamTronExcel } from './excelA4'
+import type { TrangA4, O } from './excelA4'
 import dayjs from 'dayjs'
 import type { DeXuatLuong } from '@/types/deXuat'
 import type { VienChuc } from '@/types/vienChuc'
@@ -151,9 +151,10 @@ export function demTheoNhom(ds: DongThongBao[]) {
   }
 }
 
-const hs = (n?: number) => (n == null ? '' : Number(n.toFixed(3)))
+// Làm tròn 3 chữ số như Excel và bảng tổng hợp lương (toFixed làm 3,65 × 17% = 0,6205 thành 0,620 thay vì 0,621)
+const hs = (n?: number) => (n == null ? '' : lamTronExcel(n, 3))
 const pct = (n?: number) => (n ? `${n}%` : '')
-const tnvkHs = (heSo?: number, p?: number) => (heSo && p ? Number((heSo * p / 100).toFixed(3)) : '')
+const tnvkHs = (heSo?: number, p?: number) => (heSo && p ? lamTronExcel(heSo * p / 100, 3) : '')
 const ngay = (d?: string) => (d ? formatDate(d) : '')
 const soTb = (tb: ThongBaoKetQua) => tb.soThongBao || '....'
 const ngayTbChu = (tb: ThongBaoKetQua) => (tb.ngayThongBao ? formatDate(tb.ngayThongBao) : '..../..../.....')
@@ -231,12 +232,27 @@ export function xuatExcelThongBao(tb: ThongBaoKetQua, chiCap?: CapHocTB) {
     ]
     const tieuDe = bang.tieuDe.map((r) => r.map((c) => (c === 'Nâng bậc lương năm ' ? `Nâng bậc lương năm ${tb.nam}` : c === 'Nâng phụ cấp thâm niên nhà giáo' ? `Nâng phụ cấp thâm niên nhà giáo ${tenKy(tb.ky, tb.nam).replace('6 tháng ', '')}` : c)))
     const than = ds.flatMap((d, i) => [bang.dong(d, i), ...(bang.dongPhu?.(d) ?? [])])
-    const aoa = [...dau, ...tieuDe, ...than, [], [`Tổng số: ${String(ds.length).padStart(2, '0')} người`]]
+    const aoa: O[][] = [...dau, ...tieuDe, ...than, [], [`Tổng số: ${String(ds.length).padStart(2, '0')} người`]]
     const lech = dau.length
+    // Nâng lương thường xuyên: tỷ lệ TNVK lưu dạng số (Excel hiển thị 5%), PC TNVK hệ số = hệ số × tỷ lệ,
+    // tổng hệ số lương = hệ số + PC TNVK - đều bằng công thức (cũ: cột 7-10, mới: cột 14-17)
+    const dinhDangO: Record<string, string> = {}
+    if (tb.loai === 'NANG_LUONG_TX') {
+      const dongDl = than.map((_, i) => lech + tieuDe.length + i)
+      for (const r of dongDl) for (const c of [8, 15]) {
+        const v = aoa[r][c]
+        if (typeof v === 'string' && /^\d+(\.\d+)?%$/.test(v)) { aoa[r][c] = Number(v.slice(0, -1)) / 100; dinhDangO[`${r}:${c}`] = '0%' }
+      }
+      for (const [cHs, cPct, cTn, cTong] of [[7, 8, 9, 10], [14, 15, 16, 17]]) {
+        ganCotTinh(aoa, cTn, dongDl, (o) => `ROUND(${o(cHs)}*${o(cPct)},3)`, (so) => lamTronExcel(so(cHs) * so(cPct), 3))
+        ganCotTinh(aoa, cTong, dongDl, (o) => `ROUND(${o(cHs)}+${o(cTn)},3)`, (so) => lamTronExcel(so(cHs) + so(cTn), 3))
+      }
+    }
     const g = (r1: number, c1: number, r2: number, c2: number) => ({ r1, c1, r2, c2 })
     trangs.push({
       ten: tenCapNgan[cap] === 'MN' ? 'Mầm non' : tenCapNgan[cap] === 'TH' ? 'Tiểu học' : 'THCS',
       dong: aoa,
+      dinhDangO,
       gop: [
         ...bang.merges.map((r) => g(r.s.r + lech, r.s.c, r.e.r + lech, r.e.c)),
         ...[0, 1, 2, 3].map((r) => g(r, 5, r, bang.soCot - 1)),

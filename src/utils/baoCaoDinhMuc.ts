@@ -9,6 +9,7 @@ import {
   idQuyMo, lamTron1, thongKePhanCongMN, tinhDinhMuc,
 } from './dinhMuc'
 import type { O, TrangA4, VungGop } from './excelA4'
+import { ganCotTinh, ganDongTong, ganTongNgang, ganCongThucO, oExcel, lamTronExcel } from './excelA4'
 import { MAU_NHOM_VTVL } from './mauNhomVtvl'
 
 /** Định mức, Giao (biên chế), Có mặt (biên chế), Hợp đồng có mặt, thừa/thiếu so giao, thừa/thiếu so định mức */
@@ -49,6 +50,8 @@ export interface DongBaoCao {
   ten: string
   /** Nhóm VTVL của dòng (tô màu theo nhóm) */
   nhom?: string
+  /** Tổ trưởng, tổ phó: đã đếm ở vị trí giáo viên của người đó - không cộng vào dòng nhóm */
+  trongGv?: boolean
   /** Theo id trường và MA_TOAN_CAP */
   gt: Record<string, O3>
 }
@@ -144,7 +147,7 @@ export function dungBaoCaoCapHoc(
       return soSanh(dm, n.key === 'NGOAI_DM' ? null : giaoNhom(c.id, n.key), bcNhom(c, n.key), hdNhom(c, n.key))
     })
     // Dòng vị trí: chỉ so với định mức
-    viTri.forEach((v) => them({ key: `vt-${v.ma}`, loai: 'viTri', ten: v.ten, nhom: n.key }, (c) => {
+    viTri.forEach((v) => them({ key: `vt-${v.ma}`, loai: 'viTri', ten: v.ten, nhom: n.key, trongGv: cot.some((c) => c.kq.dong.some((x) => x.ma === v.ma && x.trongGv)) }, (c) => {
       const d = c.kq.dong.find((x) => x.ma === v.ma)
       if (!d) return { cm: 0, hd: 0 }
       const dm = c.daKhai && !d.khongDinhMuc && !d.trongGv ? d.dinhMuc : null
@@ -232,6 +235,8 @@ export function trangExcelBaoCao(
   ]
   const dong: O[][] = [...dau, tieuDe1, tieuDe2]
   const dam: number[] = [0]
+  const viTriDong = new Map<string, number>() // khoá dòng báo cáo → dòng trong trang
+  const dongSo: number[] = [] // các dòng có số (không phải dòng mục)
   const nen: Record<number, string> = {}
   const mauChu: Record<string, string> = {}
   for (const d of bc.dong) {
@@ -243,6 +248,8 @@ export function trangExcelBaoCao(
       continue
     }
     const hang: O[] = [d.stt ?? '', d.ten]
+    viTriDong.set(d.key, r)
+    dongSo.push(r)
     nhom.forEach((n, i) => {
       const v = d.gt[n.id] ?? {}
       if (d.loai === 'quyMo') {
@@ -252,7 +259,7 @@ export function trangExcelBaoCao(
       }
       chiSo.forEach((c, j) => {
         const x = v[TRUONG_CHI_SO[c]] as number | null | undefined
-        hang.push(x == null ? '' : lamTron1(x))
+        hang.push(x == null ? '' : x) // số chính xác - Excel hiển thị 1 chữ số lẻ (soLe)
         if ((c === 'CL' || c === 'CLG') && laSoKhac0(x)) mauChu[`${r}:${2 + i * k + j}`] = x! > 0 ? 'FFCF1322' : 'FF1D4ED8'
       })
     })
@@ -261,6 +268,51 @@ export function trangExcelBaoCao(
     if (d.loai === 'nhom' || d.loai === 'tong') { dam.push(r); nen[r] = d.loai === 'tong' ? 'FFE0E7FF' : mau?.argbTieuDe ?? 'FFF1F5F9' }
     else if (mau) nen[r] = mau.argbNen
   }
+  // ── Công thức (mỗi công thức chỉ ghi khi cho đúng con số phần mềm đã tính) ──
+  const cotCua = (iNhom: number, c: ChiSo) => (chiSo.includes(c) ? 2 + iNhom * k + chiSo.indexOf(c) : -1)
+  const truongIdx = bc.cot.map((_, i) => i + 1) // nhóm cột 0 là toàn cấp
+  // 1. Dòng nhóm VTVL = SUM các vị trí của nhóm (trừ tổ trưởng, tổ phó); tổng nhóm I-III = SUM 3 nhóm
+  const dongNhom: number[] = []
+  let nhomDangXet: { r: number; viTri: number[] } | null = null
+  const cacNhomDong: { r: number; viTri: number[] }[] = []
+  for (const d of bc.dong) {
+    const r = viTriDong.get(d.key)
+    if (r == null) continue
+    if (d.loai === 'nhom') { nhomDangXet = { r, viTri: [] }; cacNhomDong.push(nhomDangXet); dongNhom.push(r) }
+    else if (d.loai === 'viTri' && d.key.startsWith('vt-') && nhomDangXet && !d.trongGv) nhomDangXet.viTri.push(r)
+    else if (d.loai !== 'viTri') nhomDangXet = null
+  }
+  const cotSoTruong = truongIdx.flatMap((i) => (['DM', 'GIAO', 'CM', 'HD'] as ChiSo[]).map((c) => cotCua(i, c))).filter((c) => c >= 0)
+  for (const g of cacNhomDong) ganDongTong(dong, g.r, g.viTri, cotSoTruong)
+  const rTongDm = viTriDong.get('tong-dm')
+  if (rTongDm != null) ganDongTong(dong, rTongDm, cacNhomDong.filter((g) => !/ngoài danh mục/i.test(String(dong[g.r][1] ?? ''))).map((g) => g.r), cotSoTruong)
+  // Chỉ tiêu: biên chế giao = ngân sách + sự nghiệp
+  const [rNs, rSn, rBc] = ['ct-ns', 'ct-sn', 'ct-bc'].map((x) => viTriDong.get(x))
+  if (rNs != null && rSn != null && rBc != null) for (const i of truongIdx) {
+    const c = 2 + i * k
+    ganDongTong(dong, rBc, [rNs, rSn], [c])
+  }
+  // 2. Thừa/thiếu của từng trường = có mặt - định mức / có mặt - giao
+  for (const i of truongIdx) {
+    const [cDm, cGiao, cCm, cCl, cClg] = (['DM', 'GIAO', 'CM', 'CL', 'CLG'] as ChiSo[]).map((c) => cotCua(i, c))
+    if (cCl >= 0 && cCm >= 0 && cDm >= 0) ganCotTinh(dong, cCl, dongSo, (o) => `${o(cCm)}-${o(cDm)}`, (so) => so(cCm) - so(cDm))
+    if (cClg >= 0 && cCm >= 0 && cGiao >= 0) ganCotTinh(dong, cClg, dongSo, (o) => `${o(cCm)}-${o(cGiao)}`, (so) => so(cCm) - so(cGiao))
+  }
+  // 3. Cột toàn cấp = cộng ngang các trường cùng chỉ số
+  const dongCongNgang = dongSo.filter((r) => r !== viTriDong.get('qm-bq')) // bình quân không cộng, tính ở bước 4
+  chiSo.forEach((c) => ganTongNgang(dong, dongCongNgang, cotCua(0, c), truongIdx.map((i) => cotCua(i, c))))
+  // 4. Bình quân học sinh/lớp (mọi cột, cả toàn cấp) = số học sinh / số lớp - ô quy mô nằm ở cột đầu mỗi nhóm
+  const [rLop, rHs, rBq] = ['qm-lop', 'qm-hs', 'qm-bq'].map((x) => viTriDong.get(x))
+  if (rLop != null && rHs != null && rBq != null) {
+    for (let i = 0; i < nhom.length; i++) {
+      const c = 2 + i * k
+      const lop = dong[rLop][c], hs = dong[rHs][c]
+      const so = (v: O) => (typeof v === 'number' ? v : v && typeof v === 'object' ? v.kq : null)
+      const nLop = so(lop), nHs = so(hs)
+      if (nLop && nHs != null) ganCongThucO(dong, rBq, c, `ROUND(${oExcel(rHs, c)}/${oExcel(rLop, c)},1)`, lamTronExcel(nHs / nLop, 1))
+    }
+  }
+
   const cuoi = dong.length
   dong.push([], ['Ghi chú: Giao và có mặt tính biên chế (ngân sách + sự nghiệp). Dòng nhóm so với chỉ tiêu giao và định mức; dòng từng vị trí chỉ so với định mức; cột toàn cấp: thừa/thiếu so giao chỉ cộng các trường đã được giao. Thừa (+) ghi màu đỏ, thiếu (-) ghi màu xanh. Tổ trưởng, tổ phó thuộc định mức giáo viên (không cộng lại); cấp dưỡng hợp đồng, ngoài danh mục VTVL và giáo viên dạy chuyên không tính định mức.'])
   return {
@@ -280,5 +332,6 @@ export function trangExcelBaoCao(
     huong: 'ngang',
     motTrang: true,
     coChu: 10,
+    soLe: 1,
   }
 }

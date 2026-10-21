@@ -8,7 +8,8 @@ import {
   SaveOutlined, DownloadOutlined, ArrowLeftOutlined, BankOutlined, BulbOutlined, SearchOutlined, UndoOutlined, HistoryOutlined, TableOutlined,
 } from '@ant-design/icons'
 import { xuatExcelA4 } from '@/utils/excelA4'
-import type { VungBang } from '@/utils/excelA4'
+import type { VungBang, O } from '@/utils/excelA4'
+import { ganCotTinh, ganDongTong, lamTronExcel } from '@/utils/excelA4'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ChiTieuBienCheCard from './ChiTieuBienCheCard'
 import BaoCaoDinhMucCapHoc from './BaoCaoDinhMucCapHoc'
@@ -251,11 +252,15 @@ function TongHopPhuong({ truongs, namHoc, onChon, onXemCapHoc }: { truongs: DonV
       ...NHOM_TH.map((_, i) => ({ r1: r0, c1: 4 + i * 5, r2: r0, c2: 8 + i * 5 })),
       { r1: r0, c1: soCot - 2, r2: r0, c2: soCot - 1 },
     ]
-    const dong: (string | number | null)[][] = [...dau, h1, h2]
+    const dong: O[][] = [...dau, h1, h2]
     const dam: number[] = [0]
+    // Vị trí dòng để ghi công thức: toàn phường = cộng các dòng cấp, cấp = cộng các trường của cấp
+    const dongPhuong: number[] = []
+    const capCua = new Map<string, { dong: number; truong: number[] }>()
+    let capDangDung: { dong: number; truong: number[] } | null = null
     const nen: Record<number, string> = {}
     const mauChu: Record<string, string> = {}
-    const so = (v: number | null) => (v == null ? '' : lamTron1(v))
+    const so = (v: number | null) => (v == null ? '' : v) // số chính xác - Excel hiển thị 1 chữ số lẻ (soLe)
     for (const r of rows) {
       const i = dong.length
       dong.push([
@@ -268,7 +273,21 @@ function TongHopPhuong({ truongs, namHoc, onChon, onXemCapHoc }: { truongs: DonV
         for (const [c, v] of cap) if (v != null && lamTron1(v) !== 0) mauChu[`${i}:${c}`] = v > 0 ? 'FFCF1322' : 'FF1D4ED8'
       })
       if (r.loai !== 'truong') { dam.push(i); nen[i] = r.loai === 'phuong' ? 'FFC7D2FE' : 'FFE0E7FF' }
+      if (r.loai === 'phuong') dongPhuong.push(i)
+      else if (r.loai === 'cap') { capDangDung = { dong: i, truong: [] }; capCua.set(r.key, capDangDung) }
+      else capDangDung?.truong.push(i)
     }
+    // Công thức: thừa/thiếu của từng trường = có mặt - giao / có mặt - định mức;
+    // dòng cấp = SUM các trường của cấp; toàn phường = SUM các dòng cấp (cột STT không cộng)
+    const dongTruong = [...capCua.values()].flatMap((x) => x.truong)
+    NHOM_TH.forEach((_, j) => {
+      const [cDm, cGiao, cCm, cSoGiao, cSoDm] = [4, 5, 6, 7, 8].map((x) => x + j * 5)
+      ganCotTinh(dong, cSoGiao, dongTruong, (o) => `${o(cCm)}-${o(cGiao)}`, (so) => so(cCm) - so(cGiao))
+      ganCotTinh(dong, cSoDm, dongTruong, (o) => `${o(cCm)}-${o(cDm)}`, (so) => so(cCm) - so(cDm))
+    })
+    const cotCong = Array.from({ length: soCot }, (_, c) => c).filter((c) => c >= 2)
+    for (const x of capCua.values()) ganDongTong(dong, x.dong, x.truong, cotCong)
+    for (const p of dongPhuong) ganDongTong(dong, p, [...capCua.values()].map((x) => x.dong), cotCong)
     const cuoi = dong.length
     dong.push([], ['Ghi chú: Giao và có mặt tính biên chế (ngân sách + sự nghiệp). Thừa (+) ghi màu đỏ, thiếu (-) ghi màu xanh. Tổ trưởng, tổ phó thuộc định mức giáo viên; ngoài danh mục VTVL (bảo vệ, phục vụ, lao công) không tính.'])
     xuatExcelA4(`Tong-hop-dinh-muc-chi-tieu-${namHoc}`, [{
@@ -277,7 +296,7 @@ function TongHopPhuong({ truongs, namHoc, onChon, onXemCapHoc }: { truongs: DonV
       dam, nen, mauChu, cotGiua: Array.from({ length: soCot }, (_, c) => c).filter((c) => c !== 1),
       nenCot: Object.fromEntries(NHOM_TH.flatMap(({ key }, j) => [0, 1, 2, 3, 4].map((x) => [4 + j * 5 + x, MAU_NHOM_VTVL[key].argbNen]))),
       cotDauNhom: [4, 9, 14, 19],
-      huong: 'ngang', motTrang: true, coChu: 10,
+      huong: 'ngang', motTrang: true, coChu: 10, soLe: 1,
     }]).catch(() => undefined)
   }
 
@@ -1105,8 +1124,13 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi, nhap }: {
 // ───────────────────────────── Xuất Excel một trường ─────────────────────────────
 
 function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoTruong, kq: KetQuaDinhMuc) {
-  const so = (n: number | null) => (n == null ? '' : lamTron1(n))
-  const aoa: (string | number)[][] = [
+  const so = (n: number | null) => (n == null ? '' : n) // số chính xác - Excel hiển thị 1 chữ số lẻ (soLe)
+  // Vị trí dòng để ghi công thức (dòng tổng = SUM, cột tính trong dòng)
+  const dongKhoi: number[] = []
+  const dongPb: number[] = []
+  let dongTongQm = -1, dongTongPb = -1, dongTongI3 = -1, dongTongToan = -1
+  const cacNhom: { dong: number; apDung: boolean; viTri: number[]; tatCa: number[] }[] = []
+  const aoa: O[][] = [
     ['UBND PHƯỜNG GIA VIÊN'],
     [donVi.ten.toUpperCase()],
     [],
@@ -1133,10 +1157,12 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     const lop = o?.soLop ?? 0
     const hs = o?.soHocSinh ?? 0
     const bq = lop ? lamTron1(hs / lop) : ''
+    dongKhoi.push(aoa.length)
     aoa.push(haiBuoi
       ? [k.ten, lop, hs, Math.min(o?.soLop2Buoi ?? 0, lop), Math.min(o?.soHocSinh2Buoi ?? 0, hs), bq]
       : [k.ten, lop, hs, bq])
   }
+  dongTongQm = aoa.length
   aoa.push(haiBuoi
     ? ['Tổng', kq.tongLop, kq.tongHS, kq.tongLop2Buoi, kq.tongHS2Buoi, lamTron1(kq.binhQuan)]
     : ['Tổng', kq.tongLop, kq.tongHS, lamTron1(kq.binhQuan)])
@@ -1153,8 +1179,9 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     dam.push(aoa.length - 1)
     batDauBang(7)
     aoa.push(['Môn', 'Tiết/tuần', 'Đứng lớp', 'Kiêm nhiệm gợi ý', 'Trường điều chỉnh', 'Kiêm nhiệm áp dụng', 'Định mức môn'])
-    for (const d of pb.dong) aoa.push([d.ten, lamTron1(d.tietTuan), lamTron1(d.dungLop), lamTron1(d.goiY), d.nhapTay != null ? lamTron1(d.nhapTay) : '', lamTron1(d.apDung), lamTron1(d.dinhMuc)])
-    aoa.push(['Tổng', '', lamTron1(pb.dong.reduce((s, d) => s + d.dungLop, 0)), lamTron1(pb.tong), '', lamTron1(pb.daPhanBo), lamTron1(pb.dong.reduce((s, d) => s + d.dinhMuc, 0))])
+    for (const d of pb.dong) dongPb.push(aoa.length), aoa.push([d.ten, d.tietTuan, d.dungLop, d.goiY, d.nhapTay != null ? d.nhapTay : '', d.apDung, d.dinhMuc])
+    dongTongPb = aoa.length
+    aoa.push(['Tổng', '', pb.dong.reduce((s, d) => s + d.dungLop, 0), pb.tong, '', pb.daPhanBo, pb.dong.reduce((s, d) => s + d.dinhMuc, 0)])
     dam.push(aoa.length - 1)
     ketThucBang()
     aoa.push([pb.khop ? 'Tổng phân bổ khớp số cần phân bổ' : `Tổng phân bổ ${pb.conLai > 0 ? 'còn thiếu' : 'vượt'} ${lamTron1(Math.abs(pb.conLai))} giáo viên`], [])
@@ -1167,16 +1194,21 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     const ds = kq.dong.filter((d) => d.nhom === n.key)
     if (!ds.length) continue
     const t = kq.tongNhom.find((x) => x.nhom === n.key)
+    const nhomDong = { dong: aoa.length, apDung: !!t?.apDungDinhMuc, viTri: [] as number[], tatCa: [] as number[] }
+    cacNhom.push(nhomDong)
     aoa.push([
       '', n.ten,
       !t ? '' : !t.apDungDinhMuc ? 'Chỉ đếm số có mặt, không so với định mức' : t.coMatNgoai ? `${t.coMatNgoai} người ở vị trí chưa có định mức, không đưa vào so sánh` : '',
-      t?.apDungDinhMuc ? lamTron1(t.dinhMuc) : '', t?.coMatVC ?? '', t?.coMatHD ?? '', t?.coMat ?? '',
-      t?.chenhLech == null ? '' : lamTron1(t.chenhLech),
+      t?.apDungDinhMuc ? t.dinhMuc : '', t?.coMatVC ?? '', t?.coMatHD ?? '', t?.coMat ?? '',
+      t?.chenhLech == null ? '' : t.chenhLech,
     ])
     dam.push(aoa.length - 1)
     nen[aoa.length - 1] = 'FFEEF2FF'
     if (t?.chenhLech != null) toMau(7, t.chenhLech)
     ds.forEach((d, i) => {
+      // Tổ trưởng, tổ phó đã đếm ở vị trí giáo viên của mình - không cộng vào nhóm
+      if (!d.trongGv) nhomDong.viTri.push(aoa.length)
+      nhomDong.tatCa.push(aoa.length)
       aoa.push([
         i + 1, d.ten, d.canCu, d.trongGv ? 'Thuộc định mức GV' : d.khongDinhMuc ? 'Không áp dụng' : so(d.dinhMuc),
         d.coMatVC, d.coMatHD, d.coMat, d.khongDinhMuc || d.trongGv ? '' : so(d.chenhLech),
@@ -1185,16 +1217,35 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
     })
   }
   const coDm = kq.tongNhom.filter((t) => t.apDungDinhMuc)
-  aoa.push(['', 'Tổng toàn trường - nhóm I-III (so với định mức)', '', lamTron1(kq.tongDinhMuc),
-    coDm.reduce((s, t) => s + t.coMatVC, 0), coDm.reduce((s, t) => s + t.coMatHD, 0), coDm.reduce((s, t) => s + t.coMat, 0), lamTron1(kq.coMatCoDinhMuc - kq.tongDinhMuc)])
+  dongTongI3 = aoa.length
+  aoa.push(['', 'Tổng toàn trường - nhóm I-III (so với định mức)', '', kq.tongDinhMuc,
+    coDm.reduce((s, t) => s + t.coMatVC, 0), coDm.reduce((s, t) => s + t.coMatHD, 0), coDm.reduce((s, t) => s + t.coMat, 0), kq.coMatCoDinhMuc - kq.tongDinhMuc])
   toMau(7, kq.coMatCoDinhMuc - kq.tongDinhMuc)
   dam.push(aoa.length - 1)
+  dongTongToan = aoa.length
   aoa.push(['', 'Tổng lao động toàn trường (cả ngoài danh mục)', '', '', kq.toanTruong.coMatVC, kq.toanTruong.coMatHD, kq.toanTruong.coMat, ''])
   dam.push(aoa.length - 1)
   ketThucBang()
   if (nhap.ghiChu) aoa.push([], [`Ghi chú: ${nhap.ghiChu}`])
 
+  // ── Công thức (mỗi công thức chỉ ghi khi cho đúng con số phần mềm đã tính) ──
+  // Quy mô: dòng Tổng = SUM các khối; bình quân/lớp = học sinh / số lớp
+  const cBq = haiBuoi ? 5 : 3
+  ganDongTong(aoa, dongTongQm, dongKhoi, haiBuoi ? [1, 2, 3, 4] : [1, 2])
+  ganCotTinh(aoa, cBq, [...dongKhoi, dongTongQm], (o) => `ROUND(${o(2)}/${o(1)},1)`, (s2) => (s2(1) ? lamTronExcel(s2(2) / s2(1), 1) : null))
+  // Phân bổ kiêm nhiệm: dòng Tổng = SUM các môn
+  if (dongTongPb >= 0) ganDongTong(aoa, dongTongPb, dongPb, [2, 3, 5, 6])
+  // Định mức và cơ cấu: có mặt tổng = viên chức + hợp đồng; thừa/thiếu = có mặt - định mức;
+  // dòng nhóm = SUM vị trí của nhóm (không tính tổ trưởng, tổ phó); tổng I-III = SUM nhóm áp dụng định mức
+  const viTriTatCa = cacNhom.flatMap((n) => n.tatCa)
+  ganCotTinh(aoa, 6, viTriTatCa, (o) => `${o(4)}+${o(5)}`, (s2) => s2(4) + s2(5))
+  for (const n of cacNhom) ganDongTong(aoa, n.dong, n.viTri, [3, 4, 5, 6])
+  ganDongTong(aoa, dongTongI3, cacNhom.filter((n) => n.apDung).map((n) => n.dong), [3, 4, 5, 6])
+  ganDongTong(aoa, dongTongToan, cacNhom.map((n) => n.dong), [4, 5, 6])
+  ganCotTinh(aoa, 7, [...viTriTatCa, ...cacNhom.map((n) => n.dong), dongTongI3], (o) => `${o(6)}-${o(3)}`, (s2) => s2(6) - s2(3))
+
   return xuatExcelA4(`Dinh-muc-${donVi.ma || donVi.id}-${namHoc}`, [{
+    soLe: 1,
     ten: 'Định mức',
     dong: aoa,
     rongCot: [6, 40, 40, 11, 11, 11, 11, 12],

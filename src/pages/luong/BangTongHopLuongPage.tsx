@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Table, Card, Select, Input, Space, Typography, Button, Tag, Tooltip } from 'antd'
 import { SearchOutlined, DownloadOutlined } from '@ant-design/icons'
-import { exportToExcel } from '@/utils/exportExcel'
+import { trangTuDanhSach, xuatExcelA4, ganCotTinh, ganDongTong, lamTronExcel } from '@/utils/excelA4'
+import type { O } from '@/utils/excelA4'
 import dayjs from 'dayjs'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -388,11 +389,12 @@ export default function BangTongHopLuongPage() {
     },
   ]
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const donViTen = filterDonVi
       ? (donVis.find((d) => d.id === filterDonVi)?.ten ?? 'TatCa')
       : 'TatCa'
-    const exportRows = rows.map((r) => ({
+    const dvMap = new Map(donVis.map((d) => [d.id, d.ten]))
+    const hang = (r: RowData): Record<string, O> => ({
       'TT': r.stt,
       'Họ và tên': r.hoTen,
       'Ngày sinh': r.ngaySinh,
@@ -415,13 +417,61 @@ export default function BangTongHopLuongPage() {
       'Tổng HS lương 1 tháng': r.tong1Thang,
       'Tổng HS lương 6 tháng đầu năm': r.tong6Thang,
       'Lương theo mức tiền (đ/tháng)': r.mucLuongTien || '',
-    }))
-    exportToExcel(
-      exportRows,
-      `BangTongHopLuong_${donViTen}_${dayjs().format('YYYYMMDD')}`,
-      'Bang TH Luong',
-      ['BẢNG TỔNG HỢP HỆ SỐ LƯƠNG, PHỤ CẤP', filterDonVi ? donViTen : 'Các trường thuộc phường Gia Viên'],
-    )
+    })
+    const dongCong = (ten: string, t: ReturnType<typeof sumGroup>): Record<string, O> => ({
+      ...Object.fromEntries(Object.keys(hang(rows[0])).map((k) => [k, ''])),
+      'Họ và tên': ten,
+      'Hệ số': t.heSo, 'PC TNVK Hệ số': t.vkHeSo, 'Tổng HS lương chính': t.tongHSLC, 'PC Chức vụ': t.pcCV,
+      'PC Trách nhiệm': t.pcTN, 'PC TNNG Hệ số': t.pcTNNG_HeSo, 'HS Chênh lệch bảo lưu': t.hsBaoLuu, 'PC ưu đãi nhà giáo': t.pcUD,
+      'Tổng HS lương 1 tháng': t.tong1Thang, 'Tổng HS lương 6 tháng đầu năm': t.tong6Thang, 'Lương theo mức tiền (đ/tháng)': t.mucLuongTien,
+    })
+    if (!rows.length) return
+
+    // Danh sách người, dòng "Cộng" từng trường (khi có nhiều trường) và dòng "TỔNG CỘNG" cuối bảng
+    const nhom = new Map<string, RowData[]>()
+    for (const r of rows) nhom.set(r.donViId, [...(nhom.get(r.donViId) ?? []), r])
+    const coCongTruong = nhom.size > 1
+    const data: Record<string, O>[] = []
+    const dongNguoi: number[] = []
+    const cacCong: { dong: number; cac: number[] }[] = []
+    for (const [dvId, grp] of nhom) {
+      const cac: number[] = []
+      for (const r of grp) { cac.push(data.length); dongNguoi.push(data.length); data.push(hang(r)) }
+      if (coCongTruong) { cacCong.push({ dong: data.length, cac }); data.push(dongCong(`Cộng: ${dvMap.get(dvId) ?? dvId} (${grp.length} người)`, sumGroup(grp))) }
+    }
+    const dongTongCong = data.length
+    data.push(dongCong(`TỔNG CỘNG (${rows.length} người)`, sumGroup(rows)))
+
+    const tieuDe = ['BẢNG TỔNG HỢP HỆ SỐ LƯƠNG, PHỤ CẤP', filterDonVi ? donViTen : 'Các trường thuộc phường Gia Viên']
+    const trang = trangTuDanhSach(data, 'Bang TH Luong', { tieuDe })
+    // Dòng dữ liệu thứ i nằm ở dòng (tiêu đề + 1 dòng trống + dòng tiêu đề cột) + i
+    const lech = tieuDe.length + 2
+    const d = (i: number) => lech + i
+    const cot = Object.keys(data[0])
+    const c = (k: string) => cot.indexOf(k)
+    const C = {
+      heSo: c('Hệ số'), vkPct: c('PC TNVK (%)'), vkHs: c('PC TNVK Hệ số'), tongHSLC: c('Tổng HS lương chính'), cv: c('PC Chức vụ'),
+      tn: c('PC Trách nhiệm'), tnngPct: c('PC TNNG (%)'), tnngHs: c('PC TNNG Hệ số'), bl: c('HS Chênh lệch bảo lưu'), ud: c('PC ưu đãi nhà giáo'),
+      t1: c('Tổng HS lương 1 tháng'), t6: c('Tổng HS lương 6 tháng đầu năm'), tien: c('Lương theo mức tiền (đ/tháng)'),
+    }
+    const nguoi = dongNguoi.map(d)
+    // Công thức trong từng dòng người - đúng cách phần mềm tính (làm tròn 3 chữ số)
+    ganCotTinh(trang.dong, C.vkHs, nguoi, (o) => `ROUND(${o(C.heSo)}*${o(C.vkPct)}/100,3)`, (so) => lamTronExcel(so(C.heSo) * so(C.vkPct) / 100, 3))
+    ganCotTinh(trang.dong, C.tongHSLC, nguoi, (o) => `ROUND(${o(C.heSo)}+${o(C.vkHs)},3)`, (so) => lamTronExcel(so(C.heSo) + so(C.vkHs), 3))
+    // PC thâm niên nhà giáo: % trên lương chính + PC chức vụ
+    ganCotTinh(trang.dong, C.tnngHs, nguoi, (o) => `ROUND((${o(C.tongHSLC)}+${o(C.cv)})*${o(C.tnngPct)}/100,3)`, (so) => lamTronExcel((so(C.tongHSLC) + so(C.cv)) * so(C.tnngPct) / 100, 3))
+    ganCotTinh(trang.dong, C.t1, nguoi,
+      (o) => `ROUND(${[C.tongHSLC, C.cv, C.tn, C.tnngHs, C.bl, C.ud].map(o).join('+')},3)`,
+      (so) => lamTronExcel(so(C.tongHSLC) + so(C.cv) + so(C.tn) + so(C.tnngHs) + so(C.bl) + so(C.ud), 3))
+    ganCotTinh(trang.dong, C.t6, nguoi, (o) => `ROUND(${o(C.t1)}*6,3)`, (so) => lamTronExcel(so(C.t1) * 6, 3))
+    // Dòng cộng từng trường = SUM người của trường; tổng cộng = SUM các dòng cộng (hoặc SUM người khi một trường)
+    const cotCong = [C.heSo, C.vkHs, C.tongHSLC, C.cv, C.tn, C.tnngHs, C.bl, C.ud, C.t1, C.t6, C.tien]
+    for (const g of cacCong) ganDongTong(trang.dong, d(g.dong), g.cac.map(d), cotCong)
+    ganDongTong(trang.dong, d(dongTongCong), coCongTruong ? cacCong.map((g) => d(g.dong)) : nguoi, cotCong)
+
+    trang.dam = [...cacCong.map((g) => d(g.dong)), d(dongTongCong)]
+    trang.nen = Object.fromEntries([...cacCong.map((g) => [d(g.dong), 'FFEFF6FF']), [d(dongTongCong), 'FFDBEAFE']])
+    await xuatExcelA4(`BangTongHopLuong_${donViTen}_${dayjs().format('YYYYMMDD')}`, [trang])
   }
 
   return (

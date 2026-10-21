@@ -844,6 +844,14 @@ export default function HuongDanPage() {
             Nút <b>Dùng toàn bộ gợi ý</b> bỏ mọi điều chỉnh.</li>
           <li>Bấm <b>Lưu điều chỉnh</b> để ghi. Trang tổng hợp toàn phường gắn nhãn cho trường có phân bổ lệch (đỏ: vượt, xanh dương: thiếu); file Excel có thêm phần phân bổ này.</li>
         </ul>
+        <Paragraph strong style={{ marginTop: 16 }}>File Excel xuất từ phần mềm</Paragraph>
+        <Paragraph>
+          Các <b>dòng tổng</b> (cộng từng trường, từng cấp, toàn phường, tổng cộng, dòng nhóm vị trí việc làm) và các <b>cột tính</b>
+          (tổng hệ số lương, phụ cấp tính theo %, thừa/thiếu, bình quân học sinh/lớp, tỷ lệ %) được ghi bằng <b>công thức Excel</b>:
+          sửa số liệu một ô thì dòng tổng, cột tính tự cập nhật, không phải tính tay. Số liệu khi mở file đúng bằng số trên phần mềm;
+          ô nào công thức không cho đúng con số phần mềm đã tính (VD thừa/thiếu của nhóm chỉ so người ở vị trí có định mức) thì giữ giá trị.
+          Số lẻ được ghi đầy đủ và chỉ hiển thị làm tròn, nên tổng trong Excel khớp với tổng trên màn hình.
+        </Paragraph>
         <Paragraph>
           Ở các bảng danh sách, bấm vào <b>tiêu đề cột</b> để sắp xếp tăng hoặc giảm dần. Trang
           <b> Hồ sơ nhân sự</b> có bộ lọc theo đơn vị, loại hình lao động và trạng thái công tác (mặc định: đang công tác).

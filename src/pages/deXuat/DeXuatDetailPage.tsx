@@ -12,7 +12,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { ngayDu5Nam } from '@/utils/pctnLanDau'
 import { formatDate } from '@/utils/helpers'
-import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, trangDanhSachCuaLoai } from '@/types/deXuat'
+import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, trangDanhSachCuaLoai, laHoSoNangLuong } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import { lamMoiNgay } from '@/lib/supabase'
@@ -105,6 +105,27 @@ export default function DeXuatDetailPage() {
     colMinhChung,
   ]
 
+  // Phòng VHXH thẩm định từng người - dùng chung 4 loại hồ sơ nâng lương - PCTN. Nâng trước thời hạn phải chọn cho
+  // từng người; ba loại theo niên hạn chưa chọn coi như Đồng ý, chỉ cần đánh dấu người Không đồng ý.
+  const batBuocThamDinh = laTruocHan
+  const colThamDinh = {
+    title: 'Phòng VHXH thẩm định', key: 'td', width: 230,
+    render: (_: any, r: ChiTietDeXuat) => (canXetDuyet
+      ? (
+        <Space orientation="vertical" size={4} style={{ width: '100%' }}>
+          <Select
+            size="small" style={{ width: '100%' }} placeholder={batBuocThamDinh ? 'Chọn kết quả' : 'Đồng ý (mặc định)'} value={r.thamDinh} allowClear={!batBuocThamDinh}
+            onChange={(v) => thamDinhNguoi(dx.id, r.vienChucId, v, r.yKienThamDinh)}
+            options={[{ value: 'DONG_Y', label: 'Đồng ý' }, { value: 'KHONG_DONG_Y', label: 'Không đồng ý' }]}
+          />
+          <Input size="small" placeholder="Ý kiến (nếu có)" defaultValue={r.yKienThamDinh} onBlur={(e) => thamDinhNguoi(dx.id, r.vienChucId, r.thamDinh, e.target.value || undefined)} />
+        </Space>
+      )
+      : r.thamDinh
+        ? <div><Tag color={r.thamDinh === 'DONG_Y' ? 'success' : 'error'} style={{ marginInlineEnd: 0 }}>{r.thamDinh === 'DONG_Y' ? 'Đồng ý' : 'Không đồng ý'}</Tag>{r.yKienThamDinh && <div style={{ fontSize: 13, marginTop: 2 }}>{r.yKienThamDinh}</div>}</div>
+        : <Text type="secondary">{batBuocThamDinh || dx.trangThai === 'NHAP' || dx.trangThai === 'CHO_HIEU_TRUONG_DUYET' || dx.trangThai === 'CHO_XET_DUYET' ? 'Chưa thẩm định' : 'Đồng ý'}</Text>),
+  }
+
   // Nâng lương trước thời hạn: thành tích, số tháng, kiểm tra điều kiện, thẩm định từng người của Phòng VHXH
   const ctxKiemTra = (r: ChiTietDeXuat) => {
     const vc = vienChucs.find((v) => v.id === r.vienChucId)
@@ -153,26 +174,11 @@ export default function DeXuatDetailPage() {
         return <Space orientation="vertical" size={2}>{[...k.loi.map((l) => <Text key={l} type="danger" style={{ fontSize: 12.5 }}>• {l}</Text>), ...k.canhBao.map((l) => <Text key={l} type="warning" style={{ fontSize: 12.5 }}>• {l}</Text>)]}</Space>
       },
     },
-    {
-      title: 'Phòng VHXH thẩm định', key: 'td', width: 230,
-      render: (_: any, r: ChiTietDeXuat) => (canXetDuyet
-        ? (
-          <Space orientation="vertical" size={4} style={{ width: '100%' }}>
-            <Select
-              size="small" style={{ width: '100%' }} placeholder="Chọn kết quả" value={r.thamDinh}
-              onChange={(v) => thamDinhNguoi(dx.id, r.vienChucId, v, r.yKienThamDinh)}
-              options={[{ value: 'DONG_Y', label: 'Đồng ý' }, { value: 'KHONG_DONG_Y', label: 'Không đồng ý' }]}
-            />
-            <Input size="small" placeholder="Ý kiến (nếu có)" defaultValue={r.yKienThamDinh} onBlur={(e) => thamDinhNguoi(dx.id, r.vienChucId, r.thamDinh, e.target.value || undefined)} />
-          </Space>
-        )
-        : r.thamDinh
-          ? <div><Tag color={r.thamDinh === 'DONG_Y' ? 'success' : 'error'} style={{ marginInlineEnd: 0 }}>{r.thamDinh === 'DONG_Y' ? 'Đồng ý' : 'Không đồng ý'}</Tag>{r.yKienThamDinh && <div style={{ fontSize: 13, marginTop: 2 }}>{r.yKienThamDinh}</div>}</div>
-          : <Text type="secondary">Chưa thẩm định</Text>),
-    },
+    colThamDinh,
   ]
 
-  const detailCols = laTruocHan ? colsTruocHan : dx.loai === 'PCTN_LAN_DAU' ? colsLanDau : laPctn
+  const coCotThamDinh = laHoSoNangLuong(dx.loai) && !laTruocHan && (dx.trangThai === 'CHO_XET_DUYET' || dx.chiTiet.some((c) => c.thamDinh))
+  const detailColsGoc = laTruocHan ? colsTruocHan : dx.loai === 'PCTN_LAN_DAU' ? colsLanDau : laPctn
     ? [
         colVienChuc,
         { title: 'PCTN cũ', key: 'pctnc', width: 90, render: (_: any, r: any) => `${r.pctnCu ?? 0}%` },
@@ -202,6 +208,7 @@ export default function DeXuatDetailPage() {
         colLyDo,
         ...(coMinhChung ? [colMinhChung] : []),
       ]
+  const detailCols = coCotThamDinh ? [...detailColsGoc, colThamDinh] : detailColsGoc
 
   const canSubmit = dx.trangThai === 'NHAP' && dx.nguoiDeXuatId === currentUser?.id
   // Bản nháp và phiếu bị yêu cầu bổ sung: trường lập phiếu mở lại để sửa, rồi trình lại
@@ -234,12 +241,12 @@ export default function DeXuatDetailPage() {
         duyetHieuTruong(id!, 'YEU_CAU_BO_SUNG', ghiChu, currentUser.id, currentUser.fullName)
         message.info('Đã yêu cầu bổ sung hồ sơ')
       } else if (modalAction === 'xd_approve') {
+        const moi = useDeXuatStore.getState().getById(id!)
         if (laTruocHan) {
-          const moi = useDeXuatStore.getState().getById(id!)
           const chua = moi?.chiTiet.filter((c) => !c.thamDinh).length ?? 0
           if (chua) { message.warning(`Còn ${chua} người chưa thẩm định - chọn Đồng ý / Không đồng ý cho từng người`); return }
-          if (!moi?.chiTiet.some((c) => c.thamDinh === 'DONG_Y')) { message.warning('Không có người nào được đồng ý - chọn Từ chối hồ sơ thay vì chuyển lãnh đạo'); return }
         }
+        if (!moi?.chiTiet.some((c) => c.thamDinh !== 'KHONG_DONG_Y')) { message.warning('Không có người nào được đồng ý - chọn Từ chối hồ sơ thay vì chuyển lãnh đạo'); return }
         xetDuyetDeXuat(id!, 'DONG_Y', ghiChu, currentUser.id, currentUser.fullName)
         message.success('Đã thẩm định - chuyển Lãnh đạo phê duyệt')
       } else if (modalAction === 'xd_reject') {
@@ -298,7 +305,15 @@ export default function DeXuatDetailPage() {
           {coMinhChung && <Descriptions.Item label={laTruocHan ? 'Tài liệu khác' : 'Minh chứng của phiếu'} span={laTruocHan ? 1 : 2}><DanhSachMinhChung value={dx.minhChung} /></Descriptions.Item>}
         </Descriptions>
 
-        <Title level={5}>Chi tiết đề xuất ({dx.chiTiet.length} viên chức)</Title>
+        <Title level={5}>
+          Chi tiết đề xuất ({dx.chiTiet.length} viên chức)
+          {dx.chiTiet.some((c) => c.thamDinh === 'KHONG_DONG_Y') && <Tag color="error" style={{ marginLeft: 8, fontWeight: 400 }}>VHXH không đồng ý {dx.chiTiet.filter((c) => c.thamDinh === 'KHONG_DONG_Y').length} người - không ghi hồ sơ, không đưa vào thông báo</Tag>}
+        </Title>
+        {canXetDuyet && !laTruocHan && laHoSoNangLuong(dx.loai) && (
+          <Text type="secondary" style={{ display: 'block', marginBottom: 8, fontSize: 13 }}>
+            Cột <b>Phòng VHXH thẩm định</b>: người chưa chọn được coi là Đồng ý; chọn <b>Không đồng ý</b> (kèm ý kiến) cho người không đủ điều kiện rồi bấm Đồng ý - chuyển lãnh đạo.
+          </Text>
+        )}
         <Table dataSource={dx.chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: 1450 }} />
 
         <Divider />

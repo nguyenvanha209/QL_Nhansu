@@ -48,7 +48,7 @@ export default function HoSoTruocHanPage() {
 
   const namMacDinh = Number(params.get('nam')) || dayjs().year()
   const [nam, setNam] = useState<number>(dxSua?.namXet ?? namMacDinh)
-  const [donViId, setDonViId] = useState<string | undefined>(scopeDonViId ?? dxSua?.donViId ?? undefined)
+  const [donViId, setDonViId] = useState<string | undefined>(scopeDonViId ?? dxSua?.donViId ?? params.get('truong') ?? undefined)
   const [chiTiet, setChiTiet] = useState<ChiTietDeXuat[]>(dxSua?.chiTiet ?? [])
   const [hoSo, setHoSo] = useState<HoSoTruocHan>(dxSua?.hoSoTruocHan ?? {})
   const [khac, setKhac] = useState<MinhChung[]>(dxSua?.minhChung ?? [])

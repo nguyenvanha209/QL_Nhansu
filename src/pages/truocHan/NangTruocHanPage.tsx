@@ -18,6 +18,7 @@ import { BANG_CHUAN, cotSTT, cotChu, cotGiua } from '@/utils/cotBang'
 import { danhSachTraLuong, soSuatToiDa } from '@/utils/nangTruocHan'
 import { logAction } from '@/utils/auditLogger'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
+import TongHopHoSoNangLuong from '@/components/TongHopHoSoNangLuong'
 
 const { Title, Text } = Typography
 
@@ -48,7 +49,8 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
     return { key: t.id, ten: t.ten, dx, soTraLuong: n, toiDa: soSuatToiDa(n) }
   }), [truongs, hoSoNam, vienChucs, heSoLuongs])
 
-  const coLap = hasPermission('deXuat', 'write') && !!scopeDonViId
+  // Trường lập hồ sơ của mình; quản trị lập thay được cho trường bất kỳ
+  const coLap = (hasPermission('deXuat', 'write') && !!scopeDonViId) || laQuanTri
   const columns: ColumnsType<Dong> = [
     cotSTT<Dong>(),
     cotChu<Dong>('Trường', (r) => r.ten, 200),
@@ -62,7 +64,7 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
       title: '', key: 'mo', width: 150, align: 'center',
       render: (_, r) => (r.dx
         ? <Space size={4}><Button size="small" onClick={() => navigate(`/nang-truoc-han/${r.dx!.id}`)}>Xem hồ sơ</Button><NutXoaPhieuNhap dx={r.dx} nho /></Space>
-        : coLap ? <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/nang-truoc-han/new?nam=${nam}`)}>Lập hồ sơ</Button> : null),
+        : coLap ? <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/nang-truoc-han/new?nam=${nam}&truong=${r.key}`)}>Lập hồ sơ</Button> : null),
     },
   ]
 
@@ -74,6 +76,7 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
         {soCho > 0 && <Tag color="red">{soCho} hồ sơ chờ bạn xử lý</Tag>}
       </Space>
       <Table<Dong> {...BANG_CHUAN} rowKey="key" dataSource={dongs} columns={columns} pagination={false} />
+      {!scopeDonViId && <div style={{ marginTop: 16 }}><TongHopHoSoNangLuong loai="NANG_TRUOC_HAN" nam={nam} anBangTruong /></div>}
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Quy trình: Kế toán lập hồ sơ (tờ trình, biên bản Hội đồng trường, minh chứng từng người) → Hiệu trưởng trình → Phòng VHXH thẩm định từng người
         → Lãnh đạo phường phê duyệt (hồ sơ lương tự cập nhật) → Phòng VHXH lập thông báo ở trang Thông báo kết quả nâng lương.

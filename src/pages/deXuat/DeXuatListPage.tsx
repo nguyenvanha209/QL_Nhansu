@@ -7,6 +7,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
+import TongHopHoSoNangLuong from '@/components/TongHopHoSoNangLuong'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, LOAI_DE_XUAT_DIEU_CHINH } from '@/types/deXuat'
 import type { TrangThaiDeXuat, LoaiDeXuat } from '@/types/deXuat'
@@ -122,6 +123,9 @@ export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
 .dx-hd-table th { background: #f8fafc; color: #475569; font-weight: 600; }
 @media (max-width: 700px) { .dx-hd-table { display: block; overflow-x: auto; } }
       `}</style>
+
+      {/* Phòng VHXH, Lãnh đạo, quản trị: tổng hợp các trường theo bước xử lý và danh sách người */}
+      {loai && !scopeDonViId && <TongHopHoSoNangLuong loai={loai} />}
 
       {/* Status badges */}
       <Space wrap style={{ marginBottom: 16 }}>

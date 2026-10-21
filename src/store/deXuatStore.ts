@@ -225,6 +225,8 @@ export const useDeXuatStore = create<DeXuatState>()(
           const ngayVN = (d: string) => d.split('-').reverse().join('/')
 
           dx.chiTiet.forEach((ct: ChiTietDeXuat) => {
+            // Người Phòng VHXH không đồng ý thì không ghi hồ sơ (thống nhất cả 4 loại hồ sơ nâng lương - PCTN)
+            if (ct.thamDinh === 'KHONG_DONG_Y') return
             const quaTrinh = ct.lanDau?.quaTrinh ?? []
             const cuoi = quaTrinh[quaTrinh.length - 1]
             if (!loaiPctn || !cuoi) return
@@ -269,6 +271,7 @@ export const useDeXuatStore = create<DeXuatState>()(
           const { updateVienChuc, getById: getVienChuc } = useVienChucStore.getState()
 
           dx.chiTiet.forEach((ct: ChiTietDeXuat) => {
+            if (ct.thamDinh === 'KHONG_DONG_Y') return
             if (!loaiPctn) return
             // Chốt chặn: nhân viên không hưởng phụ cấp thâm niên, bỏ qua dù phiếu có lọt
             const vc = getVienChuc(ct.vienChucId)

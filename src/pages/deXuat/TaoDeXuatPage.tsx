@@ -9,7 +9,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import type { ChiTietDeXuat, LoaiDeXuat, KhaiPctnLanDau, DongQuaTrinhPctn } from '@/types/deXuat'
-import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung } from '@/types/deXuat'
+import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung, laHoSoNangLuong, LOAI_HO_SO_NANG_LUONG, LOAI_DE_XUAT_DIEU_CHINH, trangDanhSachCuaLoai } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import { isDangCongTac, nhanLuongTheoTien } from '@/types/vienChuc'
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
@@ -49,7 +49,8 @@ export default function TaoDeXuatPage() {
   const [chiTiet, setChiTiet] = useState<ChiTietDeXuat[]>([])
   const [minhChung, setMinhChung] = useState<MinhChung[]>([])
   const [selectedDonVi, setSelectedDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
-  const [loaiDeXuat, setLoaiDeXuat] = useState<LoaiDeXuat>('NANG_BAC')
+  const loaiBanDau: LoaiDeXuat = loaiTuHoSo && loaiTuHoSo in LOAI_DE_XUAT_LABELS ? loaiTuHoSo : 'DIEU_CHINH'
+  const [loaiDeXuat, setLoaiDeXuat] = useState<LoaiDeXuat>(loaiBanDau)
   const laPctn = loaiDeXuat === 'PHU_CAP_THAM_NIEN'
   // Xếp phụ cấp thâm niên lần đầu: kế toán khai thời gian đóng BHXH, thời gian không tính; hệ thống tính mức hưởng
   const laLanDau = loaiDeXuat === 'PCTN_LAN_DAU'
@@ -397,7 +398,7 @@ export default function TaoDeXuatPage() {
     navigate(`/de-xuat/${id}`)
   }
 
-  if (editId && !dxSua) return <Result status="404" title="Không tìm thấy đề xuất" extra={<Button onClick={() => navigate('/de-xuat')}>Quay lại</Button>} />
+  if (editId && !dxSua) return <Result status="404" title="Không tìm thấy đề xuất" extra={<Button onClick={() => navigate(trangDanhSachCuaLoai(loaiDeXuat))}>Quay lại</Button>} />
   if (!duocSua) return <Result status="warning" title="Phiếu này không sửa được" subTitle="Chỉ sửa được phiếu Bản nháp hoặc phiếu bị Yêu cầu bổ sung của trường mình." extra={<Button onClick={() => navigate(`/de-xuat/${editId}`)}>Xem phiếu</Button>} />
 
   const colVienChuc = {
@@ -568,9 +569,9 @@ export default function TaoDeXuatPage() {
   return (
     <Card>
       <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(editId ? `/de-xuat/${editId}` : '/de-xuat')}>Quay lại</Button>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(editId ? `/de-xuat/${editId}` : trangDanhSachCuaLoai(loaiDeXuat))}>Quay lại</Button>
       </Space>
-      <Title level={4}>{editId ? `Sửa đề xuất ${dxSua?.ma ?? ''}` : `Tạo ${TEN_CHUC_NANG_DE_XUAT.charAt(0).toLowerCase()}${TEN_CHUC_NANG_DE_XUAT.slice(1)}`}</Title>
+      <Title level={4}>{editId ? `Sửa đề xuất ${dxSua?.ma ?? ''}` : (laHoSoNangLuong(loaiDeXuat) ? `Lập phiếu ${LOAI_DE_XUAT_LABELS[loaiDeXuat].charAt(0).toLowerCase()}${LOAI_DE_XUAT_LABELS[loaiDeXuat].slice(1)}` : `Tạo ${TEN_CHUC_NANG_DE_XUAT.charAt(0).toLowerCase()}${TEN_CHUC_NANG_DE_XUAT.slice(1)}`)}</Title>
       {dxSua?.trangThai === 'YEU_CAU_BO_SUNG' && (
         <Alert
           type="warning"
@@ -581,7 +582,7 @@ export default function TaoDeXuatPage() {
         />
       )}
 
-      <Form form={form} layout="vertical" onFinish={(v) => onFinish(v, false)} initialValues={{ loai: 'NANG_BAC', donViId: scopeDonViId ?? undefined }}>
+      <Form form={form} layout="vertical" onFinish={(v) => onFinish(v, false)} initialValues={{ loai: loaiBanDau, donViId: scopeDonViId ?? undefined }}>
         <Form.Item name="tieuDe" label="Tiêu đề" rules={[{ required: true }]}>
           <Input placeholder="VD: Nâng bậc lương 6 tháng đầu năm 2026 - TH Gia Viên 1" />
         </Form.Item>
@@ -591,8 +592,9 @@ export default function TaoDeXuatPage() {
           </Form.Item>
           <Form.Item name="loai" label="Loại đề xuất" rules={[{ required: true }]} style={{ minWidth: 220 }}>
             <Select
-              // Nâng lương trước thời hạn có mục riêng (hồ sơ tờ trình, biên bản Hội đồng, thẩm định từng người)
-              options={Object.entries(LOAI_DE_XUAT_LABELS).filter(([k]) => k !== 'NANG_TRUOC_HAN' || loaiDeXuat === 'NANG_TRUOC_HAN').map(([k, v]) => ({ value: k, label: v }))}
+              // Chỉ đổi trong cùng nhóm: hồ sơ nâng lương - PCTN (trừ trước thời hạn - có màn hình riêng) hoặc đề xuất điều chỉnh
+              options={(laHoSoNangLuong(loaiDeXuat) ? LOAI_HO_SO_NANG_LUONG.filter((k) => k !== 'NANG_TRUOC_HAN' || loaiDeXuat === 'NANG_TRUOC_HAN') : LOAI_DE_XUAT_DIEU_CHINH)
+                .map((k) => ({ value: k, label: LOAI_DE_XUAT_LABELS[k] }))}
               onChange={doiLoai}
             />
           </Form.Item>

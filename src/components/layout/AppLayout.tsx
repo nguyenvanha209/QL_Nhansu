@@ -18,6 +18,9 @@ import { ROLE_LABELS } from '@/types/auth'
 import ChiBaoDongBo from './ChiBaoDongBo'
 import { useThongBaoMoi } from '@/hooks/useThongBaoMoi'
 import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
+import { useDeXuatStore } from '@/store/deXuatStore'
+import { LOAI_HO_SO_NANG_LUONG, TEN_CHUC_NANG_NANG_LUONG, laHoSoNangLuong } from '@/types/deXuat'
+import type { LoaiDeXuat } from '@/types/deXuat'
 
 const { Header, Sider, Content, Footer } = Layout
 const { Text } = Typography
@@ -43,7 +46,8 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/nhat-ky': 'Nhật ký thao tác',
   '/huong-dan': 'Hướng dẫn sử dụng',
   '/thong-tin-truong': 'Thông tin trường',
-  '/nang-truoc-han': 'Nâng lương trước thời hạn',
+  '/ho-so-nang-luong': 'Lập hồ sơ nâng lương - phụ cấp thâm niên',
+  '/nang-truoc-han': 'Lập hồ sơ nâng lương - phụ cấp thâm niên',
   '/tai-khoan': 'Thông tin tài khoản',
 }
 
@@ -52,7 +56,7 @@ export default function AppLayout() {
   const { currentUser, logout, scopeDonViId, hasPermission } = useAuth()
   const soThongBaoMoi = useThongBaoMoi()
   const soDeXuatCho = useDeXuatCanXuLy()
-  const soTruocHanCho = useDeXuatCanXuLy('NANG_TRUOC_HAN')
+  const soNangLuongCho = useDeXuatCanXuLy(LOAI_HO_SO_NANG_LUONG)
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -68,15 +72,16 @@ export default function AppLayout() {
     hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
     hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL và định mức VC' },
     hasPermission('deXuat', 'read') && {
+      key: '/ho-so-nang-luong', icon: <RiseOutlined />,
+      label: <Badge count={soNangLuongCho} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>{TEN_CHUC_NANG_NANG_LUONG}</span></Badge>,
+      title: soNangLuongCho ? `${TEN_CHUC_NANG_NANG_LUONG}: ${soNangLuongCho} hồ sơ chờ bạn xử lý` : TEN_CHUC_NANG_NANG_LUONG,
+      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
+    },
+    hasPermission('deXuat', 'read') && {
       key: '/de-xuat', icon: <FileTextOutlined />,
       label: <Badge count={soDeXuatCho} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Đề xuất điều chỉnh hệ số lương - phụ cấp</span></Badge>,
       title: soDeXuatCho ? `Đề xuất điều chỉnh hệ số lương - phụ cấp: ${soDeXuatCho} phiếu chờ bạn xử lý` : 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
-    },
-    hasPermission('deXuat', 'read') && {
-      key: '/nang-truoc-han', icon: <RiseOutlined />,
-      label: <Badge count={soTruocHanCho} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Nâng lương trước thời hạn</span></Badge>,
-      title: soTruocHanCho ? `Nâng lương trước thời hạn: ${soTruocHanCho} hồ sơ chờ bạn xử lý` : 'Nâng lương trước thời hạn',
     },
     hasPermission('deXuat', 'read') && {
       key: '/thong-bao-ket-qua', icon: <NotificationOutlined />,
@@ -106,16 +111,24 @@ export default function AppLayout() {
     const path = location.pathname
     if (path.startsWith('/luong')) return path
     if (path.startsWith('/admin')) return path
+    // Hồ sơ nâng lương - PCTN: phiếu mở ở /de-xuat/:id hoặc /nang-truoc-han/:id vẫn sáng mục của nó
+    if (path.startsWith('/nang-truoc-han')) return '/ho-so-nang-luong'
+    const m = path.match(/^\/de-xuat\/([^/]+)/)
+    const dx = m ? useDeXuatStore.getState().deXuats.find((d) => d.id === m[1]) : undefined
+    if (dx && laHoSoNangLuong(dx.loai)) return '/ho-so-nang-luong'
+    if (path.startsWith('/de-xuat/new') && laHoSoNangLuong((new URLSearchParams(location.search).get('loai') ?? '') as LoaiDeXuat)) return '/ho-so-nang-luong'
     return path.split('/').slice(0, 2).join('/') || '/dashboard'
   }
 
   const breadcrumbTitle = useMemo(() => {
     const path = location.pathname
+    const chon = getSelectedKey()
+    if (chon === '/ho-so-nang-luong') return BREADCRUMB_MAP[chon]
     for (const [key, label] of Object.entries(BREADCRUMB_MAP)) {
       if (path.startsWith(key)) return label
     }
     return 'Tổng quan'
-  }, [location.pathname])
+  }, [location.pathname, location.search])
 
   const userMenu = {
     items: [
@@ -237,7 +250,7 @@ export default function AppLayout() {
               placement="bottomRight"
               menu={{
                 items: [
-                  { key: '/de-xuat', icon: <WarningOutlined />, label: `Sắp đến kỳ nâng lương: ${alerts.length} người` },
+                  { key: '/ho-so-nang-luong?loai=NANG_BAC', icon: <WarningOutlined />, label: `Sắp đến kỳ nâng lương: ${alerts.length} người` },
                   ...(coXemBoNhiem ? [{ key: '/bo-nhiem', icon: <SolutionOutlined />, label: `Sắp hết nhiệm kỳ bổ nhiệm: ${soBoNhiem} người` }] : []),
                 ],
                 onClick: ({ key }) => navigate(key),

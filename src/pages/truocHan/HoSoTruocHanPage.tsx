@@ -261,14 +261,14 @@ export default function HoSoTruocHanPage() {
     } else thucHien()
   }
 
-  if (editId && !dxSua) return <Result status="404" title="Không tìm thấy hồ sơ" extra={<Button onClick={() => navigate('/nang-truoc-han')}>Quay lại</Button>} />
+  if (editId && !dxSua) return <Result status="404" title="Không tìm thấy hồ sơ" extra={<Button onClick={() => navigate('/ho-so-nang-luong?loai=NANG_TRUOC_HAN')}>Quay lại</Button>} />
   if (!duocSua) return <Result status="warning" title="Hồ sơ này không sửa được" subTitle="Chỉ sửa được hồ sơ Bản nháp hoặc bị Yêu cầu bổ sung của trường mình." extra={<Button onClick={() => navigate(`/nang-truoc-han/${editId}`)}>Xem hồ sơ</Button>} />
 
   const { tu, den } = khoangDenHan(nam)
   return (
     <Card>
       <Space style={{ marginBottom: 12 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(editId ? `/nang-truoc-han/${editId}` : '/nang-truoc-han')}>Quay lại</Button>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(editId ? `/nang-truoc-han/${editId}` : '/ho-so-nang-luong?loai=NANG_TRUOC_HAN')}>Quay lại</Button>
       </Space>
       <Title level={4} style={{ marginBottom: 0 }}>{editId ? 'Sửa hồ sơ' : 'Lập hồ sơ'} nâng bậc lương trước thời hạn</Title>
       <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>

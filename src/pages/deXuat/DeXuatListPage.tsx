@@ -7,20 +7,24 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
 import { formatDate } from '@/utils/helpers'
-import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT } from '@/types/deXuat'
+import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, LOAI_DE_XUAT_DIEU_CHINH } from '@/types/deXuat'
 import type { TrangThaiDeXuat, LoaiDeXuat } from '@/types/deXuat'
 
 const { Title, Text } = Typography
 
 const ALL_STATUSES: TrangThaiDeXuat[] = ['NHAP', 'CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET', 'CHO_PHE_DUYET', 'DA_PHE_DUYET', 'TU_CHOI', 'YEU_CAU_BO_SUNG']
 
-export default function DeXuatListPage() {
-  const soCho = useDeXuatCanXuLy()
+/**
+ * Danh sách phiếu. Không truyền `loai`: trang Đề xuất điều chỉnh (chuyển ngạch, điều chỉnh hệ số - phụ cấp).
+ * Có `loai`: một thẻ của trang Lập hồ sơ nâng lương - phụ cấp thâm niên (chỉ phiếu loại đó, không khung Card).
+ */
+export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
+  const cacLoai = useMemo(() => (loai ? [loai] : LOAI_DE_XUAT_DIEU_CHINH), [loai])
+  const soCho = useDeXuatCanXuLy(cacLoai)
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission, isCBTruong, isLanhDao } = useAuth()
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
-  // Hồ sơ nâng lương trước thời hạn nằm ở mục riêng
-  const deXuats = useMemo(() => allDeXuats.filter((d) => d.loai !== 'NANG_TRUOC_HAN' && (!scopeDonViId || d.donViId === scopeDonViId)), [allDeXuats, scopeDonViId])
+  const deXuats = useMemo(() => allDeXuats.filter((d) => cacLoai.includes(d.loai) && (!scopeDonViId || d.donViId === scopeDonViId)), [allDeXuats, scopeDonViId, cacLoai])
   const donVis = useDanhMucStore((s) => s.donVis)
   const [filterStatus, setFilterStatus] = useState<TrangThaiDeXuat | undefined>()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
@@ -43,7 +47,7 @@ export default function DeXuatListPage() {
       title: 'Đơn vị', dataIndex: 'donViId', key: 'dv', ellipsis: true,
       render: (id: string) => donVis.find((d) => d.id === id)?.ten ?? id,
     },
-    { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 240, render: (v: string) => LOAI_DE_XUAT_LABELS[v as keyof typeof LOAI_DE_XUAT_LABELS] ?? v },
+    ...(loai ? [] : [{ title: 'Loại', dataIndex: 'loai', key: 'loai', width: 240, render: (v: string) => LOAI_DE_XUAT_LABELS[v as keyof typeof LOAI_DE_XUAT_LABELS] ?? v }]),
     { title: 'Số VC', key: 'sl', width: 70, render: (_: any, r: any) => r.chiTiet.length },
     {
       title: 'Trạng thái', dataIndex: 'trangThai', key: 'tt',
@@ -59,22 +63,26 @@ export default function DeXuatListPage() {
     },
   ]
 
-  return (
-    <Card>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+  const noiDung = (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 8, flexWrap: 'wrap' }}>
         <Space size={8} wrap>
-          <Title level={4} style={{ margin: 0 }}>{TEN_CHUC_NANG_DE_XUAT}</Title>
+          {loai
+            ? <Text type="secondary">{NGHIEP_VU_LOAI[loai].tomTat}</Text>
+            : <Title level={4} style={{ margin: 0 }}>{TEN_CHUC_NANG_DE_XUAT}</Title>}
           {soCho > 0 && <Tag color="red" style={{ marginInlineEnd: 0 }}>{soCho} phiếu chờ bạn xử lý</Tag>}
         </Space>
         {canCreate && (
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/de-xuat/new')}>Tạo đề xuất</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/de-xuat/new?loai=${loai ?? 'DIEU_CHINH'}`)}>
+            {loai ? `Lập phiếu ${LOAI_DE_XUAT_LABELS[loai].charAt(0).toLowerCase()}${LOAI_DE_XUAT_LABELS[loai].slice(1)}` : 'Tạo đề xuất'}
+          </Button>
         )}
       </div>
 
       {/* Hướng dẫn ngắn - đặt ngay trang đầu để người lập phiếu đọc trước khi tạo */}
       <Collapse
         size="small"
-        defaultActiveKey={canCreate ? ['hd'] : []}
+        defaultActiveKey={canCreate && !loai ? ['hd'] : []}
         style={{ marginBottom: 16, background: '#f0f7ff' }}
         items={[{
           key: 'hd',
@@ -89,7 +97,7 @@ export default function DeXuatListPage() {
               <table className="dx-hd-table">
                 <thead><tr><th style={{ width: 200 }}>Loại</th><th>Nghiệp vụ</th><th style={{ width: 230 }}>Minh chứng</th></tr></thead>
                 <tbody>
-                  {(Object.keys(NGHIEP_VU_LOAI) as LoaiDeXuat[]).map((k) => (
+                  {cacLoai.map((k) => (
                     <tr key={k}>
                       <td><b>{LOAI_DE_XUAT_LABELS[k]}</b></td>
                       <td>{NGHIEP_VU_LOAI[k].tomTat}</td>
@@ -131,8 +139,9 @@ export default function DeXuatListPage() {
       </Space>
 
       <Table dataSource={filtered} columns={columns} rowKey="id" size="small" scroll={{ x: 900 }}
-        pagination={{ pageSize: 15, showTotal: (t) => `Tổng ${t} đề xuất` }}
+        pagination={{ pageSize: 15, showTotal: (t) => `Tổng ${t} phiếu` }}
       />
-    </Card>
+    </>
   )
+  return loai ? noiDung : <Card>{noiDung}</Card>
 }

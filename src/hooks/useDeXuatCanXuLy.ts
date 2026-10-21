@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useDeXuatStore } from '@/store/deXuatStore'
+import { LOAI_DE_XUAT_DIEU_CHINH } from '@/types/deXuat'
+import type { LoaiDeXuat } from '@/types/deXuat'
 
 /**
  * Số phiếu đề xuất đang chờ CHÍNH người dùng này xử lý (số nhỏ trên menu) - cùng quy tắc với nút duyệt ở
  * trang chi tiết phiếu: hiệu trưởng duyệt phiếu của trường, Phòng VHXH thẩm định, lãnh đạo phê duyệt cuối;
  * người lập phiếu (trường) còn phải trình bản nháp của mình và sửa phiếu bị yêu cầu bổ sung.
- * `pham`: 'NANG_TRUOC_HAN' chỉ đếm hồ sơ nâng lương trước thời hạn (menu riêng); mặc định đếm các phiếu đề xuất còn lại.
+ * `loais`: các loại phiếu được đếm; mặc định là hai loại của trang Đề xuất điều chỉnh (chuyển ngạch, điều chỉnh).
  */
-export function useDeXuatCanXuLy(pham: 'DE_XUAT' | 'NANG_TRUOC_HAN' = 'DE_XUAT'): number {
+export function useDeXuatCanXuLy(loais: LoaiDeXuat[] = LOAI_DE_XUAT_DIEU_CHINH): number {
   const deXuats = useDeXuatStore((s) => s.deXuats)
   const { currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong } = useAuth()
 
@@ -17,7 +19,7 @@ export function useDeXuatCanXuLy(pham: 'DE_XUAT' | 'NANG_TRUOC_HAN' = 'DE_XUAT')
     const coQuyenDuyet = hasPermission('deXuat', 'approve')
     const coQuyenLap = hasPermission('deXuat', 'write')
     return deXuats.filter((d) => {
-      if ((d.loai === 'NANG_TRUOC_HAN') !== (pham === 'NANG_TRUOC_HAN')) return false
+      if (!loais.includes(d.loai)) return false
       switch (d.trangThai) {
         case 'CHO_HIEU_TRUONG_DUYET':
           return laQuanTri || (isHieuTruong && coQuyenDuyet && d.donViId === scopeDonViId)
@@ -34,5 +36,5 @@ export function useDeXuatCanXuLy(pham: 'DE_XUAT' | 'NANG_TRUOC_HAN' = 'DE_XUAT')
           return false
       }
     }).length
-  }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong, pham])
+  }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong, loais.join()])
 }

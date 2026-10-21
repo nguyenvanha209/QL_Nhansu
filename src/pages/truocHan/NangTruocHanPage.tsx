@@ -12,7 +12,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { TRANG_THAI_COLORS, TRANG_THAI_LABELS } from '@/types/deXuat'
-import type { DeXuatLuong, MucNangTruocHan } from '@/types/deXuat'
+import type { DeXuatLuong, LoaiDeXuat, MucNangTruocHan } from '@/types/deXuat'
 import { formatDate } from '@/utils/helpers'
 import { BANG_CHUAN, cotSTT, cotChu, cotGiua } from '@/utils/cotBang'
 import { danhSachTraLuong, soSuatToiDa } from '@/utils/nangTruocHan'
@@ -21,19 +21,20 @@ import { logAction } from '@/utils/auditLogger'
 const { Title, Text } = Typography
 
 export const TEN_CHUC_NANG_TRUOC_HAN = 'Nâng lương trước thời hạn'
+const LOAI_TRUOC_HAN: LoaiDeXuat[] = ['NANG_TRUOC_HAN']
 
 /** Danh sách hồ sơ nâng bậc lương trước thời hạn theo năm (mỗi trường một hồ sơ / năm) */
-export default function NangTruocHanPage() {
+export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
   const navigate = useNavigate()
-  const [params, setParams] = useSearchParams()
+  const [params] = useSearchParams()
   const { scopeDonViId, hasPermission, laQuanTri, isVHXH } = useAuth()
-  const soCho = useDeXuatCanXuLy('NANG_TRUOC_HAN')
+  const soCho = useDeXuatCanXuLy(LOAI_TRUOC_HAN)
   const deXuats = useDeXuatStore((s) => s.deXuats)
   const donVis = useDanhMucStore((s) => s.donVis)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
   const [nam, setNam] = useState(dayjs().year())
-  const the = params.get('tab') === 'muc' ? 'muc' : 'ho-so'
+  const [the, setThe] = useState(params.get('tab') === 'muc' ? 'muc' : 'ho-so')
 
   const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER' && (!scopeDonViId || d.id === scopeDonViId)), [donVis, scopeDonViId])
   const hoSoNam = useMemo(() => deXuats.filter((d) => d.loai === 'NANG_TRUOC_HAN' && (d.namXet ?? Number(d.ngayDeXuat?.slice(0, 4))) === nam && (!scopeDonViId || d.donViId === scopeDonViId)), [deXuats, nam, scopeDonViId])
@@ -79,22 +80,24 @@ export default function NangTruocHanPage() {
     </>
   )
 
-  return (
-    <Card>
-      <Title level={4} style={{ marginBottom: 0 }}>{TEN_CHUC_NANG_TRUOC_HAN}</Title>
+  const noiDung = (
+    <>
+      {!nhung && <Title level={4} style={{ marginBottom: 0 }}>{TEN_CHUC_NANG_TRUOC_HAN}</Title>}
       <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
         Nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ - Thông tư 08/2013/TT-BNV, sửa đổi bởi Thông tư 03/2021/TT-BNV.
       </Text>
       <Tabs
         activeKey={the}
-        onChange={(k) => setParams(k === 'muc' ? { tab: 'muc' } : {}, { replace: true })}
+        onChange={setThe}
+        size={nhung ? 'small' : undefined}
         items={[
           { key: 'ho-so', label: 'Hồ sơ các trường', children: hoSo },
           { key: 'muc', label: 'Mức nâng theo thành tích', children: <BangMuc suaDuoc={laQuanTri || isVHXH} /> },
         ]}
       />
-    </Card>
+    </>
   )
+  return nhung ? noiDung : <Card>{noiDung}</Card>
 }
 
 /** Bảng gợi ý hình thức khen → số tháng nâng trước (Phòng VHXH khai; trường sửa theo Quy chế khi lập hồ sơ) */

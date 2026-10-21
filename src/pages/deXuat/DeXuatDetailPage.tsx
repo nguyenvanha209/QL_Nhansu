@@ -12,7 +12,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { ngayDu5Nam } from '@/utils/pctnLanDau'
 import { formatDate } from '@/utils/helpers'
-import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG } from '@/types/deXuat'
+import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, trangDanhSachCuaLoai } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import { lamMoiNgay } from '@/lib/supabase'
 import { DanhSachMinhChung } from '@/components/MinhChungField'
@@ -44,10 +44,11 @@ export default function DeXuatDetailPage() {
   // Hồ sơ nâng lương trước thời hạn có mục riêng
   const laTruocHan = dx.loai === 'NANG_TRUOC_HAN'
   const goc = laTruocHan ? '/nang-truoc-han' : '/de-xuat'
+  const veDanhSach = trangDanhSachCuaLoai(dx.loai)
 
   // Tài khoản trường chỉ xem phiếu của trường mình (trước đây mở được phiếu trường khác bằng đường dẫn)
   if (scopeDonViId && dx.donViId !== scopeDonViId) {
-    return <Result status="403" title="Không có quyền xem phiếu này" subTitle="Phiếu thuộc trường khác." extra={<Button onClick={() => navigate(goc)}>Quay lại</Button>} />
+    return <Result status="403" title="Không có quyền xem phiếu này" subTitle="Phiếu thuộc trường khác." extra={<Button onClick={() => navigate(veDanhSach)}>Quay lại</Button>} />
   }
 
   const donVi = donVis.find((d) => d.id === dx.donViId)
@@ -265,7 +266,7 @@ export default function DeXuatDetailPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(goc)}>Quay lại</Button>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(veDanhSach)}>Quay lại</Button>
       </Space>
 
       <Card title={<><Tag color={TRANG_THAI_COLORS[dx.trangThai]}>{TRANG_THAI_LABELS[dx.trangThai]}</Tag> {dx.ma} - {dx.tieuDe}</>}>

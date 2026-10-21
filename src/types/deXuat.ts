@@ -189,6 +189,14 @@ export const TRANG_THAI_COLORS: Record<TrangThaiDeXuat, string> = {
 export const LOAI_CAN_MINH_CHUNG: LoaiDeXuat[] = ['NANG_TRUOC_HAN', 'DIEU_CHINH', 'CHUYEN_NGACH', 'PCTN_LAN_DAU']
 
 export const TEN_CHUC_NANG_DE_XUAT = 'Đề xuất điều chỉnh hệ số lương - phụ cấp'
+export const TEN_CHUC_NANG_NANG_LUONG = 'Lập hồ sơ nâng lương - phụ cấp thâm niên'
+/** Bốn loại hồ sơ theo niên hạn / thành tích - gom ở trang Lập hồ sơ nâng lương - phụ cấp thâm niên */
+export const LOAI_HO_SO_NANG_LUONG: LoaiDeXuat[] = ['NANG_BAC', 'PHU_CAP_THAM_NIEN', 'PCTN_LAN_DAU', 'NANG_TRUOC_HAN']
+/** Hai loại còn lại ở trang Đề xuất điều chỉnh hệ số lương - phụ cấp */
+export const LOAI_DE_XUAT_DIEU_CHINH: LoaiDeXuat[] = ['CHUYEN_NGACH', 'DIEU_CHINH']
+export const laHoSoNangLuong = (loai: LoaiDeXuat) => LOAI_HO_SO_NANG_LUONG.includes(loai)
+/** Trang danh sách chứa phiếu loại này (nút Quay lại) */
+export const trangDanhSachCuaLoai = (loai: LoaiDeXuat) => (laHoSoNangLuong(loai) ? `/ho-so-nang-luong?loai=${loai}` : '/de-xuat')
 
 export const LOAI_DE_XUAT_LABELS: Record<LoaiDeXuat, string> = {
   NANG_BAC: 'Nâng bậc lương thường xuyên',

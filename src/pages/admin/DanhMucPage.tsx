@@ -5,6 +5,7 @@ import {
   DollarOutlined, ProfileOutlined, ApartmentOutlined, SolutionOutlined, FlagOutlined,
 } from '@ant-design/icons'
 import { useDanhMucStore } from '@/store/danhMucStore'
+import { soSanhMaChucDanh } from '@/utils/helpers'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
 import { LOAI_DON_VI_LABELS } from '@/types/donVi'
 import { hangTruongTheoNamHoc, moTaHang, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
@@ -136,7 +137,7 @@ function ChucDanhTab() {
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức danh</Button>
-      <Table scroll={{ x: 'max-content' }} dataSource={chucDanhs.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={chucDanhs.filter((c) => c.active).sort(soSanhMaChucDanh)} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa chức danh' : 'Thêm chức danh'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>

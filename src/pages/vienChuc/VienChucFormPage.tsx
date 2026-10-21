@@ -16,7 +16,7 @@ import type { ChucVu, LoaiLaoDong, HinhThucLuong } from '@/types/vienChuc'
 import { getPhuCapChucVuHeSo, HANG_TRUONG_LABELS, hangTruongTheoNamHoc, moTaHang } from '@/utils/hangTruong'
 import { namHocHienHanh, soSanhTruong } from '@/utils/dinhMuc'
 import type { LoaiDonVi } from '@/types/donVi'
-import { splitHoTen, toUpperName } from '@/utils/helpers'
+import { splitHoTen, toUpperName, soSanhMaChucDanh } from '@/utils/helpers'
 import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
 import { CONG_VIEC, NHOM_VI_TRI, laToTruongNuoiDuong } from '@/utils/nhomViTri'
 import { MON_GIANG_DAY, laCapHoc } from '@/utils/dinhMuc'
@@ -175,6 +175,7 @@ export default function VienChucFormPage() {
   const chucDanhOptions = chucDanhs
     .filter((c) => c.active)
     .filter((c) => chucDanhHopLeVoiVtvl(c.nhom, watchVtvl) || c.id === watchChucDanhIdRaw)
+    .sort(soSanhMaChucDanh)
     .map((c) => ({
       value: c.id,
       label: chucDanhHopLeVoiVtvl(c.nhom, watchVtvl)

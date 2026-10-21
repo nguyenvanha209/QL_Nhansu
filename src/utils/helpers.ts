@@ -91,3 +91,7 @@ export function ago(iso: string): string {
   if (months < 12) return `${months} tháng trước`
   return `${Math.floor(months / 12)} năm trước`
 }
+
+/** Sắp mã chức danh nghề nghiệp theo mã, so phần số tự nhiên (V.07.02.24 → V.07.02.25 → V.07.03.27; 02.006 → 02.007) */
+export const soSanhMaChucDanh = (a: { ma: string }, b: { ma: string }) =>
+  (a.ma ?? '').localeCompare(b.ma ?? '', 'vi', { numeric: true, sensitivity: 'base' })

@@ -16,7 +16,7 @@ import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import { isDangCongTac, nhanLuongTheoTien, duocTinhSoLieu } from '@/types/vienChuc'
 import { xuatExcelKiemTraDeXuat } from '@/utils/danhSachKiemTraDeXuat'
 import { soSanhTruong } from '@/utils/dinhMuc'
-import { soSanhVienChuc, formatDate } from '@/utils/helpers'
+import { soSanhVienChuc, formatDate, soSanhMaChucDanh } from '@/utils/helpers'
 import { laDienPhuCapThamNien, nhomCoBan } from '@/utils/nhomViTri'
 import MinhChungField from '@/components/MinhChungField'
 import { lamMoiNgay } from '@/lib/supabase'
@@ -92,7 +92,7 @@ export default function TaoDeXuatPage() {
     const bang = bangCua(chucDanhId)
     return (bang.find((b) => b.bac === bac) ?? bang[0])?.thoiGianNangLuong ?? (/^[BC]/.test(cdCua(chucDanhId)?.bangLuong ?? '') ? 2 : 3)
   }
-  const chucDanhOptions = useMemo(() => chucDanhs.filter((c) => c.active)
+  const chucDanhOptions = useMemo(() => chucDanhs.filter((c) => c.active).sort(soSanhMaChucDanh)
     .map((c) => ({ value: c.id, label: `${c.ma} - ${c.ten} (${c.bangLuong})` })), [chucDanhs])
 
   // Phiếu PCTN chỉ áp dụng cho CBQL và giáo viên (nhân viên không hưởng phụ cấp thâm niên);

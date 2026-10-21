@@ -8,7 +8,7 @@ import type { ChucDanhNgheNghiep } from '@/types/danhMuc'
 import { formatDate } from '@/utils/helpers'
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
-const thangNam = (d?: string) => (d ? dayjs(d).format('MM/YYYY') : '')
+const ngayDayDu = (d?: string) => (d ? dayjs(d).format('DD/MM/YYYY') : '')
 const heSo = (n: number) => String(Number(n.toFixed(2)))
 
 /** Ghi chú tự động cho người vượt tỷ lệ: thứ tự ưu tiên trong số người vượt (1 = được xét trước nếu có suất) */
@@ -36,8 +36,8 @@ function bang(ds: ChiTietDeXuat[], batDau: number, toiDa: number, d: DauVao, laV
     return `<tr>
 <td align="center">${i + 1}</td><td><b>${esc(vc ? `${vc.ho} ${vc.ten}` : c.vienChucId)}</b></td>
 <td align="center">${vc?.gioiTinh === 'NAM' ? formatDate(vc.ngaySinh) : ''}</td><td align="center">${vc?.gioiTinh === 'NU' ? formatDate(vc.ngaySinh) : ''}</td>
-<td>${esc(chucDanh)}</td><td align="center">${esc(cd?.ma ?? '')}</td><td align="center">${c.bacCu}</td><td align="center">${heSo(c.heSoCu)}</td><td align="center">${thangNam(c.ngayHieuLucCu)}</td>
-<td align="center">${c.bacMoi}</td><td align="center">${heSo(c.heSoMoi)}</td><td align="center">${thangNam(c.ngayHieuLuc)}</td>
+<td>${esc(chucDanh)}</td><td align="center">${esc(cd?.ma ?? '')}</td><td align="center">${c.bacCu}</td><td align="center">${heSo(c.heSoCu)}</td><td align="center">${ngayDayDu(c.ngayHieuLucCu)}</td>
+<td align="center">${c.bacMoi}</td><td align="center">${heSo(c.heSoMoi)}</td><td align="center">${ngayDayDu(c.ngayHieuLuc)}</td>
 <td>${esc(thanhTich)}</td><td align="center">${c.soThangTruocHan ?? ''}</td><td>${esc(ghiChu)}</td></tr>`
   }).join('')
   return `<table border="1" cellspacing="0" cellpadding="3" width="100%" style="border-collapse:collapse;margin-top:6pt">

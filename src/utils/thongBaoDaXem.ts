@@ -1,4 +1,5 @@
 import type { ThongBaoKetQua, CapHocTB } from '@/types/thongBao'
+import { khoCucBo } from '@/lib/khoCucBo'
 
 // Đánh dấu "đã xem" lưu riêng trên máy từng người: nhiều trường cùng ghi vào một bản thông báo
 // chung trên máy chủ sẽ dễ đè nhau, mà việc đã xem chỉ là tiện ích cho người xem.
@@ -7,7 +8,7 @@ const ma = (tb: Pick<ThongBaoKetQua, 'id' | 'banHanhLuc'>) => `${tb.id}@${tb.ban
 
 export function daXemThongBao(userId?: string): Set<string> {
   try {
-    return new Set(JSON.parse(localStorage.getItem(khoa(userId)) ?? '[]') as string[])
+    return new Set(JSON.parse(khoCucBo.getItem(khoa(userId)) ?? '[]') as string[])
   } catch {
     return new Set()
   }
@@ -17,7 +18,7 @@ export function danhDauDaXem(userId: string, tb: Pick<ThongBaoKetQua, 'id' | 'ba
   try {
     const s = daXemThongBao(userId)
     s.add(ma(tb))
-    localStorage.setItem(khoa(userId), JSON.stringify([...s]))
+    khoCucBo.setItem(khoa(userId), JSON.stringify([...s]))
     window.dispatchEvent(new Event('qlvc-tb-da-xem'))
   } catch { /* bỏ qua: chế độ riêng tư */ }
 }

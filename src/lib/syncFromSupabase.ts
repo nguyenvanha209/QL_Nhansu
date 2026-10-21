@@ -1,3 +1,4 @@
+import { khoCucBo } from './khoCucBo'
 import {
   supabase, ghiNhanPhienBan, ghiNhanBanGoc, ghiNhanManhDaCo, datCoDangDongBo, dangKyNapLai,
   dangKyChiaKho, laKhoChia, tachKhoa, gopCacManh, KHOA_GOC,
@@ -116,7 +117,7 @@ export async function syncFromSupabase(): Promise<SyncResult> {
           theoKho.get(ten)!.push(row.value as KhoiTrangThai)
           continue
         }
-        localStorage.setItem(row.key, JSON.stringify(row.value))
+        khoCucBo.setItem(row.key, JSON.stringify(row.value))
         // Bản gốc để hợp nhất 3 chiều: nội dung đúng như máy chủ lúc đọc
         ghiNhanBanGoc(row.key, (row.value as KhoiTrangThai)?.state, true)
       }
@@ -124,7 +125,7 @@ export async function syncFromSupabase(): Promise<SyncResult> {
       for (const [ten, manhList] of theoKho) {
         const gop = gopCacManh(manhList)
         if (gop) {
-          localStorage.setItem(ten, JSON.stringify(gop))
+          khoCucBo.setItem(ten, JSON.stringify(gop))
           ghiNhanBanGoc(ten, gop.state, true)
           // Mảnh đã khớp máy chủ → lần ghi sau chỉ ghi mảnh đổi, không ghi lại cả 12 mảnh
           // (ghi thừa làm mọi máy khác phải tải lại toàn bộ)

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { khoCucBo } from './khoCucBo'
 import { createJSONStorage } from 'zustand/middleware'
 import type { StateStorage } from 'zustand/middleware'
 
@@ -458,7 +459,7 @@ function xepViecGhi(name: string, value: string, daXoa: DaXoa, lanThuLai: number
       if (!c) return
       // Thử lại bằng nội dung MỚI NHẤT đang có ở máy, không phải bản chụp lúc lỗi: trong khoảng chờ,
       // máy có thể đã tải và hợp nhất dữ liệu của người khác - đẩy lại bản chụp cũ sẽ đè mất phần đó.
-      const hienTai = localStorage.getItem(name) ?? c.value
+      const hienTai = khoCucBo.getItem(name) ?? c.value
       choGhiLai.set(name, { value: hienTai, daXoa: c.daXoa })
       xepViecGhi(name, hienTai, c.daXoa, lanThuLai + 1)
     }, CACH_THU_LAI_MS[lanThuLai])
@@ -518,7 +519,7 @@ function dayGhi(name: string) {
   window.clearTimeout(c.hen)
   choGom.delete(name)
   // Nội dung MỚI NHẤT trên máy, không phải bản lúc hẹn: trong lúc chờ, máy có thể vừa hợp nhất dữ liệu người khác
-  const value = localStorage.getItem(name)
+  const value = khoCucBo.getItem(name)
   if (value !== null) xepHangGhi(name, value, timDaXoa(c.truoc, value))
   soLenhDangGhi--
   capNhatTrangThaiGhi()
@@ -548,7 +549,7 @@ export async function choGhiXong() {
 function idsToanKhoTaiMay(ten: string): Map<string, Set<string>> {
   const ra = new Map<string, Set<string>>()
   try {
-    const state = (JSON.parse(localStorage.getItem(ten) ?? '{}') as KhoiTrangThai).state ?? {}
+    const state = (JSON.parse(khoCucBo.getItem(ten) ?? '{}') as KhoiTrangThai).state ?? {}
     for (const [k, v] of Object.entries(state)) if (laMangCoId(v)) ra.set(k, new Set(v.map((x) => x.id)))
   } catch { /* bỏ qua */ }
   return ra
@@ -562,7 +563,7 @@ async function apDungManhVaoKho(ten: string, manh: string, noiDung: KhoiTrangTha
   if (!chiaTheo) return
   let khoi: KhoiTrangThai
   try {
-    khoi = JSON.parse(localStorage.getItem(ten) ?? '{}') as KhoiTrangThai
+    khoi = JSON.parse(khoCucBo.getItem(ten) ?? '{}') as KhoiTrangThai
   } catch {
     return
   }
@@ -582,7 +583,7 @@ async function apDungManhVaoKho(ten: string, manh: string, noiDung: KhoiTrangTha
   const moi = { ...khoi, state }
   dangDongBo = true
   try {
-    localStorage.setItem(ten, JSON.stringify(moi))
+    khoCucBo.setItem(ten, JSON.stringify(moi))
     await napLai?.(ten)
   } finally {
     dangDongBo = false
@@ -736,7 +737,7 @@ async function ghiLenMayChu(name: string, value: string, lanThu = 0, daXoa: DaXo
     } else {
       dangDongBo = true
       try {
-        localStorage.setItem(name, JSON.stringify(hopNhat))
+        khoCucBo.setItem(name, JSON.stringify(hopNhat))
         await napLai?.(name)
       } finally {
         dangDongBo = false
@@ -794,7 +795,7 @@ export function lamMoiTuMayChu(): Promise<number> {
         const mayChu = row.value as KhoiTrangThai
         let cucBo: KhoiTrangThai
         try {
-          const toanKho = JSON.parse(localStorage.getItem(ten) ?? 'null') as KhoiTrangThai | null
+          const toanKho = JSON.parse(khoCucBo.getItem(ten) ?? 'null') as KhoiTrangThai | null
           if (!toanKho) continue
           cucBo = manh ? (chiaTrangThai(ten, toanKho).get(manh) ?? { ...toanKho, state: {} }) : toanKho
         } catch {
@@ -809,7 +810,7 @@ export function lamMoiTuMayChu(): Promise<number> {
         } else {
           dangDongBo = true
           try {
-            localStorage.setItem(ten, JSON.stringify(khoi))
+            khoCucBo.setItem(ten, JSON.stringify(khoi))
           } finally {
             dangDongBo = false
           }
@@ -869,7 +870,7 @@ export function batNhanThayDoiTucThi(): () => void {
 export function ghiNhanManhDaCo(ten: string) {
   if (!laKhoChia(ten)) return
   try {
-    const khoi = JSON.parse(localStorage.getItem(ten) ?? 'null') as KhoiTrangThai | null
+    const khoi = JSON.parse(khoCucBo.getItem(ten) ?? 'null') as KhoiTrangThai | null
     if (!khoi) return
     for (const [manh, nd] of chiaTrangThai(ten, khoi)) manhDaGhi.set(khoaManh(ten, manh), JSON.stringify(nd))
   } catch { /* bỏ qua */ }
@@ -888,15 +889,15 @@ export async function lamMoiNgay(): Promise<void> {
 // Đọc luôn từ localStorage nên giao diện hiện tức thì, không chờ mạng.
 // Việc ghi lên máy chủ chạy nền, có kiểm tra phiên bản như trên.
 const hybridStorage: StateStorage = {
-  getItem: (name: string): string | null => localStorage.getItem(name),
+  getItem: (name: string): string | null => khoCucBo.getItem(name),
 
   setItem: (name: string, value: string): void => {
     // Chưa đăng nhập máy chủ thì chỉ lưu trên máy (máy chủ không nhận ghi từ người chưa đăng nhập)
     const guiMayChu = !!supabase && !dangDongBo && coPhien
     // Phải giữ bản cũ TRƯỚC khi ghi đè, để biết người dùng xóa hẳn bản ghi nào -
     // dùng khi hợp nhất lúc có xung đột. Đang chờ gom thì bản cũ đã giữ từ lần đầu.
-    const truoc = guiMayChu && !choGom.has(name) ? localStorage.getItem(name) : null
-    localStorage.setItem(name, value)
+    const truoc = guiMayChu && !choGom.has(name) ? khoCucBo.getItem(name) : null
+    khoCucBo.setItem(name, value)
     if (guiMayChu) henGhi(name, truoc)
   },
 
@@ -908,7 +909,7 @@ const hybridStorage: StateStorage = {
       soLenhDangGhi--
       capNhatTrangThaiGhi()
     }
-    localStorage.removeItem(name)
+    khoCucBo.removeItem(name)
     if (supabase && !dangDongBo && coPhien) {
       supabase.from('app_state').delete().eq('key', name).then(({ error }) => {
         if (error) console.warn('[Supabase] Lỗi khi xoá', name, '-', error.message)

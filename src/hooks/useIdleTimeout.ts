@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { khoCucBo } from '@/lib/khoCucBo'
 import { useAuthStore } from '@/store/authStore'
 
 const PHUT = 60 * 1000
@@ -37,7 +38,7 @@ export function useIdleTimeout() {
       if (nay - lanGhiCuoi >= 2000) {
         lanGhiCuoi = nay
         try {
-          localStorage.setItem(KHOA_MOC, String(nay))
+          khoCucBo.setItem(KHOA_MOC, String(nay))
         } catch {
           /* chế độ riêng tư có thể chặn ghi - bỏ qua, vẫn chạy theo mốc trong phiên */
         }
@@ -47,7 +48,7 @@ export function useIdleTimeout() {
 
     const docMoc = (): number => {
       try {
-        const v = Number(localStorage.getItem(KHOA_MOC))
+        const v = Number(khoCucBo.getItem(KHOA_MOC))
         return Number.isFinite(v) && v > 0 ? v : Date.now()
       } catch {
         return Date.now()

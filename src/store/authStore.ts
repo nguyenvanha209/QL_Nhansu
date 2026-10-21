@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { khoCucBo } from '@/lib/khoCucBo'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { User } from '@/types/auth'
 import { logAction } from '@/utils/auditLogger'
@@ -36,6 +37,6 @@ export const useAuthStore = create<AuthState>()(
         dangXuatMayChu()
       },
     }),
-    { name: 'ql-auth', storage: createJSONStorage(() => localStorage) }
+    { name: 'ql-auth', storage: createJSONStorage(() => khoCucBo) }
   )
 )

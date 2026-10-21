@@ -79,6 +79,9 @@ body {
 .qlvc-sidebar .ant-menu .ant-menu-item.menu-noi-bat:hover { background: rgba(255,255,255,0.22) !important; }
 .qlvc-sidebar .ant-menu .ant-menu-item-selected.menu-noi-bat { background: rgba(255,255,255,0.28) !important; }
 .qlvc-sidebar .ant-menu .ant-menu-item.menu-noi-bat .anticon { color: #fff !important; font-size: 17px; }
+/* Nhãn có số nhỏ (Badge) trong menu: antd tô chữ Badge màu đen - cho theo màu của mục menu */
+.qlvc-sidebar .ant-menu .ant-menu-item .ant-badge { color: inherit !important; }
+.qlvc-sidebar .ant-menu .ant-menu-item.menu-noi-bat .ant-badge { color: #fff !important; }
 
 /* Mục menu nhấn mạnh màu vàng (Đề xuất điều chỉnh hệ số lương - phụ cấp) */
 .qlvc-sidebar .ant-menu .ant-menu-item.menu-vang .anticon,

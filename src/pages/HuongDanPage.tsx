@@ -852,10 +852,6 @@ export default function HuongDanPage() {
         <Paragraph>
           Thanh điều hướng bên trái có thể thu gọn thành biểu tượng bằng nút ở cuối thanh, giúp mở rộng vùng hiển thị trên màn hình nhỏ.
         </Paragraph>
-        <Paragraph>
-          <b>File Excel in được ngay:</b> mọi nút Xuất Excel đều ra file khổ A4, đã kẻ khung bảng, lề trái 1,5 cm, ba lề còn lại 1 cm,
-          co vừa chiều ngang một trang (bảng rộng tự chuyển giấy ngang), dòng tiêu đề cột lặp lại khi sang trang và có số trang ở chân trang - mở file là in.
-        </Paragraph>
       </Section>
 
       {/* ── IX ── */}

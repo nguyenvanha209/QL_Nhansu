@@ -168,14 +168,20 @@ export default function BoSungBhxhPage() {
   }
 
   const taiMau = () => {
-    if (!dsTruong.length) { message.info('Chọn trường có CBQL, giáo viên'); return }
+    if (!dsTruong.length) { message.info('Chọn trường có nhân sự'); return }
+    // Đủ các cột như bảng trên màn hình (giữ dòng tiêu đề ở dòng 1 để nhập lại được); chỉ cột tháng BHXH được đọc khi nhập
     xuatExcelA4(`Mau-BHXH-${tenTruong(truongChon ?? dsTruong[0].donViId).replace(/\s+/g, '-')}`, [trangTuDanhSach(
       dsTruong.map((d, i) => ({
         STT: i + 1, 'Mã hồ sơ': d.vc.ma, 'Họ và tên': `${d.ho} ${d.ten}`, 'Ngày sinh': formatDate(d.vc.ngaySinh),
-        'Chức vụ, chức danh': d.chucDanh, 'Ngày vào ngành': formatDate(d.vc.ngayVaoNganh),
+        'Chức vụ, chức danh': d.chucDanh, 'Loại hình': LOAI_LAO_DONG_LABELS[d.vc.loaiLaoDong] ?? '',
+        'Ngày vào ngành': formatDate(d.vc.ngayVaoNganh),
+        'PCTN đang hưởng': !d.dienPctn ? 'Không hưởng' : d.pctn ? `${d.pctn}%` : '',
         'Tháng bắt đầu đóng BHXH (MM/YYYY)': hienThang(d.thang),
+        'Dự kiến đủ 5 năm': formatDate(d.du5Nam ?? ''),
+        'Tình trạng': d.uuTien ? 'Chưa khai - cần rà soát PCTN' : NHAN_TRANG_THAI[d.tt].nhan,
       })),
       'BHXH',
+      { rongCot: [5, 12, 26, 12, 16, 22, 12, 11, 16, 12, 28], cotGiua: [0, 1, 3, 6, 7, 8, 9] },
     )])
   }
 

@@ -37,6 +37,13 @@ export function nhomTheoLoai(ds: PhuCapVienChuc[], loaiPhuCaps: LoaiTra[]): Map<
   return m
 }
 
+/** Mức phụ cấp theo đơn vị của loại: hệ số 0,35 / 30% / 500.000đ */
+export function hienMucPhuCap(loai: Pick<LoaiPhuCap, 'loaiCongThuc'> | undefined, giaTri: number): string {
+  if (loai?.loaiCongThuc === 'HE_SO') return String(giaTri).replace('.', ',')
+  if (loai?.loaiCongThuc === 'TIEN_MAT') return `${giaTri.toLocaleString('vi-VN')}đ`
+  return `${giaTri}%`
+}
+
 /** Ngày kết thúc của bản cũ khi có bản mới thay thế: ngay trước ngày hiệu lực mới, hoặc hôm nay */
 export function ngayKetThucKhiThay(ngayHieuLucCu: string | undefined, ngayHieuLucMoi: string | undefined): string {
   const homNay = new Date().toISOString().slice(0, 10)

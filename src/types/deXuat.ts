@@ -72,6 +72,27 @@ export interface ChiTietDeXuat {
   /** Phòng VHXH thẩm định từng người - người không đồng ý không được ghi hồ sơ khi phê duyệt */
   thamDinh?: 'DONG_Y' | 'KHONG_DONG_Y'
   yKienThamDinh?: string
+  /** Phiếu Điều chỉnh: các phụ cấp điều chỉnh mức (cũ → mới) - phê duyệt xong ghi vào hồ sơ phụ cấp */
+  phuCaps?: DieuChinhPhuCap[]
+}
+
+/** Dòng phiếu có đổi phần lương (ngạch, bậc, hệ số, mốc hưởng) - phiếu Điều chỉnh chỉ đổi phụ cấp thì giữ nguyên bản lương */
+export const coDoiLuong = (ct: ChiTietDeXuat) => ct.chucDanhMoiId !== ct.chucDanhCuId || ct.bacMoi !== ct.bacCu
+  || Math.abs(Number(ct.heSoMoi) - Number(ct.heSoCu)) > 0.0005 || (ct.ngayHieuLuc || '') !== (ct.ngayHieuLucCu || '')
+
+/** Phụ cấp có thay đổi thật (đổi loại trong họ hoặc đổi mức) */
+export const coDoiPhuCap = (p: DieuChinhPhuCap) => p.loaiPhuCapId !== (p.loaiPhuCapCuId ?? p.loaiPhuCapId) || p.giaTriMoi !== (p.giaTriCu ?? 0)
+
+/** Một phụ cấp điều chỉnh trong phiếu Điều chỉnh hệ số lương - phụ cấp */
+export interface DieuChinhPhuCap {
+  /** Loại phụ cấp mới (ưu đãi nghề: đổi mức = đổi loại PCUD_xx) */
+  loaiPhuCapId: string
+  /** Loại và mức đang hưởng lúc lập phiếu (trống = chưa hưởng) */
+  loaiPhuCapCuId?: string
+  giaTriCu?: number
+  /** Mức mới theo đơn vị của loại (%, hệ số, đồng); 0 = thôi hưởng */
+  giaTriMoi: number
+  ngayHieuLuc: string
 }
 
 /** Thành tích xuất sắc làm căn cứ nâng bậc lương trước thời hạn */
@@ -246,9 +267,9 @@ export const NGHIEP_VU_LOAI: Record<LoaiDeXuat, { chonNguoi: string; dieuChinh: 
   },
   DIEU_CHINH: {
     chonNguoi: 'Chọn người cần điều chỉnh do sai sót xếp lương hoặc theo văn bản của cấp có thẩm quyền.',
-    dieuChinh: 'Sửa được ngạch, bậc, hệ số, mốc hưởng cho đúng văn bản; hệ số lệch bảng lương sẽ có cảnh báo để người duyệt lưu ý.',
+    dieuChinh: 'Sửa được ngạch, bậc, hệ số, mốc hưởng cho đúng văn bản (không đổi thì để nguyên); hệ số lệch bảng lương sẽ có cảnh báo để người duyệt lưu ý. Cột Phụ cấp điều chỉnh: thêm phụ cấp cần đổi mức (chức vụ, ưu đãi, trách nhiệm, thâm niên…), ghi mức mới và ngày hưởng; mức 0 là thôi hưởng.',
     minhChung: 'Quyết định / văn bản làm căn cứ điều chỉnh.',
-    tomTat: 'Sửa ngạch, bậc, hệ số, mốc hưởng theo văn bản',
+    tomTat: 'Sửa ngạch, bậc, hệ số, mốc hưởng; điều chỉnh mức các loại phụ cấp theo văn bản',
     minhChungNgan: 'Văn bản căn cứ',
   },
 }

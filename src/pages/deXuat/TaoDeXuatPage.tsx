@@ -9,8 +9,9 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
 import type { ChiTietDeXuat, LoaiDeXuat, KhaiPctnLanDau, DongQuaTrinhPctn } from '@/types/deXuat'
-import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung, laHoSoNangLuong, LOAI_HO_SO_NANG_LUONG, LOAI_DE_XUAT_DIEU_CHINH, trangDanhSachCuaLoai } from '@/types/deXuat'
+import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung, coDoiLuong, coDoiPhuCap, laHoSoNangLuong, LOAI_HO_SO_NANG_LUONG, LOAI_DE_XUAT_DIEU_CHINH, trangDanhSachCuaLoai } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
+import PhuCapDieuChinhField from '@/components/PhuCapDieuChinhField'
 import { isDangCongTac, nhanLuongTheoTien } from '@/types/vienChuc'
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
 import { laDienPhuCapThamNien, nhomCoBan } from '@/utils/nhomViTri'
@@ -166,7 +167,8 @@ export default function TaoDeXuatPage() {
     // Phiếu PCTN: gợi ý mốc mới = mốc hưởng PCTN hiện tại + 1 năm, mức mới = mức cũ + 1%
     const mocPctnMoi = vc.mocHuongPctn ? dayjs(vc.mocHuongPctn).add(1, 'year').format('YYYY-MM-DD') : undefined
     // Mốc hưởng mặc định: nâng thường xuyên = ngày đến hạn nâng bậc; loại khác = hôm nay
-    const mocMacDinh = laPctn ? mocPctnMoi : loaiDeXuat === 'NANG_BAC' ? hsl.ngayNangLuongTiepTheo : undefined
+    // Điều chỉnh: giữ mốc hưởng hiện tại (chỉ sửa khi văn bản đổi mốc) để phiếu chỉ đổi phụ cấp không tạo bản lương mới
+    const mocMacDinh = laPctn ? mocPctnMoi : loaiDeXuat === 'NANG_BAC' ? hsl.ngayNangLuongTiepTheo : loaiDeXuat === 'DIEU_CHINH' ? hsl.ngayHieuLuc : undefined
     setChiTiet((prev) => [...prev, {
       vienChucId: vcId,
       chucDanhCuId: hsl.chucDanhId,
@@ -180,7 +182,7 @@ export default function TaoDeXuatPage() {
       lyDo: laPctn ? 'Nâng phụ cấp thâm niên theo niên hạn'
         : loaiDeXuat === 'NANG_TRUOC_HAN' ? 'Nâng bậc trước thời hạn do lập thành tích xuất sắc'
         : loaiDeXuat === 'CHUYEN_NGACH' ? 'Chuyển ngạch / thay đổi hạng chức danh'
-        : loaiDeXuat === 'DIEU_CHINH' ? 'Điều chỉnh hệ số lương'
+        : loaiDeXuat === 'DIEU_CHINH' ? 'Điều chỉnh hệ số lương - phụ cấp'
         : laVuotKhung ? (tnvkHienTai > 0 ? 'Nâng phụ cấp thâm niên vượt khung' : 'Hưởng phụ cấp thâm niên vượt khung lần đầu')
         : 'Đủ thời hạn nâng bậc thường xuyên',
       pctnCu: pctnHienTai,
@@ -341,6 +343,14 @@ export default function TaoDeXuatPage() {
       if (loai === 'PHU_CAP_THAM_NIEN') return
       if (LOAI_NANG_BAC.includes(loai) && !laDongVuotKhung(r) && r.bacMoi <= r.bacCu && r.chucDanhMoiId === r.chucDanhCuId) loi.push(`${ten}: bậc mới phải cao hơn bậc ${r.bacCu}`)
       if (!bangCua(r.chucDanhMoiId).some((b) => b.bac === r.bacMoi)) loi.push(`${ten}: bậc ${r.bacMoi} không có trong bảng lương của ngạch mới`)
+      if (loai === 'DIEU_CHINH') {
+        for (const p of r.phuCaps ?? []) {
+          const tenPc = loaiPhuCaps.find((l) => l.id === p.loaiPhuCapId)?.ten ?? 'phụ cấp'
+          if (!p.ngayHieuLuc) loi.push(`${ten}: ${tenPc} chưa có ngày hưởng`)
+          if (!coDoiPhuCap(p)) loi.push(`${ten}: ${tenPc} mức mới giống mức đang hưởng - bỏ dòng hoặc sửa mức`)
+        }
+        if (!coDoiLuong(r) && !r.phuCaps?.length) loi.push(`${ten}: chưa có nội dung điều chỉnh (lương giữ nguyên, chưa thêm phụ cấp)`)
+      }
       // Nâng trước hạn: mốc hưởng mới phải sớm hơn ngày đến hạn, nhưng không quá 12 tháng
       if (loai === 'NANG_TRUOC_HAN' && r.ngayDenHanCu && r.ngayHieuLuc) {
         if (r.ngayHieuLuc >= r.ngayDenHanCu) loi.push(`${ten}: mốc hưởng mới phải trước ngày đến hạn ${formatDate(r.ngayDenHanCu)}`)
@@ -556,6 +566,12 @@ export default function TaoDeXuatPage() {
               : <Text type="secondary">{ngay} <span style={{ fontSize: 12 }}>(+{tg} năm)</span></Text>
           },
         },
+        ...(loaiDeXuat === 'DIEU_CHINH' ? [{
+          title: <Tooltip title="Thêm phụ cấp cần đổi mức: chức vụ, ưu đãi, trách nhiệm, thâm niên… Mức 0 = thôi hưởng">Phụ cấp điều chỉnh</Tooltip>, key: 'pc', width: 300,
+          render: (_: any, r: ChiTietDeXuat, idx: number) => (
+            <PhuCapDieuChinhField vienChucId={r.vienChucId} value={r.phuCaps} ngayMacDinh={r.ngayHieuLuc} onChange={(v) => updateChiTiet(idx, { phuCaps: v })} />
+          ),
+        }] : []),
         {
           title: 'Nội dung điều chỉnh (cũ → mới)', key: 'noi_dung', width: 300,
           render: (_: any, r: ChiTietDeXuat) => <NoiDungDieuChinh r={r} chucDanhs={chucDanhs} />,

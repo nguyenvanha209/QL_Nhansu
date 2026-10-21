@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
 import type { DeXuatLuong, TrangThaiDeXuat, ChiTietDeXuat } from '@/types/deXuat'
-import { laDongVuotKhung } from '@/types/deXuat'
+import { laDongVuotKhung, coDoiLuong } from '@/types/deXuat'
+import { hoPhuCap, hienMucPhuCap, ngayKetThucKhiThay } from '@/utils/phuCapDangHuong'
 import type { LyDoNangLuong } from '@/types/luong'
 import { laDienPhuCapThamNien } from '@/utils/nhomViTri'
 import { persistStorage } from '@/lib/supabase'
@@ -331,6 +332,37 @@ export const useDeXuatStore = create<DeXuatState>()(
                 deXuatId: id,
               })
               return
+            }
+            // Phiếu Điều chỉnh: ghi các phụ cấp đổi mức (addPhuCap tự đóng bản đang hưởng cùng họ; mức 0 = thôi hưởng)
+            if (dx.loai === 'DIEU_CHINH' && ct.phuCaps?.length) {
+              const lg = useLuongStore.getState()
+              const loais = useDanhMucStore.getState().loaiPhuCaps
+              for (const p of ct.phuCaps) {
+                const ho = hoPhuCap(p.loaiPhuCapId, loais)
+                const dangHuong = lg.getActivePhuCaps(ct.vienChucId).filter((x) => hoPhuCap(x.loaiPhuCapId, loais) === ho)
+                if (p.giaTriMoi > 0) {
+                  lg.addPhuCap({
+                    vienChucId: ct.vienChucId, loaiPhuCapId: p.loaiPhuCapId, giaTri: p.giaTriMoi, ngayHieuLuc: p.ngayHieuLuc,
+                    ghiChu: `Theo đề xuất ${dx.ma}`, isActive: true, createdBy: actorId,
+                  })
+                } else {
+                  for (const x of dangHuong) lg.updatePhuCap(x.id, { isActive: false, ngayHetHan: ngayKetThucKhiThay(x.ngayHieuLuc, p.ngayHieuLuc) })
+                }
+                const lMoi = loais.find((l) => l.id === p.loaiPhuCapId)
+                const lCu = loais.find((l) => l.id === (p.loaiPhuCapCuId ?? p.loaiPhuCapId))
+                addLichSuBienDong({
+                  vienChucId: ct.vienChucId,
+                  loai: 'PHU_CAP',
+                  truongThayDoi: lMoi?.ten ?? 'Phụ cấp',
+                  giaTriCu: p.giaTriCu != null ? `${lCu && lCu.id !== lMoi?.id ? `${lCu.ten} ` : ''}${hienMucPhuCap(lCu, p.giaTriCu)}` : 'Chưa hưởng',
+                  giaTriMoi: p.giaTriMoi > 0 ? hienMucPhuCap(lMoi, p.giaTriMoi) : 'Thôi hưởng',
+                  ngayThayDoi: p.ngayHieuLuc,
+                  nguoiThayDoiId: actorId,
+                  deXuatId: id,
+                })
+              }
+              // Chỉ đổi phụ cấp: giữ nguyên bản lương đang hưởng
+              if (!coDoiLuong(ct)) return
             }
             const cur = getActiveHeSo(ct.vienChucId)
             if (cur) deactivateHeSoLuong(cur.id)

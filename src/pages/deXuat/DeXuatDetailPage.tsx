@@ -110,7 +110,19 @@ export default function DeXuatDetailPage() {
     return { cd: chucDanhs.find((c) => c.id === r.chucDanhCuId), hs: vc ? heSoDangHuong(vc, heSoLuongs) : undefined, bacCuoi: bang.length ? bang[bang.length - 1].bac : undefined, tenNguoi: vc ? `${vc.ho} ${vc.ten}` : r.vienChucId }
   }
   const colsTruocHan = [
-    colVienChuc,
+    {
+      ...colVienChuc, width: 190,
+      render: (_: any, r: ChiTietDeXuat, i: number) => {
+        const toiDa = soSuatToiDa(dx.hoSoTruocHan?.soNguoiTraLuong ?? 0)
+        return (
+          <div>
+            {colVienChuc.render(_, r)}
+            {i >= toiDa && <div><Tag color="orange" style={{ marginInlineEnd: 0 }}>Vượt tỷ lệ - dự phòng {i + 1 - toiDa}</Tag></div>}
+            {r.ghiChu && <div><Text type="secondary" style={{ fontSize: 13 }}>{r.ghiChu}</Text></div>}
+          </div>
+        )
+      },
+    },
     {
       title: 'Hiện tại', key: 'cu', width: 160,
       render: (_: any, r: ChiTietDeXuat) => {

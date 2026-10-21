@@ -15,6 +15,36 @@ export function ngayDu5Nam(k: Pick<KhaiPctnLanDau, 'batDauBhxh' | 'thangTapSu' |
   return dayjs(`${k.batDauBhxh}-01`).add(60 + khongTinh, 'month').format('YYYY-MM-DD')
 }
 
+/** Số tháng tập sự tạm tính khi chưa khai chi tiết (khai đúng theo hồ sơ ở phiếu Xếp PCTN lần đầu) */
+export const THANG_TAP_SU_MAC_DINH = 12
+
+/** Ngày dự kiến đủ 5 năm từ tháng bắt đầu đóng BHXH trong ngành ghi ở hồ sơ (tạm tính 12 tháng tập sự) */
+export const du5NamTuHoSo = (batDauBhxhGd?: string) =>
+  ngayDu5Nam({ batDauBhxh: batDauBhxhGd, thangTapSu: THANG_TAP_SU_MAC_DINH, thangKhongTinhKhac: 0 })
+
+export type TinhTrangLanDau = 'DANG_HUONG' | 'CHUA_KHAI' | 'DU_5_NAM' | 'SAP_DU' | 'CHUA_DU'
+
+/**
+ * Tình trạng xếp PCTN lần đầu của CBQL, giáo viên: đang hưởng / chưa khai BHXH / đã đủ 5 năm (thuộc diện rà soát,
+ * lập phiếu) / sắp đủ (trong `soThangSapDu` tháng tới) / chưa đủ.
+ */
+export function tinhTrangLanDau(pctnDangHuong: number, batDauBhxhGd: string | undefined, homNay: string, soThangSapDu = 6): { tt: TinhTrangLanDau; du5Nam?: string } {
+  if (pctnDangHuong > 0) return { tt: 'DANG_HUONG' }
+  const du5Nam = du5NamTuHoSo(batDauBhxhGd)
+  if (!du5Nam) return { tt: 'CHUA_KHAI' }
+  if (du5Nam <= homNay) return { tt: 'DU_5_NAM', du5Nam }
+  if (du5Nam <= dayjs(homNay).add(soThangSapDu, 'month').format('YYYY-MM-DD')) return { tt: 'SAP_DU', du5Nam }
+  return { tt: 'CHUA_DU', du5Nam }
+}
+
+export const TINH_TRANG_LAN_DAU: Record<TinhTrangLanDau, { nhan: string; mau: string }> = {
+  DANG_HUONG: { nhan: 'Đang hưởng PCTN', mau: 'default' },
+  CHUA_KHAI: { nhan: 'Chưa khai BHXH', mau: 'warning' },
+  DU_5_NAM: { nhan: 'Đủ 5 năm - rà soát xếp lần đầu', mau: 'error' },
+  SAP_DU: { nhan: 'Sắp đủ 5 năm', mau: 'processing' },
+  CHUA_DU: { nhan: 'Chưa đủ 5 năm', mau: 'default' },
+}
+
 /** Ngày bắt đầu được hưởng mặc định: ngày tuyển dụng, làm tròn lên ngày 01 của tháng (VD 13/02 → 01/03) */
 export function huongTuMacDinh(ngayTuyenDung?: string): string | undefined {
   if (!ngayTuyenDung) return undefined

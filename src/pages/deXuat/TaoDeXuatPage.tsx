@@ -146,7 +146,8 @@ export default function TaoDeXuatPage() {
       const khai: KhaiPctnLanDau = {
         ngayTuyenDung: vc.ngayVaoBienChe,
         trinhDo: vc.trinhDoChuyenMon,
-        batDauBhxh: vc.ngayVaoNganh ? vc.ngayVaoNganh.slice(0, 7) : undefined,
+        // Ưu tiên tháng bắt đầu đóng BHXH trong ngành ghi ở hồ sơ; chưa khai thì tạm theo ngày vào ngành
+        batDauBhxh: vc.batDauBhxhGd ?? (vc.ngayVaoNganh ? vc.ngayVaoNganh.slice(0, 7) : undefined),
         thangTapSu: 12,
         thangKhongTinhKhac: 0,
         huongTu: huongTuMacDinh(vc.ngayVaoBienChe),
@@ -279,13 +280,15 @@ export default function TaoDeXuatPage() {
       .filter((v) => duocHuongPctn(v) && !chiTiet.some((c) => c.vienChucId === v.id))
       .filter((v) => !phuCapVienChucs.some((p) => p.vienChucId === v.id && p.isActive && p.loaiPhuCapId === loaiPctn.id && p.giaTri > 0))
       .map((v) => {
-        const duKien = ngayDu5Nam({ batDauBhxh: v.ngayVaoNganh?.slice(0, 7), thangTapSu: 12, thangKhongTinhKhac: 0 })
+        // Căn cứ: tháng bắt đầu đóng BHXH trong ngành ở hồ sơ; chưa khai thì tạm theo ngày vào ngành (cần bổ sung)
+        const coBhxh = !!v.batDauBhxhGd
+        const duKien = ngayDu5Nam({ batDauBhxh: v.batDauBhxhGd ?? v.ngayVaoNganh?.slice(0, 7), thangTapSu: 12, thangKhongTinhKhac: 0 })
         const laCbql = nhomCoBan(v, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom) === 'CBQL'
-        return { id: v.id, hoTen: `${v.ho} ${v.ten}`, viTri: laCbql ? 'Cán bộ quản lý' : 'Giáo viên', ngayVaoNganh: v.ngayVaoNganh, ngayTuyenDung: v.ngayVaoBienChe, duKien }
+        return { id: v.id, hoTen: `${v.ho} ${v.ten}`, viTri: laCbql ? 'Cán bộ quản lý' : 'Giáo viên', ngayVaoNganh: v.ngayVaoNganh, ngayTuyenDung: v.ngayVaoBienChe, batDauBhxh: v.batDauBhxhGd, coBhxh, duKien }
       })
-      // Liệt kê mọi người chưa hưởng (hồ sơ có thể chưa ghi thời gian dạy ngoài công lập); người dự kiến đủ trong kỳ lên đầu
+      // Liệt kê mọi người chưa hưởng; đã đủ 5 năm (theo BHXH) trong kỳ lên đầu, rồi người chưa khai BHXH, rồi theo ngày dự kiến
       .map((x) => ({ ...x, duTrongKy: !!x.duKien && x.duKien <= dotRange.end }))
-      .sort((a, b) => Number(b.duTrongKy) - Number(a.duTrongKy) || (a.duKien ?? '9').localeCompare(b.duKien ?? '9'))
+      .sort((a, b) => Number(b.duTrongKy && b.coBhxh) - Number(a.duTrongKy && a.coBhxh) || Number(a.coBhxh) - Number(b.coBhxh) || (a.duKien ?? '9').localeCompare(b.duKien ?? '9'))
   }, [laLanDau, vienChucs, selectedDonVi, chiTiet, phuCapVienChucs, loaiPctn, dotRange])
   const themDaChonLanDau = () => {
     selectedGoiYLanDau.forEach((vcId) => addVC(vcId))
@@ -702,14 +705,14 @@ export default function TaoDeXuatPage() {
         </>}
 
         {laLanDau && <>
-        <Divider plain>Cán bộ quản lý, giáo viên chưa hưởng phụ cấp thâm niên (dự kiến đủ 5 năm trong kỳ tô xanh) - nhân viên không thuộc diện</Divider>
+        <Divider plain>Rà soát CBQL, giáo viên chưa hưởng phụ cấp thâm niên - đủ 5 năm trong kỳ theo BHXH tô xanh, tạm tính (chưa khai BHXH) tô vàng; nhân viên không thuộc diện</Divider>
         <Space wrap style={{ marginBottom: 12 }}>
           <InputNumber value={dotNam} onChange={(v) => setDotNam(v ?? currentYear)} style={{ width: 100 }} />
           <Select value={dotKy} onChange={setDotKy} style={{ width: 180 }} options={[{ value: 'H1', label: '6 tháng đầu năm' }, { value: 'H2', label: '6 tháng cuối năm' }]} />
           <Button type="primary" ghost disabled={selectedGoiYLanDau.length === 0} onClick={themDaChonLanDau}>
             Thêm {selectedGoiYLanDau.length > 0 ? selectedGoiYLanDau.length : ''} đã chọn vào đề xuất
           </Button>
-          <Text type="secondary" style={{ fontSize: 13 }}>Dự kiến tạm tính từ ngày vào ngành + 60 tháng + 12 tháng tập sự; khai đúng theo hồ sơ BHXH ở nút "Khai báo".</Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>Dự kiến = tháng bắt đầu đóng BHXH trong ngành (hồ sơ) + 60 tháng + 12 tháng tập sự; người chưa khai BHXH tạm tính theo ngày vào ngành - bổ sung ở trang <a onClick={() => navigate('/vien-chuc/bhxh')}>Bổ sung thông tin đóng BHXH</a>. Khai chi tiết ở nút "Khai báo".</Text>
         </Space>
         <Table
           dataSource={goiYLanDauData}
@@ -723,9 +726,17 @@ export default function TaoDeXuatPage() {
           columns={[
             { title: 'Họ và tên', dataIndex: 'hoTen', key: 'ht' },
             { title: 'Vị trí', dataIndex: 'viTri', key: 'vt', width: 130 },
-            { title: 'Ngày vào ngành', key: 'vn', width: 130, render: (_: any, r: any) => (r.ngayVaoNganh ? formatDate(r.ngayVaoNganh) : <Text type="warning">Chưa có</Text>) },
+            { title: 'Ngày vào ngành', key: 'vn', width: 120, render: (_: any, r: any) => (r.ngayVaoNganh ? formatDate(r.ngayVaoNganh) : <Text type="warning">Chưa có</Text>) },
+            { title: 'Bắt đầu đóng BHXH', key: 'bh', width: 140, render: (_: any, r: any) => (r.batDauBhxh ? `${r.batDauBhxh.slice(5, 7)}/${r.batDauBhxh.slice(0, 4)}` : <Tag color="warning">Chưa khai</Tag>) },
             { title: 'Ngày tuyển dụng', key: 'td', width: 130, render: (_: any, r: any) => (r.ngayTuyenDung ? formatDate(r.ngayTuyenDung) : '-') },
-            { title: 'Dự kiến đủ 5 năm', key: 'dk', width: 170, render: (_: any, r: any) => (r.duKien ? <Tag color={r.duTrongKy ? 'green' : 'default'}>{formatDate(r.duKien)}{r.duTrongKy ? ' - trong kỳ' : ''}</Tag> : <Text type="secondary">Khai để tính</Text>) },
+            {
+              title: 'Dự kiến đủ 5 năm', key: 'dk', width: 200,
+              render: (_: any, r: any) => (r.duKien
+                ? <Tooltip title={r.coBhxh ? 'Theo tháng đóng BHXH ở hồ sơ' : 'Tạm tính theo ngày vào ngành - cần khai tháng đóng BHXH'}>
+                    <Tag color={r.duTrongKy ? (r.coBhxh ? 'green' : 'gold') : 'default'}>{formatDate(r.duKien)}{r.duTrongKy ? (r.coBhxh ? ' - đủ trong kỳ' : ' - tạm tính') : ''}</Tag>
+                  </Tooltip>
+                : <Text type="secondary">Khai để tính</Text>),
+            },
           ]}
         />
         </>}

@@ -9,7 +9,7 @@ import {
   BarChartOutlined, SettingOutlined, LogoutOutlined, BellOutlined,
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
   AuditOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
-  SolutionOutlined, WarningOutlined, BankOutlined, RiseOutlined,
+  SolutionOutlined, WarningOutlined, BankOutlined, RiseOutlined, SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useBoNhiem } from '@/hooks/useBoNhiem'
 import { useAuth } from '@/hooks/useAuth'
@@ -29,6 +29,7 @@ const FOOTER_TEXT = 'QLVC&LĐ phường Gia Viên | Đơn vị: Phòng Văn hóa
 
 const BREADCRUMB_MAP: Record<string, string> = {
   '/dashboard': 'Tổng quan',
+  '/vien-chuc/bhxh': 'Bổ sung thông tin đóng BHXH',
   '/vien-chuc': 'Hồ sơ nhân sự',
   '/bang-tong-hop-luong': 'Bảng tổng hợp lương',
   '/luong/he-so': 'Hệ số lương',
@@ -68,6 +69,7 @@ export default function AppLayout() {
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
+    hasPermission('vienChuc', 'read') && { key: '/vien-chuc/bhxh', icon: <SafetyCertificateOutlined />, label: 'Bổ sung thông tin đóng BHXH', style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 } },
     hasPermission('luong', 'read') && { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
     hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
     hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL và định mức VC' },
@@ -111,6 +113,7 @@ export default function AppLayout() {
     const path = location.pathname
     if (path.startsWith('/luong')) return path
     if (path.startsWith('/admin')) return path
+    if (path === '/vien-chuc/bhxh') return path
     // Hồ sơ nâng lương - PCTN: phiếu mở ở /de-xuat/:id hoặc /nang-truoc-han/:id vẫn sáng mục của nó
     if (path.startsWith('/nang-truoc-han')) return '/ho-so-nang-luong'
     const m = path.match(/^\/de-xuat\/([^/]+)/)

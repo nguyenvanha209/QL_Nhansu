@@ -277,6 +277,9 @@ export default function VienChucDetailPage() {
                 {coPhuCapThamNien(vc.vtvl) && (
                   <Descriptions.Item label="Mốc hưởng PCTN">{vc.mocHuongPctn ? formatDate(vc.mocHuongPctn) : '-'}</Descriptions.Item>
                 )}
+                {coPhuCapThamNien(vc.vtvl) && (
+                  <Descriptions.Item label="Bắt đầu đóng BHXH trong ngành GD">{vc.batDauBhxhGd ? `${vc.batDauBhxhGd.slice(5, 7)}/${vc.batDauBhxhGd.slice(0, 4)}` : <Typography.Text type="warning">Chưa khai</Typography.Text>}</Descriptions.Item>
+                )}
                 {nhanLuongTheoTien(vc) && <>
                   <Descriptions.Item label="Hình thức nhận lương">{HINH_THUC_LUONG_LABELS.TIEN}</Descriptions.Item>
                   <Descriptions.Item label="Mức lương">{vc.mucLuongTien != null ? `${vc.mucLuongTien.toLocaleString('vi-VN')} đ/tháng` : '-'}</Descriptions.Item>

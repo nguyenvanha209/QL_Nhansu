@@ -400,6 +400,7 @@ export default function VienChucFormPage() {
       ngayHetTapSu: vc.ngayHetTapSu ? dayjs(vc.ngayHetTapSu) : undefined,
       ngayVaoBienChe: vc.ngayVaoBienChe ? dayjs(vc.ngayVaoBienChe) : undefined,
       mocHuongPctn: vc.mocHuongPctn ? dayjs(vc.mocHuongPctn) : undefined,
+      batDauBhxhGd: vc.batDauBhxhGd ? dayjs(`${vc.batDauBhxhGd}-01`) : undefined,
       ngayChuyenDi: vc.ngayChuyenDi ? dayjs(vc.ngayChuyenDi) : undefined,
       blBat: !!vc.baoLuuPccv,
       blChucVuCu: vc.baoLuuPccv?.chucVuCu,
@@ -540,6 +541,7 @@ export default function VienChucFormPage() {
       ngayHetTapSu: values.ngayHetTapSu?.format('YYYY-MM-DD'),
       ngayVaoBienChe: values.ngayVaoBienChe?.format('YYYY-MM-DD'),
       mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
+      batDauBhxhGd: values.batDauBhxhGd ? values.batDauBhxhGd.format('YYYY-MM') : undefined,
       ngayChuyenDi: values.trangThai === 'CHUYEN_DI' ? values.ngayChuyenDi?.format('YYYY-MM-DD') : undefined,
       baoLuuPccv,
     }
@@ -1057,6 +1059,15 @@ export default function VienChucFormPage() {
               </Form.Item>
             </Col>
           )}
+          <Col xs={24} sm={12} md={8}>
+            <Form.Item
+              name="batDauBhxhGd"
+              label="Bắt đầu đóng BHXH trong ngành giáo dục"
+              tooltip="Tháng bắt đầu giảng dạy, giáo dục có đóng BHXH bắt buộc (theo sổ / quá trình đóng BHXH) - căn cứ tính đủ 5 năm xếp phụ cấp thâm niên nhà giáo lần đầu. CBQL, giáo viên cần khai; nhân viên không hưởng PCTN."
+            >
+              <DatePicker picker="month" format="MM/YYYY" placeholder="Tháng/năm" style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
         </Row>
         {laBienChe ? (
           <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>

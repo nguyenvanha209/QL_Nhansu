@@ -92,6 +92,11 @@ export interface VienChuc {
   laDangVien?: boolean
   /** Mốc hưởng phụ cấp thâm niên - căn cứ đề xuất nâng 1%/năm ở kỳ sau (chỉ CBQL và giáo viên) */
   mocHuongPctn?: string
+  /**
+   * Tháng bắt đầu đóng BHXH bắt buộc khi giảng dạy, giáo dục trong ngành ('YYYY-MM') - căn cứ tính đủ 5 năm (60 tháng)
+   * xếp phụ cấp thâm niên nhà giáo lần đầu (NĐ 77/2021). Kế toán khai ở hồ sơ hoặc trang Bổ sung thông tin đóng BHXH.
+   */
+  batDauBhxhGd?: string
   ngayVaoNganh: string
   ngayVaoDonVi: string
   ngayHetTapSu?: string

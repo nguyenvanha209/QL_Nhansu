@@ -31,6 +31,7 @@ const QuyMoDinhMucPage = lazy(() => import('@/pages/quyMo/QuyMoDinhMucPage'))
 const ThongBaoKetQuaPage = lazy(() => import('@/pages/thongBao/ThongBaoKetQuaPage'))
 const ThongTinTruongPage = lazy(() => import('@/pages/thongTinTruong/ThongTinTruongPage'))
 const HoSoNangLuongPage = lazy(() => import('@/pages/nangLuong/HoSoNangLuongPage'))
+const BoSungBhxhPage = lazy(() => import('@/pages/vienChuc/BoSungBhxhPage'))
 const HoSoTruocHanPage = lazy(() => import('@/pages/truocHan/HoSoTruocHanPage'))
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -48,6 +49,7 @@ export default function AppRouter() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="vien-chuc" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><VienChucListPage /></RoleGuard>} />
+          <Route path="vien-chuc/bhxh" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><BoSungBhxhPage /></RoleGuard>} />
           <Route path="vien-chuc/new" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'write' }}><VienChucFormPage /></RoleGuard>} />
           <Route path="vien-chuc/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><VienChucDetailPage /></RoleGuard>} />
           <Route path="vien-chuc/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'write' }}><VienChucFormPage /></RoleGuard>} />

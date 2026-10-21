@@ -236,6 +236,8 @@ export const useDeXuatStore = create<DeXuatState>()(
             updateVienChuc(ct.vienChucId, {
               mocHuongPctn: cuoi.mocXet,
               ...(vc && !vc.ngayVaoBienChe && ct.lanDau?.ngayTuyenDung ? { ngayVaoBienChe: ct.lanDau.ngayTuyenDung } : {}),
+              // Tháng bắt đầu đóng BHXH đã khai trong phiếu → ghi vào hồ sơ nếu hồ sơ chưa có
+              ...(vc && !vc.batDauBhxhGd && ct.lanDau?.batDauBhxh ? { batDauBhxhGd: ct.lanDau.batDauBhxh } : {}),
             })
             addPhuCap({
               vienChucId: ct.vienChucId,

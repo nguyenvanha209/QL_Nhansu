@@ -69,6 +69,17 @@ body {
 .qlvc-sidebar .ant-menu .ant-menu-item-selected .anticon {
   color: #fff !important;
 }
+/* Hai mục nghiệp vụ chính (Lập hồ sơ nâng lương - PCTN, Thông báo kết quả): chữ đậm trắng, nền sáng, vạch vàng bên trái */
+.qlvc-sidebar .ant-menu .ant-menu-item.menu-noi-bat {
+  color: #fff !important;
+  font-weight: 700;
+  background: rgba(255,255,255,0.13) !important;
+  box-shadow: inset 3px 0 0 #facc15;
+}
+.qlvc-sidebar .ant-menu .ant-menu-item.menu-noi-bat:hover { background: rgba(255,255,255,0.22) !important; }
+.qlvc-sidebar .ant-menu .ant-menu-item-selected.menu-noi-bat { background: rgba(255,255,255,0.28) !important; }
+.qlvc-sidebar .ant-menu .ant-menu-item.menu-noi-bat .anticon { color: #fff !important; font-size: 17px; }
+
 /* Mục menu nhấn mạnh màu vàng (Đề xuất điều chỉnh hệ số lương - phụ cấp) */
 .qlvc-sidebar .ant-menu .ant-menu-item.menu-vang .anticon,
 .qlvc-sidebar .ant-menu .ant-menu-item-selected.menu-vang .anticon {

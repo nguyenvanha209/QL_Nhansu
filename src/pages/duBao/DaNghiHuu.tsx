@@ -10,6 +10,8 @@ import type { VienChuc } from '@/types/vienChuc'
 import { calcRetirementDate, calcPensionStartDate, moTaTuoiNghiHuu } from '@/utils/retirement'
 import { formatDate } from '@/utils/helpers'
 import { exportToExcel } from '@/utils/exportExcel'
+import type { ColumnsType } from 'antd/es/table'
+import { BANG_CHUAN, phanTrang, cotSTT, cotHoTen, cotNgay, cotChu, cotGiua, tenGioiTinh } from '@/utils/cotBang'
 import { laBienChe } from '@/utils/dinhMuc'
 
 const { Text } = Typography
@@ -74,33 +76,22 @@ export default function DaNghiHuu() {
   )
 
   const xemHoSo = hasPermission('vienChuc', 'read')
-  const columns = [
-    { title: 'STT', key: 'stt', width: 55, align: 'center' as const, render: (_: unknown, __: Dong, i: number) => i + 1 },
-    {
-      title: 'Họ và tên', key: 'hoTen', width: 190,
-      render: (_: unknown, r: Dong) => (xemHoSo ? <a onClick={() => navigate(`/vien-chuc/${r.id}`)}>{r.ho} {r.ten}</a> : `${r.ho} ${r.ten}`),
-      sorter: (a: Dong, b: Dong) => a.ten.localeCompare(b.ten, 'vi') || a.ho.localeCompare(b.ho, 'vi'),
-    },
-    { title: 'Ngày sinh', dataIndex: 'ngaySinh', key: 'ns', width: 105, render: (v: string) => formatDate(v) },
-    { title: 'Giới tính', dataIndex: 'gioiTinh', key: 'gt', width: 75, render: (v: string) => (v === 'NAM' ? 'Nam' : 'Nữ') },
-    {
-      title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', width: 200, ellipsis: true,
-      sorter: (a: Dong, b: Dong) => a.donViTen.localeCompare(b.donViTen, 'vi'),
-    },
-    { title: 'Chức danh', key: 'cd', width: 210, ellipsis: true, render: (_: unknown, r: Dong) => <span>{r.chucDanhTen}{r.maNgach && <Text type="secondary" style={{ fontSize: 12 }}> ({r.maNgach})</Text>}</span> },
-    { title: 'Chức vụ', key: 'cv', width: 110, render: (_: unknown, r: Dong) => (r.chucVu ? CHUC_VU_LABELS[r.chucVu] ?? r.chucVu : '') },
-    { title: 'Loại hình', key: 'lh', width: 150, render: (_: unknown, r: Dong) => LOAI_LAO_DONG_LABELS[r.loaiLaoDong] ?? r.loaiLaoDong },
-    { title: 'Tuổi nghỉ hưu', dataIndex: 'tuoiNghiHuu', key: 'tnh', width: 130, render: (v: string) => <Text type="secondary">{v}</Text> },
-    {
-      title: 'Thời điểm nghỉ hưu', dataIndex: 'ngayNghiHuu', key: 'nnh', width: 125,
-      render: (v: string) => <Text strong>{formatDate(v)}</Text>,
-      sorter: (a: Dong, b: Dong) => a.ngayNghiHuu.localeCompare(b.ngayNghiHuu),
-    },
-    { title: 'Hưởng chế độ hưu trí từ', dataIndex: 'ngayHuongHuu', key: 'nhh', width: 125, render: (v: string) => formatDate(v) },
-    ...(che === 'QUA_TUOI' ? [{
-      title: 'Tình trạng', key: 'tt', width: 190,
-      render: () => <Tag color="volcano">Đã qua tuổi, hồ sơ còn đang công tác</Tag>,
-    }] : [{ title: 'Ghi chú', dataIndex: 'ghiChu', key: 'gc', width: 200, ellipsis: true }]),
+  // Theo quy chuẩn bảng (utils/cotBang): mọi cột có độ rộng, Họ và tên ghim trái
+  const columns: ColumnsType<Dong> = [
+    cotSTT<Dong>(),
+    cotHoTen<Dong>(xemHoSo ? (r) => navigate(`/vien-chuc/${r.id}`) : undefined),
+    cotNgay<Dong>('Ngày sinh', (r) => r.ngaySinh),
+    cotGiua<Dong>('Giới tính', 'gt', 75, (r) => tenGioiTinh(r.gioiTinh)),
+    cotChu<Dong>('Đơn vị', (r) => r.donViTen, 190, { sapXep: true }),
+    cotChu<Dong>('Chức danh', (r) => r.chucDanhTen, 220, { phu: (r) => r.maNgach }),
+    cotGiua<Dong>('Chức vụ', 'cv', 100, (r) => (r.chucVu ? CHUC_VU_LABELS[r.chucVu] ?? r.chucVu : '')),
+    cotChu<Dong>('Loại hình', (r) => LOAI_LAO_DONG_LABELS[r.loaiLaoDong] ?? r.loaiLaoDong, 160),
+    cotGiua<Dong>('Tuổi nghỉ hưu', 'tnh', 130, (r) => <Text type="secondary">{r.tuoiNghiHuu}</Text>),
+    cotNgay<Dong>('Thời điểm nghỉ hưu', (r) => r.ngayNghiHuu, { dam: true, width: 115, sapXep: true }),
+    cotNgay<Dong>('Hưởng chế độ hưu trí từ', (r) => r.ngayHuongHuu, { width: 115 }),
+    che === 'QUA_TUOI'
+      ? cotGiua<Dong>('Tình trạng', 'tt', 150, () => <Tag color="volcano" style={{ marginInlineEnd: 0 }}>Hồ sơ còn ghi đang công tác</Tag>)
+      : cotChu<Dong>('Ghi chú', (r) => r.ghiChu, 200),
   ]
 
   const xuat = () => exportToExcel(
@@ -172,12 +163,11 @@ export default function DaNghiHuu() {
       </Space>
 
       <Table<Dong>
+        {...BANG_CHUAN}
         dataSource={data}
         columns={columns}
         rowKey="id"
-        size="small"
-        scroll={{ x: 'max-content' }}
-        pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} người` }}
+        pagination={phanTrang('người')}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Thời điểm nghỉ hưu tính theo tuổi nghỉ hưu tại Nghị định 135/2020/NĐ-CP (theo tháng, năm sinh); hưởng chế độ hưu trí từ ngày đầu tháng liền kề.

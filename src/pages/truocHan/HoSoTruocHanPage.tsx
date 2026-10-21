@@ -4,7 +4,7 @@ import {
   Alert, App, AutoComplete, Button, Card, Col, DatePicker, Empty, Input, InputNumber, Result, Row, Select, Space, Table, Tag, Tooltip, Typography,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { ArrowDownOutlined, ArrowLeftOutlined, ArrowUpOutlined, DeleteOutlined, PlusOutlined, PrinterOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons'
+import { ArrowDownOutlined, ArrowLeftOutlined, ArrowUpOutlined, DeleteOutlined, PlusOutlined, FileExcelOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useAuth } from '@/hooks/useAuth'
 import { useDeXuatStore } from '@/store/deXuatStore'
@@ -18,7 +18,7 @@ import type { ChiTietDeXuat, HoSoTruocHan } from '@/types/deXuat'
 import type { VienChuc } from '@/types/vienChuc'
 import { duocTinhSoLieu } from '@/types/vienChuc'
 import { formatDate } from '@/utils/helpers'
-import { ghiChuVuotTyLe, taiWordDanhSachTruong } from '@/utils/danhSachTruocHan'
+import { ghiChuVuotTyLe, xuatExcelDanhSachTruong } from '@/utils/danhSachTruocHan'
 import { cotSTT, BANG_CHUAN } from '@/utils/cotBang'
 import {
   SO_THANG_TOI_DA, bacKeTiep, danhSachTraLuong, heSoDangHuong, khoangDenHan, kiemTraDong, mocMoiTruocHan, soSuatToiDa, trongDienXet,
@@ -134,7 +134,7 @@ export default function HoSoTruocHanPage() {
     if (!chiTiet.length) { message.warning('Chưa có người trong danh sách'); return }
     const thieu = chiTiet.filter((c) => !c.thanhTich?.hinhThuc?.trim() || !c.soThangTruocHan)
     if (thieu.length) message.warning(`${thieu.length} người chưa ghi thành tích / số tháng - cột tương ứng trên bản in sẽ để trống`)
-    taiWordDanhSachTruong({ tenTruong: donVi?.ten ?? '', nam, chiTiet, toiDa, vienChucs: vcTheoId, chucDanhs: cdTheoId, hieuTruong })
+    xuatExcelDanhSachTruong({ tenTruong: donVi?.ten ?? '', nam, chiTiet, toiDa, soNguoiTraLuong: dsTraLuong.length, vienChucs: vcTheoId, chucDanhs: cdTheoId, hieuTruong })
   }
   const tenNguoi = (c: ChiTietDeXuat) => { const vc = vcTheoId.get(c.vienChucId); return vc ? `${vc.ho} ${vc.ten}` : c.vienChucId }
   const columns: ColumnsType<ChiTietDeXuat> = [
@@ -347,11 +347,11 @@ export default function HoSoTruocHanPage() {
       {chiTiet.length > toiDa && (
         <Alert style={{ marginTop: 12 }} type="warning" showIcon
           title={`${chiTiet.length - toiDa} người vượt tỷ lệ (tối đa ${toiDa} suất)`}
-          description={<>Dùng nút mũi tên cột <b>Thứ tự</b> xếp người ưu tiên lên trước: <b>{toiDa}</b> người đầu nằm trong tỷ lệ, những người sau được ghi "Vượt tỷ lệ - dự phòng 1, 2…" và in ở danh sách riêng (dự phòng khi có người rút hoặc Phòng VHXH không đồng ý).</>} />
+          description={<>Dùng nút mũi tên cột <b>Thứ tự</b> xếp người ưu tiên lên trước: <b>{toiDa}</b> người đầu nằm trong tỷ lệ, những người sau được ghi "Vượt tỷ lệ - dự phòng 1, 2…" trên danh sách xuất Excel (dự phòng khi có người rút hoặc Phòng VHXH không đồng ý).</>} />
       )}
 
       <Space style={{ marginTop: 16 }} wrap>
-        <Button icon={<PrinterOutlined />} onClick={inDanhSach}>In danh sách duyệt tại trường (Word)</Button>
+        <Button icon={<FileExcelOutlined />} onClick={inDanhSach}>Xuất danh sách duyệt tại trường (Excel)</Button>
         <Button icon={<SaveOutlined />} loading={dangLuu} onClick={() => luu(false)}>Lưu bản nháp</Button>
         <Button type="primary" icon={<SendOutlined />} loading={dangLuu} onClick={() => luu(true)}>
           {dxSua?.trangThai === 'YEU_CAU_BO_SUNG' ? 'Lưu và trình lại' : 'Lưu và trình Hiệu trưởng'}

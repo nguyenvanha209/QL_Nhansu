@@ -23,6 +23,13 @@ export const THU_TU_CAP: Record<CapHoc, number> = { MAM_NON: 1, TIEU_HOC: 2, THC
 export const soSanhTruong = (a: { loai: string; ten: string }, b: { loai: string; ten: string }) =>
   (THU_TU_CAP[a.loai as CapHoc] ?? 9) - (THU_TU_CAP[b.loai as CapHoc] ?? 9) || a.ten.localeCompare(b.ten, 'vi')
 
+/**
+ * Thứ tự trường (id → vị trí) theo quy tắc trên - dùng sắp các bảng người / phiếu theo trường.
+ * QUY TẮC CHUNG: mọi bảng, ô chọn có danh sách trường đều xếp mầm non → tiểu học → THCS, trong cấp theo A B C.
+ */
+export const thuTuTruong = (donVis: { id: string; loai: string; ten: string }[]) =>
+  new Map([...donVis].sort(soSanhTruong).map((d, i) => [d.id, i]))
+
 /** Năm học bắt đầu từ tháng 9 */
 export function namHocHienHanh(d = new Date()): string {
   const y = d.getFullYear()

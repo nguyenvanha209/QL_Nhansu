@@ -17,6 +17,7 @@ import { formatDate } from '@/utils/helpers'
 import { useAuth } from '@/hooks/useAuth'
 import { adminDatMatKhau, adminXoaMatKhau } from '@/lib/auth'
 import { logAction } from '@/utils/auditLogger'
+import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
 
@@ -89,7 +90,7 @@ export default function UserManagePage() {
   const { currentUser } = useAuth()
   const { users, addUser, updateUser, softDelete, xoaTaiKhoan } = useUserStore()
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
 
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)

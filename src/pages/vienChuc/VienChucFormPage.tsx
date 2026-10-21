@@ -14,7 +14,7 @@ import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_DANG_DUNG, LOAI_LAO_DONG_OPTIONS, T
 import { chucDanhHopLeVoiVtvl } from '@/utils/vtvlRules'
 import type { ChucVu, LoaiLaoDong, HinhThucLuong } from '@/types/vienChuc'
 import { getPhuCapChucVuHeSo, HANG_TRUONG_LABELS, hangTruongTheoNamHoc, moTaHang } from '@/utils/hangTruong'
-import { namHocHienHanh } from '@/utils/dinhMuc'
+import { namHocHienHanh, soSanhTruong } from '@/utils/dinhMuc'
 import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen, toUpperName } from '@/utils/helpers'
 import { sapXepLoaiPhuCap } from '@/utils/phuCapThuTu'
@@ -164,7 +164,7 @@ export default function VienChucFormPage() {
   }
   const donViOptions = (scopeDonViId
     ? donVis.filter((d) => d.id === scopeDonViId)
-    : donVis.filter((d) => d.active)
+    : donVis.filter((d) => d.active).sort(soSanhTruong)
   ).map((d) => ({ value: d.id, label: d.ten }))
 
   const watchVtvl = Form.useWatch('vtvl', form) as string | undefined

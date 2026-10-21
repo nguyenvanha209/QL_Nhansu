@@ -17,6 +17,7 @@ import type { TinhTrangLanDau } from '@/utils/pctnLanDau'
 import { BANG_CHUAN, cotGiua, cotHoTen, cotNgay, cotSTT, phanTrang } from '@/utils/cotBang'
 import { xuatExcelA4, trangTuDanhSach } from '@/utils/excelA4'
 import { formatDate, soSanhVienChuc } from '@/utils/helpers'
+import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
 
@@ -86,7 +87,8 @@ export default function BoSungBhxhPage() {
   const [nhap, setNhap] = useState<Record<string, string | undefined>>({})
   const [xemTruong, setXemTruong] = useState<string | null>(null)
 
-  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER' && (!scopeDonViId || d.id === scopeDonViId)), [donVis, scopeDonViId])
+  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER' && (!scopeDonViId || d.id === scopeDonViId)).sort(soSanhTruong), [donVis, scopeDonViId])
+  const thuTu = useMemo(() => thuTuTruong(donVis), [donVis])
   const cdTheoId = useMemo(() => new Map(chucDanhs.map((c) => [c.id, c])), [chucDanhs])
   const idPctn = loaiPhuCaps.find((l) => l.ma === 'PC_THAM_NIEN')?.id
   const pctnTheoNguoi = useMemo(() => {
@@ -98,7 +100,7 @@ export default function BoSungBhxhPage() {
   // Mọi người đang công tác (biên chế, hợp đồng) khai BHXH; tình trạng xếp PCTN lần đầu chỉ tính cho CBQL, giáo viên
   const tatCa = useMemo<Dong[]>(() => vienChucs
     .filter((v) => duocTinhSoLieu(v) && (!scopeDonViId || v.donViId === scopeDonViId))
-    .sort(soSanhVienChuc((v) => cdTheoId.get(v.chucDanhId)?.nhom))
+    .sort((a, b) => (thuTu.get(a.donViId) ?? 999) - (thuTu.get(b.donViId) ?? 999) || soSanhVienChuc((v: VienChuc) => cdTheoId.get(v.chucDanhId)?.nhom)(a, b))
     .map((v) => {
       const daSua = Object.prototype.hasOwnProperty.call(nhap, v.id)
       const thang = daSua ? nhap[v.id] : v.batDauBhxhGd
@@ -113,7 +115,7 @@ export default function BoSungBhxhPage() {
         chucDanh: (v.chucVu && CHUC_VU_LABELS[v.chucVu]) || (nhom === 'CBQL' ? 'Cán bộ quản lý' : nhom === 'GIAO_VIEN' ? 'Giáo viên' : 'Nhân viên'),
         pctn, thang, daSua, dienPctn, uuTien: dienPctn && !pctn && !thang, tt, du5Nam: xet?.du5Nam,
       }
-    }), [vienChucs, cdTheoId, scopeDonViId, nhap, pctnTheoNguoi, homNay])
+    }), [vienChucs, cdTheoId, scopeDonViId, nhap, pctnTheoNguoi, homNay, thuTu])
 
   const soDaSua = tatCa.filter((d) => d.daSua && (d.thang ?? '') !== (d.vc.batDauBhxhGd ?? '')).length
 
@@ -129,14 +131,14 @@ export default function BoSungBhxhPage() {
       du5Nam: ds.filter((d) => d.tt === 'DU_5_NAM').length,
       sapDu: ds.filter((d) => d.tt === 'SAP_DU').length,
     }
-  }).sort((a, b) => b.uuTien - a.uuTien || b.chuaKhai - a.chuaKhai || a.ten.localeCompare(b.ten, 'vi')), [truongs, tatCa])
+  }), [truongs, tatCa])
   const tong = tongHop.reduce((s, r) => ({ tong: s.tong + r.tong, daKhai: s.daKhai + r.daKhai, chuaKhai: s.chuaKhai + r.chuaKhai, uuTien: s.uuTien + r.uuTien, du5Nam: s.du5Nam + r.du5Nam, sapDu: s.sapDu + r.sapDu }), { tong: 0, daKhai: 0, chuaKhai: 0, uuTien: 0, du5Nam: 0, sapDu: 0 })
   const tenTruong = (id: string) => donVis.find((d) => d.id === id)?.ten ?? ''
 
   const xuatChuaKhai = () => {
     const ds = tatCa.filter((d) => !d.vc.batDauBhxhGd)
     if (!ds.length) { message.info('Không còn người chưa khai'); return }
-    const theoTruong = [...new Set(ds.map((d) => d.donViId))].sort((a, b) => tenTruong(a).localeCompare(tenTruong(b), 'vi'))
+    const theoTruong = [...new Set(ds.map((d) => d.donViId))].sort((a, b) => (thuTu.get(a) ?? 999) - (thuTu.get(b) ?? 999))
     xuatExcelA4(`Chua-khai-BHXH-${homNay}`, [trangTuDanhSach(
       theoTruong.flatMap((t) => ds.filter((d) => d.donViId === t)).map((d, i) => ({
         STT: i + 1, 'Trường': tenTruong(d.donViId), 'Họ và tên': `${d.ho} ${d.ten}`, 'Ngày sinh': formatDate(d.vc.ngaySinh),

@@ -12,7 +12,7 @@ import { formatDate } from '@/utils/helpers'
 import { exportToExcel } from '@/utils/exportExcel'
 import type { ColumnsType } from 'antd/es/table'
 import { BANG_CHUAN, phanTrang, cotSTT, cotHoTen, cotNgay, cotChu, cotGiua, tenGioiTinh } from '@/utils/cotBang'
-import { laBienChe } from '@/utils/dinhMuc'
+import { laBienChe, soSanhTruong } from '@/utils/dinhMuc'
 
 const { Text } = Typography
 
@@ -38,7 +38,7 @@ export default function DaNghiHuu() {
   const [che, setChe] = useState<'DA_NGHI' | 'QUA_TUOI'>('DA_NGHI')
   const [nam, setNam] = useState<number | undefined>()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
 
   const { daNghi, quaTuoi } = useMemo(() => {
     const homNay = toDateStr(new Date())

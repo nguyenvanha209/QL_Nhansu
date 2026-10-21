@@ -10,6 +10,7 @@ import { getDaysUntilReview, getReviewUrgencyColor } from '@/utils/calculations'
 import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
 import { duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
+import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
 
@@ -21,7 +22,8 @@ export default function HeSoLuongPage() {
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
+  const thuTuTen = useMemo(() => new Map(donVis.map((d, i) => [d.ten, i])), [donVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
 
   const alerts = useSalaryAlerts(scopeDonViId, 90)
@@ -63,7 +65,7 @@ export default function HeSoLuongPage() {
       ),
       sorter: (a: any, b: any) => a.hoTen.localeCompare(b.hoTen, 'vi'),
     },
-    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', minWidth: 130, responsive: ['lg' as const], sorter: (a: any, b: any) => a.donViTen.localeCompare(b.donViTen, 'vi') },
+    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', minWidth: 130, responsive: ['lg' as const], sorter: (a: any, b: any) => (thuTuTen.get(a.donViTen) ?? 999) - (thuTuTen.get(b.donViTen) ?? 999) },
     { title: 'Chức danh', dataIndex: 'chucDanhTen', key: 'cd', minWidth: 160, sorter: (a: any, b: any) => a.chucDanhTen.localeCompare(b.chucDanhTen, 'vi') },
     { title: 'Bậc', dataIndex: 'bac', key: 'bac', width: 60, align: 'center' as const, sorter: (a: any, b: any) => (a.bac ?? 0) - (b.bac ?? 0) },
     { title: 'Hệ số', dataIndex: 'heSo', key: 'hs', width: 80, align: 'center' as const, sorter: (a: any, b: any) => (a.heSo ?? 0) - (b.heSo ?? 0) },

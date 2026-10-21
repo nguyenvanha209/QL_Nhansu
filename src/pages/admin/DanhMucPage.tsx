@@ -8,7 +8,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
 import { LOAI_DON_VI_LABELS } from '@/types/donVi'
 import { hangTruongTheoNamHoc, moTaHang, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
-import { namHocHienHanh } from '@/utils/dinhMuc'
+import { namHocHienHanh, soSanhTruong } from '@/utils/dinhMuc'
 import { sapXepLoaiPhuCap, PCUD_MUC_CU } from '@/utils/phuCapThuTu'
 import { TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
@@ -93,7 +93,7 @@ function DonViTab() {
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm đơn vị</Button>
-      <Table scroll={{ x: 'max-content' }} dataSource={donVis} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={[...donVis].sort(soSanhTruong)} columns={cols} rowKey="id" size="small" pagination={false} />
 
       <Modal open={open} title={editing ? 'Sửa đơn vị' : 'Thêm đơn vị'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>

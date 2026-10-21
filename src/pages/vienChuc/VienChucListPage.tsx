@@ -10,6 +10,7 @@ import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_OPTIONS, VTVL_LABELS, TRANG_THAI_CO
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import ImportVienChucModal, { ExportExcelButton } from './ImportVienChucModal'
 import { NHOM_VI_TRI, NHOM_LOAI_HINH, nhomViTri, nhomLoaiHinh } from '@/utils/nhomViTri'
+import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const TRANG_THAI_COLORS: Record<TrangThaiCongTac, string> = {
   DANG_LAM_VIEC: 'green',
@@ -31,7 +32,7 @@ export default function VienChucListPage() {
   const softDelete = useVienChucStore((s) => s.softDelete)
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(
-    () => allDonVis.filter((d) => d.active).sort((a, b) => a.ten.localeCompare(b.ten, 'vi')),
+    () => allDonVis.filter((d) => d.active).sort(soSanhTruong),
     [allDonVis]
   )
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
@@ -68,6 +69,7 @@ export default function VienChucListPage() {
   const canWrite = hasPermission('vienChuc', 'write')
 
   const dvNameMap = useMemo(() => new Map(donVis.map((d) => [d.id, d.ten])), [donVis])
+  const thuTu = useMemo(() => thuTuTruong(allDonVis), [allDonVis])
   const cdNameMap = useMemo(() => new Map(chucDanhs.map((c) => [c.id, c.ten])), [chucDanhs])
 
   const columns = [
@@ -98,7 +100,7 @@ export default function VienChucListPage() {
     {
       title: 'Đơn vị', dataIndex: 'donViId', key: 'dv', width: 240,
       render: (id: string) => dvNameMap.get(id) ?? id,
-      sorter: (a: any, b: any) => (dvNameMap.get(a.donViId) ?? '').localeCompare(dvNameMap.get(b.donViId) ?? '', 'vi'),
+      sorter: (a: any, b: any) => (thuTu.get(a.donViId) ?? 999) - (thuTu.get(b.donViId) ?? 999),
     },
     {
       title: 'Chức danh', dataIndex: 'chucDanhId', key: 'cd', width: 235,

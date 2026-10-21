@@ -15,7 +15,7 @@ import { duocTinhSoLieu } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
 import type { DonVi } from '@/types/donVi'
 import type { ChucDanhNgheNghiep } from '@/types/danhMuc'
-import { type CapHoc, type NhomDinhMuc, TEN_CAP, THU_TU_CAP, laBienChe, nhomNguoi, viTriCuaNguoi, dongCuaNguoi, danhSachViTri } from '@/utils/dinhMuc'
+import { type CapHoc, type NhomDinhMuc, TEN_CAP, THU_TU_CAP, laBienChe, nhomNguoi, viTriCuaNguoi, dongCuaNguoi, danhSachViTri, soSanhTruong } from '@/utils/dinhMuc'
 import { exportToExcel } from '@/utils/exportExcel'
 import { trangTuDanhSach, xuatExcelA4, ganDongTong, ganCotTinh } from '@/utils/excelA4'
 import type { TrangA4 } from '@/utils/excelA4'
@@ -382,7 +382,7 @@ function DanhSach({ xem, onClose, xemHoSo, moHoSo }: {
   xem: { tieuDe: string; ds: NguoiTinh[] } | null; onClose: () => void; xemHoSo: boolean; moHoSo: (id: string) => void
 }) {
   const ds = useMemo(
-    () => [...(xem?.ds ?? [])].sort((a, b) => a.truong.ten.localeCompare(b.truong.ten, 'vi') || a.vc.ten.localeCompare(b.vc.ten, 'vi') || a.vc.ho.localeCompare(b.vc.ho, 'vi')),
+    () => [...(xem?.ds ?? [])].sort((a, b) => soSanhTruong(a.truong, b.truong) || a.vc.ten.localeCompare(b.vc.ten, 'vi') || a.vc.ho.localeCompare(b.vc.ho, 'vi')),
     [xem],
   )
   const coA22 = ds.some((n) => n.a22)

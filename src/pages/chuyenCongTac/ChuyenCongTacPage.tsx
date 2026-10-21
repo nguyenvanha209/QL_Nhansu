@@ -15,6 +15,7 @@ import { isDangCongTac, VTVL_LABELS, CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { DeXuatChuyenCongTac } from '@/types/chuyenCongTac'
 import { lamMoiNgay } from '@/lib/supabase'
 import { TRANG_THAI_CCT_LABELS, TRANG_THAI_CCT_COLORS } from '@/types/chuyenCongTac'
+import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
 
@@ -39,10 +40,11 @@ export default function ChuyenCongTacPage() {
   const [loc, setLoc] = useState<'DANG_XU_LY' | 'TAT_CA'>('DANG_XU_LY')
 
   const donVis = useMemo(
-    () => allDonVis.filter((d) => d.active).sort((a, b) => a.ten.localeCompare(b.ten, 'vi')),
+    () => allDonVis.filter((d) => d.active).sort(soSanhTruong),
     [allDonVis],
   )
   const dvMap = useMemo(() => new Map(donVis.map((d) => [d.id, d.ten])), [donVis])
+  const thuTu = useMemo(() => thuTuTruong(allDonVis), [allDonVis])
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.fullName])), [users])
 
   // Viên chức của trường mình, đang công tác, chưa có phiếu chuyển nào đang mở
@@ -200,11 +202,11 @@ export default function ChuyenCongTacPage() {
       sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => a.hoTenSnapshot.localeCompare(b.hoTenSnapshot, 'vi') },
     { title: 'Trường đi', dataIndex: 'donViDiId', key: 'di', minWidth: 150,
       render: (v: string) => dvMap.get(v) ?? v,
-      sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => (dvMap.get(a.donViDiId) ?? '').localeCompare(dvMap.get(b.donViDiId) ?? '', 'vi') },
+      sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => (thuTu.get(a.donViDiId) ?? 999) - (thuTu.get(b.donViDiId) ?? 999) },
     { title: '', key: 'arrow', width: 34, align: 'center' as const, render: () => <SwapOutlined style={{ color: '#1677ff' }} /> },
     { title: 'Trường đến', dataIndex: 'donViDenId', key: 'den', minWidth: 150,
       render: (v: string) => dvMap.get(v) ?? v,
-      sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => (dvMap.get(a.donViDenId) ?? '').localeCompare(dvMap.get(b.donViDenId) ?? '', 'vi') },
+      sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => (thuTu.get(a.donViDenId) ?? 999) - (thuTu.get(b.donViDenId) ?? 999) },
     { title: 'Ngày chuyển', dataIndex: 'ngayChuyen', key: 'nc', width: 115,
       render: (v: string) => formatDate(v),
       sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => a.ngayChuyen.localeCompare(b.ngayChuyen) },

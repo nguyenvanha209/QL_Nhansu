@@ -11,6 +11,7 @@ import { exportToExcel } from '@/utils/exportExcel'
 import { MOC_CHUAN_BI_THANG, MOC_DEN_HAN_NGAY, MUC_NHAC_BO_NHIEM, NAM_XET_KEO_DAI, moTaConLai } from '@/utils/boNhiem'
 import type { MucNhacBoNhiem, TinhTrangBoNhiem } from '@/utils/boNhiem'
 import { TagKeoDai, TagMucBoNhiem } from '@/components/BoNhiemTags'
+import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
 
@@ -76,7 +77,7 @@ export default function TheoDoiBoNhiemPage() {
             <Select
               allowClear placeholder="Tất cả trường" style={{ width: 260 }} value={donViId} onChange={setDonViId}
               showSearch optionFilterProp="label"
-              options={donVis.filter((d) => d.active).map((d) => ({ value: d.id, label: d.ten }))}
+              options={donVis.filter((d) => d.active).sort(soSanhTruong).map((d) => ({ value: d.id, label: d.ten }))}
             />
           )}
           <Button icon={<FileExcelOutlined />} onClick={xuatExcel} disabled={!ds.length}>Xuất Excel</Button>

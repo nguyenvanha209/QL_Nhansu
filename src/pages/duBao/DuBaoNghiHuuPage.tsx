@@ -11,7 +11,7 @@ import { calcRetirementDate, calcPensionStartDate, getDaysUntilRetirement, getMo
 import { formatDate } from '@/utils/helpers'
 import { isDangCongTac, CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
-import { laBienChe } from '@/utils/dinhMuc'
+import { laBienChe, soSanhTruong } from '@/utils/dinhMuc'
 import { exportToExcel } from '@/utils/exportExcel'
 import { BANG_CHUAN, phanTrang, cotSTT, cotHoTen, cotNgay, cotChu, cotGiua, tenGioiTinh } from '@/utils/cotBang'
 
@@ -36,7 +36,7 @@ export default function DuBaoNghiHuuPage() {
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && laBienChe(v) && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
 
   const data = useMemo<Dong[]>(() => {

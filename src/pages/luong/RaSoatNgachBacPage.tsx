@@ -14,7 +14,7 @@ import { chonBanDangHuong, nhomTheoLoai } from '@/utils/phuCapDangHuong'
 import { duocTinhSoLieu, nhanLuongTheoTien, laVienChucBienChe, LOAI_LAO_DONG_LABELS } from '@/types/vienChuc'
 import { laToTruongNuoiDuong } from '@/utils/nhomViTri'
 import { getPhuCapChucVuHeSo, hangTruongTheoNamHoc, moTaHang } from '@/utils/hangTruong'
-import { namHocHienHanh } from '@/utils/dinhMuc'
+import { namHocHienHanh, soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 import type { LoaiDonVi } from '@/types/donVi'
 import { CHUC_VU_LABELS } from '@/types/vienChuc'
 
@@ -85,7 +85,8 @@ export default function RaSoatNgachBacPage() {
   const quyMoTruongs = useDanhMucStore((s) => s.quyMoTruongs)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort((a, b) => a.ten.localeCompare(b.ten, 'vi')), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
+  const thuTu = useMemo(() => thuTuTruong(allDonVis), [allDonVis])
   const tenDonVi = useMemo(() => new Map(allDonVis.map((d) => [d.id, d.ten])), [allDonVis])
   const donViTheoId = useMemo(() => new Map(allDonVis.map((d) => [d.id, d])), [allDonVis])
 
@@ -113,7 +114,7 @@ export default function RaSoatNgachBacPage() {
     if (scopeDonViId) list = list.filter((v) => v.donViId === scopeDonViId)
     const nhomCua = (v: (typeof list)[number]) => cdTheoId.get(v.chucDanhId)?.nhom
     list = [...list].sort((a, b) =>
-      (tenDonVi.get(a.donViId) ?? '').localeCompare(tenDonVi.get(b.donViId) ?? '', 'vi') || soSanhVienChuc(nhomCua)(a, b))
+      ((thuTu.get(a.donViId) ?? 999) - (thuTu.get(b.donViId) ?? 999)) || soSanhVienChuc(nhomCua)(a, b))
 
     const pcDangHuong = new Map<string, typeof phuCaps>()
     for (const p of phuCaps) {

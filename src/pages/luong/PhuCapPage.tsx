@@ -7,6 +7,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { duocTinhSoLieu } from '@/types/vienChuc'
 import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
+import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const { Title } = Typography
 
@@ -18,7 +19,8 @@ export default function PhuCapPage() {
   const phuCapVienChucs = useLuongStore((s) => s.phuCapVienChucs)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
+  const thuTuTen = useMemo(() => new Map(donVis.map((d, i) => [d.ten, i])), [donVis])
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
 
   const data = useMemo(() => {
@@ -46,7 +48,7 @@ export default function PhuCapPage() {
 
   const columns = [
     { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht', minWidth: 160, sorter: (a: any, b: any) => a.hoTen.localeCompare(b.hoTen, 'vi') },
-    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', minWidth: 130, responsive: ['lg' as const], sorter: (a: any, b: any) => a.donViTen.localeCompare(b.donViTen, 'vi') },
+    { title: 'Đơn vị', dataIndex: 'donViTen', key: 'dv', minWidth: 130, responsive: ['lg' as const], sorter: (a: any, b: any) => (thuTuTen.get(a.donViTen) ?? 999) - (thuTuTen.get(b.donViTen) ?? 999) },
     { title: 'Loại phụ cấp', dataIndex: 'loaiPhuCapTen', key: 'lpc', sorter: (a: any, b: any) => a.loaiPhuCapTen.localeCompare(b.loaiPhuCapTen, 'vi') },
     {
       title: 'Tỷ lệ/Hệ số', key: 'tl', width: 100,

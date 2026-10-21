@@ -16,6 +16,7 @@ import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
 import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import type { LoaiPhuCap, ChucDanhNgheNghiep } from '@/types/danhMuc'
 import type { VienChuc } from '@/types/vienChuc'
+import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
 
@@ -185,6 +186,7 @@ export default function BangTongHopLuongPage() {
     if (oa !== ob) return oa - ob
     return a.ten.localeCompare(b.ten, 'vi')
   }), [allDonVis])
+  const thuTuDv = useMemo(() => thuTuTruong(allDonVis), [allDonVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const heSos = useLuongStore((s) => s.heSoLuongs)
@@ -270,7 +272,7 @@ export default function BangTongHopLuongPage() {
       render: (_: any, r: DisplayRow) => (r._type === 'data' ? tenDonVi(r.donViId) : ''),
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0
-          : tenDonVi((a as RowData).donViId).localeCompare(tenDonVi((b as RowData).donViId), 'vi'),
+          : (thuTuDv.get((a as RowData).donViId) ?? 999) - (thuTuDv.get((b as RowData).donViId) ?? 999),
     }]),
     {
       title: 'Chức vụ, vị trí đảm nhiệm', key: 'chucVu', width: 210,

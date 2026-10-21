@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, Typography, Divider, Tag, App, Alert, Tooltip, Result, Modal, Row, Col } from 'antd'
-import { DeleteOutlined, ArrowLeftOutlined, SendOutlined, WarningOutlined, EditOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons'
+import { DeleteOutlined, ArrowLeftOutlined, SendOutlined, WarningOutlined, EditOutlined, PlusOutlined, SyncOutlined, FileExcelOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -12,7 +12,8 @@ import type { ChiTietDeXuat, LoaiDeXuat, KhaiPctnLanDau, DongQuaTrinhPctn } from
 import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung, coDoiLuong, coDoiPhuCap, laHoSoNangLuong, LOAI_HO_SO_NANG_LUONG, LOAI_DE_XUAT_DIEU_CHINH, trangDanhSachCuaLoai } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import PhuCapDieuChinhField from '@/components/PhuCapDieuChinhField'
-import { isDangCongTac, nhanLuongTheoTien } from '@/types/vienChuc'
+import { isDangCongTac, nhanLuongTheoTien, duocTinhSoLieu } from '@/types/vienChuc'
+import { xuatExcelKiemTraDeXuat } from '@/utils/danhSachKiemTraDeXuat'
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
 import { laDienPhuCapThamNien, nhomCoBan } from '@/utils/nhomViTri'
 import MinhChungField from '@/components/MinhChungField'
@@ -431,6 +432,18 @@ export default function TaoDeXuatPage() {
   const colXoa = { title: '', key: 'del', width: 44, render: (_: any, __: any, idx: number) => <Button size="small" danger icon={<DeleteOutlined />} onClick={() => setChiTiet((p) => p.filter((_, i) => i !== idx))} /> }
 
   const canMinhChung = LOAI_CAN_MINH_CHUNG.includes(loaiDeXuat)
+  // Ba loại theo niên hạn: xuất Excel để kế toán in ra soát lại trước khi trình (theo dữ liệu đang có trên màn hình)
+  const coXuatKiemTra = loaiDeXuat === 'NANG_BAC' || loaiDeXuat === 'PHU_CAP_THAM_NIEN' || loaiDeXuat === 'PCTN_LAN_DAU'
+  const xuatKiemTra = () => {
+    if (!chiTiet.length) { message.warning('Chưa có viên chức trong danh sách'); return }
+    const dvId = selectedDonVi ?? form.getFieldValue('donViId')
+    const ht = allVienChucs.find((v) => v.donViId === dvId && v.chucVu === 'HT' && duocTinhSoLieu(v))
+    xuatExcelKiemTraDeXuat({
+      loai: loaiDeXuat, tenTruong: allDonVis.find((d) => d.id === dvId)?.ten ?? '', tieuDe: form.getFieldValue('tieuDe'), chiTiet,
+      vienChucs: new Map(allVienChucs.map((v) => [v.id, v])), chucDanhs: new Map(chucDanhs.map((c) => [c.id, c])),
+      hieuTruong: ht ? `${ht.ho} ${ht.ten}` : undefined, nguoiLap: currentUser?.fullName,
+    })
+  }
   const thangVN = (ym?: string) => (ym ? `${ym.slice(5, 7)}/${ym.slice(0, 4)}` : '')
   const colsLanDau = [
     colVienChuc,
@@ -762,7 +775,8 @@ export default function TaoDeXuatPage() {
 
         <Table dataSource={chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: laLanDau ? 1400 : laPctn ? 900 : (canMinhChung ? 1780 : 1590) }} style={{ marginBottom: 16 }} />
 
-        <Space>
+        <Space wrap>
+          {coXuatKiemTra && <Button icon={<FileExcelOutlined />} onClick={xuatKiemTra}>Xuất danh sách kiểm tra (Excel)</Button>}
           <Button htmlType="submit">Lưu bản nháp</Button>
           <Button type="primary" icon={<SendOutlined />} onClick={() => form.validateFields().then((v) => onFinish(v, true))}>
             {dxSua?.trangThai === 'YEU_CAU_BO_SUNG' ? 'Lưu & Trình lại' : 'Lưu & Nộp ngay'}

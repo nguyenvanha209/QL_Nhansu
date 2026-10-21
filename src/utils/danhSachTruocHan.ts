@@ -25,13 +25,16 @@ interface DauVao {
 
 const SO_COT = 15
 
+/** Tên trường đủ chữ "Trường" cho đầu văn bản (danh mục thường ghi "Mầm non Sao Sáng 4") */
+export const tenDonViDayDu = (ten: string) => (/^trường(\s|$)/i.test(ten.trim()) ? ten.trim() : `Trường ${ten.trim()}`)
+
 /** Xuất Excel (A4 ngang) danh sách đề nghị để họp duyệt tại trường */
 export function xuatExcelDanhSachTruong(d: DauVao) {
   const ngay = dayjs()
   const trong = (n: number): O[] => Array(n).fill(null)
   const dau: O[][] = [
     ['UBND PHƯỜNG GIA VIÊN', null, null, null, null, null, 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', ...trong(8)],
-    [d.tenTruong.toUpperCase(), null, null, null, null, null, 'Độc lập - Tự do - Hạnh phúc', ...trong(8)],
+    [tenDonViDayDu(d.tenTruong).toUpperCase(), null, null, null, null, null, 'Độc lập - Tự do - Hạnh phúc', ...trong(8)],
     [],
     ['DANH SÁCH', ...trong(14)],
     [`Đề nghị nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ năm ${d.nam}`, ...trong(14)],

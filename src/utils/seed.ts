@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { BANG_LUONG_CHUAN, bacLuongTheoBang } from '@/utils/bangLuongChuan'
 import { nanoid } from 'nanoid'
 import { logAction } from '@/utils/auditLogger'
 import { PCUD_MUC_CU } from '@/utils/phuCapThuTu'
@@ -223,13 +224,7 @@ function migrateGanDonViHoSoThieu() {
 //   (VD V.07.03.09 ghi "hạng III, A1" trong khi đúng là hạng IV, loại B 12 bậc).
 // - V.07.07.21 là Giáo vụ (loại A0), trước đây ghi nhầm "Nhân viên hành chính trường học" loại B.
 // - Tư vấn học sinh (tư vấn tâm lý học đường) theo TT 11/2024/TT-BGDĐT: chưa có trong danh mục.
-const BANG_LUONG: Record<string, { heSos: number[]; thoiGian: 2 | 3 }> = {
-  'A2.1': { heSos: [4.4, 4.74, 5.08, 5.42, 5.76, 6.1, 6.44, 6.78], thoiGian: 3 },
-  'A2.2': { heSos: [4.0, 4.34, 4.68, 5.02, 5.36, 5.7, 6.04, 6.38], thoiGian: 3 },
-  A1: { heSos: [2.34, 2.67, 3.0, 3.33, 3.66, 3.99, 4.32, 4.65, 4.98], thoiGian: 3 },
-  A0: { heSos: [2.1, 2.41, 2.72, 3.03, 3.34, 3.65, 3.96, 4.27, 4.58, 4.89], thoiGian: 3 },
-  B: { heSos: [1.86, 2.06, 2.26, 2.46, 2.66, 2.86, 3.06, 3.26, 3.46, 3.66, 3.86, 4.06], thoiGian: 2 },
-}
+const BANG_LUONG = BANG_LUONG_CHUAN
 const CHUC_DANH_DUNG: { ma: string; ten: string; nhom: NhomChucDanh; bangLuong: keyof typeof BANG_LUONG }[] = [
   { ma: 'V.07.03.07', ten: 'Giáo viên tiểu học hạng II (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'A1' },
   { ma: 'V.07.03.08', ten: 'Giáo viên tiểu học hạng III (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'A0' },
@@ -278,6 +273,27 @@ function migrateChucDanhTheoQuyDinh() {
       `Sửa mã ${dung.ma}: "${cd.ten}" (${cd.bangLuong}) → "${dung.ten}" (${dung.bangLuong}, ${bang.heSos.length} bậc)`)
   }
   if (doi) useDanhMucStore.getState().setBacLuongs(bacLuongs)
+}
+
+// Chức danh quản trị tự thêm ở Danh mục trước khi phần mềm biết tự sinh bảng bậc
+// (VD V.06.30 chọn A2.2) → chưa có bậc nào hoặc bảng bậc là của bảng lương khác (bậc 1 lệch).
+// Bổ sung bảng bậc chuẩn theo bảng lương; không đụng hệ số trong hồ sơ.
+function migrateBacLuongChucDanhThieu() {
+  const dm = useDanhMucStore.getState()
+  let bacLuongs = dm.bacLuongs
+  const sua: string[] = []
+  for (const cd of dm.chucDanhs) {
+    const chuan = bacLuongTheoBang(cd.id, cd.bangLuong)
+    if (!chuan) continue
+    const hienCo = bacLuongs.filter((b) => b.chucDanhId === cd.id)
+    const bac1 = hienCo.find((b) => b.bac === 1)
+    if (hienCo.length && bac1?.heSo === chuan[0].heSo) continue
+    bacLuongs = [...bacLuongs.filter((b) => b.chucDanhId !== cd.id), ...chuan]
+    sua.push(`${cd.ma} (${cd.bangLuong}, ${chuan.length} bậc${hienCo.length ? `, thay ${hienCo.length} bậc lệch` : ''})`)
+  }
+  if (!sua.length) return
+  dm.setBacLuongs(bacLuongs)
+  logAction('system', 'Hệ thống', 'UPDATE', 'ChucDanh', undefined, `Bổ sung bảng bậc lương cho chức danh: ${sua.join('; ')}`)
 }
 
 // Tự điền trước "Công việc cụ thể" cho nhân viên từ nhiệm vụ chính / tên chức danh.
@@ -525,6 +541,7 @@ export function initSeedData() {
   migrateTachHoSoChuyenCongTac()
   migrateGanDonViHoSoThieu()
   migrateChucDanhTheoQuyDinh()
+  migrateBacLuongChucDanhThieu()
   migrateDienCongViecNhanVien()
   migrateMaChucVuTrung()
   migrateNgachVanThu()

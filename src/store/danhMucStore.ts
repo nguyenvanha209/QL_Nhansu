@@ -16,6 +16,7 @@ import type { MucNangTruocHan } from '@/types/deXuat'
 import { MUC_NANG_TRUOC_HAN_MAC_DINH } from '@/types/deXuat'
 import type { QuyMoTruong, QuyMoLichSu, ChiTieuBienChe, ChiTieuLichSu } from '@/types/quyMo'
 import { layNoiDung, giongNhau } from '@/utils/quyMoLichSu'
+import { bacLuongTheoBang, bacLuongKhopBang } from '@/utils/bangLuongChuan'
 
 interface DanhMucState {
   donVis: DonVi[]
@@ -159,13 +160,22 @@ export const useDanhMucStore = create<DanhMucState>()(
         }),
 
       setChucDanhs: (v) => set({ chucDanhs: v }),
+      // Thêm chức danh / đổi bảng lương thì sinh luôn bảng bậc, hệ số chuẩn để hồ sơ chọn được bậc
       addChucDanh: (d) => {
         const item: ChucDanhNgheNghiep = { ...d, id: nanoid() }
-        set((s) => ({ chucDanhs: [...s.chucDanhs, item] }))
+        const bac = bacLuongTheoBang(item.id, item.bangLuong) ?? []
+        set((s) => ({ chucDanhs: [...s.chucDanhs, item], bacLuongs: [...s.bacLuongs, ...bac] }))
         return item
       },
       updateChucDanh: (id, patch) =>
-        set((s) => ({ chucDanhs: s.chucDanhs.map((i) => (i.id === id ? { ...i, ...patch } : i)) })),
+        set((s) => {
+          const chucDanhs = s.chucDanhs.map((i) => (i.id === id ? { ...i, ...patch } : i))
+          const cu = s.chucDanhs.find((i) => i.id === id)
+          const chuan = patch.bangLuong ? bacLuongTheoBang(id, patch.bangLuong) : undefined
+          const hienCo = s.bacLuongs.filter((b) => b.chucDanhId === id)
+          if (!chuan || (cu?.bangLuong === patch.bangLuong && hienCo.length) || bacLuongKhopBang(hienCo, chuan)) return { chucDanhs }
+          return { chucDanhs, bacLuongs: [...s.bacLuongs.filter((b) => b.chucDanhId !== id), ...chuan] }
+        }),
 
       setViTriViecLams: (v) => set({ viTriViecLams: v }),
       addViTriViecLam: (d) => {

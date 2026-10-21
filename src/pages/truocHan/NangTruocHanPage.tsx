@@ -17,6 +17,7 @@ import { formatDate } from '@/utils/helpers'
 import { BANG_CHUAN, cotSTT, cotChu, cotGiua } from '@/utils/cotBang'
 import { danhSachTraLuong, soSuatToiDa } from '@/utils/nangTruocHan'
 import { logAction } from '@/utils/auditLogger'
+import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 
 const { Title, Text } = Typography
 
@@ -58,9 +59,9 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
     cotGiua<Dong>('Trạng thái', 'tt', 170, (r) => (r.dx ? <Tag color={TRANG_THAI_COLORS[r.dx.trangThai]} style={{ marginInlineEnd: 0 }}>{TRANG_THAI_LABELS[r.dx.trangThai]}</Tag> : <Tag style={{ marginInlineEnd: 0 }}>Chưa lập</Tag>)),
     cotGiua<Dong>('Ngày trình', 'nt', 100, (r) => (r.dx && r.dx.trangThai !== 'NHAP' ? formatDate(r.dx.ngayDeXuat) : '')),
     {
-      title: '', key: 'mo', width: 130, align: 'center',
+      title: '', key: 'mo', width: 150, align: 'center',
       render: (_, r) => (r.dx
-        ? <Button size="small" onClick={() => navigate(`/nang-truoc-han/${r.dx!.id}`)}>Xem hồ sơ</Button>
+        ? <Space size={4}><Button size="small" onClick={() => navigate(`/nang-truoc-han/${r.dx!.id}`)}>Xem hồ sơ</Button><NutXoaPhieuNhap dx={r.dx} nho /></Space>
         : coLap ? <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/nang-truoc-han/new?nam=${nam}`)}>Lập hồ sơ</Button> : null),
     },
   ]

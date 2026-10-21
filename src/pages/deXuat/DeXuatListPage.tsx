@@ -6,6 +6,7 @@ import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
+import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, LOAI_DE_XUAT_DIEU_CHINH } from '@/types/deXuat'
 import type { TrangThaiDeXuat, LoaiDeXuat } from '@/types/deXuat'
@@ -56,9 +57,12 @@ export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
     { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'ct', width: 110, render: (v: string) => formatDate(v) },
     { title: 'Cập nhật', dataIndex: 'updatedAt', key: 'upd', width: 110, render: (v: string) => formatDate(v) },
     {
-      title: 'Thao tác', key: 'action', width: 80,
+      title: 'Thao tác', key: 'action', width: 110,
       render: (_: any, r: any) => (
-        <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/de-xuat/${r.id}`)}>Xem</Button>
+        <Space size={4}>
+          <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/de-xuat/${r.id}`)}>Xem</Button>
+          <NutXoaPhieuNhap dx={r} nho />
+        </Space>
       ),
     },
   ]

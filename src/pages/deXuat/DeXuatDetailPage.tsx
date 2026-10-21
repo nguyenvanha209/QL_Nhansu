@@ -14,6 +14,7 @@ import { ngayDu5Nam } from '@/utils/pctnLanDau'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, trangDanhSachCuaLoai } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
+import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import { lamMoiNgay } from '@/lib/supabase'
 import { DanhSachMinhChung } from '@/components/MinhChungField'
 
@@ -303,6 +304,7 @@ export default function DeXuatDetailPage() {
         <Divider />
         <Space wrap>
           {canSua && <Button icon={<EditOutlined />} onClick={() => navigate(`${goc}/${dx.id}/edit`)}>{dx.trangThai === 'YEU_CAU_BO_SUNG' ? 'Sửa & trình lại' : 'Sửa phiếu'}</Button>}
+          <NutXoaPhieuNhap dx={dx} sauKhiXoa={() => navigate(veDanhSach, { replace: true })} />
           {canSubmit && <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('submit')}>Trình Hiệu trưởng duyệt</Button>}
           {canDuyetHT && <>
             <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('ht_approve')}>Duyệt - chuyển VH-XH</Button>

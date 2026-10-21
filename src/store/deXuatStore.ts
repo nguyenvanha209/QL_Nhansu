@@ -62,6 +62,8 @@ interface DeXuatState {
   thamDinhNguoi: (id: string, vienChucId: string, ketQua: 'DONG_Y' | 'KHONG_DONG_Y' | undefined, yKien?: string) => void
 
   submitDeXuat: (id: string, actorId: string, actorName: string) => void
+  /** Xoá phiếu Bản nháp (chưa trình Hiệu trưởng); phiếu đã trình không xoá được. Trả về false nếu không xoá */
+  xoaDeXuatNhap: (id: string, actorId: string, actorName: string) => boolean
   duyetHieuTruong: (id: string, ketQua: 'DONG_Y' | 'TU_CHOI' | 'YEU_CAU_BO_SUNG', ghiChu: string, actorId: string, actorName: string) => void
   xetDuyetDeXuat: (id: string, ketQua: 'DONG_Y' | 'TU_CHOI' | 'YEU_CAU_BO_SUNG', ghiChu: string, actorId: string, actorName: string) => void
   pheDuyetDeXuat: (id: string, ketQua: 'PHE_DUYET' | 'TU_CHOI', ghiChu: string, actorId: string, actorName: string) => void
@@ -149,6 +151,16 @@ export const useDeXuatStore = create<DeXuatState>()(
         get().updateDeXuat(id, { trangThai: 'CHO_HIEU_TRUONG_DUYET', buocHienTai: 2, ngayDeXuat: now().slice(0, 10), nguoiDeXuatId: actorId })
         const { addNhatKy } = useLuongStore.getState()
         addNhatKy({ userId: actorId, userFullName: actorName, action: 'UPDATE', entity: 'DeXuatLuong', entityId: id, moTa: `Trình đề xuất ${id} lên Hiệu trưởng`, thoiGian: now() })
+      },
+
+      // Lọc khỏi mảng: lớp đồng bộ nhận ra id bị xoá có chủ đích và không kéo lại từ máy chủ
+      xoaDeXuatNhap: (id, actorId, actorName) => {
+        const dx = get().deXuats.find((d) => d.id === id)
+        if (!dx || dx.trangThai !== 'NHAP') return false
+        set((s) => ({ deXuats: s.deXuats.filter((d) => d.id !== id) }))
+        const { addNhatKy } = useLuongStore.getState()
+        addNhatKy({ userId: actorId, userFullName: actorName, action: 'DELETE', entity: 'DeXuatLuong', entityId: id, moTa: `Xoá phiếu nháp ${dx.ma} - ${dx.tieuDe} (${dx.chiTiet.length} người)`, thoiGian: now() })
+        return true
       },
 
       duyetHieuTruong: (id, ketQua, ghiChu, actorId, actorName) => {

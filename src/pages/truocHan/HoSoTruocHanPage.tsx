@@ -13,6 +13,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { lamMoiNgay } from '@/lib/supabase'
 import MinhChungField from '@/components/MinhChungField'
+import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import type { MinhChung } from '@/lib/minhChung'
 import type { ChiTietDeXuat, HoSoTruocHan } from '@/types/deXuat'
 import type { VienChuc } from '@/types/vienChuc'
@@ -353,6 +354,7 @@ export default function HoSoTruocHanPage() {
       <Space style={{ marginTop: 16 }} wrap>
         <Button icon={<FileExcelOutlined />} onClick={inDanhSach}>Xuất danh sách duyệt tại trường (Excel)</Button>
         <Button icon={<SaveOutlined />} loading={dangLuu} onClick={() => luu(false)}>Lưu bản nháp</Button>
+        {dxSua && <NutXoaPhieuNhap dx={dxSua} sauKhiXoa={() => navigate('/ho-so-nang-luong?loai=NANG_TRUOC_HAN', { replace: true })} />}
         <Button type="primary" icon={<SendOutlined />} loading={dangLuu} onClick={() => luu(true)}>
           {dxSua?.trangThai === 'YEU_CAU_BO_SUNG' ? 'Lưu và trình lại' : 'Lưu và trình Hiệu trưởng'}
         </Button>

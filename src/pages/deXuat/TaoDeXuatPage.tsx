@@ -12,6 +12,7 @@ import type { ChiTietDeXuat, LoaiDeXuat, KhaiPctnLanDau, DongQuaTrinhPctn } from
 import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung, coDoiLuong, coDoiPhuCap, laHoSoNangLuong, LOAI_HO_SO_NANG_LUONG, LOAI_DE_XUAT_DIEU_CHINH, trangDanhSachCuaLoai } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import PhuCapDieuChinhField from '@/components/PhuCapDieuChinhField'
+import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import { isDangCongTac, nhanLuongTheoTien, duocTinhSoLieu } from '@/types/vienChuc'
 import { xuatExcelKiemTraDeXuat } from '@/utils/danhSachKiemTraDeXuat'
 import { soSanhVienChuc, formatDate } from '@/utils/helpers'
@@ -778,6 +779,7 @@ export default function TaoDeXuatPage() {
         <Space wrap>
           {coXuatKiemTra && <Button icon={<FileExcelOutlined />} onClick={xuatKiemTra}>Xuất danh sách kiểm tra (Excel)</Button>}
           <Button htmlType="submit">Lưu bản nháp</Button>
+          {dxSua && <NutXoaPhieuNhap dx={dxSua} sauKhiXoa={() => navigate(trangDanhSachCuaLoai(dxSua.loai), { replace: true })} />}
           <Button type="primary" icon={<SendOutlined />} onClick={() => form.validateFields().then((v) => onFinish(v, true))}>
             {dxSua?.trangThai === 'YEU_CAU_BO_SUNG' ? 'Lưu & Trình lại' : 'Lưu & Nộp ngay'}
           </Button>

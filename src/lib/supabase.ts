@@ -213,6 +213,17 @@ function layBanGoc(kho: string): BanGoc {
 }
 
 /** Ghi nhận nội dung đã khớp với máy chủ làm bản gốc. thayToanBo = true khi đó là toàn bộ kho. */
+/**
+ * Chuỗi so sánh không phụ thuộc thứ tự khoá. Máy chủ (jsonb) sắp lại thứ tự khoá khi lưu, nên cùng một bản ghi
+ * có thể khác chuỗi JSON giữa bản trên máy và bản máy chủ. So bằng JSON.stringify thường sẽ coi bản ghi máy chủ
+ * "đã sửa" dù không đổi - hợp nhất sai, nặng nhất là bản ghi đã xoá sống lại.
+ */
+export function chuoiOnDinh(v: unknown): string {
+  return JSON.stringify(v, (_k, x) => (x && typeof x === 'object' && !Array.isArray(x)
+    ? Object.fromEntries(Object.keys(x as Record<string, unknown>).sort().map((k) => [k, (x as Record<string, unknown>)[k]]))
+    : x))
+}
+
 export function ghiNhanBanGoc(kho: string, state: Record<string, unknown> | undefined, thayToanBo = false) {
   if (!state) return
   const g = layBanGoc(kho)
@@ -224,9 +235,9 @@ export function ghiNhanBanGoc(kho: string, state: Record<string, unknown> | unde
     if (laMangCoId(v)) {
       let m = g.mang.get(k)
       if (!m) g.mang.set(k, (m = new Map()))
-      for (const bg of v) m.set(bg.id, JSON.stringify(bg))
+      for (const bg of v) m.set(bg.id, chuoiOnDinh(bg))
     } else {
-      g.khac.set(k, JSON.stringify(v))
+      g.khac.set(k, chuoiOnDinh(v))
     }
   }
 }
@@ -273,7 +284,7 @@ export function hopNhat3Chieu(
       // Giá trị đơn (không phải mảng bản ghi): máy này chưa đổi thì theo máy chủ
       if (vCucBo === undefined) continue
       const goc = g.khac.get(k)
-      state[k] = goc !== undefined && JSON.stringify(vCucBo) === goc && vMayChu !== undefined ? vMayChu : vCucBo
+      state[k] = goc !== undefined && chuoiOnDinh(vCucBo) === goc && vMayChu !== undefined ? vMayChu : vCucBo
       continue
     }
 
@@ -295,20 +306,20 @@ export function hopNhat3Chieu(
         if (conLai?.has(id)) continue // đã chuyển sang mảnh khác ở máy này
         // Máy này không có: bản mới của người khác → giữ. Máy này từng có (bản gốc)
         // mà nay không còn và máy chủ vẫn y như gốc → máy này đã xoá → bỏ.
-        if (goc !== undefined && JSON.stringify(sv) === goc) continue
+        if (goc !== undefined && chuoiOnDinh(sv) === goc) continue
         ra.push(sv)
         continue
       }
       if (!sv) {
         // Máy chủ không có: máy này tạo mới → giữ. Có trong bản gốc tức người khác
         // đã xoá: máy này không sửa gì thì tôn trọng việc xoá, có sửa thì giữ lại.
-        if (goc !== undefined && JSON.stringify(lc) === goc) continue
+        if (goc !== undefined && chuoiOnDinh(lc) === goc) continue
         ra.push(lc)
         continue
       }
 
-      const jLc = JSON.stringify(lc)
-      const jSv = JSON.stringify(sv)
+      const jLc = chuoiOnDinh(lc)
+      const jSv = chuoiOnDinh(sv)
       if (jLc === jSv) { ra.push(sv); continue }
       if (goc === undefined) {
         // Không có bản gốc (chưa từng đọc được) → không biết ai sửa: lấy bản sửa sau

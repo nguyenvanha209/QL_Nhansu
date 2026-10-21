@@ -78,12 +78,6 @@ export default function AppLayout() {
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('deXuat', 'read') && {
-      key: '/de-xuat', icon: <FileTextOutlined />,
-      label: <Badge count={soDeXuatCho} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Đề xuất điều chỉnh hệ số lương - phụ cấp</span></Badge>,
-      title: soDeXuatCho ? `Đề xuất điều chỉnh hệ số lương - phụ cấp: ${soDeXuatCho} phiếu chờ bạn xử lý` : 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
-      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
-    },
-    hasPermission('deXuat', 'read') && {
       key: '/thong-bao-ket-qua', icon: <NotificationOutlined />,
       label: <Badge count={soThongBaoMoi} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Thông báo kết quả nâng lương</span></Badge>,
       title: 'Thông báo kết quả nâng lương, phụ cấp thâm niên',
@@ -96,6 +90,12 @@ export default function AppLayout() {
       title: 'Theo dõi bổ nhiệm cán bộ quản lý',
     },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
+    hasPermission('deXuat', 'read') && {
+      key: '/de-xuat', icon: <FileTextOutlined style={{ color: '#facc15' }} />,
+      label: <Badge count={soDeXuatCho} size="small" offset={[10, 0]}><span style={{ color: '#facc15' }}>Đề xuất điều chỉnh hệ số lương - phụ cấp</span></Badge>,
+      title: soDeXuatCho ? `Đề xuất điều chỉnh hệ số lương - phụ cấp: ${soDeXuatCho} phiếu chờ bạn xử lý` : 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
+      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
+    },
     hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },
     hasPermission('admin', 'admin') && {
       key: 'admin-group', icon: <SettingOutlined />, label: 'Quản trị',

@@ -69,6 +69,11 @@ body {
 .qlvc-sidebar .ant-menu .ant-menu-item-selected .anticon {
   color: #fff !important;
 }
+/* Mục menu nhấn mạnh màu vàng (Đề xuất điều chỉnh hệ số lương - phụ cấp) */
+.qlvc-sidebar .ant-menu .ant-menu-item.menu-vang .anticon,
+.qlvc-sidebar .ant-menu .ant-menu-item-selected.menu-vang .anticon {
+  color: #facc15 !important;
+}
 /* Submenu children */
 .qlvc-sidebar .ant-menu .ant-menu-sub {
   background: rgba(0,0,0,0.1) !important;

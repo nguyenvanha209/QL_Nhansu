@@ -91,7 +91,7 @@ export default function AppLayout() {
     },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
     hasPermission('deXuat', 'read') && {
-      key: '/de-xuat', icon: <FileTextOutlined style={{ color: '#facc15' }} />,
+      key: '/de-xuat', icon: <FileTextOutlined />, className: 'menu-vang',
       label: <Badge count={soDeXuatCho} size="small" offset={[10, 0]}><span style={{ color: '#facc15' }}>Đề xuất điều chỉnh hệ số lương - phụ cấp</span></Badge>,
       title: soDeXuatCho ? `Đề xuất điều chỉnh hệ số lương - phụ cấp: ${soDeXuatCho} phiếu chờ bạn xử lý` : 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },

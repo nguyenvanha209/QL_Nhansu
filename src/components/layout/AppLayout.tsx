@@ -17,7 +17,7 @@ import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { ROLE_LABELS } from '@/types/auth'
 import ChiBaoDongBo from './ChiBaoDongBo'
 import { useThongBaoMoi } from '@/hooks/useThongBaoMoi'
-import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
+import { useDeXuatCanXuLy, useDeXuatDangXuLy } from '@/hooks/useDeXuatCanXuLy'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { LOAI_HO_SO_NANG_LUONG, TEN_CHUC_NANG_NANG_LUONG, laHoSoNangLuong } from '@/types/deXuat'
 import type { LoaiDeXuat } from '@/types/deXuat'
@@ -52,12 +52,33 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/tai-khoan': 'Thông tin tài khoản',
 }
 
+/**
+ * Tên mục menu kèm số nhỏ ĐẶT NGAY SAU CHỮ (không dùng Badge góc trên: tên dài xuống dòng thì số bị đẩy khuất):
+ * đỏ = việc chờ chính bạn xử lý; xanh = tổng phiếu các trường đang trong quy trình (VHXH, Lãnh đạo, quản trị).
+ */
+function NhanMenu({ ten, soCho = 0, soTong = 0, mau }: { ten: string; soCho?: number; soTong?: number; mau?: string }) {
+  const so = (n: number, nen: string, tieuDe: string) => (
+    <span title={tieuDe} style={{ display: 'inline-block', minWidth: 18, height: 18, lineHeight: '18px', padding: '0 5px', marginLeft: 5, borderRadius: 9, background: nen, color: '#fff', fontSize: 11.5, fontWeight: 600, textAlign: 'center', verticalAlign: 'middle' }}>{n}</span>
+  )
+  return (
+    <span style={{ color: mau ?? 'inherit' }}>
+      {ten}
+      {soCho > 0 && so(soCho, '#ef4444', `${soCho} việc chờ bạn xử lý`)}
+      {soTong > 0 && so(soTong, '#0ea5e9', `${soTong} phiếu các trường đang trong quy trình (đã lập, chưa phê duyệt xong)`)}
+    </span>
+  )
+}
+const nhanTitle = (ten: string, soCho: number, soTong: number) =>
+  [ten, soCho ? `${soCho} chờ bạn xử lý` : '', soTong ? `${soTong} phiếu các trường đang trong quy trình` : ''].filter(Boolean).join(' - ')
+
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { currentUser, logout, scopeDonViId, hasPermission } = useAuth()
   const soThongBaoMoi = useThongBaoMoi()
   const soDeXuatCho = useDeXuatCanXuLy()
   const soNangLuongCho = useDeXuatCanXuLy(LOAI_HO_SO_NANG_LUONG)
+  const soNangLuongTong = useDeXuatDangXuLy(LOAI_HO_SO_NANG_LUONG)
+  const soDeXuatTong = useDeXuatDangXuLy()
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -75,27 +96,28 @@ export default function AppLayout() {
     hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL và định mức VC' },
     hasPermission('deXuat', 'read') && {
       key: '/ho-so-nang-luong', icon: <RiseOutlined />, className: 'menu-noi-bat',
-      label: <Badge count={soNangLuongCho} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>{TEN_CHUC_NANG_NANG_LUONG}</span></Badge>,
-      title: soNangLuongCho ? `${TEN_CHUC_NANG_NANG_LUONG}: ${soNangLuongCho} hồ sơ chờ bạn xử lý` : TEN_CHUC_NANG_NANG_LUONG,
+      label: <NhanMenu ten={TEN_CHUC_NANG_NANG_LUONG} soCho={soNangLuongCho} soTong={soNangLuongTong} />,
+      title: nhanTitle(TEN_CHUC_NANG_NANG_LUONG, soNangLuongCho, soNangLuongTong),
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('deXuat', 'read') && {
       key: '/thong-bao-ket-qua', icon: <NotificationOutlined />, className: 'menu-noi-bat',
-      label: <Badge count={soThongBaoMoi} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Thông báo kết quả nâng lương, phụ cấp thâm niên</span></Badge>,
+      label: <NhanMenu ten="Thông báo kết quả nâng lương, phụ cấp thâm niên" soCho={soThongBaoMoi} />,
       title: 'Thông báo kết quả nâng lương, phụ cấp thâm niên',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
     hasPermission('vienChuc', 'read') && {
       key: '/bo-nhiem', icon: <SolutionOutlined />,
-      label: <Badge count={boNhiem.canNhac.length} size="small" offset={[10, 0]}><span style={{ color: 'inherit' }}>Theo dõi bổ nhiệm</span></Badge>,
+      label: <NhanMenu ten="Theo dõi bổ nhiệm" soCho={boNhiem.canNhac.length} />,
       title: 'Theo dõi bổ nhiệm cán bộ quản lý',
+      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
     hasPermission('deXuat', 'read') && {
       key: '/de-xuat', icon: <FileTextOutlined />, className: 'menu-vang',
-      label: <Badge count={soDeXuatCho} size="small" offset={[10, 0]}><span style={{ color: '#facc15' }}>Đề xuất điều chỉnh hệ số lương - phụ cấp</span></Badge>,
-      title: soDeXuatCho ? `Đề xuất điều chỉnh hệ số lương - phụ cấp: ${soDeXuatCho} phiếu chờ bạn xử lý` : 'Đề xuất điều chỉnh hệ số lương - phụ cấp',
+      label: <NhanMenu ten="Đề xuất điều chỉnh hệ số lương - phụ cấp" soCho={soDeXuatCho} soTong={soDeXuatTong} mau="#facc15" />,
+      title: nhanTitle('Đề xuất điều chỉnh hệ số lương - phụ cấp', soDeXuatCho, soDeXuatTong),
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },

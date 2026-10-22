@@ -38,3 +38,16 @@ export function useDeXuatCanXuLy(loais: LoaiDeXuat[] = LOAI_DE_XUAT_DIEU_CHINH):
     }).length
   }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong, loais.join()])
 }
+
+/**
+ * Tổng số phiếu các trường đang trong quy trình (kế toán đã lập, chưa phê duyệt xong / chưa bị từ chối) - số nhỏ màu xanh
+ * trên menu cho Phòng VHXH, Lãnh đạo, quản trị nắm khối lượng, tránh quên. Tài khoản trường trả về 0.
+ */
+export function useDeXuatDangXuLy(loais: LoaiDeXuat[] = LOAI_DE_XUAT_DIEU_CHINH): number {
+  const deXuats = useDeXuatStore((s) => s.deXuats)
+  const { currentUser, scopeDonViId, hasPermission } = useAuth()
+  return useMemo(() => {
+    if (!currentUser || scopeDonViId || !hasPermission('deXuat', 'read')) return 0
+    return deXuats.filter((d) => loais.includes(d.loai) && d.trangThai !== 'DA_PHE_DUYET' && d.trangThai !== 'TU_CHOI').length
+  }, [deXuats, currentUser, scopeDonViId, hasPermission, loais.join()])
+}

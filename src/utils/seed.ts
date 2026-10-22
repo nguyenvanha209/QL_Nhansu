@@ -230,6 +230,8 @@ const CHUC_DANH_DUNG: { ma: string; ten: string; nhom: NhomChucDanh; bangLuong: 
   { ma: 'V.07.03.08', ten: 'Giáo viên tiểu học hạng III (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'A0' },
   { ma: 'V.07.03.09', ten: 'Giáo viên tiểu học hạng IV (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'B' },
   { ma: 'V.07.02.06', ten: 'Giáo viên mầm non hạng IV (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'B' },
+  // TTLT 22/2015/TTLT-BGDĐT-BNV: giáo viên THCS hạng III (mã cũ) xếp lương viên chức loại A0 (2,10 - 4,89)
+  { ma: 'V.07.04.12', ten: 'Giáo viên THCS hạng III (mã cũ)', nhom: 'GIAO_VIEN', bangLuong: 'A0' },
   { ma: 'V.07.07.21', ten: 'Giáo vụ', nhom: 'NHAN_VIEN', bangLuong: 'A0' },
   { ma: 'V.07.07.24', ten: 'Tư vấn học sinh (tư vấn tâm lý học đường) hạng III', nhom: 'NHAN_VIEN', bangLuong: 'A1' },
   { ma: 'V.07.07.23', ten: 'Tư vấn học sinh (tư vấn tâm lý học đường) hạng II', nhom: 'NHAN_VIEN', bangLuong: 'A2.2' },

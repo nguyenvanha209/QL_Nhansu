@@ -15,6 +15,7 @@ import { CHUC_VU_LABELS, LOAI_LAO_DONG_LABELS, VTVL_LABELS, TRANG_THAI_CONG_TAC_
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import { LY_DO_LABELS } from '@/types/luong'
 import { formatDate } from '@/utils/helpers'
+import { MON_GIANG_DAY } from '@/utils/dinhMuc'
 import { CONG_VIEC_LABELS } from '@/utils/nhomViTri'
 import { dangBaoLuuPccv, dangTinhTheoBaoLuu, tenHienThiLoaiPhuCap, TEN_PCCV_BAO_LUU } from '@/utils/baoLuuPccv'
 import { chonBanDangHuong, nhomTheoLoai } from '@/utils/phuCapDangHuong'
@@ -67,6 +68,7 @@ export default function VienChucDetailPage() {
       : createdBy === 'system' ? 'Hệ thống'
       : users.find((u) => u.id === createdBy)?.fullName ?? 'Người dùng'
   const vtvls = useDanhMucStore((s) => s.vtvls)
+  const monGiangDay = MON_GIANG_DAY[donVis.find((d) => d.id === vc?.donViId)?.loai as keyof typeof MON_GIANG_DAY] ?? []
 
   if (!vc) return <Result status="404" title="Không tìm thấy viên chức" extra={<Button onClick={() => navigate('/vien-chuc')}>Quay lại</Button>} />
   if (scopeDonViId && vc.donViId !== scopeDonViId) return <Result status="403" title="Không có quyền xem" />
@@ -268,9 +270,18 @@ export default function VienChucDetailPage() {
                 {vc.vtvl === 'NHAN_VIEN' && (
                   <Descriptions.Item label="Công việc cụ thể">{vc.congViec ? CONG_VIEC_LABELS[vc.congViec] : <Text type="warning">Chưa chọn</Text>}</Descriptions.Item>
                 )}
+                <Descriptions.Item label="Chức vụ">{vc.chucVu ? (CHUC_VU_LABELS[vc.chucVu] ?? vc.chucVu) : 'Không giữ chức vụ'}</Descriptions.Item>
+                {vc.vtvl === 'GIAO_VIEN' && (
+                  <Descriptions.Item label={donVi?.loai === 'MAM_NON' ? 'Nhóm, lớp phụ trách' : 'Môn giảng dạy'}>
+                    {vc.monDay ? (monGiangDay.find((m) => m.ma === vc.monDay)?.ten ?? vc.monDay) : '-'}
+                  </Descriptions.Item>
+                )}
                 <Descriptions.Item label="Đảng viên">{vc.laDangVien ? 'Có' : 'Không'}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào ngành">{formatDate(vc.ngayVaoNganh)}</Descriptions.Item>
                 <Descriptions.Item label="Ngày vào đơn vị">{formatDate(vc.ngayVaoDonVi)}</Descriptions.Item>
+                {IS_BIEN_CHE[vc.loaiLaoDong] && (
+                  <Descriptions.Item label="Ngày vào biên chế">{vc.ngayVaoBienChe ? formatDate(vc.ngayVaoBienChe) : '-'}</Descriptions.Item>
+                )}
                 <Descriptions.Item label="Trình độ chuyên môn nghiệp vụ">{vc.trinhDoChuyenMon ?? '-'}</Descriptions.Item>
                 <Descriptions.Item label="Nhiệm vụ chính">{vc.nhiemVuChinh ?? '-'}</Descriptions.Item>
                 <Descriptions.Item label="Trình độ khác">{vc.trinhDoKhac ?? '-'}</Descriptions.Item>
@@ -289,12 +300,14 @@ export default function VienChucDetailPage() {
                 </>}
                 {activeHeSo && !nhanLuongTheoTien(vc) && <>
                   <Descriptions.Item label="Bậc lương hiện tại">Bậc {activeHeSo.bac} - Hệ số {activeHeSo.heSo}</Descriptions.Item>
+                  <Descriptions.Item label="Mốc hưởng lương">{formatDate(activeHeSo.ngayHieuLuc)}</Descriptions.Item>
                   <Descriptions.Item label="Ngày nâng lương tiếp theo">
                     <Text type={new Date(activeHeSo.ngayNangLuongTiepTheo) < new Date() ? 'danger' : undefined}>
                       {formatDate(activeHeSo.ngayNangLuongTiepTheo)}
                     </Text>
                   </Descriptions.Item>
                 </>}
+                <Descriptions.Item label="Ghi chú" span="filled">{vc.ghiChu || '-'}</Descriptions.Item>
               </Descriptions>
             ),
           },

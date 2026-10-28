@@ -182,7 +182,7 @@ export default function AppLayout() {
         width={240}
         collapsedWidth={64}
         className="qlvc-sidebar"
-        style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'auto' }}
+        style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}
       >
         {/* Logo phường - hiện ở mọi trang (thanh menu dùng chung) */}
         <div
@@ -206,18 +206,21 @@ export default function AppLayout() {
           />
         </div>
 
-        <Menu
-          mode="inline"
-          selectedKeys={[getSelectedKey()]}
-          defaultOpenKeys={['admin-group']}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
-          style={{ marginTop: 8 }}
-        />
+        {/* Chỉ vùng menu cuộn; logo và nút thu gọn cố định, không đè lên các mục menu */}
+        <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
+          <Menu
+            mode="inline"
+            selectedKeys={[getSelectedKey()]}
+            defaultOpenKeys={['admin-group']}
+            items={menuItems}
+            onClick={({ key }) => navigate(key)}
+            style={{ marginTop: 8 }}
+          />
+        </div>
 
         {/* Collapse button at bottom */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
+          flex: '0 0 auto',
           borderTop: '1px solid rgba(255,255,255,0.1)',
           padding: '8px',
           display: 'flex', justifyContent: 'center',

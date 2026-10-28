@@ -183,3 +183,6 @@ body {
 .vt-n-CHUYEN_MON.vt-tieu-de > td { background: #dcfce7 !important; font-weight: 600; }
 .vt-n-HO_TRO.vt-tieu-de > td { background: #fef3c7 !important; font-weight: 600; }
 .vt-n-NGOAI_DM.vt-tieu-de > td { background: #e2e8f0 !important; font-weight: 600; }
+
+.qlvc-sidebar .ant-layout-sider-children { display: flex; flex-direction: column; height: 100%; }
+.qlvc-sidebar .ant-layout-sider-children > div:first-child { flex: 0 0 auto; }

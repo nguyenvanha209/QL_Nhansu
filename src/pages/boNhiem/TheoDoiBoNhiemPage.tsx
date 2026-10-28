@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, Col, Row, Select, Space, Table, Typography } from 'antd'
+import { Badge, Button, Card, Col, Row, Select, Space, Table, Tabs, Typography } from 'antd'
 import { FileExcelOutlined } from '@ant-design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useBoNhiem } from '@/hooks/useBoNhiem'
+import { useChuyenDoiKeToan } from '@/hooks/useChuyenDoiKeToan'
+import ChuyenDoiKeToanTab from './ChuyenDoiKeToanTab'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { CHUC_VU_LABELS, HINH_THUC_BO_NHIEM_LABELS } from '@/types/vienChuc'
 import { formatDate } from '@/utils/helpers'
@@ -27,7 +29,26 @@ const O_LOC: { key: BoLoc; ten: string; mau: string; moTa: string }[] = [
   { key: 'TAT_CA', ten: 'Tất cả HT, P.HT', mau: '#2563eb', moTa: 'Toàn bộ cán bộ quản lý' },
 ]
 
+/** Theo dõi bổ nhiệm: thẻ Hiệu trưởng, Phó Hiệu trưởng (nhiệm kỳ) và thẻ Kế toán (định kỳ chuyển đổi vị trí công tác) */
 export default function TheoDoiBoNhiemPage() {
+  const { scopeDonViId } = useAuth()
+  const [params, setParams] = useSearchParams()
+  const { canNhac: canNhacHt } = useBoNhiem(scopeDonViId)
+  const { canNhac: canNhacKt } = useChuyenDoiKeToan(scopeDonViId)
+  const the = params.get('the') === 'ke-toan' ? 'ke-toan' : 'cbql'
+  return (
+    <Tabs
+      activeKey={the}
+      onChange={(k) => setParams(k === 'ke-toan' ? { the: 'ke-toan' } : {}, { replace: true })}
+      items={[
+        { key: 'cbql', label: <Badge count={canNhacHt.length} size="small" offset={[10, -2]}><span>Hiệu trưởng, Phó Hiệu trưởng</span></Badge>, children: <TheoDoiCbql /> },
+        { key: 'ke-toan', label: <Badge count={canNhacKt.length} size="small" offset={[10, -2]}><span>Kế toán - chuyển đổi vị trí công tác</span></Badge>, children: <ChuyenDoiKeToanTab /> },
+      ]}
+    />
+  )
+}
+
+function TheoDoiCbql() {
   const navigate = useNavigate()
   const { scopeDonViId } = useAuth()
   const { tatCa } = useBoNhiem(scopeDonViId)

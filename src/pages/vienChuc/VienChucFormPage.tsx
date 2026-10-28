@@ -403,6 +403,8 @@ export default function VienChucFormPage() {
       ngayVaoBienChe: vc.ngayVaoBienChe ? dayjs(vc.ngayVaoBienChe) : undefined,
       mocHuongPctn: vc.mocHuongPctn ? dayjs(vc.mocHuongPctn) : undefined,
       batDauBhxhGd: vc.batDauBhxhGd ? dayjs(`${vc.batDauBhxhGd}-01`) : undefined,
+      ngayBoNhiemKeToan: vc.boNhiemKeToan?.ngay ? dayjs(vc.boNhiemKeToan.ngay) : undefined,
+      soQdKeToan: vc.boNhiemKeToan?.soQuyetDinh,
       ngayChuyenDi: vc.ngayChuyenDi ? dayjs(vc.ngayChuyenDi) : undefined,
       blBat: !!vc.baoLuuPccv,
       blChucVuCu: vc.baoLuuPccv?.chucVuCu,
@@ -545,6 +547,9 @@ export default function VienChucFormPage() {
       mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
       batDauBhxhGd: values.khongThamGiaBhxh ? undefined : values.batDauBhxhGd ? values.batDauBhxhGd.format('YYYY-MM') : undefined,
       khongThamGiaBhxh: values.khongThamGiaBhxh ? true : undefined,
+      boNhiemKeToan: values.congViec === 'KE_TOAN' && values.vtvl === 'NHAN_VIEN' && values.ngayBoNhiemKeToan
+        ? { ...(vc?.boNhiemKeToan ?? {}), ngay: values.ngayBoNhiemKeToan.format('YYYY-MM-DD'), soQuyetDinh: values.soQdKeToan?.trim() || undefined }
+        : undefined,
       ngayChuyenDi: values.trangThai === 'CHUYEN_DI' ? values.ngayChuyenDi?.format('YYYY-MM-DD') : undefined,
       baoLuuPccv,
     }
@@ -836,6 +841,24 @@ export default function VienChucFormPage() {
                     options: CONG_VIEC.filter((c) => c.nhom === n.key).map((c) => ({ value: c.key, label: c.ten })),
                   }))}
                 />
+              </Form.Item>
+            </Col>
+          )}
+          {watchVtvl === 'NHAN_VIEN' && watchCongViec === 'KE_TOAN' && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item
+                name="ngayBoNhiemKeToan"
+                label="Mốc bổ nhiệm, phân công kế toán gần nhất"
+                tooltip="Căn cứ nhắc định kỳ chuyển đổi vị trí công tác của kế toán (Luật Phòng, chống tham nhũng; NĐ 59/2019/NĐ-CP) - theo dõi ở thẻ Theo dõi bổ nhiệm."
+              >
+                <DatePicker format="DD/MM/YYYY" placeholder="Ngày" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          )}
+          {watchVtvl === 'NHAN_VIEN' && watchCongViec === 'KE_TOAN' && (
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item name="soQdKeToan" label="Số quyết định bổ nhiệm, phân công kế toán">
+                <Input placeholder="Số QĐ (nếu có)" />
               </Form.Item>
             </Col>
           )}

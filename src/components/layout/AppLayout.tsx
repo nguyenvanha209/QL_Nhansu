@@ -12,6 +12,7 @@ import {
   SolutionOutlined, WarningOutlined, BankOutlined, RiseOutlined, SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useBoNhiem } from '@/hooks/useBoNhiem'
+import { useChuyenDoiKeToan } from '@/hooks/useChuyenDoiKeToan'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { ROLE_LABELS } from '@/types/auth'
@@ -84,8 +85,10 @@ export default function AppLayout() {
   const { token } = theme.useToken()
   const alerts = useSalaryAlerts(scopeDonViId, 90)
   const boNhiem = useBoNhiem(scopeDonViId)
+  const keToan = useChuyenDoiKeToan(scopeDonViId)
   const coXemBoNhiem = hasPermission('vienChuc', 'read')
-  const soBoNhiem = coXemBoNhiem ? boNhiem.canNhac.length : 0
+  const soKeToan = coXemBoNhiem ? keToan.canNhac.length : 0
+  const soBoNhiem = coXemBoNhiem ? boNhiem.canNhac.length + soKeToan : 0
 
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
@@ -109,8 +112,8 @@ export default function AppLayout() {
     hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
     hasPermission('vienChuc', 'read') && {
       key: '/bo-nhiem', icon: <SolutionOutlined />,
-      label: <NhanMenu ten="Theo dõi bổ nhiệm" soCho={boNhiem.canNhac.length} />,
-      title: 'Theo dõi bổ nhiệm cán bộ quản lý',
+      label: <NhanMenu ten="Theo dõi bổ nhiệm" soCho={boNhiem.canNhac.length + soKeToan} />,
+      title: 'Theo dõi bổ nhiệm cán bộ quản lý và định kỳ chuyển đổi vị trí kế toán',
       style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
     },
     hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },

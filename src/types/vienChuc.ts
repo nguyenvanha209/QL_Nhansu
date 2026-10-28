@@ -103,6 +103,11 @@ export interface VienChuc {
    * đối tượng đóng BHXH bắt buộc) - không phải khai tháng đóng BHXH, được thống kê riêng.
    */
   khongThamGiaBhxh?: boolean
+  /**
+   * Kế toán trường: mốc bổ nhiệm, phân công vào vị trí kế toán gần nhất - căn cứ nhắc định kỳ chuyển đổi vị trí công tác
+   * (Luật Phòng, chống tham nhũng; NĐ 59/2019/NĐ-CP). Trường nhập ở hồ sơ hoặc thẻ Theo dõi bổ nhiệm.
+   */
+  boNhiemKeToan?: { ngay: string; soQuyetDinh?: string; ghiChu?: string }
   ngayVaoNganh: string
   ngayVaoDonVi: string
   ngayHetTapSu?: string

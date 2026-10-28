@@ -277,6 +277,11 @@ export default function VienChucDetailPage() {
                 {coPhuCapThamNien(vc.vtvl) && (
                   <Descriptions.Item label="Mốc hưởng PCTN">{vc.mocHuongPctn ? formatDate(vc.mocHuongPctn) : '-'}</Descriptions.Item>
                 )}
+                {vc.congViec === 'KE_TOAN' && (
+                  <Descriptions.Item label="Mốc bổ nhiệm, phân công kế toán gần nhất">
+                    {vc.boNhiemKeToan?.ngay ? `${formatDate(vc.boNhiemKeToan.ngay)}${vc.boNhiemKeToan.soQuyetDinh ? ` - QĐ ${vc.boNhiemKeToan.soQuyetDinh}` : ''}` : <Typography.Text type="warning">Chưa nhập</Typography.Text>}
+                  </Descriptions.Item>
+                )}
                 <Descriptions.Item label="Bắt đầu đóng BHXH trong ngành GD">{vc.khongThamGiaBhxh ? <Tag color="purple">Không tham gia BHXH do quá tuổi</Tag> : vc.batDauBhxhGd ? `${vc.batDauBhxhGd.slice(5, 7)}/${vc.batDauBhxhGd.slice(0, 4)}` : <Typography.Text type="warning">Chưa khai</Typography.Text>}</Descriptions.Item>
                 {nhanLuongTheoTien(vc) && <>
                   <Descriptions.Item label="Hình thức nhận lương">{HINH_THUC_LUONG_LABELS.TIEN}</Descriptions.Item>

@@ -16,6 +16,8 @@ import type { MucNangTruocHan } from '@/types/deXuat'
 import { MUC_NANG_TRUOC_HAN_MAC_DINH } from '@/types/deXuat'
 import type { QuyMoTruong, QuyMoLichSu, ChiTieuBienChe, ChiTieuLichSu } from '@/types/quyMo'
 import { layNoiDung, giongNhau } from '@/utils/quyMoLichSu'
+import { QUY_DINH_KE_TOAN_MAC_DINH } from '@/utils/chuyenDoiKeToan'
+import type { QuyDinhChuyenDoiKeToan } from '@/utils/chuyenDoiKeToan'
 import { bacLuongTheoBang, bacLuongKhopBang } from '@/utils/bangLuongChuan'
 
 interface DanhMucState {
@@ -35,6 +37,9 @@ interface DanhMucState {
   chucVus: ChucVuDanhMuc[]
   /** Bảng gợi ý hình thức khen → số tháng nâng lương trước thời hạn (Phòng VHXH khai; trường sửa theo Quy chế) */
   mucNangTruocHans: MucNangTruocHan[]
+  /** Thời hạn định kỳ chuyển đổi vị trí kế toán (tháng) - sửa được theo văn bản áp dụng */
+  quyDinhKeToan: QuyDinhChuyenDoiKeToan
+  setQuyDinhKeToan: (v: QuyDinhChuyenDoiKeToan) => void
 
   setDonVis: (v: DonVi[]) => void
   addDonVi: (d: Omit<DonVi, 'id' | 'createdAt'>) => DonVi
@@ -97,6 +102,8 @@ export const useDanhMucStore = create<DanhMucState>()(
       loaiPhuCaps: [],
       vtvls: [],
       mucNangTruocHans: MUC_NANG_TRUOC_HAN_MAC_DINH,
+      quyDinhKeToan: QUY_DINH_KE_TOAN_MAC_DINH,
+      setQuyDinhKeToan: (v) => set({ quyDinhKeToan: v }),
       chucVus: [],
 
       setDonVis: (v) => set({ donVis: v }),

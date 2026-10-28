@@ -98,6 +98,11 @@ export interface VienChuc {
    * Kế toán khai ở hồ sơ hoặc trang Bổ sung thông tin đóng BHXH.
    */
   batDauBhxhGd?: string
+  /**
+   * Không tham gia BHXH do quá tuổi (nhân viên phục vụ: lao công, bảo vệ... đã quá tuổi nghỉ hưu nên không còn thuộc
+   * đối tượng đóng BHXH bắt buộc) - không phải khai tháng đóng BHXH, được thống kê riêng.
+   */
+  khongThamGiaBhxh?: boolean
   ngayVaoNganh: string
   ngayVaoDonVi: string
   ngayHetTapSu?: string

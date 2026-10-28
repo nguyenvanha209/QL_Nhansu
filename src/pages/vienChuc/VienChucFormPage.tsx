@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Card, Form, Input, Select, DatePicker, Button, Row, Col,
-  Space, Typography, Divider, InputNumber, Alert, App, Tag, Switch, Tooltip, Result,
+  Space, Typography, Divider, InputNumber, Alert, App, Tag, Switch, Tooltip, Result, Checkbox,
 } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, MinusCircleOutlined, LockOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -168,6 +168,7 @@ export default function VienChucFormPage() {
   ).map((d) => ({ value: d.id, label: d.ten }))
 
   const watchVtvl = Form.useWatch('vtvl', form) as string | undefined
+  const watchKhongBhxh = Form.useWatch('khongThamGiaBhxh', form) as boolean | undefined
   const watchChucDanhIdRaw = Form.useWatch('chucDanhId', form) as string | undefined
   const duocHuongPctn = coPhuCapThamNien(watchVtvl, chucDanhs.find((c) => c.id === watchChucDanhIdRaw)?.nhom)
 
@@ -542,7 +543,8 @@ export default function VienChucFormPage() {
       ngayHetTapSu: values.ngayHetTapSu?.format('YYYY-MM-DD'),
       ngayVaoBienChe: values.ngayVaoBienChe?.format('YYYY-MM-DD'),
       mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
-      batDauBhxhGd: values.batDauBhxhGd ? values.batDauBhxhGd.format('YYYY-MM') : undefined,
+      batDauBhxhGd: values.khongThamGiaBhxh ? undefined : values.batDauBhxhGd ? values.batDauBhxhGd.format('YYYY-MM') : undefined,
+      khongThamGiaBhxh: values.khongThamGiaBhxh ? true : undefined,
       ngayChuyenDi: values.trangThai === 'CHUYEN_DI' ? values.ngayChuyenDi?.format('YYYY-MM-DD') : undefined,
       baoLuuPccv,
     }
@@ -1066,8 +1068,14 @@ export default function VienChucFormPage() {
               label="Bắt đầu đóng BHXH trong ngành giáo dục"
               tooltip="Tháng bắt đầu đóng BHXH bắt buộc trong ngành giáo dục (theo sổ / quá trình đóng BHXH) - mọi người đều khai (biên chế, hợp đồng). Với CBQL, giáo viên là căn cứ tính đủ 5 năm xếp phụ cấp thâm niên nhà giáo lần đầu."
             >
-              <DatePicker picker="month" format="MM/YYYY" placeholder="Tháng/năm" style={{ width: '100%' }} />
+              <DatePicker picker="month" format="MM/YYYY" placeholder="Tháng/năm" disabled={!!watchKhongBhxh} style={{ width: '100%' }} />
             </Form.Item>
+            {watchVtvl === 'NHAN_VIEN' && (
+              <Form.Item name="khongThamGiaBhxh" valuePropName="checked" style={{ marginTop: -12 }}
+                tooltip="Dành cho nhân viên phục vụ (lao công, bảo vệ...) đã quá tuổi nghỉ hưu nên không còn đóng BHXH bắt buộc - được thống kê riêng, không bị nhắc khai tháng đóng BHXH.">
+                <Checkbox>Không tham gia BHXH do quá tuổi</Checkbox>
+              </Form.Item>
+            )}
           </Col>
         </Row>
         {laBienChe ? (

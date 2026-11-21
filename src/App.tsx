@@ -8,11 +8,25 @@ import AppRouter from '@/router/AppRouter'
 import LopBaoVePhien from '@/components/LopBaoVePhien'
 import { useHydration } from '@/hooks/useHydration'
 import { initSeedData } from '@/utils/seed'
-import { isSupabaseEnabled, napPhienDangNhap, dangKyKhiHetPhien } from '@/lib/supabase'
+import { isSupabaseEnabled, napPhienDangNhap, dangKyKhiHetPhien, supabase } from '@/lib/supabase'
+import { emailDangNhap } from '@/lib/auth'
+import { useUserStore } from '@/store/userStore'
 import { useAuthStore } from '@/store/authStore'
 import { syncFromSupabase } from '@/lib/syncFromSupabase'
 
 dayjs.locale('vi')
+
+async function lamMoiPhienTuMayChu() {
+  const cu = useAuthStore.getState().currentUser
+  if (!cu) return
+  const moi = useUserStore.getState().findByUsername(cu.username)
+  const email = (await supabase?.auth.getSession())?.data.session?.user.email
+  if (!moi || (email && email !== emailDangNhap(cu.username))) {
+    useAuthStore.setState({ currentUser: null })
+    return
+  }
+  useAuthStore.setState({ currentUser: { ...cu, role: moi.role, donViId: moi.donViId, quyenRieng: moi.quyenRieng, fullName: moi.fullName, active: moi.active } })
+}
 
 export default function App() {
   const hydrated = useHydration()
@@ -48,6 +62,10 @@ export default function App() {
 
       // 3. Chỉ seed khi máy chủ thực sự chưa có dữ liệu (hoặc chưa bật Supabase)
       initSeedData()
+
+      // 4. Vai trò, trường phụ trách lấy lại từ danh sách tài khoản trên máy chủ (máy chủ chỉ cho quản trị viên
+      //    sửa phần này - tools/sql/08), không tin bản phiên lưu trong trình duyệt; phiên phải đúng tài khoản.
+      if (isSupabaseEnabled) await lamMoiPhienTuMayChu()
       setReady(true)
     }
 

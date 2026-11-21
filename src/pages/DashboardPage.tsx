@@ -11,6 +11,7 @@ import DanhSachNangLuongModal from '@/components/DanhSachNangLuongModal'
 import { useThongBaoMoi } from '@/hooks/useThongBaoMoi'
 import { useAuth } from '@/hooks/useAuth'
 import { filterRetirementInYears } from '@/utils/retirement'
+import { laBienChe } from '@/utils/dinhMuc'
 import { getReviewUrgencyColor } from '@/utils/calculations'
 import { formatDate } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS } from '@/types/deXuat'
@@ -104,7 +105,8 @@ export default function DashboardPage() {
     return statuses.map((s) => ({ status: s, count: deXuats.filter((d) => d.trangThai === s).length }))
   }, [deXuats])
 
-  const retireIds = useMemo(() => filterRetirementInYears(vienChucs.map((v) => ({ id: v.id, ngaySinh: v.ngaySinh, gioiTinh: v.gioiTinh as 'NAM' | 'NU' })), retireYears), [vienChucs, retireYears])
+  // Cùng phạm vi với trang Dự báo nghỉ hưu: chỉ viên chức biên chế (lao động hợp đồng không tính) - tránh hai nơi ra hai số
+  const retireIds = useMemo(() => filterRetirementInYears(vienChucs.filter(laBienChe).map((v) => ({ id: v.id, ngaySinh: v.ngaySinh, gioiTinh: v.gioiTinh as 'NAM' | 'NU' })), retireYears), [vienChucs, retireYears])
 
   const deXuatDangXL = deXuats.filter((d) => d.trangThai === 'CHO_HIEU_TRUONG_DUYET' || d.trangThai === 'CHO_XET_DUYET' || d.trangThai === 'CHO_PHE_DUYET').length
 

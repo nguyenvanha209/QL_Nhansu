@@ -45,6 +45,8 @@ export default function AccountSettingsPage() {
     if (!kq.ok) {
       if (kq.lyDo === 'SAI_MK_CU') message.error('Mật khẩu hiện tại không đúng')
       else if (kq.lyDo === 'CHUA_CAU_HINH') message.error('Chưa cấu hình máy chủ. Liên hệ quản trị viên.')
+      // Máy chủ từ chối có lý do (tạm khoá do nhập sai nhiều lần, mật khẩu quá ngắn) - hiện đúng lý do
+      else if (/khoá|ký tự/.test(kq.thongBao)) message.error(kq.thongBao)
       else message.error('CHƯA đổi được mật khẩu - không kết nối được máy chủ. Vui lòng thử lại, mật khẩu cũ vẫn còn hiệu lực.')
       return
     }
@@ -119,7 +121,7 @@ export default function AccountSettingsPage() {
             <Form.Item
               name="newPassword"
               label="Mật khẩu mới"
-              rules={[{ required: true }, { min: 6, message: 'Tối thiểu 6 ký tự' }]}
+              rules={[{ required: true }, { min: 8, message: 'Tối thiểu 8 ký tự' }]}
             >
               <Input.Password />
             </Form.Item>

@@ -176,6 +176,8 @@ export default function UserManagePage() {
       if (!kq.ok) {
         if (kq.lyDo === 'SAI_MK_ADMIN') message.error('Mật khẩu quản trị viên không đúng, hoặc tài khoản của bạn không có quyền đặt mật khẩu.')
         else if (kq.lyDo === 'CHUA_CAU_HINH') message.error('Chưa cấu hình máy chủ. Liên hệ quản trị viên.')
+        // Máy chủ từ chối có lý do (tạm khoá do nhập sai nhiều lần, mật khẩu quá ngắn)
+        else if (kq.lyDo === 'LOI' && /khoá|ký tự/.test(kq.thongBao)) message.error(kq.thongBao)
         else message.error('CHƯA đặt được mật khẩu - không kết nối được máy chủ. Vui lòng thử lại.')
         return
       }
@@ -442,7 +444,7 @@ export default function UserManagePage() {
           <Form.Item
             name="password"
             label={editing ? 'Mật khẩu mới (để trống = không đổi)' : 'Mật khẩu'}
-            rules={!editing ? [{ required: true, min: 6, message: 'Tối thiểu 6 ký tự' }] : [{ min: 6, message: 'Tối thiểu 6 ký tự' }]}
+            rules={!editing ? [{ required: true, min: 8, message: 'Tối thiểu 8 ký tự' }] : [{ min: 8, message: 'Tối thiểu 8 ký tự' }]}
           >
             <Input.Password autoComplete="new-password" />
           </Form.Item>

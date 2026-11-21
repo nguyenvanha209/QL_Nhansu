@@ -144,3 +144,41 @@ body {
 
 .qlvc-sidebar .ant-layout-sider-children { display: flex; flex-direction: column; height: 100%; }
 .qlvc-sidebar .ant-layout-sider-children > div:first-child { flex: 0 0 auto; }
+
+/* ── Thẻ (Tab) có màu riêng: mỗi thẻ một màu theo thứ tự, nền nhạt; thẻ đang chọn tô đậm chuyển màu ──
+   Áp cho nhóm thẻ ngang (phía trên) và dọc (bên trái), không áp dạng thẻ card. Màu lặp lại sau 8 thẻ. */
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab {
+  --tab-mau: #2563eb;
+  padding: 6px 14px !important;
+  margin: 0 8px 10px 0 !important;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tab-mau) 8%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tab-mau) 22%, #fff);
+  transition: background .2s, box-shadow .2s;
+}
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+  color: color-mix(in srgb, var(--tab-mau) 80%, #000) !important;
+  font-weight: 500;
+}
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:hover {
+  background: color-mix(in srgb, var(--tab-mau) 15%, #fff);
+}
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab-active {
+  background: linear-gradient(135deg, var(--tab-mau) 0%, color-mix(in srgb, var(--tab-mau) 65%, #fff) 100%);
+  border-color: transparent;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--tab-mau) 28%, transparent);
+}
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn { color: #fff !important; }
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-ink-bar { display: none; }
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav::before { border-bottom-color: #e8eef8; }
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:nth-child(8n+1) { --tab-mau: #2563eb; } /* xanh dương */
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:nth-child(8n+2) { --tab-mau: #0d9488; } /* xanh ngọc */
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:nth-child(8n+3) { --tab-mau: #7c3aed; } /* tím */
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:nth-child(8n+4) { --tab-mau: #ea580c; } /* cam */
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:nth-child(8n+5) { --tab-mau: #db2777; } /* hồng */
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:nth-child(8n+6) { --tab-mau: #16a34a; } /* xanh lá */
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:nth-child(8n+7) { --tab-mau: #0891b2; } /* xanh biển */
+.ant-tabs:is(.ant-tabs-top, .ant-tabs-left):not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:nth-child(8n+8) { --tab-mau: #b45309; } /* nâu vàng */
+/* Thẻ dọc: xếp chồng, cách nhau đều */
+.ant-tabs-left:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab { margin: 0 10px 6px 0 !important; }
+.ant-tabs-left:not(.ant-tabs-card) > .ant-tabs-nav::before { border-right: 0; }

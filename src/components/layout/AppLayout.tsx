@@ -1,4 +1,4 @@
-import { useState, useMemo, Suspense } from 'react'
+import { useState, useMemo, useEffect, Suspense } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   Layout, Menu, Avatar, Dropdown, Badge, Space, Typography, Button, theme, Tooltip,
@@ -10,7 +10,10 @@ import {
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
   AuditOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
   SolutionOutlined, WarningOutlined, BankOutlined, RiseOutlined, SafetyCertificateOutlined,
+  SearchOutlined, AppstoreOutlined,
 } from '@ant-design/icons'
+import TimNhanh from './TimNhanh'
+import type { MucTimNhanh } from './TimNhanh'
 import { useBoNhiem } from '@/hooks/useBoNhiem'
 import { useChuyenDoiKeToan } from '@/hooks/useChuyenDoiKeToan'
 import { useAuth } from '@/hooks/useAuth'
@@ -20,7 +23,7 @@ import ChiBaoDongBo from './ChiBaoDongBo'
 import { useThongBaoMoi } from '@/hooks/useThongBaoMoi'
 import { useDeXuatCanXuLy, useDeXuatDangXuLy } from '@/hooks/useDeXuatCanXuLy'
 import { useDeXuatStore } from '@/store/deXuatStore'
-import { LOAI_HO_SO_NANG_LUONG, TEN_CHUC_NANG_NANG_LUONG, laHoSoNangLuong } from '@/types/deXuat'
+import { LOAI_HO_SO_NANG_LUONG, TEN_CHUC_NANG_NANG_LUONG, TEN_CHUC_NANG_DE_XUAT, laHoSoNangLuong } from '@/types/deXuat'
 import type { LoaiDeXuat } from '@/types/deXuat'
 
 const { Header, Sider, Content, Footer } = Layout
@@ -54,16 +57,17 @@ const BREADCRUMB_MAP: Record<string, string> = {
 }
 
 /**
- * Tên mục menu kèm số nhỏ ĐẶT NGAY SAU CHỮ (không dùng Badge góc trên: tên dài xuống dòng thì số bị đẩy khuất):
+ * Tên mục menu (ngắn, một dòng) kèm số nhỏ dồn về bên phải:
  * đỏ = việc chờ chính bạn xử lý; xanh = tổng phiếu các trường đang trong quy trình (VHXH, Lãnh đạo, quản trị).
+ * Tên đầy đủ của chức năng hiện ở tiêu đề trang và khi rê chuột.
  */
-function NhanMenu({ ten, soCho = 0, soTong = 0, mau }: { ten: string; soCho?: number; soTong?: number; mau?: string }) {
+function NhanMenu({ ten, soCho = 0, soTong = 0 }: { ten: string; soCho?: number; soTong?: number }) {
   const so = (n: number, nen: string, tieuDe: string) => (
-    <span title={tieuDe} style={{ display: 'inline-block', minWidth: 18, height: 18, lineHeight: '18px', padding: '0 5px', marginLeft: 5, borderRadius: 9, background: nen, color: '#fff', fontSize: 11.5, fontWeight: 600, textAlign: 'center', verticalAlign: 'middle' }}>{n}</span>
+    <span title={tieuDe} style={{ display: 'inline-block', minWidth: 18, height: 18, lineHeight: '18px', padding: '0 5px', borderRadius: 9, background: nen, color: '#fff', fontSize: 11.5, fontWeight: 600, textAlign: 'center' }}>{n}</span>
   )
   return (
-    <span style={{ color: mau ?? 'inherit' }}>
-      {ten}
+    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{ten}</span>
       {soCho > 0 && so(soCho, '#ef4444', `${soCho} việc chờ bạn xử lý`)}
       {soTong > 0 && so(soTong, '#0ea5e9', `${soTong} phiếu các trường đang trong quy trình (đã lập, chưa phê duyệt xong)`)}
     </span>
@@ -90,49 +94,77 @@ export default function AppLayout() {
   const soKeToan = coXemBoNhiem ? keToan.canNhac.length : 0
   const soBoNhiem = coXemBoNhiem ? boNhiem.canNhac.length + soKeToan : 0
 
+  // Menu chia nhóm theo nghiệp vụ, tên mục ngắn một dòng; tên đầy đủ ở tiêu đề trang (BREADCRUMB_MAP) và khi rê chuột
+  const nhom = (label: string, children: unknown[]) => {
+    const c = children.filter(Boolean)
+    return c.length ? { type: 'group' as const, label, children: c } : null
+  }
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
-    hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
-    hasPermission('vienChuc', 'read') && { key: '/vien-chuc/bhxh', icon: <SafetyCertificateOutlined />, label: 'Bổ sung thông tin đóng BHXH', style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 } },
-    hasPermission('luong', 'read') && { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
-    hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
-    hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL và định mức VC' },
-    hasPermission('deXuat', 'read') && {
-      key: '/ho-so-nang-luong', icon: <RiseOutlined />, className: 'menu-noi-bat',
-      label: <NhanMenu ten={TEN_CHUC_NANG_NANG_LUONG} soCho={soNangLuongCho} soTong={soNangLuongTong} />,
-      title: nhanTitle(TEN_CHUC_NANG_NANG_LUONG, soNangLuongCho, soNangLuongTong),
-      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
-    },
-    hasPermission('deXuat', 'read') && {
-      key: '/thong-bao-ket-qua', icon: <NotificationOutlined />, className: 'menu-noi-bat',
-      label: <NhanMenu ten="Thông báo kết quả nâng lương, phụ cấp thâm niên" soCho={soThongBaoMoi} />,
-      title: 'Thông báo kết quả nâng lương, phụ cấp thâm niên',
-      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
-    },
-    hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
-    hasPermission('vienChuc', 'read') && {
-      key: '/bo-nhiem', icon: <SolutionOutlined />,
-      label: <NhanMenu ten="Theo dõi bổ nhiệm" soCho={boNhiem.canNhac.length + soKeToan} />,
-      title: 'Theo dõi bổ nhiệm cán bộ quản lý và định kỳ chuyển đổi vị trí kế toán',
-      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
-    },
-    hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
-    hasPermission('deXuat', 'read') && {
-      key: '/de-xuat', icon: <FileTextOutlined />, className: 'menu-vang',
-      label: <NhanMenu ten="Đề xuất điều chỉnh hệ số lương - phụ cấp" soCho={soDeXuatCho} soTong={soDeXuatTong} mau="#facc15" />,
-      title: nhanTitle('Đề xuất điều chỉnh hệ số lương - phụ cấp', soDeXuatCho, soDeXuatTong),
-      style: { height: 'auto', lineHeight: '18px', whiteSpace: 'normal', paddingTop: 7, paddingBottom: 7 },
-    },
-    hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },
-    hasPermission('admin', 'admin') && {
-      key: 'admin-group', icon: <SettingOutlined />, label: 'Quản trị',
-      children: [
-        { key: '/admin/danh-muc', label: 'Danh mục hệ thống' },
-        { key: '/admin/nguoi-dung', label: 'Tài khoản người dùng' },
-        { key: '/admin/nhat-ky', icon: <AuditOutlined />, label: 'Nhật ký thao tác' },
-      ],
-    },
+    nhom('Nhân sự', [
+      hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
+      hasPermission('vienChuc', 'read') && { key: '/vien-chuc/bhxh', icon: <SafetyCertificateOutlined />, label: 'Thông tin BHXH', title: 'Bổ sung thông tin đóng BHXH' },
+      hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
+    ]),
+    nhom('Lương và chế độ', [
+      hasPermission('luong', 'read') && { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
+      hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
+      hasPermission('quyMo', 'read') && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL, định mức', title: 'Cơ cấu vị trí việc làm và định mức viên chức' },
+    ]),
+    nhom('Hồ sơ trình duyệt', [
+      hasPermission('deXuat', 'read') && {
+        key: '/ho-so-nang-luong', icon: <RiseOutlined />,
+        label: <NhanMenu ten="Nâng lương, PCTN" soCho={soNangLuongCho} soTong={soNangLuongTong} />,
+        title: nhanTitle(TEN_CHUC_NANG_NANG_LUONG, soNangLuongCho, soNangLuongTong),
+      },
+      hasPermission('deXuat', 'read') && {
+        key: '/de-xuat', icon: <FileTextOutlined />,
+        label: <NhanMenu ten="Điều chỉnh lương" soCho={soDeXuatCho} soTong={soDeXuatTong} />,
+        title: nhanTitle(TEN_CHUC_NANG_DE_XUAT, soDeXuatCho, soDeXuatTong),
+      },
+      hasPermission('deXuat', 'read') && {
+        key: '/thong-bao-ket-qua', icon: <NotificationOutlined />,
+        label: <NhanMenu ten="Thông báo kết quả" soCho={soThongBaoMoi} />,
+        title: 'Thông báo kết quả nâng lương, phụ cấp thâm niên',
+      },
+    ]),
+    nhom('Theo dõi', [
+      hasPermission('vienChuc', 'read') && {
+        key: '/bo-nhiem', icon: <SolutionOutlined />,
+        label: <NhanMenu ten="Bổ nhiệm, kế toán" soCho={boNhiem.canNhac.length + soKeToan} />,
+        title: 'Theo dõi bổ nhiệm cán bộ quản lý và định kỳ chuyển đổi vị trí kế toán',
+      },
+      hasPermission('duBao', 'read') && { key: '/du-bao', icon: <ClockCircleOutlined />, label: 'Dự báo nghỉ hưu' },
+      hasPermission('baoCao', 'read') && { key: '/bao-cao', icon: <BarChartOutlined />, label: 'Báo cáo' },
+    ]),
+    hasPermission('admin', 'admin') && nhom('Quản trị', [
+      { key: '/admin/danh-muc', icon: <AppstoreOutlined />, label: 'Danh mục hệ thống' },
+      { key: '/admin/nguoi-dung', icon: <UserOutlined />, label: 'Tài khoản người dùng' },
+      { key: '/admin/nhat-ky', icon: <AuditOutlined />, label: 'Nhật ký thao tác' },
+    ]),
   ].filter(Boolean) as any[]
+
+  // Danh sách chức năng cho ô Tìm nhanh (Ctrl+K): các mục menu được dùng + các trang ở đầu trang
+  const chucNangs = useMemo<MucTimNhanh[]>(() => {
+    const ds: MucTimNhanh[] = []
+    for (const m of menuItems) {
+      const con = m.type === 'group' ? m.children : [m]
+      for (const c of con) ds.push({ den: c.key, ten: BREADCRUMB_MAP[c.key] ?? c.title ?? String(c.label), nhom: m.type === 'group' ? m.label : undefined, icon: c.icon })
+    }
+    if (hasPermission('quyMo', 'read')) ds.push({ den: '/thong-tin-truong', ten: 'Thông tin trường', icon: <BankOutlined /> })
+    ds.push({ den: '/huong-dan', ten: 'Hướng dẫn sử dụng', icon: <ReadOutlined /> }, { den: '/tai-khoan', ten: 'Thông tin tài khoản, đổi mật khẩu', icon: <IdcardOutlined /> })
+    return ds
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, currentUser?.role])
+
+  const [moTim, setMoTim] = useState(false)
+  useEffect(() => {
+    const bam = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setMoTim(true) }
+    }
+    window.addEventListener('keydown', bam)
+    return () => window.removeEventListener('keydown', bam)
+  }, [])
 
   const getSelectedKey = () => {
     const path = location.pathname
@@ -174,84 +206,99 @@ export default function AppLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
+      <TimNhanh mo={moTim} dong={() => setMoTim(false)} chucNangs={chucNangs} scopeDonViId={scopeDonViId ?? null} />
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
         trigger={null}
-        width={240}
+        width={264}
         collapsedWidth={64}
+        breakpoint="lg"
+        onBreakpoint={(hep) => setCollapsed(hep)}
+        theme="light"
         className="qlvc-sidebar"
-        style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}
+        style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', borderRight: '1px solid #d6e4fb' }}
       >
-        {/* Logo phường - hiện ở mọi trang (thanh menu dùng chung) */}
+        {/* Logo phường và tên phần mềm - bấm để về Tổng quan */}
         <div
           onClick={() => navigate('/dashboard')}
           title="Quản lý nhân sự lao động tiền lương - Phường Gia Viên"
           style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: collapsed ? '12px 0' : '16px 0 14px', cursor: 'pointer',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            padding: collapsed ? '14px 0' : '14px 16px', borderBottom: '1px solid #d6e4fb',
           }}
         >
           <img
-            src={`${import.meta.env.BASE_URL}${collapsed ? 'apple-touch-icon.png' : 'logo-phuong.png'}`}
+            src={`${import.meta.env.BASE_URL}logo-phuong.png`}
             alt="Logo Phường Gia Viên"
-            width={collapsed ? 40 : 120}
-            height={collapsed ? 40 : 120}
-            style={{
-              display: 'block', borderRadius: '50%', background: '#fff', padding: collapsed ? 1 : 3,
-              boxShadow: '0 4px 16px rgba(15,23,42,0.3)', transition: 'width .2s, height .2s',
-            }}
+            width={38}
+            height={38}
+            style={{ display: 'block', borderRadius: '50%', flexShrink: 0 }}
           />
+          {!collapsed && (
+            <div style={{ lineHeight: '18px', minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 14.5, color: '#0f172a' }}>Quản lý nhân sự</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Phường Gia Viên</div>
+            </div>
+          )}
         </div>
 
         {/* Chỉ vùng menu cuộn; logo và nút thu gọn cố định, không đè lên các mục menu */}
-        <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
+        <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', paddingBottom: 8 }}>
           <Menu
             mode="inline"
             selectedKeys={[getSelectedKey()]}
-            defaultOpenKeys={['admin-group']}
             items={menuItems}
+            inlineIndent={16}
             onClick={({ key }) => navigate(key)}
-            style={{ marginTop: 8 }}
+            style={{ marginTop: 6 }}
           />
         </div>
 
-        {/* Collapse button at bottom */}
-        <div style={{
-          flex: '0 0 auto',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          padding: '8px',
-          display: 'flex', justifyContent: 'center',
-        }}>
+        {/* Nút thu gọn ở đáy */}
+        <div style={{ flex: '0 0 auto', borderTop: '1px solid #d6e4fb', padding: 8, display: 'flex', justifyContent: 'center' }}>
           <Tooltip title={collapsed ? 'Mở rộng' : 'Thu gọn'} placement="right">
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed(!collapsed)}
-              style={{ color: 'rgba(255,255,255,0.65)', width: '100%' }}
+              style={{ color: '#64748b', width: '100%' }}
+              aria-label={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
             />
           </Tooltip>
         </div>
       </Sider>
 
       <Layout style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Header style={{
+        <Header className="qlvc-header" style={{
           background: '#fff', padding: '0 20px', display: 'flex',
           alignItems: 'center', justifyContent: 'space-between',
           borderBottom: `1px solid ${token.colorBorderSecondary}`,
           flexShrink: 0, height: 56,
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}>
-          <Breadcrumb
-            items={[
-              { title: <DashboardOutlined style={{ fontSize: 14 }} /> },
-              { title: <span style={{ fontWeight: 500 }}>{breadcrumbTitle}</span> },
-            ]}
-            style={{ fontSize: 14 }}
-          />
-          <Space size={8}>
+          {/* Tiêu đề trang một dòng, dài thì rút gọn (rê chuột xem đủ) - không đẩy các nút bên phải xuống dòng */}
+          <div style={{ flex: 1, minWidth: 0, marginRight: 12 }} title={breadcrumbTitle}>
+            <Breadcrumb
+              items={[
+                { title: <DashboardOutlined style={{ fontSize: 14 }} /> },
+                { title: <span className="hd-tieu-de" style={{ fontWeight: 600, color: '#1e3a5f' }}>{breadcrumbTitle}</span> },
+              ]}
+              style={{ fontSize: 14, whiteSpace: 'nowrap' }}
+            />
+          </div>
+          <Space size={8} style={{ flexShrink: 0 }}>
+            <Button
+              onClick={() => setMoTim(true)}
+              icon={<SearchOutlined />}
+              style={{ borderRadius: 8, color: '#64748b', background: 'rgba(255,255,255,0.85)', borderColor: '#d6e4fb' }}
+              aria-label="Tìm nhanh (Ctrl+K)"
+            >
+              <span className="hd-btn-label">Tìm viên chức, chức năng</span>
+              <span className="hd-btn-label hd-phim-tat" style={{ fontSize: 11, border: '1px solid #e2e8f0', borderRadius: 4, padding: '0 5px', marginLeft: 10, color: '#94a3b8' }}>Ctrl K</span>
+            </Button>
             <ChiBaoDongBo />
             {hasPermission('quyMo', 'read') && (
               <Tooltip title="Thông tin chung và quy mô trường lớp từng năm học (căn cứ hạng trường, phụ cấp chức vụ, định mức)">
@@ -295,15 +342,12 @@ export default function AppLayout() {
               <Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 8, transition: 'background 0.2s' }}>
                 <Avatar
                   size={32}
-                  style={{
-                    background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
-                    fontSize: 14, fontWeight: 600,
-                  }}
+                  style={{ background: '#2563eb', fontSize: 14, fontWeight: 600 }}
                 >
                   {currentUser?.fullName?.charAt(0) ?? 'U'}
                 </Avatar>
                 {currentUser && (
-                  <div style={{ lineHeight: '16px' }}>
+                  <div className="hd-user-text" style={{ lineHeight: '16px', whiteSpace: 'nowrap' }}>
                     <div style={{ fontSize: 14, fontWeight: 500 }}>{currentUser.fullName}</div>
                     <div style={{ fontSize: 12, color: token.colorTextSecondary }}>{ROLE_LABELS[currentUser.role]}</div>
                   </div>

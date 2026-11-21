@@ -105,13 +105,17 @@ export default function App() {
           // Chữ mặc định 14px nhỏ khi đọc lâu trên màn 1080p: nâng lên 15px (tiêu đề, ô nhập, bảng tự giãn theo)
           fontSize: 15,
           controlHeight: 34,
-          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          colorBgLayout: '#f1f5f9',
+          // Be Vietnam Pro: phông thiết kế cho tiếng Việt, dấu rõ, dễ đọc lâu
+          fontFamily: "'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          colorBgLayout: '#f2f7fe',
         },
         components: {
           Card: { borderRadiusLG: 12 },
-          Table: { borderRadiusLG: 8, cellPaddingInline: 10, cellPaddingBlock: 10, cellPaddingInlineSM: 8, cellPaddingBlockSM: 7 },
-          Menu: { fontSize: 15 },
+          Menu: {
+            fontSize: 14, itemHeight: 38, itemBorderRadius: 8, itemMarginInline: 8, itemMarginBlock: 2, iconSize: 16,
+            itemColor: '#1e3a5f', itemHoverBg: 'rgba(37,99,235,0.08)', itemSelectedBg: '#2563eb', itemSelectedColor: '#ffffff', groupTitleColor: '#6b86ad',
+          },
+          Table: { headerBg: '#eef4fd', borderRadiusLG: 8, cellPaddingInline: 10, cellPaddingBlock: 10, cellPaddingInlineSM: 8, cellPaddingBlockSM: 7 },
           Button: { borderRadius: 8 },
         },
       }}

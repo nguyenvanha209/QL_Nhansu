@@ -108,22 +108,40 @@ export default function AuditLogPage() {
 
   const cols = [
     {
-      title: 'Thời gian', dataIndex: 'thoiGian', key: 'tg', width: 180,
-      render: (v: string) => formatDatetime(v),
+      title: 'Thời gian', dataIndex: 'thoiGian', key: 'tg', width: 100,
+      render: (v: string) => (
+        <div style={{ lineHeight: 1.35 }}>
+          <div>{dayjs(v).format('DD/MM/YYYY')}</div>
+          <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(v).format('HH:mm:ss')}</Text>
+        </div>
+      ),
     },
-    { title: 'Người thực hiện', dataIndex: 'userFullName', key: 'nguoi', width: 200, ellipsis: true },
     {
-      title: 'Hành động', dataIndex: 'action', key: 'hd', width: 130,
+      title: 'Người thực hiện', dataIndex: 'userFullName', key: 'nguoi', width: 220,
+      render: (v: string, r: NhatKyThaoTac) => (
+        <div style={{ lineHeight: 1.35, whiteSpace: 'normal', wordBreak: 'break-word' }}>
+          <div style={{ fontWeight: 500 }}>{v}</div>
+          {r.donViId && <Text type="secondary" style={{ fontSize: 12 }}>{tenDonVi(r.donViId)}</Text>}
+        </div>
+      ),
+    },
+    {
+      title: 'Hành động', dataIndex: 'action', key: 'hd', width: 115,
       render: (v: string) => {
         const t = NHAN_HANH_DONG[v] ?? { nhan: v, mau: 'default' }
         return <Tag color={t.mau}>{t.nhan}</Tag>
       },
     },
     {
-      title: 'Đối tượng', dataIndex: 'entity', key: 'dt', width: 145,
+      title: 'Đối tượng', dataIndex: 'entity', key: 'dt', width: 125,
       render: (v: string) => NHAN_DOI_TUONG[v] ?? v,
     },
-    { title: 'Nội dung', dataIndex: 'moTa', key: 'mota', ellipsis: true },
+    {
+      title: 'Nội dung', dataIndex: 'moTa', key: 'mota',
+      render: (v: string) => (
+        <Typography.Paragraph style={{ margin: 0, minWidth: 260 }} ellipsis={{ rows: 2, tooltip: v }}>{v}</Typography.Paragraph>
+      ),
+    },
     {
       title: '', key: 'xem', width: 46, align: 'center' as const,
       render: (_: unknown, r: NhatKyThaoTac) => (
@@ -153,12 +171,12 @@ export default function AuditLogPage() {
           options={Object.entries(NHAN_HANH_DONG).map(([k, v]) => ({ value: k, label: v.nhan }))} />
         <Select placeholder="Đối tượng" style={{ width: 165 }} value={locDoiTuong} onChange={setLocDoiTuong} allowClear
           options={Object.entries(NHAN_DOI_TUONG).map(([k, v]) => ({ value: k, label: v }))} />
-        <Select placeholder="Người thực hiện" style={{ width: 200 }} value={locNguoi} onChange={setLocNguoi} allowClear showSearch
+        <Select placeholder="Người thực hiện" style={{ width: 260 }} popupMatchSelectWidth={false} value={locNguoi} onChange={setLocNguoi} allowClear showSearch
           options={dsNguoi.map((v) => ({ value: v, label: v }))} />
         <RangePicker format="DD/MM/YYYY" value={khoang} onChange={(v) => setKhoang(v as never)} />
       </Space>
 
-      <Table dataSource={data} columns={cols} rowKey="id" size="small" scroll={{ x: 900 }}
+      <Table dataSource={data} columns={cols} rowKey="id" size="small" scroll={{ x: 880 }}
         pagination={{ pageSize: 50, showSizeChanger: true, pageSizeOptions: [20, 50, 100, 200], showTotal: (t) => `${t} bản ghi` }}
       />
 

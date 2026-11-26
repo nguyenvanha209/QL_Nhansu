@@ -108,38 +108,39 @@ export default function AuditLogPage() {
 
   const cols = [
     {
-      title: 'Thời gian', dataIndex: 'thoiGian', key: 'tg', width: 100,
+      title: 'Thời gian', dataIndex: 'thoiGian', key: 'tg', width: 108,
       render: (v: string) => (
-        <div style={{ lineHeight: 1.35 }}>
+        <div style={{ lineHeight: 1.35, whiteSpace: 'nowrap' }}>
           <div>{dayjs(v).format('DD/MM/YYYY')}</div>
           <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(v).format('HH:mm:ss')}</Text>
         </div>
       ),
     },
     {
-      title: 'Người thực hiện', dataIndex: 'userFullName', key: 'nguoi', width: 220,
+      title: 'Người thực hiện', dataIndex: 'userFullName', key: 'nguoi', width: 190,
       render: (v: string, r: NhatKyThaoTac) => (
         <div style={{ lineHeight: 1.35, whiteSpace: 'normal', wordBreak: 'break-word' }}>
           <div style={{ fontWeight: 500 }}>{v}</div>
-          {r.donViId && <Text type="secondary" style={{ fontSize: 12 }}>{tenDonVi(r.donViId)}</Text>}
+          {r.donViId && !(v ?? '').includes(tenDonVi(r.donViId)) && <Text type="secondary" style={{ fontSize: 12 }}>{tenDonVi(r.donViId)}</Text>}
         </div>
       ),
     },
     {
-      title: 'Hành động', dataIndex: 'action', key: 'hd', width: 115,
-      render: (v: string) => {
+      title: 'Thao tác', dataIndex: 'action', key: 'hd', width: 120,
+      render: (v: string, r: NhatKyThaoTac) => {
         const t = NHAN_HANH_DONG[v] ?? { nhan: v, mau: 'default' }
-        return <Tag color={t.mau}>{t.nhan}</Tag>
+        return (
+          <div style={{ lineHeight: 1.35 }}>
+            <Tag color={t.mau} style={{ marginInlineEnd: 0 }}>{t.nhan}</Tag>
+            <div><Text type="secondary" style={{ fontSize: 12 }}>{NHAN_DOI_TUONG[r.entity] ?? r.entity}</Text></div>
+          </div>
+        )
       },
-    },
-    {
-      title: 'Đối tượng', dataIndex: 'entity', key: 'dt', width: 125,
-      render: (v: string) => NHAN_DOI_TUONG[v] ?? v,
     },
     {
       title: 'Nội dung', dataIndex: 'moTa', key: 'mota',
       render: (v: string) => (
-        <Typography.Paragraph style={{ margin: 0, minWidth: 260 }} ellipsis={{ rows: 2, tooltip: v }}>{v}</Typography.Paragraph>
+        <Typography.Paragraph style={{ margin: 0, minWidth: 180 }} ellipsis={{ rows: 2, tooltip: v }}>{v}</Typography.Paragraph>
       ),
     },
     {
@@ -176,7 +177,7 @@ export default function AuditLogPage() {
         <RangePicker format="DD/MM/YYYY" value={khoang} onChange={(v) => setKhoang(v as never)} />
       </Space>
 
-      <Table dataSource={data} columns={cols} rowKey="id" size="small" scroll={{ x: 880 }}
+      <Table dataSource={data} columns={cols} rowKey="id" size="small" scroll={{ x: 640 }}
         pagination={{ pageSize: 50, showSizeChanger: true, pageSizeOptions: [20, 50, 100, 200], showTotal: (t) => `${t} bản ghi` }}
       />
 

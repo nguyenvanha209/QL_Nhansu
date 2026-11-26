@@ -303,7 +303,11 @@ const CAN_CU_CHUNG = [
   'Căn cứ Luật Tổ chức Chính quyền địa phương số 72/2025/QH15 ngày 16/06/2025;',
   'Căn cứ Luật Viên chức số 129/2025/QH15 ngày 10/12/2025;',
 ]
-const CAN_CU_QD_HP = 'Căn cứ Quyết định số 62/2022/QĐ-UBND ngày 02/11/2022 của Uỷ ban nhân dân thành phố Hải Phòng về việc ban hành quy định một số nội dung về quản lý tổ chức bộ máy, quản lý viên chức và lao động hợp đồng trong các đơn vị sự nghiệp công lập thuộc thành phố Hải Phòng, Quyết định số 36/2024/QĐ-UBND ngày 31/10/2024 của Uỷ ban nhân dân thành phố Hải Phòng sửa đổi, bổ sung một số điều của Quy định ban hành kèm theo Quyết định số 62/2022/QĐ-UBND;'
+// Phân cấp quản lý viên chức của UBND thành phố: QĐ 101/2026/QĐ-UBND ngày 23/11/2026 (hiệu lực 01/12/2026) thay QĐ 62/2022
+// và QĐ 36/2024. Thông báo ban hành trước 01/12/2026 giữ căn cứ cũ cho đúng thời điểm.
+const CAN_CU_QD_HP_CU = 'Căn cứ Quyết định số 62/2022/QĐ-UBND ngày 02/11/2022 của Uỷ ban nhân dân thành phố Hải Phòng về việc ban hành quy định một số nội dung về quản lý tổ chức bộ máy, quản lý viên chức và lao động hợp đồng trong các đơn vị sự nghiệp công lập thuộc thành phố Hải Phòng, Quyết định số 36/2024/QĐ-UBND ngày 31/10/2024 của Uỷ ban nhân dân thành phố Hải Phòng sửa đổi, bổ sung một số điều của Quy định ban hành kèm theo Quyết định số 62/2022/QĐ-UBND;'
+const CAN_CU_QD_HP_MOI = 'Căn cứ Quyết định số 101/2026/QĐ-UBND ngày 23/11/2026 của Ủy ban nhân dân thành phố Hải Phòng phân cấp một số nội dung về quản lý viên chức trong các cơ quan, đơn vị sự nghiệp công lập thuộc thành phố Hải Phòng;'
+const canCuQdHp = (ngay?: string) => ((ngay || new Date().toISOString().slice(0, 10)) >= '2026-12-01' ? CAN_CU_QD_HP_MOI : CAN_CU_QD_HP_CU)
 
 /** Nội dung thông báo theo mẫu, điền sẵn số liệu - các đoạn văn trả về để vừa xem trước vừa xuất Word */
 export function noiDungThongBao(tb: ThongBaoKetQua): { tieuDe: string; canCu: string[]; doan: string[] } {
@@ -314,7 +318,7 @@ export function noiDungThongBao(tb: ThongBaoKetQua): { tieuDe: string; canCu: st
       tieuDe: `Viên chức đủ điều kiện nâng bậc lương thường xuyên ${ky}`,
       canCu: [...CAN_CU_CHUNG,
         'Căn cứ Nghị định số 204/2004/NĐ-CP ngày 14/12/2004 của Chính phủ về chế độ tiền lương đối với cán bộ, công chức, viên chức; Căn cứ Thông tư số 08/2013/TT-BNV ngày 31/7/2013 của Bộ Nội vụ hướng dẫn thực hiện chế độ nâng bậc lương thường xuyên và nâng bậc lương trước thời hạn đối với cán bộ, công chức, viên chức và người lao động; Thông tư 03/2021/TT-BNV ngày 29/6/2021 của Bộ Nội vụ sửa đổi, bổ sung chế độ nâng bậc lương thường xuyên, nâng bậc lương trước thời hạn và chế độ phụ cấp thâm niên vượt khung đối với cán bộ, công chức, viên chức và người lao động;',
-        CAN_CU_QD_HP],
+        canCuQdHp(tb.ngayThongBao)],
       doan: [
         `Xét đề nghị của Thủ trưởng các đơn vị sự nghiệp công lập, sau khi xem xét hồ sơ và đối chiếu với quy định, UBND phường Gia Viên thông báo viên chức đủ điều kiện nâng bậc lương thường xuyên ${ky}, cụ thể như sau:`,
         `Số viên chức đủ điều kiện nâng bậc lương thường xuyên ${ky} là ${d.tong} người (Trong đó: Cán bộ quản lý: ${d.cbql} người, Giáo viên: ${d.gv} người, Nhân viên: ${d.nv} người).`,
@@ -331,7 +335,7 @@ export function noiDungThongBao(tb: ThongBaoKetQua): { tieuDe: string; canCu: st
       tieuDe: `Viên chức được nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ năm ${tb.nam}`,
       canCu: [...CAN_CU_CHUNG,
         'Căn cứ Nghị định số 204/2004/NĐ-CP ngày 14/12/2004 của Chính phủ về chế độ tiền lương đối với cán bộ, công chức, viên chức; Căn cứ Thông tư số 08/2013/TT-BNV ngày 31/7/2013 của Bộ Nội vụ hướng dẫn thực hiện chế độ nâng bậc lương thường xuyên và nâng bậc lương trước thời hạn đối với cán bộ, công chức, viên chức và người lao động; Thông tư 03/2021/TT-BNV ngày 29/6/2021 của Bộ Nội vụ sửa đổi, bổ sung chế độ nâng bậc lương thường xuyên, nâng bậc lương trước thời hạn và chế độ phụ cấp thâm niên vượt khung đối với cán bộ, công chức, viên chức và người lao động;',
-        CAN_CU_QD_HP],
+        canCuQdHp(tb.ngayThongBao)],
       doan: [
         `Xét Tờ trình, Biên bản họp Hội đồng xét nâng bậc lương trước thời hạn của các trường mầm non, tiểu học, THCS thuộc phường và kết quả thẩm định hồ sơ của Phòng Văn hóa - Xã hội, UBND phường Gia Viên thông báo viên chức được nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ năm ${tb.nam}, cụ thể như sau:`,
         `Số viên chức được nâng bậc lương trước thời hạn năm ${tb.nam} là ${d.tong} người (Trong đó: Cán bộ quản lý: ${d.cbql} người, Giáo viên: ${d.gv} người, Nhân viên: ${d.nv} người).`,
@@ -346,7 +350,7 @@ export function noiDungThongBao(tb: ThongBaoKetQua): { tieuDe: string; canCu: st
   if (tb.loai === 'PCTN_LAN_DAU') {
     return {
       tieuDe: `Về việc thực hiện chế độ phụ cấp thâm niên nhà giáo lần đầu năm ${tb.nam}`,
-      canCu: [...CAN_CU_CHUNG, 'Căn cứ Nghị định số 77/2021/NĐ-CP ngày 01/8/2021 của Chính phủ quy định chế độ phụ cấp thâm niên nhà giáo;', CAN_CU_QD_HP],
+      canCu: [...CAN_CU_CHUNG, 'Căn cứ Nghị định số 77/2021/NĐ-CP ngày 01/8/2021 của Chính phủ quy định chế độ phụ cấp thâm niên nhà giáo;', canCuQdHp(tb.ngayThongBao)],
       doan: [
         `Xét đề nghị của Hiệu trưởng các trường mầm non, tiểu học, THCS thuộc phường về hưởng phụ cấp thâm niên nhà giáo lần đầu đối với viên chức giáo viên và kết quả thẩm định hồ sơ của Phòng Văn hóa - Xã hội, UBND phường Gia Viên thông báo để Hiệu trưởng các trường mầm non, tiểu học, THCS thuộc phường ban hành quyết định thực hiện chế độ phụ cấp thâm niên nhà giáo lần đầu đối với ${d.tong} viên chức giáo viên (có danh sách cụ thể kèm theo).`,
         'UBND phường thông báo để Hiệu trưởng các trường mầm non, tiểu học, THCS thuộc phường có cơ sở thực hiện. (Gửi 01 bản Quyết định về Phòng Văn hóa - Xã hội phường để tổng hợp hồ sơ, báo cáo UBND phường)./.',
@@ -355,7 +359,7 @@ export function noiDungThongBao(tb: ThongBaoKetQua): { tieuDe: string; canCu: st
   }
   return {
     tieuDe: `Viên chức đủ điều kiện nâng phụ cấp thâm niên nhà giáo ${ky.replace('6 tháng', '06 tháng')}`,
-    canCu: [...CAN_CU_CHUNG, 'Căn cứ Nghị định số 77/2021/NĐ-CP ngày 01/8/2021 của Chính phủ quy định chế độ phụ cấp thâm niên nhà giáo;', CAN_CU_QD_HP],
+    canCu: [...CAN_CU_CHUNG, 'Căn cứ Nghị định số 77/2021/NĐ-CP ngày 01/8/2021 của Chính phủ quy định chế độ phụ cấp thâm niên nhà giáo;', canCuQdHp(tb.ngayThongBao)],
     doan: [
       `Xét đề nghị của Hiệu trưởng các trường mầm non, tiểu học, THCS thuộc phường và kết quả thẩm định hồ sơ của Phòng Văn hóa - Xã hội, UBND phường Gia Viên thông báo viên chức đủ điều kiện nâng phụ cấp thâm niên nhà giáo ${ky.replace('6 tháng', '06 tháng')}, cụ thể như sau:`,
       `Số viên chức đủ điều kiện nâng phụ cấp thâm niên nhà giáo ${ky.replace('6 tháng', '06 tháng')}: ${d.tong} người (Trong đó: Cán bộ quản lý: ${d.cbql} người, giáo viên: ${d.gv} người).`,

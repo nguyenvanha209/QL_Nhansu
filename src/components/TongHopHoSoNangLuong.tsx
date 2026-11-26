@@ -23,7 +23,7 @@ const BUOC: { key: Buoc; ten: string; trangThai: TrangThaiDeXuat[] }[] = [
   { key: 'NHAP', ten: 'Trường đang lập', trangThai: ['NHAP'] },
   { key: 'CHO_HT', ten: 'Chờ Thủ trưởng', trangThai: ['CHO_HIEU_TRUONG_DUYET'] },
   { key: 'CHO_VHXH', ten: 'Chờ VHXH thẩm định', trangThai: ['CHO_XET_DUYET'] },
-  { key: 'CHO_LD', ten: 'Chờ Lãnh đạo phê duyệt', trangThai: ['CHO_PHE_DUYET'] },
+  { key: 'CHO_LD', ten: 'Chờ Lãnh đạo Phòng phê duyệt', trangThai: ['CHO_PHE_DUYET'] },
   { key: 'DA_DUYET', ten: 'Đã phê duyệt', trangThai: ['DA_PHE_DUYET'] },
   { key: 'TRA_LAI', ten: 'Bổ sung / từ chối', trangThai: ['YEU_CAU_BO_SUNG', 'TU_CHOI'] },
 ]
@@ -145,7 +145,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
       title={<Space wrap><span>Tổng hợp các đơn vị - {LOAI_DE_XUAT_LABELS[loai].toLowerCase()}</span>
         {namNgoai === undefined && <Select size="small" value={nam} onChange={setNamTrong} style={{ width: 90 }} options={[-2, -1, 0, 1].map((x) => dayjs().year() + x).map((n) => ({ value: n, label: n }))} />}
         <Tag color="red" style={{ marginInlineEnd: 0 }}>Chờ VHXH thẩm định: {tong('CHO_VHXH')} người</Tag>
-        <Tag color="purple" style={{ marginInlineEnd: 0 }}>Chờ Lãnh đạo: {tong('CHO_LD')} người</Tag>
+        <Tag color="purple" style={{ marginInlineEnd: 0 }}>Chờ Lãnh đạo Phòng: {tong('CHO_LD')} người</Tag>
         <Tag color="green" style={{ marginInlineEnd: 0 }}>Đã phê duyệt: {tong('DA_DUYET')} người</Tag>
       </Space>}
     >
@@ -158,7 +158,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
           value={buoc} onChange={setBuoc}
           options={[
             { value: 'CHO_VHXH', label: 'Chờ VHXH thẩm định' },
-            { value: 'CHO_LD', label: 'Chờ Lãnh đạo' },
+            { value: 'CHO_LD', label: 'Chờ Lãnh đạo Phòng' },
             { value: 'DA_DUYET', label: 'Đã phê duyệt' },
             { value: 'DA_TRINH', label: 'Tất cả đã trình' },
           ]}
@@ -170,7 +170,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
       <Table<DongNguoi> {...BANG_CHUAN} rowKey="key" dataSource={nguoi} columns={colsNguoi} pagination={phanTrang('người')}
         locale={{ emptyText: `Không có người ở bước "${tenBuoc}" năm ${nam}` }} />
       <Text type="secondary" style={{ display: 'block', marginTop: 6, fontSize: 12.5 }}>
-        Quy trình: Đơn vị lập → Thủ trưởng đơn vị duyệt → Phòng VHXH thẩm định → Lãnh đạo phê duyệt → Thông báo kết quả.
+        Quy trình: Đơn vị lập → Thủ trưởng đơn vị duyệt → Phòng VHXH thẩm định → Lãnh đạo Phòng VHXH phê duyệt → Thông báo kết quả.
       </Text>
     </Card>
   )

@@ -80,7 +80,7 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
       {!scopeDonViId && <div style={{ marginTop: 16 }}><TongHopHoSoNangLuong loai="NANG_TRUOC_HAN" nam={nam} anBangTruong /></div>}
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Quy trình: Cán bộ đơn vị lập hồ sơ (tờ trình, biên bản họp xét, minh chứng từng người) → Thủ trưởng đơn vị trình → Phòng VHXH thẩm định từng người
-        → Lãnh đạo phường phê duyệt (hồ sơ lương tự cập nhật) → Phòng VHXH lập thông báo ở trang Thông báo kết quả nâng lương.
+        → Lãnh đạo Phòng VHXH phê duyệt → Thông báo kết quả.
       </Text>
     </>
   )

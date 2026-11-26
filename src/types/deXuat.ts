@@ -190,7 +190,7 @@ export const TRANG_THAI_LABELS: Record<TrangThaiDeXuat, string> = {
   NHAP: 'Bản nháp',
   CHO_HIEU_TRUONG_DUYET: 'Chờ Thủ trưởng đơn vị duyệt',
   CHO_XET_DUYET: 'Chờ VH-XH thẩm định',
-  CHO_PHE_DUYET: 'Chờ lãnh đạo phê duyệt',
+  CHO_PHE_DUYET: 'Chờ Lãnh đạo Phòng phê duyệt',
   DA_PHE_DUYET: 'Đã phê duyệt',
   TU_CHOI: 'Bị từ chối',
   YEU_CAU_BO_SUNG: 'Yêu cầu bổ sung',

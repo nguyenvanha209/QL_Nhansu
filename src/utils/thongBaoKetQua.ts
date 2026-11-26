@@ -22,7 +22,7 @@ export const tenNganTruong = (ten: string) =>
 
 const tenCapNgan: Record<CapHocTB, string> = { MAM_NON: 'MN', TIEU_HOC: 'TH', THCS: 'THCS' }
 
-/** Chỉ phiếu đã được lãnh đạo phê duyệt (hồ sơ viên chức đã cập nhật) mới đưa vào thông báo */
+/** Chỉ phiếu đã được Lãnh đạo Phòng VHXH phê duyệt (hồ sơ viên chức đã cập nhật) mới đưa vào thông báo */
 const PHIEU_DUA_VAO: DeXuatLuong['trangThai'][] = ['DA_PHE_DUYET']
 
 interface NguonDuLieu {

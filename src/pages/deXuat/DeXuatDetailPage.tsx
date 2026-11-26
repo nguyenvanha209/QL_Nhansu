@@ -64,7 +64,7 @@ export default function DeXuatDetailPage() {
     { title: 'Đơn vị lập', content: dx.ngayDeXuat ? formatDate(dx.ngayDeXuat) : 'Chờ nộp' },
     { title: 'Thủ trưởng đơn vị duyệt', content: dx.ngayDuyetHT ? `${formatDate(dx.ngayDuyetHT)} - ${ketQuaLabel(dx.ketQuaDuyetHT)}` : 'Chờ duyệt' },
     { title: 'VH-XH thẩm định', content: dx.ngayXetDuyet ? `${formatDate(dx.ngayXetDuyet)} - ${ketQuaLabel(dx.ketQuaXetDuyet)}` : 'Chờ xử lý' },
-    { title: 'Lãnh đạo phê duyệt', content: dx.ngayPheDuyet ? `${formatDate(dx.ngayPheDuyet)} - ${ketQuaLabel(dx.ketQuaPheDuyet)}` : 'Chờ duyệt' },
+    { title: 'Lãnh đạo Phòng phê duyệt', content: dx.ngayPheDuyet ? `${formatDate(dx.ngayPheDuyet)} - ${ketQuaLabel(dx.ketQuaPheDuyet)}` : 'Chờ duyệt' },
   ]
 
   const currentStep = dx.trangThai === 'NHAP' ? 0
@@ -214,7 +214,7 @@ export default function DeXuatDetailPage() {
   // Bản nháp và phiếu bị yêu cầu bổ sung: trường lập phiếu mở lại để sửa, rồi trình lại
   const canSua = (dx.trangThai === 'NHAP' || dx.trangThai === 'YEU_CAU_BO_SUNG')
     && (dx.nguoiDeXuatId === currentUser?.id || laQuanTri || (!!scopeDonViId && dx.donViId === scopeDonViId))
-  // Quy trình: Kế toán lập → Hiệu trưởng duyệt → Phòng VH-XH thẩm định → Lãnh đạo (hoặc Admin) phê duyệt cuối.
+  // Quy trình: Kế toán lập → Hiệu trưởng duyệt → Phòng VH-XH thẩm định → Lãnh đạo Phòng VHXH (hoặc Admin) phê duyệt cuối.
   // Mỗi bước cần đúng vai trò VÀ còn quyền "Duyệt đề xuất" - quyền bị thu hồi riêng thì không duyệt được.
   const coQuyenDuyet = hasPermission('deXuat', 'approve')
   const canDuyetHT = dx.trangThai === 'CHO_HIEU_TRUONG_DUYET'
@@ -246,9 +246,9 @@ export default function DeXuatDetailPage() {
           const chua = moi?.chiTiet.filter((c) => !c.thamDinh).length ?? 0
           if (chua) { message.warning(`Còn ${chua} người chưa thẩm định - chọn Đồng ý / Không đồng ý cho từng người`); return }
         }
-        if (!moi?.chiTiet.some((c) => c.thamDinh !== 'KHONG_DONG_Y')) { message.warning('Không có người nào được đồng ý - chọn Từ chối hồ sơ thay vì chuyển lãnh đạo'); return }
+        if (!moi?.chiTiet.some((c) => c.thamDinh !== 'KHONG_DONG_Y')) { message.warning('Không có người nào được đồng ý - chọn Từ chối hồ sơ thay vì trình Lãnh đạo Phòng đạo'); return }
         xetDuyetDeXuat(id!, 'DONG_Y', ghiChu, currentUser.id, currentUser.fullName)
-        message.success('Đã thẩm định - chuyển Lãnh đạo phê duyệt')
+        message.success('Đã thẩm định - trình Lãnh đạo Phòng phê duyệt')
       } else if (modalAction === 'xd_reject') {
         xetDuyetDeXuat(id!, 'TU_CHOI', ghiChu, currentUser.id, currentUser.fullName)
         message.warning('Đã từ chối đề xuất')
@@ -287,7 +287,7 @@ export default function DeXuatDetailPage() {
           {dx.ghiChuDeXuat && <Descriptions.Item label="Ghi chú đề xuất" span={2}>{dx.ghiChuDeXuat}</Descriptions.Item>}
           {dx.ghiChuDuyetHT && <Descriptions.Item label="Ý kiến Thủ trưởng đơn vị" span={2}>{dx.ghiChuDuyetHT}</Descriptions.Item>}
           {dx.ghiChuXetDuyet && <Descriptions.Item label="Ý kiến VH-XH" span={2}>{dx.ghiChuXetDuyet}</Descriptions.Item>}
-          {dx.ghiChuPheDuyet && <Descriptions.Item label="Ý kiến lãnh đạo" span={2}>{dx.ghiChuPheDuyet}</Descriptions.Item>}
+          {dx.ghiChuPheDuyet && <Descriptions.Item label="Ý kiến Lãnh đạo Phòng" span={2}>{dx.ghiChuPheDuyet}</Descriptions.Item>}
           {laTruocHan && <>
             <Descriptions.Item label="Năm xét">{dx.namXet}</Descriptions.Item>
             <Descriptions.Item label="Tỷ lệ (10%)">
@@ -327,7 +327,7 @@ export default function DeXuatDetailPage() {
             <Button danger icon={<CloseOutlined />} onClick={() => openModal('ht_reject')}>Từ chối</Button>
           </>}
           {canXetDuyet && <>
-            <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('xd_approve')}>Đồng ý - chuyển lãnh đạo</Button>
+            <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('xd_approve')}>Đồng ý - trình Lãnh đạo Phòng</Button>
             <Button icon={<SyncOutlined />} onClick={() => openModal('xd_supplement')}>Yêu cầu bổ sung</Button>
             <Button danger icon={<CloseOutlined />} onClick={() => openModal('xd_reject')}>Từ chối</Button>
           </>}

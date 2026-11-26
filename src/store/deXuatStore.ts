@@ -35,7 +35,7 @@ const TRANG_THAI_LABELS: Record<string, string> = {
   NHAP: 'Nháp',
   CHO_HIEU_TRUONG: 'Chờ hiệu trưởng duyệt',
   CHO_XET_DUYET: 'Chờ phường thẩm định',
-  CHO_PHE_DUYET: 'Chờ lãnh đạo phê duyệt',
+  CHO_PHE_DUYET: 'Chờ Lãnh đạo Phòng phê duyệt',
   DA_PHE_DUYET: 'Đã phê duyệt',
   TU_CHOI: 'Từ chối',
 }
@@ -261,7 +261,7 @@ export const useDeXuatStore = create<DeXuatState>()(
               deXuatId: id,
             })
           })
-          addNhatKy({ userId: actorId, userFullName: actorName, action: 'APPROVE', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo phê duyệt xếp phụ cấp thâm niên lần đầu ${id}`, thoiGian: now() })
+          addNhatKy({ userId: actorId, userFullName: actorName, action: 'APPROVE', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo Phòng VHXH phê duyệt xếp phụ cấp thâm niên lần đầu ${id}`, thoiGian: now() })
         } else if (ketQua === 'PHE_DUYET' && dx.loai === 'PHU_CAP_THAM_NIEN') {
           // Phiếu phụ cấp thâm niên: cập nhật PCTN vào Phụ cấp + Lịch sử biến động
           const { addPhuCap, deactivatePhuCap, getActivePhuCaps, addLichSuBienDong, addNhatKy } =
@@ -305,7 +305,7 @@ export const useDeXuatStore = create<DeXuatState>()(
             })
           })
 
-          addNhatKy({ userId: actorId, userFullName: actorName, action: 'APPROVE', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo phê duyệt đề xuất phụ cấp thâm niên ${id}`, thoiGian: now() })
+          addNhatKy({ userId: actorId, userFullName: actorName, action: 'APPROVE', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo Phòng VHXH phê duyệt đề xuất phụ cấp thâm niên ${id}`, thoiGian: now() })
         } else if (ketQua === 'PHE_DUYET') {
           const { addHeSoLuong, deactivateHeSoLuong, getActiveHeSo, addLichSuBienDong, addNhatKy } =
             useLuongStore.getState()
@@ -421,10 +421,10 @@ export const useDeXuatStore = create<DeXuatState>()(
             })
           })
 
-          addNhatKy({ userId: actorId, userFullName: actorName, action: 'APPROVE', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo phê duyệt đề xuất ${id}`, thoiGian: now() })
+          addNhatKy({ userId: actorId, userFullName: actorName, action: 'APPROVE', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo Phòng VHXH phê duyệt đề xuất ${id}`, thoiGian: now() })
         } else {
           const { addNhatKy } = useLuongStore.getState()
-          addNhatKy({ userId: actorId, userFullName: actorName, action: 'REJECT', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo từ chối đề xuất ${id}`, thoiGian: now() })
+          addNhatKy({ userId: actorId, userFullName: actorName, action: 'REJECT', entity: 'DeXuatLuong', entityId: id, moTa: `Lãnh đạo Phòng VHXH từ chối đề xuất ${id}`, thoiGian: now() })
         }
       },
     }),

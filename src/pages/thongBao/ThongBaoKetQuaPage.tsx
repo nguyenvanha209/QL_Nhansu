@@ -172,7 +172,7 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
       content: (
         <div>
           <p>{ban.dong.length} người, gửi tới kế toán, hiệu trưởng các trường theo cấp học.</p>
-          {choPheDuyet > 0 && <Alert type="warning" showIcon title={`${choPheDuyet} người thuộc phiếu chưa được lãnh đạo phê duyệt trên phần mềm`} description="Hồ sơ lương của những người này chỉ tự cập nhật khi phiếu được phê duyệt." />}
+          {choPheDuyet > 0 && <Alert type="warning" showIcon title={`${choPheDuyet} người thuộc phiếu chưa được Lãnh đạo Phòng phê duyệt`} description="Hồ sơ lương của những người này chỉ tự cập nhật khi phiếu được phê duyệt." />}
         </div>
       ),
       okText: 'Ban hành',
@@ -401,7 +401,7 @@ function BangDanhSach({ tb, sua, onDoi, onXoa, chiCap, truongMinh }: {
           render: (_, r) => la(r) && (
             <span>
               {r.hoTen}
-              {!r.daPheDuyet && <Tooltip title={`Phiếu ${r.deXuatMa} đã thẩm định, chờ lãnh đạo phê duyệt`}><ClockCircleOutlined style={{ color: '#d97706', marginInlineStart: 6 }} /></Tooltip>}
+              {!r.daPheDuyet && <Tooltip title={`Phiếu ${r.deXuatMa} đã thẩm định, chờ Lãnh đạo Phòng phê duyệt`}><ClockCircleOutlined style={{ color: '#d97706', marginInlineStart: 6 }} /></Tooltip>}
             </span>
           ),
         },

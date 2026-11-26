@@ -127,7 +127,7 @@ export default function HuongDanPage() {
       ]} />
       <Viec ten="Thẩm định phiếu" buoc={[
         <><M>Nâng lương</M> hoặc <M>Điều chỉnh lương</M>: bảng tổng hợp cho biết mỗi đơn vị đang ở bước nào.</>,
-        <>Mở phiếu → chọn <b>Đồng ý / Không đồng ý</b> cho từng người (khi cần) → <N>Đồng ý - chuyển lãnh đạo</N> hoặc <N>Yêu cầu bổ sung</N>.</>,
+        <>Mở phiếu → chọn <b>Đồng ý / Không đồng ý</b> cho từng người (khi cần) → <N>Đồng ý - trình Lãnh đạo Phòng</N> hoặc <N>Yêu cầu bổ sung</N>.</>,
       ]} />
       <Viec ten="Thông báo kết quả" buoc={[
         <><M>Thông báo kết quả</M> → chọn loại, kỳ → <N>Tổng hợp lại</N> → nhập số, ngày, người ký → <N>Ban hành</N>.</>,
@@ -145,12 +145,12 @@ export default function HuongDanPage() {
     </>
   )
 
-  // ── Lãnh đạo UBND phường ──
+  // ── Lãnh đạo Phòng VHXH (Trưởng phòng được ủy quyền phê duyệt) ──
   const lanhDao = (
     <>
       <Viec ten="Phê duyệt phiếu" buoc={[
         <>Số đỏ ở <M>Nâng lương</M>, <M>Điều chỉnh lương</M> là phiếu chờ phê duyệt.</>,
-        <>Mở phiếu → xem ý kiến thẩm định của Phòng Văn hóa - Xã hội → <N>Phê duyệt</N> hoặc <N>Từ chối</N>.</>,
+        <>Mở phiếu → xem ý kiến thẩm định của chuyên viên → <N>Phê duyệt</N> hoặc <N>Từ chối</N>.</>,
         <>Phê duyệt xong, phần mềm tự cập nhật lương, phụ cấp vào hồ sơ từng người.</>,
       ]} />
       <Viec ten="Nắm tình hình" buoc={[
@@ -175,7 +175,7 @@ export default function HuongDanPage() {
     { key: 'can-bo', label: 'Cán bộ đơn vị (kế toán)', children: canBo },
     { key: 'thu-truong', label: 'Thủ trưởng đơn vị', children: thuTruong },
     { key: 'vhxh', label: 'Phòng Văn hóa - Xã hội', children: vhxh },
-    { key: 'lanh-dao', label: 'Lãnh đạo UBND phường', children: lanhDao },
+    { key: 'lanh-dao', label: 'Lãnh đạo Phòng VHXH', children: lanhDao },
   ]
 
   return (

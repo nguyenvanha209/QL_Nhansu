@@ -7,7 +7,7 @@ import type { LoaiDeXuat } from '@/types/deXuat'
 
 /**
  * Số phiếu đề xuất đang chờ CHÍNH người dùng này xử lý (số nhỏ trên menu) - cùng quy tắc với nút duyệt ở
- * trang chi tiết phiếu: hiệu trưởng duyệt phiếu của trường, Phòng VHXH thẩm định, lãnh đạo phê duyệt cuối;
+ * trang chi tiết phiếu: hiệu trưởng duyệt phiếu của trường, Phòng VHXH thẩm định, Lãnh đạo Phòng VHXH phê duyệt cuối;
  * người lập phiếu (trường) còn phải trình bản nháp của mình và sửa phiếu bị yêu cầu bổ sung.
  * `loais`: các loại phiếu được đếm; mặc định là hai loại của trang Đề xuất điều chỉnh (chuyển ngạch, điều chỉnh).
  */

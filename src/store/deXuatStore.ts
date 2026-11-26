@@ -70,8 +70,13 @@ interface DeXuatState {
 }
 
 const now = () => new Date().toISOString()
-let _dxCounter = 1
-const genMa = (donViId: string) => `DX-${new Date().getFullYear()}-${String(_dxCounter++).padStart(3, '0')}`
+/** Mã phiếu nối tiếp số lớn nhất đã có trong năm (bộ đếm cũ khởi động lại mỗi lần tải trang nên sinh mã trùng) */
+const genMa = (ds: { ma?: string }[]) => {
+  const nam = new Date().getFullYear()
+  const dau = `DX-${nam}-`
+  const max = ds.reduce((m, d) => (d.ma?.startsWith(dau) ? Math.max(m, parseInt(d.ma.slice(dau.length), 10) || 0) : m), 0)
+  return `${dau}${String(max + 1).padStart(3, '0')}`
+}
 
 export const useDeXuatStore = create<DeXuatState>()(
   persist(
@@ -83,7 +88,7 @@ export const useDeXuatStore = create<DeXuatState>()(
         const item: DeXuatLuong = {
           ...data,
           id: nanoid(),
-          ma: genMa(data.donViId),
+          ma: genMa(get().deXuats),
           createdAt: now(),
           updatedAt: now(),
         }

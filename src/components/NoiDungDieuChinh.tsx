@@ -12,19 +12,21 @@ const { Text } = Typography
  * Tóm tắt nội dung điều chỉnh của một người, cũ → mới, theo 4 thông số lương:
  * Ngạch - Bậc - Hệ số - Mốc hưởng. Thông số không đổi thì ghi "giữ nguyên" để người duyệt thấy rõ.
  */
-export default function NoiDungDieuChinh({ r, chucDanhs }: { r: ChiTietDeXuat; chucDanhs: ChucDanhNgheNghiep[] }) {
+export default function NoiDungDieuChinh({ r, chucDanhs, chiPhuCap }: { r: ChiTietDeXuat; chucDanhs: ChucDanhNgheNghiep[]; chiPhuCap?: boolean }) {
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const cdCu = chucDanhs.find((c) => c.id === r.chucDanhCuId)
   const cdMoi = chucDanhs.find((c) => c.id === r.chucDanhMoiId)
-  const hs = (n: number) => Number(n).toFixed(2).replace('.', ',')
+  const hs = (n: number) => Number(n).toFixed(3).replace('.', ',')
   const dong = (nhan: string, cu: string, moi: string) => {
     const doi = cu !== moi
     return (
-      <div key={nhan} style={{ whiteSpace: 'nowrap' }}>
-        <Text type="secondary" style={{ display: 'inline-block', width: 62 }}>{nhan}</Text>
+      <div key={nhan} style={{ display: 'grid', gridTemplateColumns: '84px 1fr', columnGap: 6 }}>
+        <Text type="secondary">{nhan}</Text>
+        <span>
         {doi
           ? <>{cu} <Text type="secondary">→</Text> <Text strong style={{ color: '#0958d9' }}>{moi}</Text></>
           : <Text type="secondary">{cu} (giữ nguyên)</Text>}
+        </span>
       </div>
     )
   }
@@ -32,7 +34,7 @@ export default function NoiDungDieuChinh({ r, chucDanhs }: { r: ChiTietDeXuat; c
   const loai = (id?: string) => loaiPhuCaps.find((l) => l.id === id)
   return (
     <div style={{ lineHeight: 1.6, fontSize: 14 }}>
-      {pcs.length > 0 && !coDoiLuong(r) ? <Text type="secondary">Lương giữ nguyên ({cdCu?.ma} bậc {r.bacCu} - {hs(r.heSoCu)})</Text> : <>
+      {chiPhuCap ? null : pcs.length > 0 && !coDoiLuong(r) ? <Text type="secondary">Lương giữ nguyên ({cdCu?.ma} bậc {r.bacCu} - {hs(r.heSoCu)})</Text> : <>
       {dong('Ngạch', cdCu ? `${cdCu.ma} (${cdCu.bangLuong})` : r.chucDanhCuId, cdMoi ? `${cdMoi.ma} (${cdMoi.bangLuong})` : r.chucDanhMoiId)}
       {dong('Bậc', `Bậc ${r.bacCu}`, `Bậc ${r.bacMoi}`)}
       {dong('Hệ số', hs(r.heSoCu), hs(r.heSoMoi))}

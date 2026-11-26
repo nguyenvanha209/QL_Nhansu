@@ -11,8 +11,9 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { ngayDu5Nam } from '@/utils/pctnLanDau'
-import { formatDate } from '@/utils/helpers'
-import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, trangDanhSachCuaLoai, laHoSoNangLuong } from '@/types/deXuat'
+import { formatDate, vietHoaDauTu } from '@/utils/helpers'
+import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, trangDanhSachCuaLoai, laHoSoNangLuong, coDoiLuong } from '@/types/deXuat'
+import { CHUC_VU_LABELS } from '@/types/vienChuc'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import { lamMoiNgay } from '@/lib/supabase'
@@ -63,7 +64,7 @@ export default function DeXuatDetailPage() {
   const stepItems = [
     { title: 'Đơn vị lập', content: dx.ngayDeXuat ? formatDate(dx.ngayDeXuat) : 'Chờ nộp' },
     { title: 'Thủ trưởng đơn vị duyệt', content: dx.ngayDuyetHT ? `${formatDate(dx.ngayDuyetHT)} - ${ketQuaLabel(dx.ketQuaDuyetHT)}` : 'Chờ duyệt' },
-    { title: 'VH-XH thẩm định', content: dx.ngayXetDuyet ? `${formatDate(dx.ngayXetDuyet)} - ${ketQuaLabel(dx.ketQuaXetDuyet)}` : 'Chờ xử lý' },
+    { title: 'Phòng VHXH thẩm định', content: dx.ngayXetDuyet ? `${formatDate(dx.ngayXetDuyet)} - ${ketQuaLabel(dx.ketQuaXetDuyet)}` : 'Chờ xử lý' },
     { title: 'Lãnh đạo Phòng phê duyệt', content: dx.ngayPheDuyet ? `${formatDate(dx.ngayPheDuyet)} - ${ketQuaLabel(dx.ketQuaPheDuyet)}` : 'Chờ duyệt' },
   ]
 
@@ -177,6 +178,27 @@ export default function DeXuatDetailPage() {
     colThamDinh,
   ]
 
+  const colTT = { title: 'TT', key: 'tt', width: 46, align: 'center' as const, render: (_: unknown, __: unknown, i: number) => i + 1 }
+  const colHoTen = {
+    title: 'Họ và tên', key: 'vc', width: 200,
+    render: (_: unknown, r: ChiTietDeXuat) => {
+      const vc = vienChucs.find((v) => v.id === r.vienChucId)
+      if (!vc) return r.vienChucId
+      const phu = [vc.ngaySinh ? `Sinh ${formatDate(vc.ngaySinh)}` : '', vc.chucVu ? CHUC_VU_LABELS[vc.chucVu] ?? '' : ''].filter(Boolean).join(' · ')
+      return (
+        <div style={{ lineHeight: 1.45 }}>
+          <div style={{ fontWeight: 600 }}>{vietHoaDauTu(`${vc.ho} ${vc.ten}`)}</div>
+          {phu && <Text type="secondary" style={{ fontSize: 12.5 }}>{phu}</Text>}
+        </div>
+      )
+    },
+  }
+  const hs3 = (n: number) => Number(n).toFixed(3).replace('.', ',')
+  const coPhuCap = dx.chiTiet.some((c) => c.phuCaps?.length)
+  // Cùng một lý do cho cả phiếu (VD nâng lương thường xuyên) thì ghi một lần trên bảng, không lặp từng dòng
+  const cacLyDo = [...new Set(dx.chiTiet.map((c) => (c.lyDo ?? '').trim()))]
+  const lyDoChung = !laTruocHan && cacLyDo.length === 1 ? cacLyDo[0] : undefined
+
   const coCotThamDinh = laHoSoNangLuong(dx.loai) && !laTruocHan && (dx.trangThai === 'CHO_XET_DUYET' || dx.chiTiet.some((c) => c.thamDinh))
   const detailColsGoc = laTruocHan ? colsTruocHan : dx.loai === 'PCTN_LAN_DAU' ? colsLanDau : laPctn
     ? [
@@ -187,25 +209,44 @@ export default function DeXuatDetailPage() {
         colLyDo,
       ]
     : [
-        colVienChuc,
+        colTT,
+        colHoTen,
         {
-          title: 'Hiện tại', key: 'cu', width: 200,
-          render: (_: any, r: any) => {
-            const cd = chucDanhs.find((c) => c.id === r.chucDanhCuId)
-            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten}>{cd?.ma ?? r.chucDanhCuId}</Text> <Text type="secondary">({cd?.bangLuong})</Text><br />Bậc {r.bacCu} - {Number(r.heSoCu).toFixed(2)}{r.tnvkCu ? <> + <b>VK {r.tnvkCu}%</b></> : null}{r.ngayHieuLucCu && <><br /><Text type="secondary" style={{ fontSize: 13 }}>từ {formatDate(r.ngayHieuLucCu)}</Text></>}</div>
+          title: 'Ngạch (mã CDNN)', key: 'ngach', width: 150,
+          render: (_: any, r: ChiTietDeXuat) => {
+            const cu = chucDanhs.find((c) => c.id === r.chucDanhCuId)
+            const moi = chucDanhs.find((c) => c.id === r.chucDanhMoiId)
+            const ten = (c?: typeof cu, id?: string) => <><Text strong title={c?.ten}>{c?.ma ?? id}</Text> <Text type="secondary">({c?.bangLuong})</Text></>
+            return r.chucDanhMoiId !== r.chucDanhCuId
+              ? <div style={{ lineHeight: 1.5 }}>{ten(cu, r.chucDanhCuId)}<div><Text type="secondary">→</Text> {ten(moi, r.chucDanhMoiId)}</div><Tag color="orange" style={{ marginInlineEnd: 0 }}>Chuyển ngạch</Tag></div>
+              : ten(cu, r.chucDanhCuId)
           },
         },
         {
-          title: 'Đề nghị', key: 'moi', width: 220,
-          render: (_: any, r: any) => {
-            const cd = chucDanhs.find((c) => c.id === r.chucDanhMoiId)
-            const doiNgach = r.chucDanhMoiId !== r.chucDanhCuId
-            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten} type={doiNgach ? 'warning' : undefined}>{cd?.ma ?? r.chucDanhMoiId}</Text> <Text type="secondary">({cd?.bangLuong})</Text>{doiNgach && <Tag color="orange" style={{ marginLeft: 4 }}>Chuyển ngạch</Tag>}<br /><b>Bậc {r.bacMoi} - {Number(r.heSoMoi).toFixed(2)}{r.tnvkMoi != null ? ` + VK ${r.tnvkMoi}%` : ''}</b></div>
-          },
+          title: 'Đang hưởng', key: 'cu', width: 150,
+          render: (_: any, r: ChiTietDeXuat) => (
+            <div style={{ lineHeight: 1.5 }}>
+              <div style={{ whiteSpace: 'nowrap' }}>Bậc {r.bacCu} - {hs3(r.heSoCu)}{r.tnvkCu ? ` + VK ${r.tnvkCu}%` : ''}</div>
+              {r.ngayHieuLucCu && <Text type="secondary" style={{ fontSize: 13 }}>từ {formatDate(r.ngayHieuLucCu)}</Text>}
+            </div>
+          ),
         },
-        { title: 'Mốc hưởng mới', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 120, render: (v: string) => formatDate(v) },
-        { title: 'Nội dung điều chỉnh (cũ → mới)', key: 'noi_dung', width: 300, render: (_: any, r: any) => <NoiDungDieuChinh r={r} chucDanhs={chucDanhs} /> },
-        colLyDo,
+        {
+          title: 'Đề nghị', key: 'moi', width: 160,
+          render: (_: any, r: ChiTietDeXuat) => (coDoiLuong(r)
+            ? (
+              <div style={{ lineHeight: 1.5 }}>
+                <div style={{ fontWeight: 600, color: '#0958d9', whiteSpace: 'nowrap' }}>Bậc {r.bacMoi} - {hs3(r.heSoMoi)}{r.tnvkMoi != null ? ` + VK ${r.tnvkMoi}%` : ''}</div>
+                <Text style={{ fontSize: 13 }}>từ <b>{formatDate(r.ngayHieuLuc)}</b></Text>
+              </div>
+            )
+            : <Text type="secondary">Lương giữ nguyên</Text>),
+        },
+        ...(coPhuCap ? [{
+          title: 'Phụ cấp điều chỉnh (cũ → mới)', key: 'pc', width: 280,
+          render: (_: any, r: ChiTietDeXuat) => (r.phuCaps?.length ? <NoiDungDieuChinh r={r} chucDanhs={chucDanhs} chiPhuCap /> : <Text type="secondary">-</Text>),
+        }] : []),
+        ...(lyDoChung ? [] : [colLyDo]),
         ...(coMinhChung ? [colMinhChung] : []),
       ]
   const detailCols = coCotThamDinh ? [...detailColsGoc, colThamDinh] : detailColsGoc
@@ -286,7 +327,7 @@ export default function DeXuatDetailPage() {
           <Descriptions.Item label={laTruocHan ? 'Loại hồ sơ' : 'Loại đề xuất'} span={2}>{laTruocHan ? 'Nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ' : LOAI_DE_XUAT_LABELS[dx.loai]}</Descriptions.Item>
           {dx.ghiChuDeXuat && <Descriptions.Item label="Ghi chú đề xuất" span={2}>{dx.ghiChuDeXuat}</Descriptions.Item>}
           {dx.ghiChuDuyetHT && <Descriptions.Item label="Ý kiến Thủ trưởng đơn vị" span={2}>{dx.ghiChuDuyetHT}</Descriptions.Item>}
-          {dx.ghiChuXetDuyet && <Descriptions.Item label="Ý kiến VH-XH" span={2}>{dx.ghiChuXetDuyet}</Descriptions.Item>}
+          {dx.ghiChuXetDuyet && <Descriptions.Item label="Ý kiến Phòng VHXH" span={2}>{dx.ghiChuXetDuyet}</Descriptions.Item>}
           {dx.ghiChuPheDuyet && <Descriptions.Item label="Ý kiến Lãnh đạo Phòng" span={2}>{dx.ghiChuPheDuyet}</Descriptions.Item>}
           {laTruocHan && <>
             <Descriptions.Item label="Năm xét">{dx.namXet}</Descriptions.Item>
@@ -314,15 +355,17 @@ export default function DeXuatDetailPage() {
             Cột <b>Phòng VHXH thẩm định</b>: mặc định Đồng ý; người không đủ điều kiện chọn <b>Không đồng ý</b> kèm ý kiến.
           </Text>
         )}
-        <Table dataSource={dx.chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: 1450 }} />
+        {lyDoChung && <div style={{ marginBottom: 8 }}><Text type="secondary">Lý do: </Text>{lyDoChung}</div>}
+        <Table dataSource={dx.chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} bordered
+          scroll={{ x: 'max-content' }} />
 
-        <Divider />
-        <Space wrap>
+        <Divider style={{ marginBottom: 0 }} />
+        <Space wrap className="thanh-thao-tac-phieu">
           {canSua && <Button icon={<EditOutlined />} onClick={() => navigate(`${goc}/${dx.id}/edit`)}>{dx.trangThai === 'YEU_CAU_BO_SUNG' ? 'Sửa & trình lại' : 'Sửa phiếu'}</Button>}
           <NutXoaPhieuNhap dx={dx} sauKhiXoa={() => navigate(veDanhSach, { replace: true })} />
           {canSubmit && <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('submit')}>Trình Thủ trưởng đơn vị duyệt</Button>}
           {canDuyetHT && <>
-            <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('ht_approve')}>Duyệt - chuyển VH-XH</Button>
+            <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('ht_approve')}>Duyệt - trình Phòng VHXH</Button>
             <Button icon={<SyncOutlined />} onClick={() => openModal('ht_supplement')}>Yêu cầu bổ sung</Button>
             <Button danger icon={<CloseOutlined />} onClick={() => openModal('ht_reject')}>Từ chối</Button>
           </>}

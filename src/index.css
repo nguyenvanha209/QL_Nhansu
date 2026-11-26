@@ -190,3 +190,14 @@ body {
 /* Thẻ dọc: xếp chồng, cách nhau đều */
 .ant-tabs-left:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab { margin: 0 10px 6px 0 !important; }
 .ant-tabs-left:not(.ant-tabs-card) > .ant-tabs-nav::before { border-right: 0; }
+
+/* Thanh nút duyệt phiếu: luôn nằm ở đáy màn hình khi bảng chi tiết dài */
+.thanh-thao-tac-phieu {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  width: 100%;
+  padding: 12px 0;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+}

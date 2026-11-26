@@ -121,7 +121,10 @@ begin
 end;
 $$;
 
--- 4. Thay quy tắc "mọi người đã đăng nhập" bằng quy tắc theo đơn vị
+-- 4. Thay quy tắc "mọi người đã đăng nhập" bằng quy tắc theo đơn vị.
+--    Gỡ cả quy tắc cũ "allow_all" (từ thời đầu dự án, cho mọi vai trò toàn quyền): các quy tắc được CỘNG
+--    với nhau, còn nó thì quy tắc theo đơn vị không có tác dụng. Khoá công khai (anon) vẫn bị chặn ở quyền bảng (05).
+drop policy if exists "allow_all" on public.app_state;
 drop policy if exists "app_state: nguoi da dang nhap" on public.app_state;
 drop policy if exists "app_state: doc theo don vi" on public.app_state;
 drop policy if exists "app_state: them theo don vi" on public.app_state;
@@ -138,7 +141,7 @@ create policy "app_state: xoa theo don vi" on public.app_state
   for delete to authenticated using (public.duoc_truy_cap_kho(key));
 
 -- 5. Kiểm tra
--- 5a. Các quy tắc đang có (phải là 4 quy tắc "... theo don vi")
+-- 5a. Các quy tắc đang có (phải đúng 4 quy tắc "... theo don vi", không còn allow_all)
 select policyname, cmd from pg_policies where schemaname = 'public' and tablename = 'app_state' order by policyname;
 -- 5b. Các mảnh phiếu đề xuất theo đơn vị và số phiếu mỗi mảnh
 select key, jsonb_array_length(value -> 'state' -> 'deXuats') as so_phieu

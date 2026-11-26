@@ -134,15 +134,7 @@ export default function ChuyenDoiKeToanTab() {
       <Alert
         type="info" showIcon style={{ marginBottom: 12 }}
         title="Định kỳ chuyển đổi vị trí công tác của kế toán"
-        description={<>
-          Căn cứ: Điều 24 Luật Phòng, chống tham nhũng; Chương V Nghị định 59/2019/NĐ-CP (sửa đổi bởi NĐ 184/2026/NĐ-CP);
-          <b> Thông tư 159/2026/TT-BTC</b> ngày 28/10/2026 của Bộ Tài chính (hiệu lực từ 15/12/2026, thay Thông tư 27/2024/TT-BTC):
-          vị trí <i>Kế toán</i> thuộc danh mục phải định kỳ chuyển đổi (Phụ lục, mục 2), thời hạn <b>từ đủ 02 năm đến 05 năm</b> (Điều 4 khoản 1).
-          Thời hạn tính từ ngày <b>quyết định điều động, bố trí, phân công có hiệu lực</b>; đổi vị trí mà bản chất công việc không đổi thì không tính là đã chuyển đổi,
-          thời gian giữ vị trí trước 15/12/2026 được tính liên tục (Điều 4 khoản 2, Điều 7).
-          Đơn vị nhập mốc quyết định gần nhất; phần mềm tính hạn và nhắc khi sắp đủ, đã đủ hoặc quá thời hạn.
-          Danh sách gồm người có <i>Công việc cụ thể = Kế toán</i> ở hồ sơ nhân sự (mốc cũng nhập được ở hồ sơ).
-        </>}
+        description={<>Căn cứ: Thông tư số 159/2026/TT-BTC ngày 28/10/2026 của Bộ Tài chính.</>}
       />
       <Card size="small" style={{ marginBottom: 12 }} title="Thời hạn định kỳ áp dụng">
         <Space wrap>

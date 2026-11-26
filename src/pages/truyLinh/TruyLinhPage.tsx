@@ -188,6 +188,15 @@ function ChiTietBang(p: {
   useEffect(() => { setBan(bang); setDaDoi(false) }, [bang.updatedAt, bang.id])
 
   const suaDuoc = p.coLap && (ban.trangThai === 'NHAP' || ban.trangThai === 'TRA_LAI')
+  // Phiếu đã phê duyệt sau khi lập bảng mà chưa có trong bảng (VD lập bảng trước, duyệt phiếu thâm niên sau)
+  const phieuMoi = useMemo(() => {
+    if (ban.trangThai === 'DA_DUYET') return { luong: [] as DongTruyLinhLuong[], pctn: [] as DongTruyLinhPctn[] }
+    const moi = p.lapLai(ban.tinhDen)
+    const co = new Set([...ban.luong, ...ban.pctn].map((x) => `${x.deXuatId}:${x.vienChucId}`))
+    return { luong: moi.luong.filter((x) => !co.has(`${x.deXuatId}:${x.vienChucId}`)), pctn: moi.pctn.filter((x) => !co.has(`${x.deXuatId}:${x.vienChucId}`)) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ban.luong, ban.pctn, ban.tinhDen, ban.trangThai, p.lapLai])
+  const soPhieuMoi = phieuMoi.luong.length + phieuMoi.pctn.length
   const doi = (b: BangTruyLinh) => { setBan(b); setDaDoi(true) }
   const tong = tongBang(ban)
 
@@ -342,6 +351,19 @@ function ChiTietBang(p: {
         <Tag color={tt.mau}>{tt.ten}</Tag>
       </Space>
 
+      {soPhieuMoi > 0 && (
+        <Alert
+          type="warning" showIcon style={{ marginBottom: 12 }}
+          title={`Có ${soPhieuMoi} người trong phiếu đã phê duyệt chưa có trong bảng`}
+          description={<>
+            {phieuMoi.luong.length > 0 && <div>Nâng lương: {phieuMoi.luong.map((x) => x.hoTen).join(', ')}</div>}
+            {phieuMoi.pctn.length > 0 && <div>Phụ cấp thâm niên: {phieuMoi.pctn.map((x) => x.hoTen).join(', ')}</div>}
+            {suaDuoc
+              ? <div style={{ marginTop: 4 }}>Bấm <b>Cập nhật từ phiếu đã phê duyệt</b> để đưa vào bảng.</div>
+              : <div style={{ marginTop: 4 }}>Bảng đang chờ duyệt - Trưởng phòng trả lại để đơn vị cập nhật, hoặc lập bổ sung ở kỳ sau.</div>}
+          </>}
+        />
+      )}
       {ban.trangThai === 'TRA_LAI' && ban.yKienDuyet && (
         <Alert type="error" showIcon style={{ marginBottom: 12 }} title="Trưởng phòng trả lại để sửa" description={ban.yKienDuyet} />
       )}
@@ -425,7 +447,7 @@ function ChiTietBang(p: {
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Tổng hệ số truy lĩnh: <b>{d3(tong.tong) || '0'}</b> ({docHeSo(tong.tong)}). Số tháng truy lĩnh tính từ tháng hưởng đến tháng của ngày "Tính đến", sửa được từng người.
-        Người vừa nâng lương vừa nâng thâm niên trong kỳ: danh sách PCTN tính trên lương đã nâng, không tính trùng phần tăng.
+        Hai biểu độc lập nhau như mẫu: biểu nâng lương giữ tỷ lệ phụ cấp thâm niên trước khi nâng; biểu thâm niên ghi từ lương đã hưởng đến lương được nâng.
         Phiếu hưởng từ kỳ trước nhưng phê duyệt trong kỳ này (thường gặp ở nâng lương trước thời hạn) được đưa vào kỳ này, truy lĩnh từ tháng hưởng;
         người đã có trong bảng kỳ khác không bị tính lại.
       </Text>

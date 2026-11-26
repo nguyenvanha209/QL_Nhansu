@@ -88,9 +88,8 @@ const LOAI_PCTN = ['PHU_CAP_THAM_NIEN', 'PCTN_LAN_DAU'] as const
  *  - thời gian hưởng TRƯỚC kỳ nhưng phê duyệt trong kỳ (VD nâng trước hạn xét cuối năm, hưởng từ tháng 3): tính vào kỳ
  *    phê duyệt, số tháng vẫn từ tháng hưởng thật - không bị sót khi bảng kỳ trước đã duyệt xong.
  * Dòng đã nằm trong bảng truy lĩnh kỳ khác (`daCo`) thì bỏ để không tính hai lần. Phụ cấp không đổi (chức vụ, trách nhiệm, ưu đãi, bảo lưu) lấy theo hồ sơ.
- * Người vừa nâng lương vừa nâng thâm niên trong kỳ: danh sách PCTN tính trên lương đã nâng nếu nâng lương hưởng
- * trước hoặc cùng tháng; danh sách nâng lương chỉ dùng mức PCTN mới nếu PCTN hưởng trước - tổng hai danh sách
- * đúng bằng phần tăng thực tế, không tính trùng.
+ * Hai biểu truy lĩnh ĐỘC LẬP nhau (anh Hạ chốt 26/11/2026, đúng mẫu của trường): biểu nâng lương giữ tỷ lệ PCTN
+ * trước khi nâng thâm niên; biểu thâm niên ghi từ lương đã hưởng (trước mọi lần nâng trong kỳ) đến lương được nâng.
  */
 export function lapDongTruyLinh(d: DuLieuLapBang): { luong: DongTruyLinhLuong[]; pctn: DongTruyLinhPctn[] } {
   const { tu, den } = khoangKy(d.nam, d.ky)
@@ -145,10 +144,10 @@ export function lapDongTruyLinh(d: DuLieuLapBang): { luong: DongTruyLinhLuong[];
     const vc = vcTheoId.get(ct.vienChucId)
     if (!vc) continue
     const k = khoanCoDinh(vc)
-    // PCTN trong kỳ: hưởng TRƯỚC tháng nâng lương thì dùng mức mới; cùng tháng hoặc sau thì dùng mức cũ (phần tăng
-    // thâm niên nằm ở danh sách PCTN, tính trên lương đã nâng) - hai danh sách cộng lại đúng phần tăng thực tế
+    // Hai biểu truy lĩnh ĐỘC LẬP (theo mẫu của Phòng VHXH): biểu nâng lương giữ tỷ lệ PC thâm niên đang hưởng trước
+    // khi nâng thâm niên - phần tăng thâm niên nằm ở biểu thâm niên
     const p = dongPctn.find((x) => x.ct.vienChucId === vc.id)?.ct
-    const tnn = p ? (p.ngayHieuLuc < ct.ngayHieuLuc ? p.pctnMoi ?? 0 : p.pctnCu ?? 0) : (ct.pctnCu ?? k.tnnPct)
+    const tnn = p ? p.pctnCu ?? 0 : (ct.pctnCu ?? k.tnnPct)
     const vk = laDongVuotKhung(ct)
     const chung = { pcChucVu: k.pcChucVu, pcTrachNhiem: k.pcTrachNhiem, tnnPct: tnn, udPct: k.udPct, baoLuu: k.baoLuu }
     const tg = vk ? 1 : thoiGianNangBac(ct.chucDanhMoiId, ct.bacMoi, d.bacLuongs, d.chucDanhs)
@@ -172,12 +171,16 @@ export function lapDongTruyLinh(d: DuLieuLapBang): { luong: DongTruyLinhLuong[];
     const vc = vcTheoId.get(ct.vienChucId)
     if (!vc) continue
     const k = khoanCoDinh(vc)
-    // Nâng lương (kể cả vượt khung) trong kỳ hưởng trước hoặc cùng tháng: lương được nâng tính trên mức mới
+    // Biểu thâm niên độc lập, đúng mẫu: "Lương đã hưởng" là mức trước mọi lần nâng trong kỳ; "Lương được nâng" gồm cả
+    // bậc, hệ số, vượt khung mới nếu nâng lương trong kỳ hưởng trước hoặc cùng tháng (VD cô Vi: VK 7% → 8%, TNN 35% → 36%)
     const n = dongLuong.find((x) => x.ct.vienChucId === vc.id)?.ct
-    const truoc = n && n.ngayHieuLuc <= ct.ngayHieuLuc
-    const bac = n ? (truoc ? n.bacMoi : n.bacCu) : (ct.bacCu ?? k.hsl?.bac ?? null)
-    const heSo = Number(n ? (truoc ? n.heSoMoi : n.heSoCu) : (ct.heSoCu ?? k.hsl?.heSo ?? 0))
-    const vkPct = n && laDongVuotKhung(n) ? (truoc ? n.tnvkMoi ?? 0 : n.tnvkCu ?? 0) : k.vkPct
+    const truoc = !!n && n.ngayHieuLuc <= ct.ngayHieuLuc
+    const cuBac = n ? n.bacCu : (ct.bacCu ?? k.hsl?.bac ?? null)
+    const cuHeSo = Number(n ? n.heSoCu : (ct.heSoCu ?? k.hsl?.heSo ?? 0))
+    const cuVk = n && laDongVuotKhung(n) ? n.tnvkCu ?? 0 : k.vkPct
+    const moiBac = truoc ? n!.bacMoi : cuBac
+    const moiHeSo = truoc ? Number(n!.heSoMoi) : cuHeSo
+    const moiVk = truoc && laDongVuotKhung(n!) ? n!.tnvkMoi ?? 0 : cuVk
     const lanDau = dx.loai === 'PCTN_LAN_DAU'
     pctn.push({
       vienChucId: vc.id,
@@ -188,8 +191,8 @@ export function lapDongTruyLinh(d: DuLieuLapBang): { luong: DongTruyLinhLuong[];
       deXuatId: dx.id,
       deXuatMa: dx.ma,
       maNgach: maNgach(ct.chucDanhMoiId || ct.chucDanhCuId),
-      cu: { bac, heSo, vkPct, pcChucVu: k.pcChucVu, tnnPct: lanDau ? 0 : ct.pctnCu ?? 0 },
-      moi: { bac, heSo, vkPct, pcChucVu: k.pcChucVu, tnnPct: ct.pctnMoi ?? 0 },
+      cu: { bac: cuBac, heSo: cuHeSo, vkPct: cuVk, pcChucVu: k.pcChucVu, tnnPct: lanDau ? 0 : ct.pctnCu ?? 0 },
+      moi: { bac: moiBac, heSo: moiHeSo, vkPct: moiVk, pcChucVu: k.pcChucVu, tnnPct: ct.pctnMoi ?? 0 },
       mocCu: lanDau ? undefined : congNam(ct.ngayHieuLuc, -1),
       thoiGianHuong: ct.ngayHieuLuc,
       mocLanSau: congNam(ct.ngayHieuLuc, 1),

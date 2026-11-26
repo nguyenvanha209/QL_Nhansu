@@ -72,8 +72,13 @@ export default function TruyLinhPage() {
     [bangs, trongPhamVi, donVis],
   )
 
+  // Dòng đã nằm trong bảng truy lĩnh kỳ khác của đơn vị: không tính lại (phiếu duyệt muộn chỉ vào một kỳ)
+  const daCoKyKhac = (donViId: string, idBang: string) => new Set(bangs
+    .filter((b) => b.donViId === donViId && b.id !== idBang)
+    .flatMap((b) => [...b.luong, ...b.pctn].map((x) => `${x.deXuatId}:${x.vienChucId}`)))
   const lapDong = (donViId: string, n: number, k: KyTruyLinh, tinhDen: string) => lapDongTruyLinh({
     donViId, nam: n, ky: k, tinhDen, deXuats, vienChucs, chucDanhs, bacLuongs, loaiPhuCaps, phuCaps, heSoLuongs,
+    daCo: daCoKyKhac(donViId, idBangTruyLinh(donViId, n, k)),
   })
 
   const lapHoacMo = () => {
@@ -122,7 +127,8 @@ export default function TruyLinhPage() {
       <Title level={4} style={{ marginTop: 0 }}>Truy lĩnh nâng lương, phụ cấp thâm niên</Title>
       <Text type="secondary">
         Mỗi kỳ 6 tháng, đơn vị lập danh sách truy lĩnh từ các phiếu nâng lương thường xuyên (kể cả vượt khung, trước hạn) và
-        nâng phụ cấp thâm niên nhà giáo đã được phê duyệt, rồi trình Trưởng phòng Văn hóa - Xã hội duyệt.
+        nâng phụ cấp thâm niên nhà giáo đã được phê duyệt, rồi trình Trưởng phòng Văn hóa - Xã hội duyệt. Phiếu hưởng từ kỳ trước mà phê duyệt
+        trong kỳ (VD nâng trước thời hạn xét cuối năm) được tính vào kỳ phê duyệt, truy lĩnh đủ từ tháng hưởng.
       </Text>
       <Space wrap style={{ margin: '16px 0' }}>
         <InputNumber value={nam} onChange={(v) => setNam(v ?? homNay.year())} min={2020} max={2100} style={{ width: 100 }} />
@@ -420,6 +426,8 @@ function ChiTietBang(p: {
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Tổng hệ số truy lĩnh: <b>{d3(tong.tong) || '0'}</b> ({docHeSo(tong.tong)}). Số tháng truy lĩnh tính từ tháng hưởng đến tháng của ngày "Tính đến", sửa được từng người.
         Người vừa nâng lương vừa nâng thâm niên trong kỳ: danh sách PCTN tính trên lương đã nâng, không tính trùng phần tăng.
+        Phiếu hưởng từ kỳ trước nhưng phê duyệt trong kỳ này (thường gặp ở nâng lương trước thời hạn) được đưa vào kỳ này, truy lĩnh từ tháng hưởng;
+        người đã có trong bảng kỳ khác không bị tính lại.
       </Text>
     </Card>
   )

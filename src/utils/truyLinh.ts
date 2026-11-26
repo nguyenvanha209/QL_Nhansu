@@ -75,14 +75,19 @@ export interface DuLieuLapBang {
   loaiPhuCaps: LoaiPhuCap[]
   phuCaps: PhuCapVienChuc[]
   heSoLuongs: HeSoLuong[]
+  /** Dòng đã có trong bảng truy lĩnh kỳ khác của đơn vị (`deXuatId:vienChucId`) - không tính lại */
+  daCo?: Set<string>
 }
 
 const LOAI_LUONG = ['NANG_BAC', 'NANG_TRUOC_HAN'] as const
 const LOAI_PCTN = ['PHU_CAP_THAM_NIEN', 'PCTN_LAN_DAU'] as const
 
 /**
- * Danh sách truy lĩnh của một đơn vị trong kỳ: các dòng phiếu ĐÃ PHÊ DUYỆT có thời gian hưởng trong kỳ
- * (người Phòng VHXH không đồng ý thì bỏ). Phụ cấp không đổi (chức vụ, trách nhiệm, ưu đãi, bảo lưu) lấy theo hồ sơ.
+ * Danh sách truy lĩnh của một đơn vị trong kỳ: các dòng phiếu ĐÃ PHÊ DUYỆT (người Phòng VHXH không đồng ý thì bỏ)
+ *  - có thời gian hưởng trong kỳ và được duyệt trước khi kỳ kết thúc; hoặc
+ *  - thời gian hưởng TRƯỚC kỳ nhưng phê duyệt trong kỳ (VD nâng trước hạn xét cuối năm, hưởng từ tháng 3): tính vào kỳ
+ *    phê duyệt, số tháng vẫn từ tháng hưởng thật - không bị sót khi bảng kỳ trước đã duyệt xong.
+ * Dòng đã nằm trong bảng truy lĩnh kỳ khác (`daCo`) thì bỏ để không tính hai lần. Phụ cấp không đổi (chức vụ, trách nhiệm, ưu đãi, bảo lưu) lấy theo hồ sơ.
  * Người vừa nâng lương vừa nâng thâm niên trong kỳ: danh sách PCTN tính trên lương đã nâng nếu nâng lương hưởng
  * trước hoặc cùng tháng; danh sách nâng lương chỉ dùng mức PCTN mới nếu PCTN hưởng trước - tổng hai danh sách
  * đúng bằng phần tăng thực tế, không tính trùng.
@@ -114,9 +119,24 @@ export function lapDongTruyLinh(d: DuLieuLapBang): { luong: DongTruyLinhLuong[];
 
   type Dong = { dx: DeXuatLuong; ct: ChiTietDeXuat }
   const daDuyet = d.deXuats.filter((x) => x.donViId === d.donViId && x.trangThai === 'DA_PHE_DUYET')
+  const ngayDuyet = (dx: DeXuatLuong) => (dx.ngayPheDuyet ?? dx.updatedAt ?? '').slice(0, 10)
+  // Hưởng trong kỳ và đã duyệt trước khi kỳ kết thúc; hoặc hưởng từ trước kỳ mà duyệt trong kỳ. Duyệt SAU khi kỳ kết thúc
+  // thì thuộc kỳ phê duyệt (truy lĩnh đủ đến hết kỳ đó) - đưa vào kỳ hưởng sẽ chỉ tính đến hết kỳ hưởng, mất các tháng sau.
+  const vaoKy = (dx: DeXuatLuong, ct: ChiTietDeXuat) => {
+    if (!ct.ngayHieuLuc) return false
+    const duyet = ngayDuyet(dx)
+    if (trongKy(ct.ngayHieuLuc)) return !duyet || duyet <= den
+    return ct.ngayHieuLuc < tu && trongKy(duyet)
+  }
   const lay = (cacLoai: readonly string[]): Dong[] => daDuyet
     .filter((x) => cacLoai.includes(x.loai))
-    .flatMap((dx) => dx.chiTiet.filter((ct) => ct.thamDinh !== 'KHONG_DONG_Y' && trongKy(ct.ngayHieuLuc)).map((ct) => ({ dx, ct })))
+    .flatMap((dx) => dx.chiTiet
+      .filter((ct) => ct.thamDinh !== 'KHONG_DONG_Y' && vaoKy(dx, ct) && !d.daCo?.has(`${dx.id}:${ct.vienChucId}`))
+      .map((ct) => ({ dx, ct })))
+  /** Ghi chú cho người hưởng từ kỳ trước, phê duyệt muộn */
+  const ghiChuTruyLinhMuon = (dx: DeXuatLuong, ct: ChiTietDeXuat) => (ct.ngayHieuLuc < tu
+    ? `Truy lĩnh từ ${ct.ngayHieuLuc.slice(5, 7)}/${ct.ngayHieuLuc.slice(0, 4)} (phê duyệt ${ngayDuyet(dx).split('-').reverse().join('/')})`
+    : undefined)
   const dongLuong = lay(LOAI_LUONG)
   const dongPctn = lay(LOAI_PCTN)
 
@@ -143,6 +163,7 @@ export function lapDongTruyLinh(d: DuLieuLapBang): { luong: DongTruyLinhLuong[];
       thoiGianHuong: ct.ngayHieuLuc,
       mocLanSau: congNam(ct.ngayHieuLuc, tg),
       soThang: soThangTruyLinh(ct.ngayHieuLuc, d.tinhDen),
+      ...(ghiChuTruyLinhMuon(dx, ct) ? { ghiChu: `${dx.loai === 'NANG_TRUOC_HAN' ? 'Nâng trước hạn - ' : ''}${ghiChuTruyLinhMuon(dx, ct)}` } : {}),
     })
   }
 
@@ -173,7 +194,9 @@ export function lapDongTruyLinh(d: DuLieuLapBang): { luong: DongTruyLinhLuong[];
       thoiGianHuong: ct.ngayHieuLuc,
       mocLanSau: congNam(ct.ngayHieuLuc, 1),
       soThang: soThangTruyLinh(ct.ngayHieuLuc, d.tinhDen),
-      ...(lanDau ? { ghiChu: 'Xếp PCTN lần đầu' } : {}),
+      ...(lanDau || ghiChuTruyLinhMuon(dx, ct)
+        ? { ghiChu: [lanDau ? 'Xếp PCTN lần đầu' : '', ghiChuTruyLinhMuon(dx, ct) ?? ''].filter(Boolean).join(' - ') }
+        : {}),
     })
   }
 

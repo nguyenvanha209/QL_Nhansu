@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Form, Input, Button, Typography, Alert, Divider } from 'antd'
-import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Typography, Alert } from 'antd'
+import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import { logAction } from '@/utils/auditLogger'
@@ -129,18 +129,6 @@ export default function LoginPage() {
             <Text type="secondary" style={{ fontSize: 13, display: 'block', textAlign: 'center' }}>
               Tên đăng nhập và mật khẩu do Phòng Văn hóa - Xã hội cấp riêng cho từng trường.
             </Text>
-
-            <Divider style={{ margin: '16px 0 12px' }} />
-            <div style={{ textAlign: 'center', padding: '0 8px' }}>
-              <Text type="secondary" style={{ fontSize: 13 }}>
-                Nếu không đăng nhập được, xin liên hệ:
-              </Text>
-              <br />
-              <Text style={{ fontSize: 14, fontWeight: 600 }}>
-                <PhoneOutlined style={{ marginRight: 6, color: '#2563eb' }} />
-                Đ/c Nguyễn Văn Hạ - 0902.121.599
-              </Text>
-            </div>
           </div>
         </div>
       </div>

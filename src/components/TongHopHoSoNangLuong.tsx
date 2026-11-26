@@ -170,8 +170,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
       <Table<DongNguoi> {...BANG_CHUAN} rowKey="key" dataSource={nguoi} columns={colsNguoi} pagination={phanTrang('người')}
         locale={{ emptyText: `Không có người ở bước "${tenBuoc}" năm ${nam}` }} />
       <Text type="secondary" style={{ display: 'block', marginTop: 6, fontSize: 12.5 }}>
-        Bấm mã phiếu để mở và thẩm định / phê duyệt. Quy trình chung: Cán bộ đơn vị lập → Thủ trưởng đơn vị duyệt → Phòng VHXH thẩm định từng người → Lãnh đạo phê duyệt (ghi hồ sơ) →
-        Phòng VHXH lập thông báo ở trang Thông báo kết quả nâng lương, phụ cấp thâm niên. Người VHXH không đồng ý không ghi hồ sơ, không vào thông báo.
+        Quy trình: Đơn vị lập → Thủ trưởng đơn vị duyệt → Phòng VHXH thẩm định → Lãnh đạo phê duyệt → Thông báo kết quả.
       </Text>
     </Card>
   )

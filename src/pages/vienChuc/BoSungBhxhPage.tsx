@@ -347,12 +347,9 @@ export default function BoSungBhxhPage() {
       )}
       <Table<Dong> {...BANG_CHUAN} rowKey="id" dataSource={dsHien} columns={columns} pagination={phanTrang('người', 50)} />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Mọi người đang công tác (CBQL, giáo viên, nhân viên; biên chế và hợp đồng) khai tháng bắt đầu đóng BHXH bắt buộc trong ngành theo sổ / quá trình đóng BHXH.
-        Tình trạng xếp phụ cấp thâm niên lần đầu chỉ tính cho CBQL, giáo viên: dự kiến đủ 5 năm = tháng đó + 60 tháng + 12 tháng tập sự (tạm tính);
-        thời gian không tính (tập sự thực tế, nghỉ không lương…) khai chi tiết ở phiếu Xếp phụ cấp thâm niên nhà giáo lần đầu.
-        Nhân viên phục vụ (lao công, bảo vệ...) đã quá tuổi nghỉ hưu, không còn đóng BHXH bắt buộc: tick <b>Không tham gia BHXH (quá tuổi)</b> - không phải khai tháng, không bị nhắc,
-        được thống kê riêng; số tuổi tô đỏ là người đã tới tuổi nghỉ hưu (gợi ý).
-        Nhập từ Excel: tải danh sách mẫu, điền cột tháng (MM/YYYY) hoặc đánh dấu x ở cột Không tham gia BHXH, nhập lại - bảng tô viền vàng các ô thay đổi, kiểm tra rồi bấm Lưu.
+        Khai theo sổ BHXH. Dự kiến đủ 5 năm (tạm tính) = tháng bắt đầu đóng + 60 tháng + 12 tháng tập sự.
+        Nhân viên quá tuổi nghỉ hưu không đóng BHXH: đánh dấu <b>Không tham gia BHXH (quá tuổi)</b>.
+        Nhập từ Excel: tải mẫu, điền tháng (MM/YYYY) hoặc x ở cột Không tham gia BHXH, nhập lại, kiểm tra ô viền vàng rồi Lưu.
       </Text>
     </>
   )
@@ -388,8 +385,7 @@ export default function BoSungBhxhPage() {
       )}
       {tong.chuaKhai > 0 && (
         <Alert type="warning" showIcon style={{ marginBottom: 12 }}
-          title={`${tong.chuaKhai} người chưa khai tháng bắt đầu đóng BHXH (chưa tính người không tham gia do quá tuổi; trong đó ${tong.uuTien} CBQL, giáo viên chưa hưởng PCTN - ưu tiên khai để rà soát xếp lần đầu)`}
-          description="Xuất danh sách gửi các đơn vị để bổ sung (trang này hoặc từng hồ sơ). Bấm số ở cột Chưa khai để xem từng người, bấm tên trường để xem cả trường."
+          title={`${tong.chuaKhai} người chưa khai tháng bắt đầu đóng BHXH (${tong.uuTien} CBQL, giáo viên chưa hưởng PCTN)`}
           action={<Button icon={<FileExcelOutlined />} onClick={xuatChuaKhai}>Xuất danh sách chưa khai</Button>} />
       )}
       <Table<DongTruong> {...BANG_CHUAN} rowKey="id" dataSource={tongHop} columns={colsTongHop} pagination={false} />
@@ -404,7 +400,7 @@ export default function BoSungBhxhPage() {
     <Card>
       <Title level={4} style={{ marginTop: 0, marginBottom: 0 }}>{TEN_CHUC_NANG_BHXH}</Title>
       <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-        Tháng bắt đầu đóng BHXH bắt buộc trong ngành giáo dục của mọi người đang công tác (biên chế, hợp đồng); với cán bộ quản lý, giáo viên là căn cứ xếp phụ cấp thâm niên nhà giáo lần đầu (NĐ 77/2021/NĐ-CP).
+        Căn cứ xếp phụ cấp thâm niên nhà giáo lần đầu (NĐ 77/2021/NĐ-CP).
       </Text>
       {scopeDonViId ? capNhat : (
         <Tabs activeKey={the} onChange={(k) => setThe(k as typeof the)} items={[

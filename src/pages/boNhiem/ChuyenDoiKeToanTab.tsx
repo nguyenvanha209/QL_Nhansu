@@ -179,7 +179,7 @@ export default function ChuyenDoiKeToanTab() {
       <Table<TinhTrangKeToan> {...BANG_CHUAN} rowKey={(t) => t.vc.id} dataSource={ds} columns={columns} pagination={phanTrang('người', 50)}
         locale={{ emptyText: loc === 'CAN_NHAC' ? 'Không có kế toán nào đến mốc nhắc' : 'Không có' }} />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Nghỉ hưu trước khi đủ thời hạn thì không cần chuyển đổi. Trường hợp chưa chuyển đổi theo quy định (đang bị kiểm tra, xử lý kỷ luật, điều trị bệnh hiểm nghèo, đi học dài hạn…) do cấp có thẩm quyền xem xét - ghi chú ở hồ sơ.
+        Nghỉ hưu trước khi đủ thời hạn: không chuyển đổi. Trường hợp chưa chuyển đổi: ghi chú ở hồ sơ.
       </Text>
     </div>
   )

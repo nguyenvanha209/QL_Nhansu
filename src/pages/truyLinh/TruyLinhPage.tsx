@@ -126,9 +126,7 @@ export default function TruyLinhPage() {
     <Card>
       <Title level={4} style={{ marginTop: 0 }}>Truy lĩnh nâng lương, phụ cấp thâm niên</Title>
       <Text type="secondary">
-        Mỗi kỳ 6 tháng, đơn vị lập danh sách truy lĩnh từ các phiếu nâng lương thường xuyên (kể cả vượt khung, trước hạn) và
-        nâng phụ cấp thâm niên nhà giáo đã được phê duyệt, rồi trình Trưởng phòng Văn hóa - Xã hội duyệt. Phiếu hưởng từ kỳ trước mà phê duyệt
-        trong kỳ (VD nâng trước thời hạn xét cuối năm) được tính vào kỳ phê duyệt, truy lĩnh đủ từ tháng hưởng.
+        Lập từ các phiếu nâng lương, nâng phụ cấp thâm niên đã phê duyệt trong kỳ; trình Trưởng phòng Văn hóa - Xã hội duyệt.
       </Text>
       <Space wrap style={{ margin: '16px 0' }}>
         <InputNumber value={nam} onChange={(v) => setNam(v ?? homNay.year())} min={2020} max={2100} style={{ width: 100 }} />
@@ -313,7 +311,7 @@ function ChiTietBang(p: {
     cotTen('pctn'),
     { title: 'Ngày sinh', key: 'ns', width: 92, align: 'center' as const, render: (_: unknown, d: DongTruyLinhPctn) => <span>{formatDate(d.ngaySinh)} <Text type="secondary" style={{ fontSize: 12 }}>{d.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}</Text></span> },
     {
-      title: <Tooltip title={`Tổng số năm thực tế giảng dạy có tham gia BHXH đến ${formatDate(ban.tinhDen)} - tính từ tháng bắt đầu đóng BHXH trong ngành ở hồ sơ, sửa được`}>Thâm niên GD</Tooltip>,
+      title: <Tooltip title={`Số năm giảng dạy có đóng BHXH đến ${formatDate(ban.tinhDen)}`}>Thâm niên GD</Tooltip>,
       key: 'tng', width: 92, align: 'center' as const,
       render: (_: unknown, d: DongTruyLinhPctn, i: number) => (suaDuoc
         ? <Input size="small" value={d.thamNien} placeholder="VD 24n1th" onChange={(e) => suaDong<DongTruyLinhPctn>('pctn', i, { thamNien: e.target.value })} />
@@ -446,10 +444,7 @@ function ChiTietBang(p: {
         ]}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Tổng hệ số truy lĩnh: <b>{d3(tong.tong) || '0'}</b> ({docHeSo(tong.tong)}). Số tháng truy lĩnh tính từ tháng hưởng đến tháng của ngày "Tính đến", sửa được từng người.
-        Hai biểu độc lập nhau như mẫu: biểu nâng lương giữ tỷ lệ phụ cấp thâm niên trước khi nâng; biểu thâm niên ghi từ lương đã hưởng đến lương được nâng.
-        Phiếu hưởng từ kỳ trước nhưng phê duyệt trong kỳ này (thường gặp ở nâng lương trước thời hạn) được đưa vào kỳ này, truy lĩnh từ tháng hưởng;
-        người đã có trong bảng kỳ khác không bị tính lại.
+        Tổng hệ số truy lĩnh: <b>{d3(tong.tong) || '0'}</b> ({docHeSo(tong.tong)}). Số tháng tính từ tháng hưởng đến tháng của ngày "Tính đến".
       </Text>
     </Card>
   )

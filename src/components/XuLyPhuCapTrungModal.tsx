@@ -127,7 +127,7 @@ export default function XuLyPhuCapTrungModal({ giu, banKhac, donViId, tenVienChu
             onChange={(e) => setLyDo(e.target.value)}
           />
           {Object.values(cach).includes('XOA') && (
-            <Alert type="warning" showIcon title="Bản bị xoá hẳn không khôi phục được trên phần mềm. Nội dung của nó vẫn được ghi trong lịch sử biến động và nhật ký." />
+            <Alert type="warning" showIcon title="Bản bị xoá không khôi phục được." />
           )}
         </Space>
       )}

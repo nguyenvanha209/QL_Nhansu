@@ -939,10 +939,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
                   <li>Kéo thả hoặc chọn file đã sửa để hệ thống đối chiếu</li>
                 </ol>
                 <Text type="secondary" style={{ fontSize: 13 }}>
-                  File gồm 3 nhóm: <b>hồ sơ</b>, <b>lương</b> (bậc, hệ số, hệ số chênh lệch bảo lưu, mốc hưởng) và{' '}
-                  <b>phụ cấp</b> (vượt khung, chức vụ, trách nhiệm, thâm niên nghề, ưu đãi nhà giáo).
-                  Họ và tên xuất ra VIẾT HOA - khi nhập lại, hệ thống so sánh nội dung (không phân biệt hoa/thường).
-                  Muốn <b>gỡ một phụ cấp</b>, nhập số <b>0</b> vào ô đó (để trống nghĩa là giữ nguyên).
+                  Gỡ một phụ cấp: nhập <b>0</b>; để trống là giữ nguyên.
                 </Text>
               </>
             }
@@ -954,9 +951,7 @@ export default function ImportVienChucModal({ open, onClose }: Props) {
             title="Lưu ý về lương"
             description={
               <Text style={{ fontSize: 14 }}>
-                Công cụ này <b>sửa trực tiếp</b> bản ghi lương đang áp dụng - dùng để đính chính
-                dữ liệu nhập sai. Việc <b>nâng bậc lương</b> phải thực hiện qua chức năng
-                “Đề xuất điều chỉnh hệ số lương - phụ cấp” để giữ đúng lịch sử.
+                Chỉ dùng để đính chính dữ liệu nhập sai. Nâng bậc lương thực hiện qua phiếu đề xuất.
               </Text>
             }
           />

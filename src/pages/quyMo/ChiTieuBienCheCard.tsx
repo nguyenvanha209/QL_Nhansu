@@ -121,7 +121,7 @@ export default function ChiTieuBienCheCard({ donVi, namHoc, kq }: { donVi: DonVi
         />
       )}
       {coChuaRoNguon && (
-        <Alert type="warning" showIcon style={{ marginBottom: 10 }} title={`${cong((k) => coMat(k).bcChuaRoNguon)} viên chức biên chế chưa khai nguồn kinh phí (ngân sách / sự nghiệp) - cột "Chưa rõ nguồn"; trường bổ sung trong hồ sơ`} />
+        <Alert type="warning" showIcon style={{ marginBottom: 10 }} title={`${cong((k) => coMat(k).bcChuaRoNguon)} viên chức biên chế chưa khai nguồn kinh phí (cột "Chưa rõ nguồn")`} />
       )}
       <Table<Dong>
         size="small" bordered pagination={false} rowKey="key" dataSource={data} scroll={{ x: 'max-content' }}
@@ -196,8 +196,7 @@ export default function ChiTieuBienCheCard({ donVi, namHoc, kq }: { donVi: DonVi
       </Space>
       <div style={{ marginTop: 6 }}>
         <Text type="secondary" style={{ fontSize: 13 }}>
-          So với chỉ tiêu: có mặt trừ chỉ tiêu giao - thừa đỏ, thiếu xanh. Có mặt đếm theo vị trí của từng người
-          (giáo viên ở nhóm II, nhân viên theo công việc cụ thể); hợp đồng NĐ 235 là hồ sơ có loại hình "Hợp đồng NĐ 235/2026".
+          So với chỉ tiêu = có mặt − chỉ tiêu giao (thừa đỏ, thiếu xanh).
         </Text>
       </div>
       <style>{'.ct-tong td { background: #eef2ff !important; font-weight: 600; }'}</style>

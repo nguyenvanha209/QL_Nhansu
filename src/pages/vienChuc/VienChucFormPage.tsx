@@ -127,13 +127,12 @@ export default function VienChucFormPage() {
       content: (
         <div>
           <p>
-            Phụ cấp đã được cập nhật lần đầu thì mọi thay đổi về sau (mức hưởng, ngày hiệu lực, gỡ bỏ) phải qua
-            <b> phiếu đề xuất</b> gửi Phòng Văn hóa - Xã hội duyệt. Phê duyệt xong hệ thống tự cập nhật vào hồ sơ.
+            Thay đổi phụ cấp đã có (mức, ngày hiệu lực, gỡ bỏ) thực hiện qua <b>phiếu đề xuất</b>; phê duyệt xong tự cập nhật vào hồ sơ.
           </p>
           <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
             <li>Nâng phụ cấp thâm niên nghề: lập phiếu <i>Nâng phụ cấp thâm niên nghề</i>.</li>
             <li>Đổi mức phụ cấp chức vụ, trách nhiệm, ưu đãi...: lập phiếu <i>Điều chỉnh hệ số lương - phụ cấp</i>, đính kèm quyết định.</li>
-            <li>Loại phụ cấp người này chưa có thì vẫn được thêm mới ngay trong hồ sơ.</li>
+            <li>Loại phụ cấp chưa có: thêm trực tiếp trong hồ sơ.</li>
           </ul>
         </div>
       ),
@@ -150,9 +149,7 @@ export default function VienChucFormPage() {
       content: (
         <div>
           <p>
-            Bậc lương, hệ số lương và mã ngạch của người đang hưởng lương chỉ được thay đổi qua
-            <b> phiếu đề xuất</b> gửi Phòng Văn hóa - Xã hội duyệt. Khi phiếu được phê duyệt, hệ thống
-            <b> tự cập nhật</b> vào hồ sơ và lịch sử lương.
+            Thay đổi mã ngạch, bậc, hệ số lương thực hiện qua <b>phiếu đề xuất</b>; phê duyệt xong tự cập nhật vào hồ sơ.
           </p>
           <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
             <li>Đến hạn nâng bậc: lập phiếu <i>Nâng bậc lương thường xuyên</i>.</li>
@@ -829,7 +826,7 @@ export default function VienChucFormPage() {
             <Form.Item
               name="chucVu"
               label="Chức vụ"
-              tooltip="Phó hiệu trưởng về làm giáo viên: chọn &quot;Không giữ chức vụ&quot;. Nếu do sắp xếp tổ chức bộ máy thì bật Bảo lưu phụ cấp chức vụ ở khung vàng bên dưới."
+              tooltip="Thôi giữ chức vụ do sắp xếp tổ chức bộ máy: khai ở mục Bảo lưu phụ cấp chức vụ."
             >
               <Select
                 options={chucVuOptions}
@@ -873,7 +870,7 @@ export default function VienChucFormPage() {
               <Form.Item
                 name="ngayBoNhiemKeToan"
                 label="Mốc bổ nhiệm, phân công kế toán gần nhất"
-                tooltip="Căn cứ nhắc định kỳ chuyển đổi vị trí công tác của kế toán (Luật Phòng, chống tham nhũng; NĐ 59/2019/NĐ-CP) - theo dõi ở thẻ Theo dõi bổ nhiệm."
+                tooltip="Căn cứ theo dõi định kỳ chuyển đổi vị trí kế toán (TT 159/2026/TT-BTC)."
               >
                 <DatePicker format="DD/MM/YYYY" placeholder="Ngày" style={{ width: '100%' }} />
               </Form.Item>
@@ -892,8 +889,8 @@ export default function VienChucFormPage() {
                 name="monDay"
                 label={loaiTruongForm === 'MAM_NON' ? 'Nhóm, lớp phụ trách' : 'Môn giảng dạy'}
                 tooltip={loaiTruongForm === 'MAM_NON'
-                  ? 'Nhóm, lớp độ tuổi giáo viên phụ trách - để theo dõi và lập danh sách ở trang Cơ cấu VTVL và định mức VC'
-                  : 'Căn cứ đối chiếu định mức giáo viên theo từng môn (TT 20/2023/TT-BGDĐT) ở trang Cơ cấu VTVL và định mức VC'}
+                  ? undefined
+                  : 'Căn cứ tính định mức giáo viên theo môn (TT 20/2023/TT-BGDĐT)'}
               >
                 <Select options={monOptions} placeholder={loaiTruongForm === 'MAM_NON' ? 'Chọn nhóm, lớp' : 'Chọn môn giảng dạy'} allowClear showSearch optionFilterProp="label" />
               </Form.Item>
@@ -935,7 +932,7 @@ export default function VienChucFormPage() {
               name="trangThai"
               label="Trạng thái công tác"
               rules={[{ required: true }]}
-              tooltip="Chuyển đi, Nghỉ hưu, Thôi việc: hồ sơ vẫn được giữ để tra cứu nhưng không tính vào bảng lương và báo cáo số liệu. Chuyển trong phường thì làm phiếu Chuyển công tác; chuyển ra ngoài tỉnh/phường thì đặt trạng thái Chuyển đi tại đây."
+              tooltip="Chuyển đi, Nghỉ hưu, Thôi việc: không tính vào bảng lương, số liệu. Chuyển trong phường: dùng chức năng Chuyển công tác."
             >
               <Select options={Object.entries(TRANG_THAI_CONG_TAC_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
             </Form.Item>
@@ -964,8 +961,7 @@ export default function VienChucFormPage() {
                   </Text>
                 </Space>
                 <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: watchBlBat ? 8 : 0 }}>
-                  Mức PC chức vụ của chức vụ cũ được giữ sau sắp xếp tổ chức bộ máy, khai tại đây. Không khai vào dòng
-                  "{TEN_HS_CHENH_LECH_BAO_LUU}" và không cộng vào dòng PC chức vụ hiện tại - dòng đó chỉ ghi mức theo chức vụ đang giữ.
+                  Không khai vào dòng "{TEN_HS_CHENH_LECH_BAO_LUU}" hay dòng PC chức vụ hiện tại.
                 </Text>
                 {watchBlBat && (
                   <Row gutter={16}>
@@ -1027,8 +1023,8 @@ export default function VienChucFormPage() {
                     <Col xs={24}>
                       <Text style={{ fontSize: 13.5 }}>
                         {blDenNgay
-                          ? <>Được hưởng nguyên PCCV cũ <b>đến hết {formatDate(blDenNgay)}</b>; sau đó hệ thống tự chuyển về mức theo chức vụ hiện tại.</>
-                          : 'Nhập đủ hai ngày để hệ thống tính ngày hết bảo lưu.'}
+                          ? <>Hưởng PCCV cũ <b>đến hết {formatDate(blDenNgay)}</b>, sau đó theo chức vụ hiện tại.</>
+                          : 'Nhập đủ hai ngày để tính ngày hết bảo lưu.'}
                         <Text type="secondary" style={{ fontSize: 13 }}> Thời hạn còn lại dưới 6 tháng thì được bảo lưu 6 tháng (NĐ 178/2024, NĐ 67/2025).</Text>
                       </Text>
                     </Col>
@@ -1040,7 +1036,7 @@ export default function VienChucFormPage() {
                     <Alert
                       type="warning" showIcon style={{ marginTop: 8 }}
                       title={`Dòng PC chức vụ đang ghi ${String(dongCv.giaTri).replace('.', ',')} - cao hơn mức theo chức vụ hiện tại (${String(pccvInfo.heSo).replace('.', ',')})`}
-                      description="Mức cũ đã khai ở mục bảo lưu này; dòng PC chức vụ chỉ ghi mức theo chức vụ đang giữ, để khi hết bảo lưu lương tự về đúng mức."
+                      description="Dòng PC chức vụ ghi mức theo chức vụ đang giữ."
                       action={<Button size="small" onClick={apDungPccvTheoChucVu}>Đưa về mức theo chức vụ</Button>}
                     />
                   ) : null
@@ -1059,8 +1055,8 @@ export default function VienChucFormPage() {
                 type="warning"
                 showIcon
                 style={{ marginBottom: 16 }}
-                title="Tổ trưởng, tổ phó tổ nuôi dưỡng không hưởng phụ cấp chức vụ (TT 33/2005 chỉ áp dụng cho tổ chuyên môn, tổ văn phòng)"
-                description="Hệ thống không tự thêm PC chức vụ. Nếu hồ sơ đang có dòng PC chức vụ ghi nhầm, bấm nút xoá ở dòng đó rồi Lưu - việc gỡ được ghi vào lịch sử biến động."
+                title="Tổ trưởng, tổ phó tổ nuôi dưỡng không hưởng phụ cấp chức vụ (TT 33/2005/TT-BGDĐT)"
+                description="Nếu có dòng PC chức vụ ghi nhầm: xoá dòng đó rồi Lưu."
               />
             </Col>
           ) : pccvInfo && pccvInfo.heSo > 0 && (() => {
@@ -1077,9 +1073,9 @@ export default function VienChucFormPage() {
                     ? `${theoQd} - đã ghi ở mục Phụ cấp${pccvDangHuong !== pccvInfo.heSo && isEdit ? ` (đổi từ ${String(pccvDangHuong).replace('.', ',')}, ghi lịch sử khi Lưu)` : ''}`
                     : `${theoQd} - mục Phụ cấp đang ghi ${dongCv ? String(dongCv.giaTri).replace('.', ',') : 'chưa có'}`}
                   description={khop && pccvDangHuong !== pccvInfo.heSo && isEdit
-                    ? 'Kiểm tra ngày hiệu lực của dòng PC chức vụ (mặc định hôm nay - sửa theo ngày quyết định phân công) rồi bấm Lưu.'
+                    ? 'Sửa ngày hiệu lực theo quyết định rồi Lưu.'
                     : !khop && !dongDaCoDb((watchPhuCaps ?? []).find((pc) => pc?.loaiPhuCapId === pcChucVuId))
-                      ? 'Nếu mức theo chức vụ là đúng (VD vừa đổi chức vụ), bấm "Áp dụng mức theo chức vụ", sửa ngày hiệu lực theo quyết định rồi Lưu. Trường hợp đang hưởng bảo lưu do sắp xếp thì khai ở mục Bảo lưu.'
+                      ? 'Bấm "Áp dụng mức theo chức vụ", sửa ngày hiệu lực theo quyết định rồi Lưu. Đang hưởng bảo lưu: khai ở mục Bảo lưu.'
                       : undefined}
                   action={!khop && !dongDaCoDb((watchPhuCaps ?? []).find((pc) => pc?.loaiPhuCapId === pcChucVuId))
                     ? <Button size="small" onClick={apDungPccvTheoChucVu}>Áp dụng mức theo chức vụ</Button>
@@ -1113,13 +1109,13 @@ export default function VienChucFormPage() {
             <Form.Item
               name="batDauBhxhGd"
               label={laTruongForm ? 'Bắt đầu đóng BHXH trong ngành giáo dục' : 'Tháng bắt đầu đóng BHXH'}
-              tooltip="Tháng bắt đầu đóng BHXH bắt buộc trong ngành giáo dục (theo sổ / quá trình đóng BHXH) - mọi người đều khai (biên chế, hợp đồng). Với CBQL, giáo viên là căn cứ tính đủ 5 năm xếp phụ cấp thâm niên nhà giáo lần đầu."
+              tooltip="Theo sổ BHXH. Căn cứ xếp phụ cấp thâm niên lần đầu (CBQL, giáo viên)."
             >
               <DatePicker picker="month" format="MM/YYYY" placeholder="Tháng/năm" disabled={!!watchKhongBhxh} style={{ width: '100%' }} />
             </Form.Item>
             {watchVtvl === 'NHAN_VIEN' && (
               <Form.Item name="khongThamGiaBhxh" valuePropName="checked" style={{ marginTop: -12 }}
-                tooltip="Dành cho nhân viên phục vụ (lao công, bảo vệ...) đã quá tuổi nghỉ hưu nên không còn đóng BHXH bắt buộc - được thống kê riêng, không bị nhắc khai tháng đóng BHXH.">
+                tooltip="Nhân viên quá tuổi nghỉ hưu, không đóng BHXH bắt buộc.">
                 <Checkbox>Không tham gia BHXH do quá tuổi</Checkbox>
               </Form.Item>
             )}
@@ -1127,12 +1123,11 @@ export default function VienChucFormPage() {
         </Row>
         {laBienChe ? (
           <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>
-            Các ô gắn nhãn <Tag color="blue" style={{ fontSize: 12, lineHeight: '16px' }}>VC biên chế</Tag>
-            là thông tin bắt buộc theo quy định đối với công chức, viên chức biên chế.
+            Ô gắn nhãn <Tag color="blue" style={{ fontSize: 12, lineHeight: '16px' }}>VC biên chế</Tag> là bắt buộc.
           </Text>
         ) : (
           <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>
-            Loại hình hợp đồng: Mã ngạch/Hạng và Bậc lương không bắt buộc; có thể chọn nhận lương theo mức tiền ở phần Lương & Phụ cấp. Không khai nguồn kinh phí, ngày vào biên chế.
+            Hợp đồng: không bắt buộc mã ngạch, bậc lương; có thể nhận lương theo mức tiền.
           </Text>
         )}
 
@@ -1167,7 +1162,6 @@ export default function VienChucFormPage() {
             title="Mã ngạch, bậc lương, hệ số lương chỉ thay đổi qua phiếu đề xuất"
             description={(
               <span>
-                Phòng Văn hóa - Xã hội duyệt phiếu xong, hệ thống tự cập nhật vào hồ sơ.{' '}
                 <a onClick={() => navigate(`/de-xuat/new?loai=DIEU_CHINH&vienChucId=${id}`)}>Lập phiếu điều chỉnh cho người này</a>
               </span>
             )}
@@ -1271,7 +1265,7 @@ export default function VienChucFormPage() {
               <Form.Item
                 name="mocHuongPctn"
                 label="Mốc hưởng PCTN"
-                tooltip="Mốc hưởng phụ cấp thâm niên - căn cứ để trường đề xuất nâng 1%/năm ở kỳ sau (6 tháng đầu hoặc cuối năm). Chỉ áp dụng với CBQL và giáo viên."
+                tooltip="Căn cứ nâng phụ cấp thâm niên kỳ sau (CBQL, giáo viên)."
               >
                 <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} placeholder="Chọn mốc hưởng PCTN" />
               </Form.Item>
@@ -1300,10 +1294,8 @@ export default function VienChucFormPage() {
             </Button>
           </div>
           <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
-            PC Thâm niên nghề (CBQL, giáo viên) vẫn giữ nguyên, hưởng song song với PC ưu đãi nhà giáo.
-            PC ưu đãi nhà giáo chọn theo cấp học (NĐ 182/2026): mầm non, tiểu học 45%; THCS 40%; nhân viên 20%.
-            Mỗi loại phụ cấp một dòng. Dòng giữ nguyên mức thì giữ nguyên ngày hiệu lực; đổi mức thì ghi bản mới
-            từ ngày ở ô "Từ ngày" (để nguyên thì tính từ hôm nay, PC thâm niên tính từ mốc hưởng PCTN), bản cũ chuyển sang lịch sử.
+            Mỗi loại phụ cấp một dòng; đổi mức thì ghi ngày ở ô "Từ ngày", bản cũ chuyển sang lịch sử.
+            PC ưu đãi nhà giáo (NĐ 182/2026): mầm non, tiểu học 45%; THCS 40%; nhân viên 20%.
           </Text>
           {heSoBaoLuuDangGhi != null && (watchPhuCaps ?? []).some((p: any) => p?.loaiPhuCapId === pcBaoLuuId && p?.giaTri === heSoBaoLuuDangGhi) && (
             <Alert
@@ -1311,7 +1303,7 @@ export default function VienChucFormPage() {
               showIcon
               style={{ marginBottom: 8 }}
               title={`Dòng "${TEN_HS_CHENH_LECH_BAO_LUU}" ${heSoBaoLuuDangGhi} trùng mức ${TEN_PCCV_BAO_LUU}`}
-              description={`Nếu đây là phụ cấp chức vụ được giữ sau sắp xếp thì xoá dòng này - mức đó đã được tính qua khung "${TEN_PCCV_BAO_LUU}" ở trên. "${TEN_HS_CHENH_LECH_BAO_LUU}" chỉ dùng cho phần chênh lệch hệ số lương khi chuyển ngạch, xếp lại lương.`}
+              description={`PC chức vụ được giữ sau sắp xếp đã khai ở mục "${TEN_PCCV_BAO_LUU}": xoá dòng này.`}
             />
           )}
           {khoaPhuCap && pcDaCoLucMo.length > 0 && (
@@ -1323,7 +1315,7 @@ export default function VienChucFormPage() {
               title="Phụ cấp đã có dữ liệu chỉ thay đổi qua phiếu đề xuất"
               description={(
                 <span>
-                  Các dòng có nhãn khoá giữ nguyên; loại phụ cấp người này chưa có thì vẫn bấm "Thêm phụ cấp" để khai lần đầu.{' '}
+                  Loại phụ cấp chưa có: bấm "Thêm phụ cấp".{' '}
                   <a onClick={() => navigate(`/de-xuat/new?loai=DIEU_CHINH&vienChucId=${id}`)}>Lập phiếu điều chỉnh</a>
                 </span>
               )}
@@ -1353,8 +1345,8 @@ export default function VienChucFormPage() {
                   ))}
                   <div style={{ marginTop: 4 }}>
                     {khoaPhuCap
-                      ? 'Biểu mẫu đang hiện bản có ngày hiệu lực mới nhất. Phòng VH-XH sẽ đóng bản thừa - báo Phòng hoặc lập phiếu Điều chỉnh.'
-                      : 'Biểu mẫu đang hiện bản có ngày hiệu lực mới nhất. Khi bấm Lưu, các bản còn lại sẽ được đóng và chuyển sang lịch sử.'}
+                      ? 'Đang hiện bản có ngày hiệu lực mới nhất. Báo Phòng VHXH hoặc lập phiếu Điều chỉnh để đóng bản thừa.'
+                      : 'Đang hiện bản có ngày hiệu lực mới nhất; bấm Lưu để chuyển các bản còn lại sang lịch sử.'}
                   </div>
                 </div>
               }
@@ -1365,7 +1357,7 @@ export default function VienChucFormPage() {
               type="warning"
               showIcon
               style={{ marginBottom: 8 }}
-              title="Lương theo mức tiền: phụ cấp tính theo % lương chính không áp dụng (không có hệ số lương chính); phụ cấp dạng hệ số nếu có vẫn được tính."
+              title="Lương theo mức tiền: không tính phụ cấp theo % lương chính."
             />
           )}
 

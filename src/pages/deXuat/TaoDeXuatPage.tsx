@@ -669,7 +669,7 @@ export default function TaoDeXuatPage() {
         {canMinhChung && (
           <Form.Item
             label={<>Minh chứng của phiếu <Text type="danger" style={{ marginLeft: 4 }}>* bắt buộc khi trình</Text></>}
-            tooltip="Quyết định, biên bản xét… Minh chứng riêng từng người (VD giấy khen) đính kèm ở cột Minh chứng riêng."
+            tooltip="Quyết định, biên bản xét…"
           >
             <MinhChungField taiLenBoi={nguoiTaiLen} value={minhChung} onChange={setMinhChung} />
           </Form.Item>
@@ -723,7 +723,7 @@ export default function TaoDeXuatPage() {
         </>}
 
         {laLanDau && <>
-        <Divider plain>Rà soát CBQL, giáo viên chưa hưởng phụ cấp thâm niên - đủ 5 năm trong kỳ theo BHXH tô xanh, tạm tính (chưa khai BHXH) tô vàng; nhân viên không thuộc diện</Divider>
+        <Divider plain>CBQL, giáo viên chưa hưởng phụ cấp thâm niên (xanh: theo BHXH; vàng: tạm tính)</Divider>
         <Space wrap style={{ marginBottom: 12 }}>
           <InputNumber value={dotNam} onChange={(v) => setDotNam(v ?? currentYear)} style={{ width: 100 }} />
           <Select value={dotKy} onChange={setDotKy} style={{ width: 180 }} options={[{ value: 'H1', label: '6 tháng đầu năm' }, { value: 'H2', label: '6 tháng cuối năm' }]} />
@@ -854,8 +854,8 @@ function KhaiLanDauModal({ ten, khai, denNgay, onHuy, onLuu }: {
         type="info"
         showIcon
         style={{ marginBottom: 12 }}
-        title="Đủ 5 năm (60 tháng) giảng dạy, giáo dục có đóng BHXH bắt buộc thì hưởng 5%, từ năm thứ sáu mỗi năm (đủ 12 tháng) +1% (NĐ 77/2021/NĐ-CP)."
-        description="Không tính: thời gian tập sự; nghỉ việc riêng không lương liên tục từ 01 tháng; ốm đau, thai sản vượt quy định; đi học, công tác quá hạn; bị tạm đình chỉ, tạm giữ, tạm giam. Khai theo quá trình đóng BHXH và quyết định tuyển dụng."
+        title="Đủ 5 năm có đóng BHXH bắt buộc: 5%; từ năm thứ sáu mỗi năm +1% (NĐ 77/2021/NĐ-CP)."
+        description="Không tính: tập sự; nghỉ không lương liên tục từ 01 tháng; ốm đau, thai sản vượt quy định; đi học, công tác quá hạn; bị tạm đình chỉ, tạm giữ, tạm giam."
       />
       <Row gutter={[12, 8]}>
         <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Ngày tuyển dụng viên chức</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTuyenDung)} onChange={(v) => doi({ ngayTuyenDung: v?.format('YYYY-MM-DD'), huongTu: huongTuMacDinh(v?.format('YYYY-MM-DD')) })} /></Col>
@@ -900,8 +900,7 @@ function KhaiLanDauModal({ ten, khai, denNgay, onHuy, onLuu }: {
         doi({ quaTrinh: [...k.quaTrinh, { tyLe: c ? c.tyLe + 1 : 5, mocXet: moc, thoiGianHuong: moc }] })
       }}>Thêm dòng</Button>
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Dòng cuối là mức đang hưởng: khi phê duyệt, hệ thống ghi phụ cấp thâm niên mức này và lấy mốc xét của dòng cuối làm mốc nâng thâm niên lần sau.
-        Các dòng trước là thời gian truy lĩnh, ghi vào lịch sử và thông báo.
+        Dòng cuối là mức đang hưởng; các dòng trước là thời gian truy lĩnh.
       </Text>
     </Modal>
   )

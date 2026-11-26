@@ -126,8 +126,7 @@ function BangMuc({ suaDuoc }: { suaDuoc: boolean }) {
     <>
       <Alert
         type="info" showIcon style={{ marginBottom: 12 }}
-        title="Thông tư 08/2013 không quy định số tháng theo từng hình thức khen thưởng"
-        description="Điểm e khoản 1 Điều 3 giao Quy chế của từng đơn vị quy định cấp độ thành tích và thời gian nâng trước tương ứng (tối đa 12 tháng). Bảng này là mức gợi ý chung của phường: khi lập hồ sơ, kế toán chọn hình thức khen để điền sẵn số tháng, sửa được theo Quy chế của trường."
+        title="Mức gợi ý; số tháng nâng trước thực hiện theo Quy chế của đơn vị (điểm e khoản 1 Điều 3 TT 08/2013/TT-BNV, tối đa 12 tháng)"
       />
       <Table<MucNangTruocHan>
         {...BANG_CHUAN}

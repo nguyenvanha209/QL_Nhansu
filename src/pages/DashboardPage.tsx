@@ -257,7 +257,7 @@ export default function DashboardPage() {
               ]}
             />
             <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 8 }}>
-              Bấm vào số để mở danh sách hồ sơ tương ứng. Nhân viên được chia nhóm theo ô <i>Công việc cụ thể</i> trong hồ sơ.
+              Nhân viên chia nhóm theo ô <i>Công việc cụ thể</i>.
             </Text>
           </Card>
         </Col>

@@ -336,7 +336,7 @@ export default function AppLayout() {
             </Button>
             <ChiBaoDongBo />
             {coChucNangTruong(hasPermission('quyMo', 'read')) && (
-              <Tooltip title="Thông tin chung và quy mô trường lớp từng năm học (căn cứ hạng trường, phụ cấp chức vụ, định mức)">
+              <Tooltip title="Quy mô trường lớp từng năm học">
                 <Button
                   type={location.pathname === '/thong-tin-truong' ? 'primary' : 'text'}
                   ghost={location.pathname === '/thong-tin-truong'}

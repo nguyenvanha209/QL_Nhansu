@@ -16,7 +16,7 @@ export function TagMucBoNhiem({ muc, kemTen = true }: { muc: MucNhacBoNhiem; kem
 
 export function TagKeoDai({ ngayNghiHuu }: { ngayNghiHuu?: string }) {
   return (
-    <Tooltip title={`Nghỉ hưu ngày ${formatDate(ngayNghiHuu)} - còn dưới ${NAM_XET_KEO_DAI} năm tính đến ngày hết nhiệm kỳ: xem xét kéo dài thời hạn giữ chức vụ đến khi nghỉ hưu thay vì bổ nhiệm lại`}>
+    <Tooltip title={`Nghỉ hưu ngày ${formatDate(ngayNghiHuu)}, còn dưới ${NAM_XET_KEO_DAI} năm đến ngày hết nhiệm kỳ`}>
       <Tag color="purple" style={{ marginInlineEnd: 0 }}>Xem xét kéo dài</Tag>
     </Tooltip>
   )

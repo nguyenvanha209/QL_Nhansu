@@ -311,7 +311,7 @@ export default function DeXuatDetailPage() {
         </Title>
         {canXetDuyet && !laTruocHan && laHoSoNangLuong(dx.loai) && (
           <Text type="secondary" style={{ display: 'block', marginBottom: 8, fontSize: 13 }}>
-            Cột <b>Phòng VHXH thẩm định</b>: người chưa chọn được coi là Đồng ý; chọn <b>Không đồng ý</b> (kèm ý kiến) cho người không đủ điều kiện rồi bấm Đồng ý - chuyển lãnh đạo.
+            Cột <b>Phòng VHXH thẩm định</b>: mặc định Đồng ý; người không đủ điều kiện chọn <b>Không đồng ý</b> kèm ý kiến.
           </Text>
         )}
         <Table dataSource={dx.chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} scroll={{ x: 1450 }} />

@@ -326,8 +326,8 @@ export default function VienChucDetailPage() {
                     style={{ marginBottom: 12 }}
                     title={`${soLoaiTrung} loại phụ cấp đang ghi trùng (nhiều bản cùng còn hiệu lực)`}
                     description={laQuanTri
-                      ? 'Bảng lương đang dùng bản gắn nhãn "Đang tính lương" (ngày hiệu lực mới nhất). Đối chiếu quyết định, bấm "Giữ bản này" ở bản đúng; bản còn lại chuyển vào lịch sử hoặc xoá hẳn nếu nhập sai.'
-                      : 'Bảng lương đang dùng bản gắn nhãn "Đang tính lương" (ngày hiệu lực mới nhất). Báo Quản trị hệ thống (hoặc Phòng VHXH) để chọn bản đúng và xoá bản nhập sai.'}
+                      ? 'Đối chiếu quyết định, bấm "Giữ bản này" ở bản đúng.'
+                      : 'Báo Phòng VHXH hoặc Quản trị hệ thống để xử lý.'}
                   />
                 )}
                 {vc.baoLuuPccv && (
@@ -346,8 +346,8 @@ export default function VienChucDetailPage() {
                     </div>
                     <Text type="secondary" style={{ fontSize: 13 }}>
                       {dangBaoLuuPccv(vc) && !tinhTheoBaoLuu
-                        ? 'Mức bảo lưu không cao hơn PC chức vụ hiện tại nên không được tính. Dòng "PC chức vụ hiện tại" chỉ ghi mức theo chức vụ đang giữ; mức của chức vụ cũ ghi ở mục bảo lưu này.'
-                        : 'Khoản này khác "Hệ số chênh lệch bảo lưu (lương)". Bảng lương lấy mức cao hơn giữa mức bảo lưu và PC chức vụ hiện tại; hết hạn thì tự về mức theo chức vụ hiện tại.'}
+                        ? 'Mức bảo lưu không cao hơn PC chức vụ hiện tại nên không áp dụng.'
+                        : 'Bảng lương lấy mức cao hơn giữa mức bảo lưu và PC chức vụ hiện tại.'}
                     </Text>
                   </div>
                 )}

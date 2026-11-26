@@ -134,7 +134,7 @@ export default function DaNghiHuu() {
           showIcon
           style={{ marginBottom: 12 }}
           title={`${quaTuoi.length} người đã qua thời điểm nghỉ hưu nhưng hồ sơ vẫn ghi đang công tác`}
-          description="Trường mở hồ sơ, chuyển trạng thái sang Nghỉ hưu (kèm ghi chú số quyết định); trường hợp có quyết định kéo dài thời gian công tác thì ghi chú vào hồ sơ."
+          description="Chuyển trạng thái hồ sơ sang Nghỉ hưu (ghi số quyết định) hoặc ghi chú quyết định kéo dài thời gian công tác."
           action={<Button size="small" onClick={() => setChe('QUA_TUOI')}>Xem danh sách</Button>}
         />
       )}
@@ -174,8 +174,7 @@ export default function DaNghiHuu() {
         pagination={phanTrang('người')}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Thời điểm nghỉ hưu tính theo tuổi nghỉ hưu tại Nghị định 135/2020/NĐ-CP (theo tháng, năm sinh); hưởng chế độ hưu trí từ ngày đầu tháng liền kề.
-        Danh sách "Đã nghỉ hưu" lấy các hồ sơ có trạng thái công tác là Nghỉ hưu.
+        Tuổi nghỉ hưu theo Nghị định 135/2020/NĐ-CP; hưởng chế độ hưu trí từ ngày đầu tháng liền kề.
       </Text>
     </>
   )

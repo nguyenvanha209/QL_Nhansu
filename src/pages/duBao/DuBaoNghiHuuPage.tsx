@@ -134,7 +134,7 @@ export default function DuBaoNghiHuuPage() {
         pagination={phanTrang('người dự kiến nghỉ hưu')}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Thời điểm nghỉ hưu theo tuổi nghỉ hưu tại Nghị định 135/2020/NĐ-CP (theo tháng, năm sinh); hưởng chế độ hưu trí từ ngày đầu tháng liền kề.
+        Tuổi nghỉ hưu theo Nghị định 135/2020/NĐ-CP; hưởng chế độ hưu trí từ ngày đầu tháng liền kề.
         Mức độ: rất gấp ≤ 3 tháng, gấp ≤ 6 tháng, cần chuẩn bị ≤ 12 tháng.
       </Text>
     </>

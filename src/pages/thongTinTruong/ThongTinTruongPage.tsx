@@ -84,7 +84,7 @@ export default function ThongTinTruongPage() {
         <div>
           <Title level={4} style={{ margin: 0 }}>Thông tin trường</Title>
           <Text type="secondary">
-            Thông tin chung và quy mô trường lớp từng năm học. Số lớp là căn cứ xếp hạng trường (phụ cấp chức vụ, số phó hiệu trưởng) và tính định mức viên chức.
+            Quy mô trường lớp từng năm học: căn cứ xếp hạng trường và tính định mức viên chức.
           </Text>
         </div>
         <Space wrap>
@@ -434,9 +434,7 @@ function QuyMoNamHoc({ donVi, namHoc }: { donVi: DonVi; namHoc: string }) {
               Số lớp {hangHienTai.namHoc === namHoc ? `năm học ${namHoc}` : `đang dùng (theo năm học ${hangHienTai.namHoc})`} là {hangHienTai.tongLop}, nay khai {t.tongLop}.
             </p>
             <p style={{ marginBottom: 0 }}>
-              Hạng trường là căn cứ phụ cấp chức vụ (TT 33/2005/TT-BGDĐT) và số phó hiệu trưởng.
-              Phụ cấp đang hưởng <b>không tự thay đổi</b>; trang Rà soát sẽ liệt kê người có PC chức vụ khác mức theo hạng mới,
-              và khi chỉnh sửa hồ sơ hiệu trưởng, phó hiệu trưởng, tổ trưởng, tổ phó hệ thống đề xuất mức theo hạng mới.
+              Phụ cấp chức vụ đang hưởng <b>không tự thay đổi</b>; người có mức khác hạng mới được liệt kê ở trang Rà soát.
             </p>
           </div>
         ),

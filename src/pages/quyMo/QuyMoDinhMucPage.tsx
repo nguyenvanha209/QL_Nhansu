@@ -107,7 +107,7 @@ export default function QuyMoDinhMucPage() {
         <div>
           <Title level={4} style={{ margin: 0 }}>Cơ cấu VTVL và định mức VC</Title>
           <Text type="secondary">
-            Cơ cấu vị trí việc làm theo khung của Sở Nội vụ Hải Phòng; định mức viên chức tính theo TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS) từ quy mô khai ở trang Thông tin trường
+            Định mức theo TT 19/2023/TT-BGDĐT (mầm non), TT 20/2023/TT-BGDĐT (tiểu học, THCS)
           </Text>
         </div>
         <Space wrap>
@@ -311,7 +311,7 @@ function TongHopPhuong({ truongs, namHoc, onChon, onXemCapHoc }: { truongs: DonV
         showIcon
         style={{ marginBottom: 16 }}
         title={`Năm học ${namHoc}: đã khai quy mô ${daKhai}/${truongRows.length} trường, đã giao chỉ tiêu ${daGiao}/${truongRows.length} trường`}
-        description="Ba nhóm vị trí việc làm theo khung của Sở Nội vụ Hải Phòng. Giao và Có mặt tính biên chế (ngân sách + sự nghiệp); thừa/thiếu so với chỉ tiêu giao và so với định mức (thừa đỏ, thiếu xanh). Bấm tên trường để xem chi tiết và giao chỉ tiêu."
+        description="Giao, Có mặt tính biên chế. Thừa đỏ, thiếu xanh."
       />
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
         {onXemCapHoc && (
@@ -586,7 +586,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi, nhanSu, la
   const [xemDs, setXemDs] = useState<XemDanhSach | null>(null)
 
   if (!kq.tongLop) {
-    return <Empty description={`Chưa có số lớp - khai báo quy mô năm học ở trang Thông tin trường (nút trên đầu trang) để tính định mức`} />
+    return <Empty description={`Chưa khai báo quy mô năm học (trang Thông tin trường)`} />
   }
 
   const data: DongBang[] = []
@@ -632,7 +632,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi, nhanSu, la
           type="error"
           showIcon
           style={{ marginBottom: 12 }}
-          title="Chưa nhập số lớp học 2 buổi/ngày - định mức giáo viên đang tính toàn bộ là lớp 1 buổi (1,2 GV/lớp), thấp hơn thực tế"
+          title="Chưa nhập số lớp học 2 buổi/ngày - định mức đang tính theo lớp 1 buổi (1,2 GV/lớp)"
           description='Nhập cột "Trong đó học 2 buổi/ngày" ở thẻ "Khai báo quy mô" (lớp 2 buổi tính 1,5 GV/lớp).'
         />
       )}
@@ -682,7 +682,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi, nhanSu, la
             },
           },
           {
-            title: <Tooltip title="Trường nhập khi có căn cứ riêng (VD điểm trường lẻ, học sinh khuyết tật). Để trống thì dùng định mức theo quy định.">Điều chỉnh</Tooltip>,
+            title: <Tooltip title="Nhập khi có căn cứ riêng; để trống thì theo quy định.">Điều chỉnh</Tooltip>,
             key: 'tay', width: 100, align: 'center',
             render: (_, r) => {
               if (!laDong(r) || r.khongDinhMuc || r.trongGv || r.dongPhu) return null
@@ -768,9 +768,7 @@ function TheDinhMuc({ kq, nhap, coTheSua, datNhapTay, datKiem, daDoi, nhanSu, la
         )}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Có mặt đếm theo hồ sơ đang công tác tại trường: cán bộ quản lý theo chức vụ, giáo viên theo môn được phân công,
-        nhân viên theo "Công việc cụ thể". Viên chức gồm biên chế và tập sự; còn lại tính là hợp đồng.
-        Bấm vào số có mặt để xem danh sách người ở vị trí đó.
+        Viên chức gồm biên chế và tập sự; còn lại là hợp đồng.
         {daDoi && ' Số liệu đang tính theo bản chưa lưu.'}
       </Text>
       <DanhSachViTri xem={xemDs} onClose={() => setXemDs(null)} cap={kq.cap} nhanSu={nhanSu} layCd={layCd} tenTruong={tenTruong} />
@@ -884,7 +882,7 @@ function BangPhanBoKiem({ kq, coTheSua, datKiem }: {
           <Text type="secondary" style={{ fontSize: 13 }}>
             Cần phân bổ = định mức giáo viên − đứng lớp các môn ({fmt(tongDungLop)}) − Tổng phụ trách (1), gồm:
             dạy kiêm GDĐP, HĐTN-HN {fmt(pb.kiemDay)}; chủ nhiệm {fmt(pb.chuNhiem)}; kiêm nhiệm khác {fmt(pb.khac)}.
-            Hệ thống gợi ý chia theo tỷ lệ giờ đứng lớp; môn trường để trống tự nhận phần còn lại theo cùng tỷ lệ.
+            Môn để trống chia theo tỷ lệ giờ đứng lớp.
           </Text>
         </Col>
       </Row>
@@ -897,8 +895,8 @@ function BangPhanBoKiem({ kq, coTheSua, datKiem }: {
             ? `Tổng phân bổ còn thiếu ${fmt(pb.conLai)} giáo viên so với số cần phân bổ`
             : `Tổng phân bổ vượt ${fmt(-pb.conLai)} giáo viên so với số cần phân bổ`}
           description={tatCaDaChinh
-            ? 'Trường đã điều chỉnh tất cả các môn - sửa lại cho khớp, hoặc để trống một số môn để hệ thống tự cân đối phần còn lại.'
-            : 'Số trường điều chỉnh đã vượt tổng cần phân bổ - giảm số ở các môn đã điều chỉnh.'}
+            ? 'Sửa cho khớp hoặc để trống một số môn.'
+            : 'Giảm số ở các môn đã điều chỉnh.'}
         />
       )}
       <Table<DongPhanBoKiem>
@@ -1009,7 +1007,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi, nhap }: {
       width: 520,
       content: (
         <div>
-          <p>Gợi ý dựa trên "Nhiệm vụ chính", nếu trống thì theo "Trình độ chuyên môn". Kiểm tra lại sau khi điền.</p>
+          <p>Theo "Nhiệm vụ chính" hoặc "Trình độ chuyên môn".</p>
           <Space wrap size={[6, 6]}>
             {[...demMon].map(([ma, n]) => <Tag key={ma}>{tenMonDay(ma)}: {n}</Tag>)}
           </Space>
@@ -1043,7 +1041,7 @@ function ThePhanMon({ cap, nhanSu, kq, coTheSua, donVi, nhap }: {
         <Text type="secondary" style={{ display: 'block', marginBottom: 6 }}>
           Đã phân công {giaoViens.length - chuaPhan.length}/{giaoViens.length} giáo viên.{' '}
           {laMN
-            ? 'Số giáo viên phân công / định mức theo nhóm, lớp độ tuổi (số nhóm, lớp × 2,5 nhà trẻ hoặc × 2,2 mẫu giáo) - để theo dõi, định mức chung của trường không đổi:'
+            ? 'Phân công / định mức theo nhóm, lớp (nhà trẻ × 2,5; mẫu giáo × 2,2):'
             : 'Có mặt / định mức theo môn:'}
         </Text>
         <Space wrap size={[6, 6]}>

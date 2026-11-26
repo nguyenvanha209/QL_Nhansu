@@ -36,7 +36,7 @@ function cotKhoi<T>(tinh: (r: T) => KhoiDonVi[], tuChon: (r: T) => boolean) {
   }
 }
 const oKhoi = (
-  <Form.Item name="khoi" label="Khối áp dụng" tooltip="Bỏ trống để phần mềm tự xác định theo mã. Mục chỉ hiện ở đơn vị thuộc khối đã chọn; Phòng VHXH, quản trị thấy tất cả.">
+  <Form.Item name="khoi" label="Khối áp dụng" tooltip="Bỏ trống: tự xác định theo mã.">
     <Select mode="multiple" allowClear placeholder="Tự xác định theo mã" options={KHOI_DON_VI.map((k) => ({ value: k.key, label: k.ten }))} />
   </Form.Item>
 )
@@ -58,24 +58,23 @@ export default function DanhMucPage() {
         style={{ minHeight: 520 }}
         tabBarStyle={isWide ? { width: 190, paddingTop: 12 } : undefined}
         items={[
-          { key: '1', label: <TabLabel icon={<BankOutlined />} text="Đơn vị" />, children: <TabPane title="Đơn vị" desc="Các đơn vị thuộc UBND phường: trường học, phòng chuyên môn, đơn vị sự nghiệp. Với trường học: số lớp, hạng trường và thông tin chung (địa chỉ, điện thoại, email) do trường khai ở trang Thông tin trường (nút trên đầu trang), theo từng năm học."><DonViTab /></TabPane> },
-          { key: '2', label: <TabLabel icon={<IdcardOutlined />} text="Chức danh NN" />, children: <TabPane title="Chức danh nghề nghiệp" desc="Mã ngạch công chức, chức danh nghề nghiệp viên chức theo quy định, dùng khi xếp lương. Cột Khối áp dụng cho biết mục hiện ở trường, cơ quan hay đơn vị sự nghiệp."><ChucDanhTab /></TabPane> },
-          { key: '3', label: <TabLabel icon={<ProfileOutlined />} text="Loại phụ cấp" />, children: <TabPane title="Loại phụ cấp" desc="Các loại phụ cấp và công thức tính (% lương chính, % lương cơ sở, tiền mặt, hệ số)."><PhuCapTab /></TabPane> },
-          { key: '4', label: <TabLabel icon={<DollarOutlined />} text="Mức lương cơ sở" />, children: <TabPane title="Mức lương cơ sở" desc="Mức lương cơ sở theo từng thời kỳ, lưu để tra cứu và tham chiếu văn bản."><LuongCoSoTab /></TabPane> },
-          { key: '5', label: <TabLabel icon={<SolutionOutlined />} text="Chức vụ" />, children: <TabPane title="Chức vụ" desc="Chức vụ lãnh đạo, quản lý ở trường học, phòng chuyên môn, đơn vị sự nghiệp. Admin có thể thêm/sửa/xóa để tùy biến."><ChucVuTab /></TabPane> },
-          { key: '6', label: <TabLabel icon={<ApartmentOutlined />} text="VTVL" />, children: <TabPane title="Vị trí việc làm (VTVL)" desc="Phân loại vị trí việc làm của công chức, viên chức. Admin có thể thêm/sửa/xóa để tùy biến."><VtvlTab /></TabPane> },
-          { key: '7', label: <TabLabel icon={<FlagOutlined />} text="Trạng thái" />, children: <TabPane title="Trạng thái công tác" desc="Vòng đời công tác của viên chức, ảnh hưởng tới số liệu tổng hợp toàn hệ thống."><TrangThaiTab /></TabPane> },
+          { key: '1', label: <TabLabel icon={<BankOutlined />} text="Đơn vị" />, children: <TabPane title="Đơn vị"><DonViTab /></TabPane> },
+          { key: '2', label: <TabLabel icon={<IdcardOutlined />} text="Chức danh NN" />, children: <TabPane title="Chức danh nghề nghiệp"><ChucDanhTab /></TabPane> },
+          { key: '3', label: <TabLabel icon={<ProfileOutlined />} text="Loại phụ cấp" />, children: <TabPane title="Loại phụ cấp"><PhuCapTab /></TabPane> },
+          { key: '4', label: <TabLabel icon={<DollarOutlined />} text="Mức lương cơ sở" />, children: <TabPane title="Mức lương cơ sở"><LuongCoSoTab /></TabPane> },
+          { key: '5', label: <TabLabel icon={<SolutionOutlined />} text="Chức vụ" />, children: <TabPane title="Chức vụ"><ChucVuTab /></TabPane> },
+          { key: '6', label: <TabLabel icon={<ApartmentOutlined />} text="VTVL" />, children: <TabPane title="Vị trí việc làm (VTVL)"><VtvlTab /></TabPane> },
+          { key: '7', label: <TabLabel icon={<FlagOutlined />} text="Trạng thái" />, children: <TabPane title="Trạng thái công tác"><TrangThaiTab /></TabPane> },
         ]}
       />
     </Card>
   )
 }
 
-function TabPane({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
+function TabPane({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ padding: '4px 16px 16px' }}>
-      <Title level={5} style={{ marginTop: 0, marginBottom: 4 }}>{title}</Title>
-      <Text type="secondary" style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>{desc}</Text>
+      <Title level={5} style={{ marginTop: 0, marginBottom: 12 }}>{title}</Title>
       {children}
     </div>
   )
@@ -316,15 +315,14 @@ function ChucVuTab() {
     <>
       <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
         <Descriptions.Item label="Căn cứ">
-          Chức vụ quản lý trường học theo TT 19/2023/TT-BGDĐT (mầm non) và TT 20/2023/TT-BGDĐT (phổ thông). Hệ số phụ cấp chức vụ theo hạng trường
-          (TT 33/2005/TT-BGDĐT) chỉ tự động tính cho 4 mã chuẩn: HT, P.HT, TTCM, TPCM.
+          TT 19/2023/TT-BGDĐT, TT 20/2023/TT-BGDĐT; phụ cấp chức vụ theo hạng trường: TT 33/2005/TT-BGDĐT (mã HT, P.HT, TTCM, TPCM).
         </Descriptions.Item>
       </Descriptions>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức vụ</Button>
       <Table dataSource={chucVus.filter((c) => c.active && apDungChoKhoi(khoiChucVu(c), khoiXem))} columns={cols} rowKey="id" size="small" pagination={false} scroll={{ x: 1100 }} />
       <Modal open={open} title={editing ? 'Sửa chức vụ' : 'Thêm chức vụ'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
-          <Form.Item name="ma" label="Mã" rules={[{ required: true }]} tooltip="Mã chuẩn để hệ thống tự tính phụ cấp chức vụ: HT, P.HT, TTCM, TPCM (trường); TRP, P.TRP (Trưởng, Phó phòng chuyên môn); CVP, P.CVP (Chánh, Phó Chánh Văn phòng)">
+          <Form.Item name="ma" label="Mã" rules={[{ required: true }]} tooltip="Mã chuẩn: HT, P.HT, TTCM, TPCM, TRP, P.TRP, CVP, P.CVP">
             <Input placeholder="VD: TO_TRUONG_VP" />
           </Form.Item>
           <Form.Item name="ten" label="Tên chức vụ" rules={[{ required: true }]}><Input placeholder="VD: Tổ trưởng văn phòng" /></Form.Item>
@@ -373,13 +371,7 @@ function VtvlTab() {
   return (
     <>
       <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
-        <Descriptions.Item label="Căn cứ">
-          Phân loại vị trí việc làm (VTVL) của viên chức, được chọn thủ công khi khai báo hồ sơ. Mã CBQL / GIAO_VIEN / NHAN_VIEN là 3 nhóm chuẩn,
-          admin có thể bổ sung thêm nhóm khác nếu cần.
-        </Descriptions.Item>
-        <Descriptions.Item label="Phụ cấp thâm niên">
-          Chỉ CBQL và giáo viên được hưởng phụ cấp thâm niên nên hồ sơ có thêm ô "Mốc hưởng PCTN"; VTVL mã NHAN_VIEN không hưởng và không khai báo mốc này.
-        </Descriptions.Item>
+        <Descriptions.Item label="Phụ cấp thâm niên">Áp dụng cho mã CBQL, GIAO_VIEN; không áp dụng cho NHAN_VIEN.</Descriptions.Item>
       </Descriptions>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm VTVL</Button>
       <Table scroll={{ x: 'max-content' }} dataSource={vtvls.filter((v) => v.active && apDungChoKhoi(khoiVtvl(v), khoiXem))} columns={cols} rowKey="id" size="small" pagination={false} />
@@ -396,11 +388,11 @@ function VtvlTab() {
 }
 
 const TRANG_THAI_INFO: Record<TrangThaiCongTac, string> = {
-  DANG_LAM_VIEC: 'Đang công tác bình thường tại đơn vị',
-  CHUYEN_DEN: 'Mới chuyển đến đơn vị từ nơi khác, vẫn tính là đang công tác',
-  CHUYEN_DI: 'Đã chuyển công tác sang đơn vị/địa phương khác',
-  NGHI_HUU: 'Đã nghỉ hưu theo chế độ',
-  THOI_VIEC: 'Đã thôi việc, chấm dứt hợp đồng lao động/làm việc',
+  DANG_LAM_VIEC: 'Đang công tác tại đơn vị',
+  CHUYEN_DEN: 'Chuyển đến từ nơi khác, tính là đang công tác',
+  CHUYEN_DI: 'Đã chuyển công tác',
+  NGHI_HUU: 'Đã nghỉ hưu',
+  THOI_VIEC: 'Đã thôi việc, chấm dứt hợp đồng',
 }
 
 function TrangThaiTab() {
@@ -418,9 +410,8 @@ function TrangThaiTab() {
   return (
     <>
       <Descriptions size="small" column={1} bordered style={{ marginBottom: 16 }}>
-        <Descriptions.Item label="Căn cứ">
-          Trạng thái công tác phản ánh vòng đời làm việc của viên chức. Chỉ người có trạng thái "Đang làm việc" hoặc "Chuyển đến" được tính vào số liệu
-          Tổng quan, chỉ tiêu Vị trí việc làm, Báo cáo, Dự báo nghỉ hưu và danh sách chọn ở Đề xuất điều chỉnh hệ số lương - phụ cấp.
+        <Descriptions.Item label="Lưu ý">
+          Chỉ tính vào số liệu các trạng thái "Đang làm việc", "Chuyển đến".
         </Descriptions.Item>
       </Descriptions>
       <Table scroll={{ x: 'max-content' }} dataSource={data} columns={cols} rowKey="key" size="small" pagination={false} />

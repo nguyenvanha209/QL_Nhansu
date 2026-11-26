@@ -101,8 +101,8 @@ export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
             <div style={{ fontSize: 14.5 }}>
               <ol style={{ margin: '0 0 8px', paddingLeft: 18, lineHeight: 1.65 }}>
                 <li><b>Tạo đề xuất</b> → chọn loại → thêm người (một phiếu gộp nhiều người cùng đợt).</li>
-                <li>Kiểm tra cột <b>Nội dung điều chỉnh (cũ → mới)</b>: ngạch - bậc - hệ số - mốc hưởng; đính kèm minh chứng nếu loại bắt buộc (tối đa 3 MB/file).</li>
-                <li><b>Lưu &amp; Nộp</b> → Thủ trưởng đơn vị → Phòng VHXH → Lãnh đạo; phê duyệt xong tự ghi vào hồ sơ. Bị <i>Yêu cầu bổ sung</i> thì <b>Sửa &amp; trình lại</b>.</li>
+                <li>Kiểm tra cột <b>Nội dung điều chỉnh (cũ → mới)</b>; đính kèm minh chứng (tối đa 3 MB/file).</li>
+                <li><b>Lưu &amp; Nộp</b> → Thủ trưởng đơn vị → Phòng VHXH → Lãnh đạo. Bị <i>Yêu cầu bổ sung</i>: <b>Sửa &amp; trình lại</b>.</li>
               </ol>
               <table className="dx-hd-table">
                 <thead><tr><th style={{ width: 200 }}>Loại</th><th>Nghiệp vụ</th><th style={{ width: 230 }}>Minh chứng</th></tr></thead>

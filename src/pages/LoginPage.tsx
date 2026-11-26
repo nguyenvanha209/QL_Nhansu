@@ -127,7 +127,7 @@ export default function LoginPage() {
 
             {/* Không công khai danh sách tên đăng nhập (giúp kẻ xấu dò mật khẩu) - tên đăng nhập do Phòng VH-XH cấp riêng */}
             <Text type="secondary" style={{ fontSize: 13, display: 'block', textAlign: 'center' }}>
-              Tên đăng nhập và mật khẩu do Phòng Văn hóa - Xã hội cấp riêng cho từng trường.
+              Tài khoản do Phòng Văn hóa - Xã hội cấp.
             </Text>
           </div>
         </div>

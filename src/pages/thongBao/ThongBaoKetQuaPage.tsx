@@ -66,7 +66,7 @@ function QuanLyThongBao() {
         <div>
           <Title level={4} style={{ margin: 0 }}>Thông báo kết quả nâng lương, phụ cấp thâm niên</Title>
           <Text type="secondary">
-            Tổng hợp từ các phiếu đề xuất đã được phê duyệt (hồ sơ viên chức đã cập nhật), theo mẫu thông báo của UBND phường; ban hành xong các trường nhận theo cấp học.
+            Tổng hợp từ các phiếu đã phê duyệt trong kỳ.
           </Text>
         </div>
         <Space wrap>
@@ -82,10 +82,10 @@ function QuanLyThongBao() {
         type="info"
         showIcon
         style={{ marginBottom: 12 }}
-        title={`Kỳ ${tenKy(ky, nam)}: xét đến hết ${formatDate(khoangKy(ky, nam).den)}; Phòng VH-XH thẩm định và trình UBND phường ra thông báo vào tháng ${ky === 'H1' ? 6 : 12}.`}
+        title={`Kỳ ${tenKy(ky, nam)}: xét đến hết ${formatDate(khoangKy(ky, nam).den)}.`}
         description={conDangXuLy.length > 0
-          ? `Còn ${conDangXuLy.length} phiếu nâng lương / phụ cấp thâm niên trong kỳ chưa được phê duyệt (${[...new Set(conDangXuLy.map((d) => donVis.find((v) => v.id === d.donViId)?.ten ?? ''))].join(', ')}) - chưa được đưa vào thông báo.`
-          : 'Thông báo đưa vào các phiếu đã được lãnh đạo phê duyệt, tức hồ sơ lương, phụ cấp của viên chức đã cập nhật. Người đã có trong thông báo kỳ trước không bị đưa trùng.'}
+          ? `Còn ${conDangXuLy.length} phiếu chưa phê duyệt (${[...new Set(conDangXuLy.map((d) => donVis.find((v) => v.id === d.donViId)?.ten ?? ''))].join(', ')}).`
+          : undefined}
       />
       <Tabs
         activeKey={loai}
@@ -246,7 +246,7 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
               icon={<RollbackOutlined />}
               onClick={() => modal.confirm({
                 title: 'Chuyển thông báo về bản nháp?',
-                content: 'Các trường sẽ không còn thấy thông báo này cho tới khi ban hành lại. Dùng khi cần sửa sai sót.',
+                content: 'Đơn vị sẽ không thấy thông báo cho tới khi ban hành lại.',
                 okText: 'Chuyển về nháp', okButtonProps: { danger: true },
                 onOk: () => luu('NHAP', { banHanhLuc: undefined, nguoiBanHanh: undefined }),
               })}
@@ -270,7 +270,7 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
         <Button icon={<FileWordOutlined />} onClick={() => taiWordThongBao(ban)}>Thông báo (Word)</Button>
       </Space>
       {!daBanHanh && ungVien.some((u) => !ban.dong.some((d) => d.key === u.key)) && (
-        <Alert type="warning" showIcon style={{ marginBottom: 12 }} title={`Có ${ungVien.filter((u) => !ban.dong.some((d) => d.key === u.key)).length} người mới đủ điều kiện chưa có trong danh sách - bấm "Tổng hợp lại" để đưa vào`} />
+        <Alert type="warning" showIcon style={{ marginBottom: 12 }} title={`Có ${ungVien.filter((u) => !ban.dong.some((d) => d.key === u.key)).length} người mới đủ điều kiện chưa có trong danh sách - bấm "Tổng hợp lại"`} />
       )}
 
       <Card size="small" title="Nội dung thông báo (xem trước)" style={{ marginBottom: 12 }}>

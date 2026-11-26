@@ -379,7 +379,7 @@ export default function RaSoatNgachBacPage() {
         type="info"
         showIcon
         style={{ marginBottom: 12 }}
-        title="Danh sách hồ sơ đang công tác có mã ngạch, bậc, hệ số không khớp danh mục bảng lương. Hệ thống không tự sửa - đơn vị kiểm tra quyết định xếp lương; sai mã ngạch, bậc, hệ số thì lập phiếu đề xuất Điều chỉnh hệ số lương - phụ cấp (đính kèm quyết định) để Phòng VH-XH duyệt. Người nhận lương theo mức tiền chỉ được kiểm tra họ tên và công việc cụ thể."
+        title="Hồ sơ có mã ngạch, bậc, hệ số không khớp bảng lương. Đối chiếu quyết định; nếu sai, lập phiếu Điều chỉnh hệ số lương - phụ cấp."
       />
       <Space wrap style={{ marginBottom: 12 }}>
         {(Object.keys(LECH_LABELS) as LoaiLech[]).filter((l) => demTheoLoi[l]).map((l) => (

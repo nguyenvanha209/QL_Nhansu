@@ -125,7 +125,7 @@ export default function ChuyenCongTacPage() {
           <Alert
             type="info" showIcon style={{ margin: '10px 0' }}
             title="Hồ sơ giữ nguyên ngạch, bậc, hệ số lương và các khoản phụ cấp"
-            description="Sau khi duyệt, hồ sơ chuyển sang đơn vị đến ở trạng thái “Chuyển đến”. Đơn vị đến sẽ phân công vị trí việc làm và ghi nhận ngày về đơn vị."
+            description="Hồ sơ chuyển sang đơn vị đến ở trạng thái “Chuyển đến”."
           />
           <Input.TextArea rows={2} placeholder="Ý kiến của Quản trị (không bắt buộc)" onChange={(e) => { ghiChu = e.target.value }} />
         </div>
@@ -277,8 +277,7 @@ export default function ChuyenCongTacPage() {
 
       <Alert
         type="info" showIcon style={{ marginBottom: 16 }}
-        title="Quy trình: Đơn vị đi lập đề nghị → Quản trị duyệt → Hồ sơ tự chuyển sang đơn vị đến → Đơn vị đến phân công vị trí và ghi ngày về đơn vị"
-        description="Ngạch, bậc, hệ số lương và các khoản phụ cấp được giữ nguyên trong suốt quá trình chuyển."
+        title="Đơn vị đi lập đề nghị → Quản trị duyệt → Đơn vị đến phân công vị trí, ghi ngày về đơn vị"
       />
 
       <Table

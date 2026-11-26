@@ -294,7 +294,7 @@ export default function HoSoTruocHanPage() {
                 type={chiTiet.length > toiDa ? 'warning' : 'info'}
                 showIcon
                 title={`Danh sách trả lương: ${dsTraLuong.length} người → tối đa ${toiDa} suất; đang đề nghị ${chiTiet.length} người`}
-                description="Tỷ lệ không quá 10% số người trong danh sách trả lương (người xếp lương theo hệ số); cứ 10 người 1 suất, phần dư dưới 10 người không tính."
+                description="Không quá 10% danh sách trả lương; phần dư dưới 10 người không tính."
               />
               <Input.TextArea rows={2} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} placeholder="Ghi chú hồ sơ (nếu có)" />
             </Space>
@@ -323,7 +323,7 @@ export default function HoSoTruocHanPage() {
           )}
         >
           <Text type="secondary" style={{ display: 'block', marginBottom: 8, fontSize: 13 }}>
-            Chưa ở bậc cuối, đến hạn nâng bậc thường xuyên sau {formatDate(tu)} đến hết {formatDate(den)} (tính đến 31/12/{nam} còn thiếu từ 12 tháng trở xuống).
+            Chưa ở bậc cuối, đến hạn nâng bậc thường xuyên từ sau {formatDate(tu)} đến hết {formatDate(den)}.
           </Text>
           {goiY.length ? (
             <Space wrap>

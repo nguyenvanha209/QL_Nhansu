@@ -1,30 +1,34 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Card, Tabs, Table, Button, Select, Space, Typography, Statistic, Row, Col, App } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { exportToExcel } from '@/utils/exportExcel'
 import { exportToPdf } from '@/utils/exportPdf'
 import { formatDate } from '@/utils/helpers'
-import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_OPTIONS, isDangCongTac, nhanLuongTheoTien } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, loaiLaoDongTheoKhoi, isDangCongTac, nhanLuongTheoTien } from '@/types/vienChuc'
 
 const { Title } = Typography
 
 export default function BaoCaoPage() {
   const { message } = App.useApp()
   const { scopeDonViId, laQuanTri, isVHXH, isLanhDao } = useAuth()
+  const { trongPhamVi, khoi } = usePhamVi()
   // Báo cáo định mức theo cấp học: Quản trị, Phòng VHXH và Lãnh đạo (xem toàn phường)
   const [params] = useSearchParams()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (filterDonVi && !trongPhamVi(filterDonVi)) setFilterDonVi(undefined) }, [filterDonVi, trongPhamVi])
   const [filterLoai, setFilterLoai] = useState<string | undefined>()
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && trongPhamVi(v.donViId)), [allVienChucs, trongPhamVi])
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort((a, b) => {
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active && trongPhamVi(d.id)).sort((a, b) => {
     const oa = ({ MAM_NON: 1, TIEU_HOC: 2, THCS: 3, OTHER: 4 } as Record<string, number>)[a.loai] ?? 4
     const ob = ({ MAM_NON: 1, TIEU_HOC: 2, THCS: 3, OTHER: 4 } as Record<string, number>)[b.loai] ?? 4
     if (oa !== ob) return oa - ob
@@ -112,7 +116,7 @@ export default function BaoCaoPage() {
         {!scopeDonViId && (
           <Select placeholder="Lọc theo đơn vị" style={{ width: 220 }} value={filterDonVi} onChange={setFilterDonVi} allowClear options={donVis.map((d) => ({ value: d.id, label: d.ten }))} />
         )}
-        <Select placeholder="Loại hình lao động" style={{ width: 220 }} value={filterLoai} onChange={setFilterLoai} allowClear options={LOAI_LAO_DONG_OPTIONS} />
+        <Select placeholder="Loại hình lao động" style={{ width: 220 }} value={filterLoai} onChange={setFilterLoai} allowClear options={loaiLaoDongTheoKhoi(khoi ?? undefined).map((k) => ({ value: k, label: LOAI_LAO_DONG_LABELS[k] }))} />
       </Space>
 
       <Tabs defaultActiveKey={params.get('tab') ?? undefined} items={[

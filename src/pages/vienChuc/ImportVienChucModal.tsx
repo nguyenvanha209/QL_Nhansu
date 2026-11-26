@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { lamTronExcel } from '@/utils/excelA4'
 import {
   Modal, Steps, Upload, Button, Table, Checkbox, Tag, Space, Typography,
   Alert, Badge, Empty, App,
@@ -214,12 +215,16 @@ function readLuong(
  *   Nền tính ưu đãi & thâm niên = lương chính + PC vượt khung + PC chức vụ
  */
 function tinhLuong(s: LuongSnapshot, lcs: number) {
-  const luongChinh = (s.heSo ?? 0) * lcs
-  const pcVK = luongChinh * (s.vk / 100)
+  // Hệ số từng khoản làm tròn 3 chữ số (quy ước chung) rồi mới nhân mức lương cơ sở
+  const r3 = (n: number) => lamTronExcel(n, 3)
+  const heSo = s.heSo ?? 0
+  const hsVK = r3(heSo * s.vk / 100)
+  const hsNen = heSo + hsVK + s.cv
+  const luongChinh = heSo * lcs
+  const pcVK = hsVK * lcs
   const pcCV = s.cv * lcs
-  const nen = luongChinh + pcVK + pcCV
-  const pcUD = nen * (s.ud / 100)
-  const pcTNN = nen * (s.tnn / 100)
+  const pcUD = r3(hsNen * s.ud / 100) * lcs
+  const pcTNN = r3(hsNen * s.tnn / 100) * lcs
   const pcTN = s.tn * lcs
   const tongPC = pcVK + pcCV + pcUD + pcTNN + pcTN
   return { luongChinh, tongPC, tongTN: luongChinh + tongPC }

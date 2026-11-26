@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Alert, Button, Col, Row, Segmented, Select, Space, Statistic, Table, Tag, Typography } from 'antd'
 import { FileExcelOutlined, TeamOutlined, WarningOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { CHUC_VU_LABELS, LOAI_LAO_DONG_LABELS, isDangCongTac } from '@/types/vienChuc'
 import type { VienChuc } from '@/types/vienChuc'
@@ -32,13 +33,16 @@ type Dong = VienChuc & {
 export default function DaNghiHuu() {
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission } = useAuth()
+  const { trongPhamVi } = usePhamVi()
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const [che, setChe] = useState<'DA_NGHI' | 'QUA_TUOI'>('DA_NGHI')
   const [nam, setNam] = useState<number | undefined>()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (filterDonVi && !trongPhamVi(filterDonVi)) setFilterDonVi(undefined) }, [filterDonVi, trongPhamVi])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active && trongPhamVi(d.id)).sort(soSanhTruong), [allDonVis, trongPhamVi])
 
   const { daNghi, quaTuoi } = useMemo(() => {
     const homNay = toDateStr(new Date())
@@ -58,14 +62,14 @@ export default function DaNghiHuu() {
         namNghiHuu: Number(ngayNghiHuu.slice(0, 4)) || 0,
       }
     }
-    // Chỉ viên chức biên chế (viên chức, tập sự)
-    const trongPhamVi = allVienChucs.filter((v) => v.active && laBienChe(v) && (!scopeDonViId || v.donViId === scopeDonViId))
-    const daNghi = trongPhamVi.filter((v) => v.trangThai === 'NGHI_HUU').map(lam)
+    // Chỉ viên chức biên chế (công chức, viên chức, tập sự)
+    const dsTrongPhamVi = allVienChucs.filter((v) => v.active && laBienChe(v) && trongPhamVi(v.donViId))
+    const daNghi = dsTrongPhamVi.filter((v) => v.trangThai === 'NGHI_HUU').map(lam)
     // Đã qua thời điểm nghỉ hưu nhưng hồ sơ vẫn đang công tác
-    const quaTuoi = trongPhamVi.filter((v) => isDangCongTac(v) && v.ngaySinh).map(lam).filter((r) => r.ngayNghiHuu && r.ngayNghiHuu <= homNay)
+    const quaTuoi = dsTrongPhamVi.filter((v) => isDangCongTac(v) && v.ngaySinh).map(lam).filter((r) => r.ngayNghiHuu && r.ngayNghiHuu <= homNay)
     const sx = (a: Dong, b: Dong) => b.ngayNghiHuu.localeCompare(a.ngayNghiHuu) || a.donViTen.localeCompare(b.donViTen, 'vi')
     return { daNghi: daNghi.sort(sx), quaTuoi: quaTuoi.sort(sx) }
-  }, [allVienChucs, allDonVis, chucDanhs, scopeDonViId])
+  }, [allVienChucs, allDonVis, chucDanhs, trongPhamVi])
 
   const cacNam = useMemo(() => [...new Set(daNghi.map((r) => r.namNghiHuu).filter(Boolean))].sort((a, b) => b - a), [daNghi])
   const namNay = new Date().getFullYear()

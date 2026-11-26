@@ -12,6 +12,7 @@ import { useDeXuatStore } from '@/store/deXuatStore'
 import { useChuyenCongTacStore } from '@/store/chuyenCongTacStore'
 import { useNhatKyStore } from '@/store/nhatKyStore'
 import { useThongBaoStore } from '@/store/thongBaoStore'
+import { useTruyLinhStore } from '@/store/truyLinhStore'
 
 // Không đồng bộ useAuthStore: phiên đăng nhập là của riêng từng máy.
 const STORES = [
@@ -23,6 +24,7 @@ const STORES = [
   useChuyenCongTacStore,
   useNhatKyStore,
   useThongBaoStore,
+  useTruyLinhStore,
 ]
 
 // Sau khi tầng đồng bộ hợp nhất dữ liệu, store tương ứng phải nạp lại để bộ nhớ
@@ -37,12 +39,17 @@ const KHO_THEO_KHOA: Record<string, { persist: { rehydrate: () => void | Promise
   'ql-chuyen-cong-tac': useChuyenCongTacStore,
   'ql-nhat-ky': useNhatKyStore,
   'ql-thong-bao': useThongBaoStore,
+  'ql-truy-linh': useTruyLinhStore,
 }
 
 // Khai báo chia kho theo đơn vị trường.
 // Hồ sơ viên chức có sẵn donViId. Hệ số lương, phụ cấp, lịch sử biến động thì
 // gắn với viên chức, phải tra ngược qua vienChucId để biết thuộc trường nào.
+// Mỗi đơn vị một mảnh còn là căn cứ chặn đọc chéo tại máy chủ (tools/sql/09): tài khoản đơn vị chỉ đọc, ghi được
+// mảnh của đơn vị mình (và mảnh chung _goc). Phiếu đề xuất có donViId nên chia cùng cách.
 dangKyChiaKho('ql-vien-chuc', (bg) => String(bg.donViId ?? KHOA_GOC))
+dangKyChiaKho('ql-de-xuat', (bg) => String(bg.donViId ?? KHOA_GOC))
+dangKyChiaKho('ql-truy-linh', (bg) => String(bg.donViId ?? KHOA_GOC))
 dangKyChiaKho('ql-luong', (bg) => {
   const vcId = bg.vienChucId
   if (typeof vcId !== 'string') return KHOA_GOC
@@ -155,6 +162,8 @@ export async function syncFromSupabase(): Promise<SyncResult> {
     }
     console.info(`[Supabase] Mở trang: tải ${tai.length} ô, dùng lại bản trên máy ${dungLai.size} kho`)
 
+    const khoaMayChu = new Set(dsPhienBan.map((r) => r.key as string))
+
     // Khoá ghi trong lúc rehydrate, nếu không việc nạp lại state có thể kích
     // hoạt lệnh ghi ngược lên máy chủ ngay giữa chừng.
     datCoDangDongBo(true)
@@ -189,7 +198,7 @@ export async function syncFromSupabase(): Promise<SyncResult> {
           ghiNhanBanGoc(ten, gop.state, true)
           // Mảnh đã khớp máy chủ → lần ghi sau chỉ ghi mảnh đổi, không ghi lại cả 12 mảnh
           // (ghi thừa làm mọi máy khác phải tải lại toàn bộ)
-          ghiNhanManhDaCo(ten)
+          ghiNhanManhDaCo(ten, khoaMayChu)
         }
       }
 
@@ -202,7 +211,7 @@ export async function syncFromSupabase(): Promise<SyncResult> {
       }
       for (const [ten, khoi] of dungLai) {
         ghiNhanBanGoc(ten, khoi.state, true)
-        if (laKhoChia(ten)) ghiNhanManhDaCo(ten)
+        if (laKhoChia(ten)) ghiNhanManhDaCo(ten, khoaMayChu)
       }
 
       await Promise.all(STORES.map((s) => s.persist.rehydrate()))

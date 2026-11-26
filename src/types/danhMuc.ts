@@ -1,4 +1,12 @@
-export type NhomChucDanh = 'GIAO_VIEN' | 'NHAN_VIEN' | 'QUAN_LY'
+import type { KhoiDonVi } from './donVi'
+
+export type NhomChucDanh = 'GIAO_VIEN' | 'NHAN_VIEN' | 'QUAN_LY' | 'CONG_CHUC'
+
+/**
+ * Khối áp dụng của một mục danh mục (chức danh, chức vụ, VTVL, loại phụ cấp). Bỏ trống = tự suy theo mã
+ * (utils/khoiDanhMuc.ts). Mục không thuộc khối của đơn vị thì không hiện ở đơn vị đó; Phòng VHXH, quản trị thấy hết.
+ */
+export type KhoiApDung = KhoiDonVi[]
 export type LoaiViTri = 'QUAN_LY' | 'CHUYEN_MON' | 'HO_TRO'
 export type CongThucPhuCap = 'PHAN_TRAM_LUONG_CHINH' | 'PHAN_TRAM_LUONG_CO_SO' | 'TIEN_MAT' | 'HE_SO'
 
@@ -10,6 +18,7 @@ export interface ChucDanhNgheNghiep {
   tenCu?: string
   nhom: NhomChucDanh
   bangLuong: string
+  khoi?: KhoiApDung
   active: boolean
 }
 
@@ -46,6 +55,7 @@ export interface LoaiPhuCap {
   loaiCongThuc: CongThucPhuCap
   giaTri: number
   moTa?: string
+  khoi?: KhoiApDung
   active: boolean
 }
 
@@ -55,6 +65,7 @@ export interface VtvlDanhMuc {
   ma: string
   ten: string
   moTa?: string
+  khoi?: KhoiApDung
   active: boolean
 }
 
@@ -66,6 +77,7 @@ export interface ChucVuDanhMuc {
   apDung?: string
   canCu?: string
   moTa?: string
+  khoi?: KhoiApDung
   active: boolean
 }
 
@@ -73,6 +85,7 @@ export const NHOM_CHUC_DANH_LABELS: Record<NhomChucDanh, string> = {
   GIAO_VIEN: 'Giáo viên',
   NHAN_VIEN: 'Nhân viên hỗ trợ',
   QUAN_LY: 'Quản lý',
+  CONG_CHUC: 'Công chức (ngạch hành chính)',
 }
 
 export const LOAI_VI_TRI_LABELS: Record<LoaiViTri, string> = {

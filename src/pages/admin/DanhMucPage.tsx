@@ -7,7 +7,11 @@ import {
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { soSanhMaChucDanh } from '@/utils/helpers'
 import { NHOM_CHUC_DANH_LABELS, LOAI_VI_TRI_LABELS, CONG_THUC_LABELS } from '@/types/danhMuc'
-import { LOAI_DON_VI_LABELS } from '@/types/donVi'
+import { LOAI_DON_VI_LABELS, KHOI_DON_VI, khoiCuaLoai } from '@/types/donVi'
+import type { KhoiDonVi } from '@/types/donVi'
+import { usePhamVi } from '@/hooks/usePhamVi'
+import { apDungChoKhoi, khoiChucDanh, khoiChucVu, khoiVtvl, khoiPhuCap, TEN_KHOI_NGAN } from '@/utils/khoiDanhMuc'
+import { BANG_LUONG_CHUAN } from '@/utils/bangLuongChuan'
 import { hangTruongTheoNamHoc, moTaHang, HANG_TRUONG_LABELS } from '@/utils/hangTruong'
 import { namHocHienHanh, soSanhTruong } from '@/utils/dinhMuc'
 import { sapXepLoaiPhuCap, PCUD_MUC_CU } from '@/utils/phuCapThuTu'
@@ -15,6 +19,28 @@ import { TRANG_THAI_CONG_TAC_LABELS } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 
 const { Title, Text } = Typography
+
+// ── Khối áp dụng của mục danh mục ──
+// Bỏ trống = tự suy theo mã (VD ngạch giáo viên → Trường học; ngạch công chức → Cơ quan). Danh mục chỉ hiện ở đơn vị
+// thuộc khối áp dụng; Phòng VHXH, quản trị thấy hết. Ô chọn khối ở đầu trang lọc luôn các bảng danh mục này.
+const MAU_KHOI: Record<KhoiDonVi, string> = { TRUONG_HOC: 'blue', CO_QUAN: 'purple', DVSN: 'cyan' }
+function cotKhoi<T>(tinh: (r: T) => KhoiDonVi[], tuChon: (r: T) => boolean) {
+  return {
+    title: 'Khối áp dụng', key: 'khoi', width: 170,
+    render: (_: unknown, r: T) => (
+      <Space size={2} wrap>
+        {tinh(r).map((k) => <Tag key={k} color={MAU_KHOI[k]} style={{ marginInlineEnd: 0 }}>{TEN_KHOI_NGAN[k]}</Tag>)}
+        {!tuChon(r) && <Text type="secondary" style={{ fontSize: 11 }}>(tự suy)</Text>}
+      </Space>
+    ),
+  }
+}
+const oKhoi = (
+  <Form.Item name="khoi" label="Khối áp dụng" tooltip="Bỏ trống để phần mềm tự xác định theo mã. Mục chỉ hiện ở đơn vị thuộc khối đã chọn; Phòng VHXH, quản trị thấy tất cả.">
+    <Select mode="multiple" allowClear placeholder="Tự xác định theo mã" options={KHOI_DON_VI.map((k) => ({ value: k.key, label: k.ten }))} />
+  </Form.Item>
+)
+const coKhoiRieng = (r: { khoi?: KhoiDonVi[] }) => !!r.khoi?.length
 
 function TabLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
   return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{icon}{text}</span>
@@ -32,12 +58,12 @@ export default function DanhMucPage() {
         style={{ minHeight: 520 }}
         tabBarStyle={isWide ? { width: 190, paddingTop: 12 } : undefined}
         items={[
-          { key: '1', label: <TabLabel icon={<BankOutlined />} text="Đơn vị trường" />, children: <TabPane title="Đơn vị trường" desc="Danh sách trường học trực thuộc. Số lớp, hạng trường và thông tin chung (địa chỉ, điện thoại, email) do trường khai ở trang Thông tin trường (nút trên đầu trang), theo từng năm học."><DonViTab /></TabPane> },
-          { key: '2', label: <TabLabel icon={<IdcardOutlined />} text="Chức danh NN" />, children: <TabPane title="Chức danh nghề nghiệp" desc="Mã ngạch/hạng chức danh nghề nghiệp theo quy định, dùng khi xếp lương viên chức."><ChucDanhTab /></TabPane> },
+          { key: '1', label: <TabLabel icon={<BankOutlined />} text="Đơn vị" />, children: <TabPane title="Đơn vị" desc="Các đơn vị thuộc UBND phường: trường học, phòng chuyên môn, đơn vị sự nghiệp. Với trường học: số lớp, hạng trường và thông tin chung (địa chỉ, điện thoại, email) do trường khai ở trang Thông tin trường (nút trên đầu trang), theo từng năm học."><DonViTab /></TabPane> },
+          { key: '2', label: <TabLabel icon={<IdcardOutlined />} text="Chức danh NN" />, children: <TabPane title="Chức danh nghề nghiệp" desc="Mã ngạch công chức, chức danh nghề nghiệp viên chức theo quy định, dùng khi xếp lương. Cột Khối áp dụng cho biết mục hiện ở trường, cơ quan hay đơn vị sự nghiệp."><ChucDanhTab /></TabPane> },
           { key: '3', label: <TabLabel icon={<ProfileOutlined />} text="Loại phụ cấp" />, children: <TabPane title="Loại phụ cấp" desc="Các loại phụ cấp và công thức tính (% lương chính, % lương cơ sở, tiền mặt, hệ số)."><PhuCapTab /></TabPane> },
           { key: '4', label: <TabLabel icon={<DollarOutlined />} text="Mức lương cơ sở" />, children: <TabPane title="Mức lương cơ sở" desc="Mức lương cơ sở theo từng thời kỳ, lưu để tra cứu và tham chiếu văn bản."><LuongCoSoTab /></TabPane> },
-          { key: '5', label: <TabLabel icon={<SolutionOutlined />} text="Chức vụ" />, children: <TabPane title="Chức vụ" desc="Chức vụ lãnh đạo, quản lý trong nhà trường. Admin có thể thêm/sửa/xóa để tùy biến."><ChucVuTab /></TabPane> },
-          { key: '6', label: <TabLabel icon={<ApartmentOutlined />} text="VTVL" />, children: <TabPane title="Vị trí việc làm (VTVL)" desc="Phân loại vị trí việc làm của viên chức. Admin có thể thêm/sửa/xóa để tùy biến."><VtvlTab /></TabPane> },
+          { key: '5', label: <TabLabel icon={<SolutionOutlined />} text="Chức vụ" />, children: <TabPane title="Chức vụ" desc="Chức vụ lãnh đạo, quản lý ở trường học, phòng chuyên môn, đơn vị sự nghiệp. Admin có thể thêm/sửa/xóa để tùy biến."><ChucVuTab /></TabPane> },
+          { key: '6', label: <TabLabel icon={<ApartmentOutlined />} text="VTVL" />, children: <TabPane title="Vị trí việc làm (VTVL)" desc="Phân loại vị trí việc làm của công chức, viên chức. Admin có thể thêm/sửa/xóa để tùy biến."><VtvlTab /></TabPane> },
           { key: '7', label: <TabLabel icon={<FlagOutlined />} text="Trạng thái" />, children: <TabPane title="Trạng thái công tác" desc="Vòng đời công tác của viên chức, ảnh hưởng tới số liệu tổng hợp toàn hệ thống."><TrangThaiTab /></TabPane> },
         ]}
       />
@@ -56,6 +82,7 @@ function TabPane({ title, desc, children }: { title: string; desc: string; child
 }
 
 function DonViTab() {
+  const { khoi: khoiXem } = usePhamVi()
   const { message } = App.useApp()
   const { donVis, addDonVi, updateDonVi, quyMoTruongs } = useDanhMucStore()
   const namHoc = namHocHienHanh()
@@ -72,13 +99,13 @@ function DonViTab() {
 
   const cols = [
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 80 },
-    { title: 'Tên trường', dataIndex: 'ten', key: 'ten' },
-    { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 90, render: (v: string) => LOAI_DON_VI_LABELS[v as keyof typeof LOAI_DON_VI_LABELS] ?? v },
+    { title: 'Tên đơn vị', dataIndex: 'ten', key: 'ten' },
+    { title: 'Loại', dataIndex: 'loai', key: 'loai', width: 130, render: (v: string) => LOAI_DON_VI_LABELS[v as keyof typeof LOAI_DON_VI_LABELS] ?? v },
     {
       title: `Hạng trường (năm học ${namHoc})`, key: 'hang', width: 120, align: 'center' as const,
       render: (_: any, r: any) => {
         const h = hangTruongTheoNamHoc(r, quyMoTruongs, namHoc)
-        if (!h) return r.loai === 'OTHER' ? '-' : <Text type="secondary" style={{ fontSize: 13 }}>Chưa khai quy mô</Text>
+        if (!h) return r.loai === 'OTHER' || khoiCuaLoai(r.loai) !== 'TRUONG_HOC' ? '-' : <Text type="secondary" style={{ fontSize: 13 }}>Chưa khai quy mô</Text>
         return <Tooltip title={moTaHang(h)}><Tag color={h.hang === 1 ? 'gold' : h.hang === 2 ? 'blue' : 'default'}>{HANG_TRUONG_LABELS[h.hang]}</Tag></Tooltip>
       },
     },
@@ -94,12 +121,12 @@ function DonViTab() {
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm đơn vị</Button>
-      <Table scroll={{ x: 'max-content' }} dataSource={[...donVis].sort(soSanhTruong)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={donVis.filter((d) => !khoiXem || khoiCuaLoai(d.loai) === khoiXem).sort(soSanhTruong)} columns={cols} rowKey="id" size="small" pagination={false} />
 
       <Modal open={open} title={editing ? 'Sửa đơn vị' : 'Thêm đơn vị'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="ten" label="Tên trường" rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="ten" label="Tên đơn vị" rules={[{ required: true }]}><Input placeholder="VD: Phòng Kinh tế, Hạ tầng và Đô thị" /></Form.Item>
           <Form.Item name="loai" label="Loại" rules={[{ required: true }]}>
             <Select options={Object.entries(LOAI_DON_VI_LABELS).map(([k, v]) => ({ value: k, label: v }))} />
           </Form.Item>
@@ -110,6 +137,7 @@ function DonViTab() {
 }
 
 function ChucDanhTab() {
+  const { khoi: khoiXem } = usePhamVi()
   const { message } = App.useApp()
   const { chucDanhs, addChucDanh, updateChucDanh } = useDanhMucStore()
   const [open, setOpen] = useState(false)
@@ -127,6 +155,7 @@ function ChucDanhTab() {
     { title: 'Tên chức danh', dataIndex: 'ten', key: 'ten' },
     { title: 'Nhóm', dataIndex: 'nhom', key: 'nhom', render: (v: string) => NHOM_CHUC_DANH_LABELS[v as keyof typeof NHOM_CHUC_DANH_LABELS] ?? v },
     { title: 'Mã cũ', dataIndex: 'maCu', key: 'maCu' },
+    cotKhoi(khoiChucDanh, coKhoiRieng),
     { title: '', key: 'act', render: (_: any, r: any) => (
       <Space size="small">
         <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} />
@@ -137,7 +166,7 @@ function ChucDanhTab() {
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức danh</Button>
-      <Table scroll={{ x: 'max-content' }} dataSource={chucDanhs.filter((c) => c.active).sort(soSanhMaChucDanh)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={chucDanhs.filter((c) => c.active && apDungChoKhoi(khoiChucDanh(c), khoiXem)).sort(soSanhMaChucDanh)} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa chức danh' : 'Thêm chức danh'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
@@ -147,7 +176,8 @@ function ChucDanhTab() {
           </Form.Item>
           <Form.Item name="maCu" label="Mã cũ (hạng I/II/III)"><Input /></Form.Item>
           <Form.Item name="tenCu" label="Tên cũ"><Input /></Form.Item>
-          <Form.Item name="bangLuong" label="Bảng lương" rules={[{ required: true }]}><Select options={['A0', 'A1', 'A2.1', 'A2.2', 'B'].map((v) => ({ value: v, label: v }))} /></Form.Item>
+          <Form.Item name="bangLuong" label="Bảng lương" rules={[{ required: true }]}><Select options={Object.keys(BANG_LUONG_CHUAN).map((v) => ({ value: v, label: v }))} /></Form.Item>
+          {oKhoi}
         </Form>
       </Modal>
     </>
@@ -155,6 +185,7 @@ function ChucDanhTab() {
 }
 
 function PhuCapTab() {
+  const { khoi: khoiXem } = usePhamVi()
   const { message } = App.useApp()
   const { loaiPhuCaps, addLoaiPhuCap, updateLoaiPhuCap } = useDanhMucStore()
   const [open, setOpen] = useState(false)
@@ -182,13 +213,14 @@ function PhuCapTab() {
       },
     },
     { title: 'Đối tượng / Căn cứ', dataIndex: 'moTa', key: 'moTa', render: (v?: string) => v ?? '-' },
+    cotKhoi(khoiPhuCap, coKhoiRieng),
     { title: '', key: 'act', width: 60, render: (_: any, r: any) => <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue(r); setOpen(true) }} /> },
   ]
 
   return (
     <>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm loại phụ cấp</Button>
-      <Table scroll={{ x: 1300 }} dataSource={sapXepLoaiPhuCap(loaiPhuCaps.filter((p) => p.active))} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 1300 }} dataSource={sapXepLoaiPhuCap(loaiPhuCaps.filter((p) => p.active && apDungChoKhoi(khoiPhuCap(p), khoiXem)))} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa phụ cấp' : 'Thêm phụ cấp'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input /></Form.Item>
@@ -203,6 +235,7 @@ function PhuCapTab() {
             extra="Loại Hệ số nhập giá trị hệ số (VD 0,33), không nhập %. Để 0 nếu mỗi người một mức."
           ><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
           <Form.Item name="moTa" label="Mô tả"><Input.TextArea rows={2} /></Form.Item>
+          {oKhoi}
         </Form>
       </Modal>
     </>
@@ -246,6 +279,7 @@ function LuongCoSoTab() {
 }
 
 function ChucVuTab() {
+  const { khoi: khoiXem } = usePhamVi()
   const { message } = App.useApp()
   const { chucVus, addChucVu, updateChucVu } = useDanhMucStore()
   const [open, setOpen] = useState(false)
@@ -264,6 +298,7 @@ function ChucVuTab() {
     { title: 'Áp dụng cho', dataIndex: 'apDung', key: 'apDung', width: 300, render: (v: string) => v ?? '-' },
     { title: 'Căn cứ pháp lý', dataIndex: 'canCu', key: 'canCu', ellipsis: true, render: (v: string) => v ?? '-' },
     { title: 'Ghi chú', dataIndex: 'moTa', key: 'moTa', ellipsis: true, render: (v: string) => v ?? '-' },
+    cotKhoi(khoiChucVu, coKhoiRieng),
     {
       title: '', key: 'act', width: 80,
       render: (_: any, r: any) => (
@@ -286,16 +321,17 @@ function ChucVuTab() {
         </Descriptions.Item>
       </Descriptions>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm chức vụ</Button>
-      <Table dataSource={chucVus.filter((c) => c.active)} columns={cols} rowKey="id" size="small" pagination={false} scroll={{ x: 1100 }} />
+      <Table dataSource={chucVus.filter((c) => c.active && apDungChoKhoi(khoiChucVu(c), khoiXem))} columns={cols} rowKey="id" size="small" pagination={false} scroll={{ x: 1100 }} />
       <Modal open={open} title={editing ? 'Sửa chức vụ' : 'Thêm chức vụ'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
-          <Form.Item name="ma" label="Mã" rules={[{ required: true }]} tooltip="Dùng 4 mã chuẩn để hệ thống tự tính phụ cấp chức vụ: HT, P.HT, TTCM, TPCM">
+          <Form.Item name="ma" label="Mã" rules={[{ required: true }]} tooltip="Mã chuẩn để hệ thống tự tính phụ cấp chức vụ: HT, P.HT, TTCM, TPCM (trường); TRP, P.TRP (Trưởng, Phó phòng chuyên môn); CVP, P.CVP (Chánh, Phó Chánh Văn phòng)">
             <Input placeholder="VD: TO_TRUONG_VP" />
           </Form.Item>
           <Form.Item name="ten" label="Tên chức vụ" rules={[{ required: true }]}><Input placeholder="VD: Tổ trưởng văn phòng" /></Form.Item>
           <Form.Item name="apDung" label="Áp dụng cho"><Input placeholder="VD: Tiểu học, THCS" /></Form.Item>
           <Form.Item name="canCu" label="Căn cứ pháp lý"><Input placeholder="VD: TT 20/2023/TT-BGDĐT" /></Form.Item>
           <Form.Item name="moTa" label="Ghi chú"><Input.TextArea rows={2} /></Form.Item>
+          {oKhoi}
         </Form>
       </Modal>
     </>
@@ -303,6 +339,7 @@ function ChucVuTab() {
 }
 
 function VtvlTab() {
+  const { khoi: khoiXem } = usePhamVi()
   const { message } = App.useApp()
   const { vtvls, addVtvl, updateVtvl } = useDanhMucStore()
   const [open, setOpen] = useState(false)
@@ -319,6 +356,7 @@ function VtvlTab() {
     { title: 'Mã', dataIndex: 'ma', key: 'ma', width: 150 },
     { title: 'VTVL', dataIndex: 'ten', key: 'ten', width: 200 },
     { title: 'Mô tả', dataIndex: 'moTa', key: 'moTa', render: (v: string) => v ?? '-' },
+    cotKhoi(khoiVtvl, coKhoiRieng),
     {
       title: '', key: 'act', width: 80,
       render: (_: any, r: any) => (
@@ -344,12 +382,13 @@ function VtvlTab() {
         </Descriptions.Item>
       </Descriptions>
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={() => { setEditing(null); form.resetFields(); setOpen(true) }}>Thêm VTVL</Button>
-      <Table scroll={{ x: 'max-content' }} dataSource={vtvls.filter((v) => v.active)} columns={cols} rowKey="id" size="small" pagination={false} />
+      <Table scroll={{ x: 'max-content' }} dataSource={vtvls.filter((v) => v.active && apDungChoKhoi(khoiVtvl(v), khoiXem))} columns={cols} rowKey="id" size="small" pagination={false} />
       <Modal open={open} title={editing ? 'Sửa VTVL' : 'Thêm VTVL'} onCancel={() => setOpen(false)} onOk={() => form.submit()} destroyOnHidden>
         <Form form={form} layout="vertical" onFinish={onSave}>
           <Form.Item name="ma" label="Mã" rules={[{ required: true }]}><Input placeholder="VD: NHAN_VIEN_YT" /></Form.Item>
           <Form.Item name="ten" label="Tên VTVL" rules={[{ required: true }]}><Input placeholder="VD: Nhân viên y tế" /></Form.Item>
           <Form.Item name="moTa" label="Mô tả"><Input.TextArea rows={2} /></Form.Item>
+          {oKhoi}
         </Form>
       </Modal>
     </>

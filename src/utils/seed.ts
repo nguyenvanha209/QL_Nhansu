@@ -13,7 +13,8 @@ import { useUserStore } from '@/store/userStore'
 import { useNhatKyStore } from '@/store/nhatKyStore'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { getHangTruong, getPhuCapChucVuHeSo } from '@/utils/hangTruong'
-import { toUpperName } from '@/utils/helpers'
+import { toUpperName, normalize } from '@/utils/helpers'
+import { QUY_DINH_KE_TOAN_CU, QUY_DINH_KE_TOAN_MAC_DINH } from '@/utils/chuyenDoiKeToan'
 import type { ChucVu, VTVL } from '@/types/vienChuc'
 import { IS_BIEN_CHE } from '@/types/vienChuc'
 
@@ -533,6 +534,116 @@ function migrateNhatKySangKhoRieng() {
   lg.setNhatKyThaoTacs([])
 }
 
+
+// ───────────────────────────── Phân hệ công chức (khối Cơ quan UBND phường, ĐVSN) ─────────────────────────────
+// Chỉ THÊM mã còn thiếu, không sửa mục đã có - mã kế toán, văn thư có thể đang dùng cho nhân viên trường.
+// Căn cứ: ngạch công chức chuyên ngành hành chính, kế toán, văn thư (TT 02/2021/TT-BNV, TT 29/2022/TT-BTC...);
+// xếp lương theo bảng 2 NĐ 204/2004. PC chức vụ Trưởng/Phó phòng thuộc UBND cấp xã: 0,25 / 0,15 (địa bàn ngoài
+// Hà Nội, TP HCM) áp dụng từ 10/01/2026 - quản trị sửa được tại Danh mục nếu văn bản thay đổi.
+const NGACH_CONG_CHUC: { ma: string; ten: string; bangLuong: string; chung?: boolean }[] = [
+  { ma: '01.002', ten: 'Chuyên viên chính', bangLuong: 'A2.1' },
+  { ma: '01.003', ten: 'Chuyên viên', bangLuong: 'A1' },
+  { ma: '01.004', ten: 'Cán sự', bangLuong: 'A0' },
+  { ma: '01.005', ten: 'Nhân viên', bangLuong: 'B' },
+  { ma: '06.030', ten: 'Kế toán viên chính', bangLuong: 'A2.1', chung: true },
+  { ma: '06.031', ten: 'Kế toán viên', bangLuong: 'A1', chung: true },
+  { ma: '06.032', ten: 'Kế toán viên trung cấp', bangLuong: 'A0', chung: true },
+  { ma: '02.006', ten: 'Văn thư viên chính', bangLuong: 'A2.1', chung: true },
+  { ma: '02.007', ten: 'Văn thư viên', bangLuong: 'A1', chung: true },
+  { ma: '02.008', ten: 'Văn thư viên trung cấp', bangLuong: 'A0', chung: true },
+]
+
+const CHUC_VU_CO_QUAN = [
+  { ma: 'TRP', ten: 'Trưởng phòng', apDung: 'Phòng chuyên môn thuộc UBND phường', canCu: 'NĐ 150/2025/NĐ-CP; PC chức vụ 0,25 từ 10/01/2026', moTa: 'Người đứng đầu phòng chuyên môn', active: true },
+  { ma: 'P.TRP', ten: 'Phó Trưởng phòng', apDung: 'Phòng chuyên môn thuộc UBND phường', canCu: 'NĐ 150/2025/NĐ-CP; PC chức vụ 0,15 từ 10/01/2026', moTa: 'Cấp phó của Trưởng phòng', active: true },
+  { ma: 'CVP', ten: 'Chánh Văn phòng', apDung: 'Văn phòng HĐND và UBND phường', canCu: 'Tương đương Trưởng phòng chuyên môn; PC chức vụ 0,25 từ 10/01/2026', moTa: 'Người đứng đầu Văn phòng HĐND và UBND', active: true },
+  { ma: 'P.CVP', ten: 'Phó Chánh Văn phòng', apDung: 'Văn phòng HĐND và UBND phường', canCu: 'Tương đương Phó Trưởng phòng chuyên môn; PC chức vụ 0,15 từ 10/01/2026', moTa: 'Cấp phó của Chánh Văn phòng', active: true },
+  { ma: 'GD', ten: 'Giám đốc', apDung: 'Trung tâm Phục vụ Hành chính công; Ban Quản lý dự án; Trạm Y tế; Trung tâm Dịch vụ Sự nghiệp công', canCu: 'Theo quyết định thành lập, bổ nhiệm', moTa: 'Người đứng đầu trung tâm, ban, trạm - PC chức vụ nhập theo quyết định', active: true },
+  { ma: 'P.GD', ten: 'Phó Giám đốc', apDung: 'Trung tâm Phục vụ Hành chính công; Ban Quản lý dự án; Trạm Y tế; Trung tâm Dịch vụ Sự nghiệp công', canCu: 'Theo quyết định thành lập, bổ nhiệm', moTa: 'Cấp phó của Giám đốc - PC chức vụ nhập theo quyết định', active: true },
+]
+
+// Đơn vị thuộc UBND phường Gia Viên (không phải trường học) - anh Hạ cung cấp 22/11/2026.
+// Tự thêm khi chưa có đơn vị cùng tên (so không dấu, không phân biệt hoa thường); không sửa đơn vị đã có.
+const DON_VI_PHUONG: { ma: string; ten: string; loai: 'PHONG_CM' | 'DVSN' }[] = [
+  { ma: 'VP', ten: 'Văn phòng HĐND và UBND', loai: 'PHONG_CM' },
+  { ma: 'PVHXH', ten: 'Phòng Văn hóa - Xã hội', loai: 'PHONG_CM' },
+  { ma: 'PKT', ten: 'Phòng Kinh tế', loai: 'PHONG_CM' },
+  { ma: 'PXDMT', ten: 'Phòng Xây dựng và Môi trường', loai: 'PHONG_CM' },
+  { ma: 'TTHCC', ten: 'Trung tâm Phục vụ Hành chính công', loai: 'PHONG_CM' },
+  { ma: 'BQLDA', ten: 'Ban Quản lý dự án đầu tư xây dựng', loai: 'DVSN' },
+  { ma: 'TYT', ten: 'Trạm Y tế', loai: 'DVSN' },
+  { ma: 'TTDVSN', ten: 'Trung tâm Dịch vụ Sự nghiệp công', loai: 'DVSN' },
+]
+
+function ensureDonViPhuong() {
+  const dm = useDanhMucStore.getState()
+  const daCo = new Set(dm.donVis.map((d) => normalize(d.ten)))
+  const them: string[] = []
+  for (const d of DON_VI_PHUONG) {
+    if (daCo.has(normalize(d.ten))) continue
+    dm.addDonVi({ ma: d.ma, ten: d.ten, loai: d.loai, active: true })
+    them.push(d.ten)
+  }
+  if (them.length) logAction('system', 'Hệ thống', 'CREATE', 'DonVi', undefined, `Bổ sung đơn vị thuộc UBND phường: ${them.join('; ')}`)
+}
+
+const VTVL_CO_QUAN = [
+  { ma: 'LANH_DAO_QL', ten: 'Lãnh đạo, quản lý', moTa: 'Trưởng, Phó phòng; Giám đốc, Phó Giám đốc đơn vị sự nghiệp', active: true },
+  { ma: 'CHUYEN_MON_NV', ten: 'Chuyên môn, nghiệp vụ', moTa: 'Công chức, viên chức chuyên môn của phòng, đơn vị sự nghiệp', active: true },
+  { ma: 'HO_TRO_PV', ten: 'Hỗ trợ, phục vụ', moTa: 'Văn thư, thủ quỹ, lái xe, bảo vệ, phục vụ của cơ quan, đơn vị', active: true },
+]
+
+const PC_CONG_VU = {
+  ma: 'PC_CONG_VU', ten: 'PC Công vụ 25%', loaiCongThuc: 'PHAN_TRAM_LUONG_CHINH' as const, giaTri: 25,
+  moTa: 'Công chức, người làm việc trong cơ quan hành chính (NĐ 34/2012/NĐ-CP): 25% mức lương ngạch bậc cộng PC chức vụ lãnh đạo và PC thâm niên vượt khung', active: true,
+}
+
+// Thông tư 159/2026/TT-BTC: thời hạn chuyển đổi vị trí kế toán từ đủ 02 đến 05 năm (trước đây phần mềm mặc định 03 - 05 năm).
+// Chỉ đổi khi thời hạn đang đúng mặc định cũ (chưa ai sửa tay); Phòng VHXH đã đặt mức khác thì giữ nguyên.
+function migrateKeToanTheoTt159() {
+  const dm = useDanhMucStore.getState()
+  const qd = dm.quyDinhKeToan
+  if (!qd || qd.thangToiThieu !== QUY_DINH_KE_TOAN_CU.thangToiThieu || qd.thangToiDa !== QUY_DINH_KE_TOAN_CU.thangToiDa) return
+  dm.setQuyDinhKeToan({ ...qd, thangToiThieu: QUY_DINH_KE_TOAN_MAC_DINH.thangToiThieu, thangToiDa: QUY_DINH_KE_TOAN_MAC_DINH.thangToiDa })
+  logAction('system', 'Hệ thống', 'UPDATE', 'QuyDinhKeToan', undefined,
+    'Thời hạn chuyển đổi vị trí kế toán theo Thông tư 159/2026/TT-BTC: từ đủ 24 tháng đến 60 tháng (trước: 36 - 60 tháng)')
+}
+
+function ensureDanhMucCongChuc() {
+  const dm = useDanhMucStore.getState()
+  // Ngạch công chức kèm bảng bậc chuẩn
+  let bacLuongs = dm.bacLuongs
+  const them: string[] = []
+  for (const n of NGACH_CONG_CHUC) {
+    const daCo = useDanhMucStore.getState().chucDanhs.find((c) => c.ma === n.ma)
+    if (daCo) {
+      // Mã dùng chung (kế toán, văn thư) đang là ngạch của trường → cho dùng thêm ở cơ quan, không đổi nhóm
+      if (n.chung && !daCo.khoi?.length && daCo.nhom !== 'CONG_CHUC') {
+        const theoNhom = daCo.nhom === 'NHAN_VIEN' ? ['TRUONG_HOC', 'DVSN'] : ['TRUONG_HOC']
+        dm.updateChucDanh(daCo.id, { khoi: [...theoNhom, 'CO_QUAN'] as ('TRUONG_HOC' | 'CO_QUAN' | 'DVSN')[] })
+      }
+      continue
+    }
+    const cd = dm.addChucDanh({
+      ma: n.ma, ten: n.ten, nhom: 'CONG_CHUC', bangLuong: n.bangLuong, active: true,
+      ...(n.chung ? { khoi: ['CO_QUAN', 'DVSN'] as ('CO_QUAN' | 'DVSN')[] } : {}),
+    })
+    const chuan = bacLuongTheoBang(cd.id, n.bangLuong)
+    if (chuan) bacLuongs = [...bacLuongs.filter((b) => b.chucDanhId !== cd.id), ...chuan]
+    them.push(`${n.ma} ${n.ten}`)
+  }
+  if (them.length) {
+    useDanhMucStore.getState().setBacLuongs(bacLuongs)
+    logAction('system', 'Hệ thống', 'CREATE', 'ChucDanh', undefined, `Bổ sung ngạch công chức: ${them.join('; ')}`)
+  }
+  const s2 = useDanhMucStore.getState()
+  const cv = new Set(s2.chucVus.map((c) => c.ma))
+  for (const c of CHUC_VU_CO_QUAN) if (!cv.has(c.ma)) s2.addChucVu(c)
+  const vt = new Set(s2.vtvls.map((v) => v.ma))
+  for (const v of VTVL_CO_QUAN) if (!vt.has(v.ma)) s2.addVtvl(v)
+  if (!s2.loaiPhuCaps.some((p) => p.ma === PC_CONG_VU.ma)) s2.addLoaiPhuCap(PC_CONG_VU)
+}
+
 export function initSeedData() {
   ensureRequiredPhuCaps()
   ensureVtvlVaChucVu()
@@ -550,6 +661,8 @@ export function initSeedData() {
   migrateGopBanGhiLuongTrung()
   migrateChiTieuToDonVi()
   migrateNhatKySangKhoRieng()
+  ensureDanhMucCongChuc()
+  migrateKeToanTheoTt159()
 
   const dm = useDanhMucStore.getState()
 
@@ -561,7 +674,8 @@ export function initSeedData() {
   // phải xử lý bằng hàm ensure*/migrate* bổ sung tại chỗ, không xoá rồi tạo lại.
 
   // Chỉ seed khi CHƯA có bất kỳ dữ liệu nào (lần chạy đầu tiên trên máy trống)
-  if (dm.donVis.length > 0 || useVienChucStore.getState().vienChucs.length > 0) return
+  // Đơn vị thuộc UBND phường thêm SAU bước kiểm tra này - thêm trước thì máy trống không bao giờ được tạo dữ liệu mẫu
+  if (dm.donVis.length > 0 || useVienChucStore.getState().vienChucs.length > 0) { ensureDonViPhuong(); return }
 
   const { setDonVis, setChucDanhs, setBacLuongs, setMucLuongCosos, setLoaiPhuCaps, setViTriViecLams } =
     useDanhMucStore.getState()
@@ -864,6 +978,7 @@ export function initSeedData() {
     },
   ])
 
+  ensureDonViPhuong()
 }
 
 function d(s: string) {

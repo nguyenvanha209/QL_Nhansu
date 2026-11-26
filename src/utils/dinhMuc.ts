@@ -20,8 +20,10 @@ export const TEN_CAP: Record<CapHoc, string> = { MAM_NON: 'Mầm non', TIEU_HOC:
 export const THU_TU_CAP: Record<CapHoc, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3 }
 
 /** Sắp xếp trường: mầm non → tiểu học → THCS (đơn vị khác cuối), trong mỗi cấp theo tên A B C */
+// Sau các trường: phòng chuyên môn, đơn vị sự nghiệp, rồi loại khác
+const THU_TU_LOAI: Record<string, number> = { ...THU_TU_CAP, PHONG_CM: 5, DVSN: 6 }
 export const soSanhTruong = (a: { loai: string; ten: string }, b: { loai: string; ten: string }) =>
-  (THU_TU_CAP[a.loai as CapHoc] ?? 9) - (THU_TU_CAP[b.loai as CapHoc] ?? 9) || a.ten.localeCompare(b.ten, 'vi')
+  (THU_TU_LOAI[a.loai] ?? 9) - (THU_TU_LOAI[b.loai] ?? 9) || a.ten.localeCompare(b.ten, 'vi')
 
 /**
  * Thứ tự trường (id → vị trí) theo quy tắc trên - dùng sắp các bảng người / phiếu theo trường.
@@ -385,7 +387,8 @@ export function chiaTheoTyLe(tong: number, trongSo: number[]): number[] {
   return nguyen.map((n) => n / 10)
 }
 
-export const laBienChe = (vc: VienChuc) => vc.loaiLaoDong === 'VIEN_CHUC' || vc.loaiLaoDong === 'TAP_SU'
+/** Biên chế: công chức, viên chức (kể cả tập sự) */
+export const laBienChe = (vc: VienChuc) => vc.loaiLaoDong === 'VIEN_CHUC' || vc.loaiLaoDong === 'TAP_SU' || vc.loaiLaoDong === 'CONG_CHUC'
 
 const VTVL_CHUAN = ['CBQL', 'GIAO_VIEN', 'NHAN_VIEN']
 const laVtvlChuan = (vtvl?: string) => !!vtvl && VTVL_CHUAN.includes(vtvl)

@@ -27,6 +27,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: 'Quản trị hệ thống',
   CB_VH_XH: 'Cán bộ Văn hóa - Xã hội',
   LANH_DAO: 'Lãnh đạo UBND phường',
-  HIEU_TRUONG: 'Hiệu trưởng',
-  CB_TRUONG: 'Cán bộ trường (kế toán)',
+  // Mã vai trò giữ nguyên để không phải đổi dữ liệu tài khoản; nay dùng chung cho mọi đơn vị (trường, phòng, ĐVSN)
+  HIEU_TRUONG: 'Thủ trưởng đơn vị',
+  CB_TRUONG: 'Cán bộ đơn vị (kế toán, tổ chức)',
 }

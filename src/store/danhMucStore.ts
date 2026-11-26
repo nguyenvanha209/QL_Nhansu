@@ -39,6 +39,9 @@ interface DanhMucState {
   mucNangTruocHans: MucNangTruocHan[]
   /** Thời hạn định kỳ chuyển đổi vị trí kế toán (tháng) - sửa được theo văn bản áp dụng */
   quyDinhKeToan: QuyDinhChuyenDoiKeToan
+  /** Họ tên Trưởng phòng Văn hóa - Xã hội - ký xác nhận (TUQ. Chủ tịch UBND phường) trên các danh sách truy lĩnh */
+  truongPhongVhxh: string
+  setTruongPhongVhxh: (v: string) => void
   setQuyDinhKeToan: (v: QuyDinhChuyenDoiKeToan) => void
 
   setDonVis: (v: DonVi[]) => void
@@ -104,6 +107,9 @@ export const useDanhMucStore = create<DanhMucState>()(
       mucNangTruocHans: MUC_NANG_TRUOC_HAN_MAC_DINH,
       quyDinhKeToan: QUY_DINH_KE_TOAN_MAC_DINH,
       setQuyDinhKeToan: (v) => set({ quyDinhKeToan: v }),
+      // Theo mẫu danh sách truy lĩnh 2026 của Phòng VHXH; Phòng VHXH sửa được ở trang Truy lĩnh
+      truongPhongVhxh: 'Phạm Văn Quân',
+      setTruongPhongVhxh: (v) => set({ truongPhongVhxh: v }),
       chucVus: [],
 
       setDonVis: (v) => set({ donVis: v }),

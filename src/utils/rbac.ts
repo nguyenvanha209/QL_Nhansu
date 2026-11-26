@@ -69,10 +69,10 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
 
 export const ROLE_DESC: Record<UserRole, string> = {
   ADMIN: 'Toàn quyền - quản trị hệ thống, tài khoản, danh mục. Không giới hạn phạm vi đơn vị.',
-  CB_VH_XH: 'Cán bộ Phòng VH-XH: xem + sửa hồ sơ, lương, phụ cấp của tất cả trường; thẩm định phiếu đề xuất (bước 3).',
+  CB_VH_XH: 'Cán bộ Phòng VH-XH: xem + sửa hồ sơ, lương, phụ cấp của tất cả đơn vị (trường học, phòng chuyên môn, đơn vị sự nghiệp); thẩm định phiếu đề xuất (bước 3).',
   LANH_DAO: 'Lãnh đạo UBND phường: chỉ xem; phê duyệt cuối phiếu đề xuất (bước 4), không chỉnh sửa dữ liệu.',
-  HIEU_TRUONG: 'Hiệu trưởng: xem + sửa hồ sơ trường mình (bậc lương, hệ số, phụ cấp đã có chỉ qua phiếu); duyệt phiếu đề xuất của trường (bước 2).',
-  CB_TRUONG: 'Kế toán trường: xem + sửa hồ sơ trường mình, khai đủ lương - phụ cấp cho hồ sơ mới, sửa mốc hưởng lương; bậc, hệ số, phụ cấp đã có chỉ đổi qua phiếu; lập phiếu đề xuất (bước 1).',
+  HIEU_TRUONG: 'Thủ trưởng đơn vị (Hiệu trưởng, Trưởng phòng, Giám đốc): xem + sửa hồ sơ đơn vị mình (bậc lương, hệ số, phụ cấp đã có chỉ qua phiếu); duyệt phiếu đề xuất của đơn vị (bước 2). Chỉ thấy danh mục, chức năng của khối đơn vị mình.',
+  CB_TRUONG: 'Cán bộ đơn vị (kế toán trường, người làm tổ chức ở phòng, ĐVSN): xem + sửa hồ sơ đơn vị mình, khai đủ lương - phụ cấp cho hồ sơ mới, sửa mốc hưởng lương; bậc, hệ số, phụ cấp đã có chỉ đổi qua phiếu; lập phiếu đề xuất (bước 1).',
 }
 
 export const khoaQuyen = (resource: string, action: Action) => `${resource}:${action}`

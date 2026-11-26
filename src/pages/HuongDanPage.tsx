@@ -871,12 +871,13 @@ export default function HuongDanPage() {
           <li>Khi có quyết định bổ nhiệm lại, thêm một lần bổ nhiệm mới - hệ thống lấy lần mới nhất làm nhiệm kỳ hiện tại, người đó tự rời danh sách nhắc.</li>
           <li>Phòng VHXH sửa được dữ liệu của mọi trường. Mọi lần thêm, sửa, xoá đều ghi vào lịch sử biến động của hồ sơ và nhật ký thao tác.</li>
         </ul>
-        <Paragraph strong>Kế toán các trường: định kỳ chuyển đổi vị trí công tác</Paragraph>
+        <Paragraph strong>Kế toán: định kỳ chuyển đổi vị trí công tác (Thông tư 159/2026/TT-BTC)</Paragraph>
         <ul>
-          <li>Thẻ <b>Kế toán - chuyển đổi vị trí công tác</b> (cạnh thẻ Hiệu trưởng, Phó Hiệu trưởng) theo dõi định kỳ chuyển đổi vị trí kế toán để phòng ngừa tham nhũng (Điều 24 Luật Phòng, chống tham nhũng; Chương V Nghị định 59/2019/NĐ-CP; Điều 9 Nghị định 184/2026/NĐ-CP).</li>
-          <li>Danh sách gồm nhân viên có <b>Công việc cụ thể = Kế toán</b> ở hồ sơ nhân sự. Kế toán trường nhập <b>mốc bổ nhiệm, phân công kế toán gần nhất</b> (kèm số quyết định) ngay trên bảng rồi bấm Lưu, hoặc nhập ở hồ sơ nhân sự.</li>
+          <li>Thẻ <b>Kế toán - chuyển đổi vị trí công tác</b> (cạnh thẻ Hiệu trưởng, Phó Hiệu trưởng) theo dõi định kỳ chuyển đổi vị trí kế toán để phòng ngừa tham nhũng (Điều 24 Luật Phòng, chống tham nhũng; Chương V Nghị định 59/2019/NĐ-CP sửa đổi bởi NĐ 184/2026/NĐ-CP; <b>Thông tư 159/2026/TT-BTC</b> ngày 28/10/2026 của Bộ Tài chính, hiệu lực từ 15/12/2026, thay Thông tư 27/2024/TT-BTC).</li>
+          <li>Theo Thông tư 159/2026/TT-BTC: <i>Kế toán</i> thuộc danh mục vị trí phải định kỳ chuyển đổi; thời hạn <b>từ đủ 02 năm đến 05 năm</b>, tính từ ngày quyết định điều động, bố trí, phân công có hiệu lực. Đổi vị trí mà bản chất công việc không đổi thì không tính là đã chuyển đổi; thời gian giữ vị trí trước 15/12/2026 được tính liên tục.</li>
+          <li>Danh sách gồm nhân viên có <b>Công việc cụ thể = Kế toán</b> ở hồ sơ nhân sự. Đơn vị nhập <b>mốc quyết định điều động, bố trí, phân công kế toán gần nhất</b> (kèm số quyết định) ngay trên bảng rồi bấm Lưu, hoặc nhập ở hồ sơ nhân sự.</li>
           <li>Phần mềm tính <b>ngày đủ thời hạn tối thiểu</b> và <b>hạn tối đa</b>, nhắc khi sắp đủ (mặc định trước 6 tháng), đã đủ, hoặc quá thời hạn tối đa; số nhắc cộng vào số đỏ của menu Theo dõi bổ nhiệm.</li>
-          <li>Thời hạn tối thiểu, tối đa (mặc định 36 - 60 tháng) do Phòng VHXH hoặc quản trị chỉnh ở khung <b>Thời hạn định kỳ áp dụng</b> theo văn bản đang áp dụng.</li>
+          <li>Thời hạn tối thiểu, tối đa (mặc định 24 - 60 tháng theo Thông tư 159/2026/TT-BTC) do Phòng VHXH hoặc quản trị chỉnh ở khung <b>Thời hạn định kỳ áp dụng</b> theo văn bản đang áp dụng.</li>
           <li>Người nghỉ hưu trước khi đủ thời hạn không cần chuyển đổi. Trường hợp chưa chuyển đổi theo quy định (đang bị kiểm tra, xử lý kỷ luật, điều trị bệnh hiểm nghèo, đi học dài hạn…) do cấp có thẩm quyền xem xét.</li>
         </ul>
         <Paragraph strong>Phòng VHXH: theo dõi và nhắc việc</Paragraph>

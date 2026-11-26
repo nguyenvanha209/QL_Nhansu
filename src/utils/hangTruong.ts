@@ -45,6 +45,19 @@ export function getPhuCapChucVuHeSo(loai: LoaiDonVi, hang: HangTruong, chucVu: C
   return PCCV[loai]?.[hang]?.[chucVu] ?? 0
 }
 
+// PC chức vụ ở phòng chuyên môn thuộc UBND cấp xã - không phụ thuộc hạng: Trưởng phòng (và Chánh Văn phòng HĐND và UBND,
+// tương đương) 0,25; cấp phó 0,15
+// (địa bàn ngoài Hà Nội, TP HCM; áp dụng từ 10/01/2026). Đơn vị sự nghiệp: theo quyết định riêng nên không tự tính.
+const PCCV_KHONG_HANG: Partial<Record<LoaiDonVi, Record<string, number>>> = {
+  PHONG_CM: { TRP: 0.25, 'P.TRP': 0.15, CVP: 0.25, 'P.CVP': 0.15 },
+}
+
+/** Hệ số PC chức vụ của đơn vị không xếp hạng (phòng chuyên môn); undefined khi không có mức chuẩn để tự tính */
+export function heSoPccvKhongHang(loai: LoaiDonVi, chucVu?: string): number | undefined {
+  if (!chucVu) return undefined
+  return PCCV_KHONG_HANG[loai]?.[chucVu]
+}
+
 // ───────────────────────────── Hạng trường theo năm học ─────────────────────────────
 // Số lớp lấy từ quy mô trường khai báo từng năm học (trang Thông tin trường), không còn
 // dùng một con số chung ở Danh mục. Năm học cần xét chưa khai báo thì dùng năm học gần
@@ -69,7 +82,7 @@ export function hangTruongTheoNamHoc(
   quyMos: QuyMoRutGon[],
   namHoc: string,
 ): HangTheoNamHoc | null {
-  if (!donVi || donVi.loai === 'OTHER') return null
+  if (!donVi || donVi.loai === 'OTHER' || donVi.loai === 'PHONG_CM' || donVi.loai === 'DVSN') return null
   const cuaTruong = quyMos
     .filter((q) => q.donViId === donVi.id && tongLopQuyMo(q) > 0)
     .sort((a, b) => a.namHoc.localeCompare(b.namHoc))

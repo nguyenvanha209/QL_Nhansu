@@ -133,10 +133,14 @@ export default function ChuyenDoiKeToanTab() {
     <div>
       <Alert
         type="info" showIcon style={{ marginBottom: 12 }}
-        title="Định kỳ chuyển đổi vị trí công tác của kế toán các trường"
+        title="Định kỳ chuyển đổi vị trí công tác của kế toán"
         description={<>
-          Căn cứ: Điều 24 Luật Phòng, chống tham nhũng; Chương V Nghị định 59/2019/NĐ-CP; Điều 9 Nghị định 184/2026/NĐ-CP (sửa đổi NĐ 59/2019).
-          Kế toán trường nhập <b>mốc bổ nhiệm, phân công kế toán gần nhất</b>; phần mềm tính hạn và nhắc khi sắp đủ, đã đủ hoặc quá thời hạn chuyển đổi.
+          Căn cứ: Điều 24 Luật Phòng, chống tham nhũng; Chương V Nghị định 59/2019/NĐ-CP (sửa đổi bởi NĐ 184/2026/NĐ-CP);
+          <b> Thông tư 159/2026/TT-BTC</b> ngày 28/10/2026 của Bộ Tài chính (hiệu lực từ 15/12/2026, thay Thông tư 27/2024/TT-BTC):
+          vị trí <i>Kế toán</i> thuộc danh mục phải định kỳ chuyển đổi (Phụ lục, mục 2), thời hạn <b>từ đủ 02 năm đến 05 năm</b> (Điều 4 khoản 1).
+          Thời hạn tính từ ngày <b>quyết định điều động, bố trí, phân công có hiệu lực</b>; đổi vị trí mà bản chất công việc không đổi thì không tính là đã chuyển đổi,
+          thời gian giữ vị trí trước 15/12/2026 được tính liên tục (Điều 4 khoản 2, Điều 7).
+          Đơn vị nhập mốc quyết định gần nhất; phần mềm tính hạn và nhắc khi sắp đủ, đã đủ hoặc quá thời hạn.
           Danh sách gồm người có <i>Công việc cụ thể = Kế toán</i> ở hồ sơ nhân sự (mốc cũng nhập được ở hồ sơ).
         </>}
       />
@@ -149,7 +153,7 @@ export default function ChuyenDoiKeToanTab() {
           <Text>Nhắc trước</Text>
           <InputNumber min={0} max={24} value={qd.thangNhacTruoc} disabled={!suaQuyDinh} onChange={(v) => setQd({ ...qd, thangNhacTruoc: v ?? 0 })} addonAfter="tháng" />
           {suaQuyDinh && <Button icon={<SaveOutlined />} disabled={JSON.stringify(qd) === JSON.stringify(quyDinh)} onClick={luuQuyDinh}>Lưu thời hạn</Button>}
-          <Text type="secondary" style={{ fontSize: 13 }}>Đặt theo văn bản đang áp dụng (VD từ đủ 03 đến 05 năm = 36 - 60 tháng); Phòng VHXH, quản trị sửa được.</Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>Mặc định theo Thông tư 159/2026/TT-BTC: từ đủ 02 đến 05 năm = 24 - 60 tháng; Phòng VHXH, quản trị sửa được nếu văn bản thay đổi.</Text>
         </Space>
       </Card>
 

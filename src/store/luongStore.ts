@@ -39,6 +39,15 @@ interface LuongState {
 
 const now = () => new Date().toISOString()
 
+// Quy ước chung: hệ số lương, hệ số phụ cấp dùng tối đa 3 chữ số thập phân (như bảng lương của trường, Excel).
+// Làm tròn ngay khi ghi để mọi đường nhập (biểu mẫu, nhập Excel, phê duyệt phiếu) thống nhất; % và mức tiền
+// (số nguyên) không bị ảnh hưởng.
+const lam3 = (n: number | undefined) => (typeof n === 'number' && Number.isFinite(n) ? Math.round(n * 1000 + Math.sign(n) * 1e-9) / 1000 : n)
+const lamTronHeSo = <T extends Partial<HeSoLuong>>(h: T): T => ({
+  ...h, ...('heSo' in h ? { heSo: lam3(h.heSo) } : {}), ...('heSoBaoLuu' in h ? { heSoBaoLuu: lam3(h.heSoBaoLuu) } : {}),
+})
+const lamTronPhuCap = <T extends Partial<PhuCapVienChuc>>(p: T): T => ('giaTri' in p ? { ...p, giaTri: lam3(p.giaTri) } : p)
+
 export const useLuongStore = create<LuongState>()(
   persist(
     (set, get) => ({
@@ -49,13 +58,13 @@ export const useLuongStore = create<LuongState>()(
 
       setHeSoLuongs: (v) => set({ heSoLuongs: v }),
       addHeSoLuong: (data) => {
-        const item: HeSoLuong = { ...data, id: nanoid(), createdAt: now() }
+        const item: HeSoLuong = { ...lamTronHeSo(data), id: nanoid(), createdAt: now() }
         set((s) => ({ heSoLuongs: [...s.heSoLuongs, item] }))
         return item
       },
       updateHeSoLuong: (id, patch) =>
         set((s) => ({
-          heSoLuongs: s.heSoLuongs.map((h) => (h.id === id ? { ...h, ...patch, updatedAt: now() } : h)),
+          heSoLuongs: s.heSoLuongs.map((h) => (h.id === id ? { ...h, ...lamTronHeSo(patch), updatedAt: now() } : h)),
         })),
       deactivateHeSoLuong: (id) =>
         set((s) => ({
@@ -72,7 +81,7 @@ export const useLuongStore = create<LuongState>()(
       // Mỗi người chỉ một bản đang hưởng cho mỗi loại phụ cấp: ghi bản mới thì đóng bản cũ cùng loại.
       // Thiếu quy tắc này, lưu biểu mẫu trên máy chưa kịp nhận bản mới từ máy chủ đã sinh bản trùng.
       addPhuCap: (data) => {
-        const item: PhuCapVienChuc = { ...data, id: nanoid(), createdAt: now() }
+        const item: PhuCapVienChuc = { ...lamTronPhuCap(data), id: nanoid(), createdAt: now() }
         const loais = useDanhMucStore.getState().loaiPhuCaps
         const ho = hoPhuCap(item.loaiPhuCapId, loais)
         const t = now()
@@ -90,7 +99,7 @@ export const useLuongStore = create<LuongState>()(
       },
       updatePhuCap: (id, patch) =>
         set((s) => ({
-          phuCapVienChucs: s.phuCapVienChucs.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: now() } : p)),
+          phuCapVienChucs: s.phuCapVienChucs.map((p) => (p.id === id ? { ...p, ...lamTronPhuCap(patch), updatedAt: now() } : p)),
         })),
       deactivatePhuCap: (id) =>
         set((s) => ({

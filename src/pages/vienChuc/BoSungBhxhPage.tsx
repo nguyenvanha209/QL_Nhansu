@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Alert, App, Button, Card, Checkbox, DatePicker, Modal, Segmented, Select, Space, Statistic, Table, Tabs, Tag, Tooltip, Typography, Upload } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined, FileExcelOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import * as XLSX from 'xlsx'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
@@ -87,6 +88,7 @@ export default function BoSungBhxhPage() {
   const { message, modal } = App.useApp()
   const navigate = useNavigate()
   const { currentUser, scopeDonViId, hasPermission } = useAuth()
+  const { trongPhamVi } = usePhamVi()
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const donVis = useDanhMucStore((s) => s.donVis)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
@@ -97,12 +99,14 @@ export default function BoSungBhxhPage() {
 
   const [the, setThe] = useState<'tong-hop' | 'cap-nhat'>(scopeDonViId ? 'cap-nhat' : 'tong-hop')
   const [truongChon, setTruongChon] = useState<string | undefined>(scopeDonViId ?? undefined)
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (truongChon && !trongPhamVi(truongChon)) setTruongChon(undefined) }, [truongChon, trongPhamVi])
   const [loc, setLoc] = useState<'TAT_CA' | TrangThaiDong>('TAT_CA')
   const [nhap, setNhap] = useState<Record<string, string | undefined>>({})
   const [nhapKhong, setNhapKhong] = useState<Record<string, boolean>>({})
   const [xemTruong, setXemTruong] = useState<string | null>(null)
 
-  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER' && (!scopeDonViId || d.id === scopeDonViId)).sort(soSanhTruong), [donVis, scopeDonViId])
+  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER' && trongPhamVi(d.id)).sort(soSanhTruong), [donVis, trongPhamVi])
   const thuTu = useMemo(() => thuTuTruong(donVis), [donVis])
   const cdTheoId = useMemo(() => new Map(chucDanhs.map((c) => [c.id, c])), [chucDanhs])
   const idPctn = loaiPhuCaps.find((l) => l.ma === 'PC_THAM_NIEN')?.id
@@ -114,7 +118,7 @@ export default function BoSungBhxhPage() {
 
   // Mọi người đang công tác (biên chế, hợp đồng) khai BHXH; tình trạng xếp PCTN lần đầu chỉ tính cho CBQL, giáo viên
   const tatCa = useMemo<Dong[]>(() => vienChucs
-    .filter((v) => duocTinhSoLieu(v) && (!scopeDonViId || v.donViId === scopeDonViId))
+    .filter((v) => duocTinhSoLieu(v) && trongPhamVi(v.donViId))
     .sort((a, b) => (thuTu.get(a.donViId) ?? 999) - (thuTu.get(b.donViId) ?? 999) || soSanhVienChuc((v: VienChuc) => cdTheoId.get(v.chucDanhId)?.nhom)(a, b))
     .map((v) => {
       const suaThang = Object.prototype.hasOwnProperty.call(nhap, v.id)
@@ -139,7 +143,7 @@ export default function BoSungBhxhPage() {
         congViec: v.congViec ? (CONG_VIEC_LABELS[v.congViec] ?? v.congViec) : nv === 'NV_PHUC_VU' ? 'Nhân viên phục vụ' : 'Nhân viên khác',
         tt, du5Nam: xet?.du5Nam,
       }
-    }), [vienChucs, cdTheoId, scopeDonViId, nhap, nhapKhong, pctnTheoNguoi, homNay, thuTu])
+    }), [vienChucs, cdTheoId, trongPhamVi, nhap, nhapKhong, pctnTheoNguoi, homNay, thuTu])
 
   const doiCuaDong = (d: Dong) => (d.thang ?? '') !== (d.vc.batDauBhxhGd ?? '') || d.khong !== !!d.vc.khongThamGiaBhxh
   const soDaSua = tatCa.filter((d) => d.daSua && doiCuaDong(d)).length
@@ -319,7 +323,7 @@ export default function BoSungBhxhPage() {
     <>
       <Space wrap style={{ marginBottom: 12 }}>
         {!scopeDonViId && (
-          <Select placeholder="Chọn trường" allowClear showSearch optionFilterProp="label" style={{ width: 240 }} value={truongChon}
+          <Select placeholder="Chọn đơn vị" allowClear showSearch optionFilterProp="label" style={{ width: 240 }} value={truongChon}
             onChange={(v) => setTruongChon(v)} options={truongs.map((t) => ({ value: t.id, label: t.ten }))} />
         )}
         <Segmented<'TAT_CA' | TrangThaiDong>

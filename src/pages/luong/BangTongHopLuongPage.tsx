@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Table, Card, Select, Input, Space, Typography, Button, Tag, Tooltip } from 'antd'
 import { SearchOutlined, DownloadOutlined } from '@ant-design/icons'
@@ -8,8 +8,9 @@ import dayjs from 'dayjs'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
-import { CHUC_VU_LABELS, LOAI_LAO_DONG_OPTIONS, duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
+import { CHUC_VU_LABELS, loaiLaoDongTheoKhoi, LOAI_LAO_DONG_LABELS, duocTinhSoLieu, nhanLuongTheoTien } from '@/types/vienChuc'
 import { formatDate, matchSearch, soSanhVienChuc } from '@/utils/helpers'
 import { pccvThucHuong, dangBaoLuuPccv } from '@/utils/baoLuuPccv'
 import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
@@ -26,6 +27,7 @@ const PC_TN_MA  = 'PC_TRACH_NHIEM'
 const PC_TNN_MA = 'PC_THAM_NIEN'
 const PC_BAO_LUU_MA = 'PC_BAO_LUU'
 const PC_UD_PREFIX = 'PCUD'
+const PC_CVU_MA = 'PC_CONG_VU'
 
 const r3 = (n: number) => Math.round(n * 1000) / 1000
 const d3 = (n: number) => (n ? n.toFixed(3) : '')
@@ -54,6 +56,9 @@ interface RowData {
   mocTNNG: string
   hsBaoLuu: number
   pcUD: number
+  /** PC công vụ (công chức, cơ quan hành chính): % và quy ra hệ số */
+  pcCongVuPct: number
+  pcCongVu: number
   tong1Thang: number
   tong6Thang: number
   /** Hợp đồng nhận lương theo mức tiền (đ/tháng) - không có hệ số lương chính */
@@ -73,6 +78,7 @@ interface SubtotalRow {
   pcTNNG_HeSo: number
   hsBaoLuu: number
   pcUD: number
+  pcCongVu: number
   tong1Thang: number
   tong6Thang: number
   mucLuongTien: number
@@ -80,7 +86,7 @@ interface SubtotalRow {
 
 type DisplayRow = RowData | SubtotalRow
 
-const SUM_COLS = ['heSo', 'vkHeSo', 'tongHSLC', 'pcCV', 'pcTN', 'pcTNNG_HeSo', 'hsBaoLuu', 'pcUD', 'tong1Thang', 'tong6Thang', 'mucLuongTien'] as const
+const SUM_COLS = ['heSo', 'vkHeSo', 'tongHSLC', 'pcCV', 'pcTN', 'pcTNNG_HeSo', 'hsBaoLuu', 'pcUD', 'pcCongVu', 'tong1Thang', 'tong6Thang', 'mucLuongTien'] as const
 
 function sumGroup(rows: RowData[]): Omit<SubtotalRow, '_type' | 'key' | 'donViTen' | 'count'> {
   const result: Record<string, number> = {}
@@ -125,6 +131,7 @@ function buildRow(
   const cvBaoLuu = dangBaoLuuPccv(vc) && cvCoeff > cvTheoChucVu
   const { val: tnCoeff } = byMa(PC_TN_MA)
   const { val: tnnPct, rec: tnnRec } = byMa(PC_TNN_MA)
+  const { val: cvuPct } = byMa(PC_CVU_MA)
 
   const heSo = heSoRec?.heSo ?? 0
   // Hệ số chênh lệch bảo lưu nằm ở hai chỗ tuỳ nguồn nhập: một số hồ sơ ghi
@@ -138,7 +145,9 @@ function buildRow(
   const nen = tongHSLC + cvCoeff
   const pcTNNG_HeSo = r3(nen * (tnnPct / 100))
   const pcUD_HeSo = r3(nen * (udVal / 100))
-  const tong1Thang = r3(tongHSLC + cvCoeff + tnCoeff + pcTNNG_HeSo + baoLuu + pcUD_HeSo)
+  // PC công vụ: % trên lương ngạch bậc + PC thâm niên vượt khung + PC chức vụ (đúng nền `nen`) - chỉ công chức có
+  const pcCongVu = r3(nen * (cvuPct / 100))
+  const tong1Thang = r3(tongHSLC + cvCoeff + tnCoeff + pcTNNG_HeSo + baoLuu + pcUD_HeSo + pcCongVu)
 
   const chucDanh = chucDanhs.find((c) => c.id === vc.chucDanhId)
   const chucVuHienThi = vc.chucVu
@@ -168,6 +177,8 @@ function buildRow(
     mocTNNG: tnnRec ? formatDate(tnnRec.ngayHieuLuc) : '',
     hsBaoLuu: baoLuu,
     pcUD: pcUD_HeSo,
+    pcCongVuPct: cvuPct,
+    pcCongVu,
     tong1Thang,
     tong6Thang: r3(tong1Thang * 6),
     mucLuongTien: theoTien ? (vc.mucLuongTien ?? 0) : 0,
@@ -178,9 +189,10 @@ const DV_ORDER: Record<string, number> = { MAM_NON: 1, TIEU_HOC: 2, THCS: 3, OTH
 
 export default function BangTongHopLuongPage() {
   const { scopeDonViId } = useAuth()
+  const { trongPhamVi, khoi } = usePhamVi()
   const allVC = useVienChucStore((s) => s.vienChucs)
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort((a, b) => {
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active && trongPhamVi(d.id)).sort((a, b) => {
     const oa = DV_ORDER[a.loai] ?? 4
     const ob = DV_ORDER[b.loai] ?? 4
     if (oa !== ob) return oa - ob
@@ -193,6 +205,8 @@ export default function BangTongHopLuongPage() {
   const phuCaps = useLuongStore((s) => s.phuCapVienChucs)
 
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (filterDonVi && !trongPhamVi(filterDonVi)) setFilterDonVi(undefined) }, [filterDonVi, trongPhamVi])
   const tenDonVi = useMemo(() => {
     const m = new Map(donVis.map((d) => [d.id, d.ten]))
     return (id: string) => m.get(id) ?? id
@@ -202,7 +216,7 @@ export default function BangTongHopLuongPage() {
 
   const rows = useMemo<RowData[]>(() => {
     let list = allVC.filter(duocTinhSoLieu)
-    if (scopeDonViId) list = list.filter((v) => v.donViId === scopeDonViId)
+    list = list.filter((v) => trongPhamVi(v.donViId))
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
     if (filterLoai) list = list.filter((v) => v.loaiLaoDong === filterLoai)
     if (search) list = list.filter((v) => matchSearch(`${v.ho} ${v.ten}`, search))
@@ -220,7 +234,7 @@ export default function BangTongHopLuongPage() {
       return theoVtvl(a, b)
     })
     return list.map((vc, i) => buildRow(i + 1, vc, heSos, phuCaps, loaiPhuCaps, chucDanhs))
-  }, [allVC, donVis, scopeDonViId, filterDonVi, filterLoai, search, heSos, phuCaps, loaiPhuCaps, chucDanhs])
+  }, [allVC, donVis, trongPhamVi, filterDonVi, filterLoai, search, heSos, phuCaps, loaiPhuCaps, chucDanhs])
 
   // Chèn subtotal rows khi xem tất cả trường (không filter, không search)
   const displayRows = useMemo<DisplayRow[]>(() => {
@@ -250,7 +264,12 @@ export default function BangTongHopLuongPage() {
   // Grand total cho summary row
   const grandTotal = useMemo(() => sumGroup(rows), [rows])
 
-  const columns: any[] = [
+  // Cột riêng nhà giáo (thâm niên, ưu đãi) chỉ ở khối trường; PC công vụ chỉ ở khối cơ quan. Xem tất cả thì hiện đủ.
+  const hienNhaGiao = !khoi || khoi === 'TRUONG_HOC'
+  const hienCongVu = !khoi || khoi === 'CO_QUAN'
+  const cotAn = new Set([...(hienNhaGiao ? [] : ['tnng', 'pcUD']), ...(hienCongVu ? [] : ['pcCongVu'])])
+
+  const tatCaCot: any[] = [
     {
       title: 'TT', key: 'stt', width: 46, fixed: 'left' as const, align: 'center' as const,
       render: (_: any, r: DisplayRow, i: number) => r._type === 'subtotal' ? '' : i + 1,
@@ -268,7 +287,7 @@ export default function BangTongHopLuongPage() {
     // Tài khoản xem được nhiều trường thì phải biết mỗi dòng thuộc trường nào.
     // Dòng "Cộng" chỉ hiện ở cuối mỗi nhóm, cuộn giữa bảng là mất dấu.
     ...(scopeDonViId ? [] : [{
-      title: 'Đơn vị trường', key: 'donVi', width: 235, fixed: 'left' as const,
+      title: 'Đơn vị', key: 'donVi', width: 235, fixed: 'left' as const,
       render: (_: any, r: DisplayRow) => (r._type === 'data' ? tenDonVi(r.donViId) : ''),
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0
@@ -342,7 +361,7 @@ export default function BangTongHopLuongPage() {
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcTN - (b as RowData).pcTN,
     },
     {
-      title: 'Phụ cấp thâm niên nhà giáo',
+      title: 'Phụ cấp thâm niên nhà giáo', key: 'tnng',
       children: [
         {
           title: '%', key: 'pcTNNG_Pct', width: 55, align: 'center' as const,
@@ -365,6 +384,10 @@ export default function BangTongHopLuongPage() {
       render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcUD)}</Text> : d3((r as RowData).pcUD),
       sorter: (a: DisplayRow, b: DisplayRow) =>
         a._type === 'subtotal' || b._type === 'subtotal' ? 0 : (a as RowData).pcUD - (b as RowData).pcUD,
+    },
+    {
+      title: 'PC công vụ', key: 'pcCongVu', width: 85, align: 'right' as const,
+      render: (_: any, r: DisplayRow) => r._type === 'subtotal' ? <Text strong>{d3(r.pcCongVu)}</Text> : d3((r as RowData).pcCongVu),
     },
     {
       // Cột chốt của cả bảng: tổng hệ số lương thực hưởng của từng viên chức,
@@ -391,6 +414,8 @@ export default function BangTongHopLuongPage() {
     },
   ]
 
+  const columns = tatCaCot.filter((c) => !cotAn.has(c.key))
+
   const handleExport = async () => {
     const donViTen = filterDonVi
       ? (donVis.find((d) => d.id === filterDonVi)?.ten ?? 'TatCa')
@@ -411,11 +436,10 @@ export default function BangTongHopLuongPage() {
       'PC Chức vụ': r.pcCV || '',
       'Bảo lưu PCCV đến': r.pcCvBaoLuuDen ? formatDate(r.pcCvBaoLuuDen) : '',
       'PC Trách nhiệm': r.pcTN || '',
-      'PC TNNG (%)': r.pcTNNG_Pct || '',
-      'PC TNNG Hệ số': r.pcTNNG_HeSo || '',
-      'Mốc xét nâng TNNG': r.mocTNNG,
+      ...(hienNhaGiao ? { 'PC TNNG (%)': r.pcTNNG_Pct || '', 'PC TNNG Hệ số': r.pcTNNG_HeSo || '', 'Mốc xét nâng TNNG': r.mocTNNG } : {}),
       'HS Chênh lệch bảo lưu': r.hsBaoLuu || '',
-      'PC ưu đãi nhà giáo': r.pcUD || '',
+      ...(hienNhaGiao ? { 'PC ưu đãi nhà giáo': r.pcUD || '' } : {}),
+      ...(hienCongVu ? { 'PC công vụ (%)': r.pcCongVuPct || '', 'PC công vụ Hệ số': r.pcCongVu || '' } : {}),
       'Tổng HS lương 1 tháng': r.tong1Thang,
       'Tổng HS lương 6 tháng đầu năm': r.tong6Thang,
       'Lương theo mức tiền (đ/tháng)': r.mucLuongTien || '',
@@ -424,7 +448,9 @@ export default function BangTongHopLuongPage() {
       ...Object.fromEntries(Object.keys(hang(rows[0])).map((k) => [k, ''])),
       'Họ và tên': ten,
       'Hệ số': t.heSo, 'PC TNVK Hệ số': t.vkHeSo, 'Tổng HS lương chính': t.tongHSLC, 'PC Chức vụ': t.pcCV,
-      'PC Trách nhiệm': t.pcTN, 'PC TNNG Hệ số': t.pcTNNG_HeSo, 'HS Chênh lệch bảo lưu': t.hsBaoLuu, 'PC ưu đãi nhà giáo': t.pcUD,
+      'PC Trách nhiệm': t.pcTN, 'HS Chênh lệch bảo lưu': t.hsBaoLuu,
+      ...(hienNhaGiao ? { 'PC TNNG Hệ số': t.pcTNNG_HeSo, 'PC ưu đãi nhà giáo': t.pcUD } : {}),
+      ...(hienCongVu ? { 'PC công vụ Hệ số': t.pcCongVu } : {}),
       'Tổng HS lương 1 tháng': t.tong1Thang, 'Tổng HS lương 6 tháng đầu năm': t.tong6Thang, 'Lương theo mức tiền (đ/tháng)': t.mucLuongTien,
     })
     if (!rows.length) return
@@ -444,7 +470,7 @@ export default function BangTongHopLuongPage() {
     const dongTongCong = data.length
     data.push(dongCong(`TỔNG CỘNG (${rows.length} người)`, sumGroup(rows)))
 
-    const tieuDe = ['BẢNG TỔNG HỢP HỆ SỐ LƯƠNG, PHỤ CẤP', filterDonVi ? donViTen : 'Các trường thuộc phường Gia Viên']
+    const tieuDe = ['BẢNG TỔNG HỢP HỆ SỐ LƯƠNG, PHỤ CẤP', filterDonVi ? donViTen : khoi === 'CO_QUAN' ? 'Các phòng chuyên môn thuộc UBND phường Gia Viên' : khoi === 'DVSN' ? 'Các đơn vị sự nghiệp thuộc UBND phường Gia Viên' : khoi === 'TRUONG_HOC' ? 'Các trường thuộc phường Gia Viên' : 'Các đơn vị thuộc phường Gia Viên']
     const trang = trangTuDanhSach(data, 'Bang TH Luong', { tieuDe })
     // Dòng dữ liệu thứ i nằm ở dòng (tiêu đề + 1 dòng trống + dòng tiêu đề cột) + i
     const lech = tieuDe.length + 2
@@ -454,20 +480,23 @@ export default function BangTongHopLuongPage() {
     const C = {
       heSo: c('Hệ số'), vkPct: c('PC TNVK (%)'), vkHs: c('PC TNVK Hệ số'), tongHSLC: c('Tổng HS lương chính'), cv: c('PC Chức vụ'),
       tn: c('PC Trách nhiệm'), tnngPct: c('PC TNNG (%)'), tnngHs: c('PC TNNG Hệ số'), bl: c('HS Chênh lệch bảo lưu'), ud: c('PC ưu đãi nhà giáo'),
+      cvuPct: c('PC công vụ (%)'), cvuHs: c('PC công vụ Hệ số'),
       t1: c('Tổng HS lương 1 tháng'), t6: c('Tổng HS lương 6 tháng đầu năm'), tien: c('Lương theo mức tiền (đ/tháng)'),
     }
     const nguoi = dongNguoi.map(d)
     // Công thức trong từng dòng người - đúng cách phần mềm tính (làm tròn 3 chữ số)
     ganCotTinh(trang.dong, C.vkHs, nguoi, (o) => `ROUND(${o(C.heSo)}*${o(C.vkPct)}/100,3)`, (so) => lamTronExcel(so(C.heSo) * so(C.vkPct) / 100, 3))
     ganCotTinh(trang.dong, C.tongHSLC, nguoi, (o) => `ROUND(${o(C.heSo)}+${o(C.vkHs)},3)`, (so) => lamTronExcel(so(C.heSo) + so(C.vkHs), 3))
-    // PC thâm niên nhà giáo: % trên lương chính + PC chức vụ
-    ganCotTinh(trang.dong, C.tnngHs, nguoi, (o) => `ROUND((${o(C.tongHSLC)}+${o(C.cv)})*${o(C.tnngPct)}/100,3)`, (so) => lamTronExcel((so(C.tongHSLC) + so(C.cv)) * so(C.tnngPct) / 100, 3))
+    // PC thâm niên nhà giáo / PC công vụ: % trên lương chính + PC chức vụ (cột nào không có trong bảng thì bỏ qua)
+    if (C.cvuHs >= 0) ganCotTinh(trang.dong, C.cvuHs, nguoi, (o) => `ROUND((${o(C.tongHSLC)}+${o(C.cv)})*${o(C.cvuPct)}/100,3)`, (so) => lamTronExcel((so(C.tongHSLC) + so(C.cv)) * so(C.cvuPct) / 100, 3))
+    if (C.tnngHs >= 0) ganCotTinh(trang.dong, C.tnngHs, nguoi, (o) => `ROUND((${o(C.tongHSLC)}+${o(C.cv)})*${o(C.tnngPct)}/100,3)`, (so) => lamTronExcel((so(C.tongHSLC) + so(C.cv)) * so(C.tnngPct) / 100, 3))
+    const cotCongT1 = [C.tongHSLC, C.cv, C.tn, C.tnngHs, C.bl, C.ud, C.cvuHs].filter((x) => x >= 0)
     ganCotTinh(trang.dong, C.t1, nguoi,
-      (o) => `ROUND(${[C.tongHSLC, C.cv, C.tn, C.tnngHs, C.bl, C.ud].map(o).join('+')},3)`,
-      (so) => lamTronExcel(so(C.tongHSLC) + so(C.cv) + so(C.tn) + so(C.tnngHs) + so(C.bl) + so(C.ud), 3))
+      (o) => `ROUND(${cotCongT1.map(o).join('+')},3)`,
+      (so) => lamTronExcel(cotCongT1.reduce((t, x) => t + so(x), 0), 3))
     ganCotTinh(trang.dong, C.t6, nguoi, (o) => `ROUND(${o(C.t1)}*6,3)`, (so) => lamTronExcel(so(C.t1) * 6, 3))
     // Dòng cộng từng trường = SUM người của trường; tổng cộng = SUM các dòng cộng (hoặc SUM người khi một trường)
-    const cotCong = [C.heSo, C.vkHs, C.tongHSLC, C.cv, C.tn, C.tnngHs, C.bl, C.ud, C.t1, C.t6, C.tien]
+    const cotCong = [C.heSo, C.vkHs, C.tongHSLC, C.cv, C.tn, C.tnngHs, C.bl, C.ud, C.cvuHs, C.t1, C.t6, C.tien].filter((x) => x >= 0)
     for (const g of cacCong) ganDongTong(trang.dong, d(g.dong), g.cac.map(d), cotCong)
     ganDongTong(trang.dong, d(dongTongCong), coCongTruong ? cacCong.map((g) => d(g.dong)) : nguoi, cotCong)
 
@@ -500,7 +529,7 @@ export default function BangTongHopLuongPage() {
         />
         {!scopeDonViId && (
           <Select
-            placeholder="Chọn đơn vị trường"
+            placeholder="Chọn đơn vị"
             style={{ width: 240 }}
             value={filterDonVi}
             onChange={setFilterDonVi}
@@ -514,7 +543,7 @@ export default function BangTongHopLuongPage() {
           value={filterLoai}
           onChange={setFilterLoai}
           allowClear
-          options={LOAI_LAO_DONG_OPTIONS}
+          options={loaiLaoDongTheoKhoi(khoi ?? undefined).map((k) => ({ value: k, label: LOAI_LAO_DONG_LABELS[k] }))}
         />
       </Space>
 
@@ -541,10 +570,10 @@ export default function BangTongHopLuongPage() {
             { noiDung: grandTotal.tongHSLC.toFixed(3), canPhai: true },
             { noiDung: d3(grandTotal.pcCV), canPhai: true },
             { noiDung: d3(grandTotal.pcTN), canPhai: true },
-            {}, // % thâm niên nhà giáo
-            { noiDung: d3(grandTotal.pcTNNG_HeSo), canPhai: true },
+            ...(hienNhaGiao ? [{}, { noiDung: d3(grandTotal.pcTNNG_HeSo), canPhai: true }] : []), // % và hệ số thâm niên nhà giáo
             { noiDung: d3(grandTotal.hsBaoLuu), canPhai: true },
-            { noiDung: d3(grandTotal.pcUD), canPhai: true },
+            ...(hienNhaGiao ? [{ noiDung: d3(grandTotal.pcUD), canPhai: true }] : []),
+            ...(hienCongVu ? [{ noiDung: d3(grandTotal.pcCongVu), canPhai: true }] : []),
             { noiDung: <span style={{ color: '#0958d9' }}>{grandTotal.tong1Thang.toFixed(3)}</span>, canPhai: true },
             { noiDung: grandTotal.mucLuongTien ? grandTotal.mucLuongTien.toLocaleString('vi-VN') : '', canPhai: true },
           ]

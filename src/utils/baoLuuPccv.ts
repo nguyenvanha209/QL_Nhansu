@@ -10,7 +10,7 @@ import type { VienChuc } from '@/types/vienChuc'
 // Ba khoản dễ nhầm vì cùng chữ "bảo lưu" / "chức vụ" - dùng thống nhất các tên dưới đây ở mọi màn hình
 export const TEN_PCCV_BAO_LUU = 'PC chức vụ bảo lưu (sau sắp xếp)'
 export const TEN_HS_CHENH_LECH_BAO_LUU = 'Hệ số chênh lệch bảo lưu (lương)'
-export const TEN_PCCV_HIEN_TAI = 'PC chức vụ hiện tại (TT 33/2005)'
+export const TEN_PCCV_HIEN_TAI = 'PC chức vụ hiện tại'
 
 /** Tên hiển thị của loại phụ cấp, tách rõ hệ số chênh lệch bảo lưu (lương) với PC chức vụ */
 export function tenHienThiLoaiPhuCap(loai?: { ma: string; ten: string }): string {

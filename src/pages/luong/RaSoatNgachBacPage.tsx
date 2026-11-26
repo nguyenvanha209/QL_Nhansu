@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Table, Card, Typography, Tag, Input, Select, Space, Button, Alert } from 'antd'
 import { SearchOutlined, FileExcelOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useLuongStore } from '@/store/luongStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { matchSearch, soSanhVienChuc, formatDate } from '@/utils/helpers'
 import { dangBaoLuuPccv, soNgayConBaoLuu } from '@/utils/baoLuuPccv'
@@ -73,8 +74,11 @@ const r2 = (n: number) => Math.round(n * 100) / 100
 export default function RaSoatNgachBacPage() {
   const navigate = useNavigate()
   const { scopeDonViId } = useAuth()
+  const { trongPhamVi } = usePhamVi()
   const [search, setSearch] = useState('')
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (filterDonVi && !trongPhamVi(filterDonVi)) setFilterDonVi(undefined) }, [filterDonVi, trongPhamVi])
   const [filterLoi, setFilterLoi] = useState<LoaiLech | undefined>()
 
   const vienChucs = useVienChucStore((s) => s.vienChucs)
@@ -85,7 +89,7 @@ export default function RaSoatNgachBacPage() {
   const quyMoTruongs = useDanhMucStore((s) => s.quyMoTruongs)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active && trongPhamVi(d.id)).sort(soSanhTruong), [allDonVis, trongPhamVi])
   const thuTu = useMemo(() => thuTuTruong(allDonVis), [allDonVis])
   const tenDonVi = useMemo(() => new Map(allDonVis.map((d) => [d.id, d.ten])), [allDonVis])
   const donViTheoId = useMemo(() => new Map(allDonVis.map((d) => [d.id, d])), [allDonVis])
@@ -111,7 +115,7 @@ export default function RaSoatNgachBacPage() {
     }
 
     let list = vienChucs.filter((v) => duocTinhSoLieu(v))
-    if (scopeDonViId) list = list.filter((v) => v.donViId === scopeDonViId)
+    list = list.filter((v) => trongPhamVi(v.donViId))
     const nhomCua = (v: (typeof list)[number]) => cdTheoId.get(v.chucDanhId)?.nhom
     list = [...list].sort((a, b) =>
       ((thuTu.get(a.donViId) ?? 999) - (thuTu.get(b.donViId) ?? 999)) || soSanhVienChuc(nhomCua)(a, b))
@@ -288,7 +292,7 @@ export default function RaSoatNgachBacPage() {
       })
     }
     return ketQua
-  }, [vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, chucDanhs, bacLuongs, scopeDonViId, tenDonVi, donViTheoId, quyMoTruongs])
+  }, [vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, chucDanhs, bacLuongs, trongPhamVi, tenDonVi, donViTheoId, quyMoTruongs])
 
   const data = useMemo(() => rows.filter((r) =>
     (!filterDonVi || r.donViId === filterDonVi)
@@ -400,7 +404,7 @@ export default function RaSoatNgachBacPage() {
         />
         {!scopeDonViId && (
           <Select
-            placeholder="Chọn đơn vị trường"
+            placeholder="Chọn đơn vị"
             style={{ width: 240 }}
             value={filterDonVi}
             onChange={setFilterDonVi}

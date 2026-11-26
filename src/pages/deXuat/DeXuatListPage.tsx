@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Table, Card, Button, Select, Tag, Space, Typography, Badge, Collapse } from 'antd'
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
@@ -26,11 +27,14 @@ export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
   const soCho = useDeXuatCanXuLy(cacLoai)
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission, isCBTruong, isLanhDao } = useAuth()
+  const { trongPhamVi } = usePhamVi()
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
-  const deXuats = useMemo(() => allDeXuats.filter((d) => cacLoai.includes(d.loai) && (!scopeDonViId || d.donViId === scopeDonViId)), [allDeXuats, scopeDonViId, cacLoai])
+  const deXuats = useMemo(() => allDeXuats.filter((d) => cacLoai.includes(d.loai) && trongPhamVi(d.donViId)), [allDeXuats, trongPhamVi, cacLoai])
   const donVis = useDanhMucStore((s) => s.donVis)
   const [filterStatus, setFilterStatus] = useState<TrangThaiDeXuat | undefined>()
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (filterDonVi && !trongPhamVi(filterDonVi)) setFilterDonVi(undefined) }, [filterDonVi, trongPhamVi])
 
   const filtered = useMemo(() => {
     let list = deXuats
@@ -143,7 +147,7 @@ export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
       <Space wrap style={{ marginBottom: 12 }}>
         <Select placeholder="Lọc trạng thái" style={{ width: 220 }} value={filterStatus} onChange={setFilterStatus} allowClear options={ALL_STATUSES.map((s) => ({ value: s, label: TRANG_THAI_LABELS[s] }))} />
         {!scopeDonViId && (
-          <Select placeholder="Lọc đơn vị" style={{ width: 200 }} value={filterDonVi} onChange={setFilterDonVi} allowClear options={donVis.filter((d) => d.active).sort(soSanhTruong).map((d) => ({ value: d.id, label: d.ten }))} />
+          <Select placeholder="Lọc đơn vị" style={{ width: 200 }} value={filterDonVi} onChange={setFilterDonVi} allowClear options={donVis.filter((d) => d.active && trongPhamVi(d.id)).sort(soSanhTruong).map((d) => ({ value: d.id, label: d.ten }))} />
         )}
       </Space>
 

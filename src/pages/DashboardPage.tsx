@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Row, Col, Card, Statistic, Table, Tag, Select, Typography, Space, Badge, Segmented } from 'antd'
 import { TeamOutlined, FileTextOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -9,6 +9,7 @@ import { useDeXuatStore } from '@/store/deXuatStore'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import DanhSachNangLuongModal from '@/components/DanhSachNangLuongModal'
 import ViecCanLam from '@/components/ViecCanLam'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { filterRetirementInYears } from '@/utils/retirement'
 import { laBienChe } from '@/utils/dinhMuc'
@@ -20,7 +21,7 @@ import { useBoNhiem } from '@/hooks/useBoNhiem'
 import { moTaConLai } from '@/utils/boNhiem'
 import type { TinhTrangBoNhiem } from '@/utils/boNhiem'
 import { TagKeoDai, TagMucBoNhiem } from '@/components/BoNhiemTags'
-import { NHOM_VI_TRI, NHOM_LOAI_HINH, nhomViTri, nhomLoaiHinh } from '@/utils/nhomViTri'
+import { NHOM_VI_TRI, nhomViTri, nhomLoaiHinh, nhomViTriTheoKhoi, nhomLoaiHinhTheoKhoi } from '@/utils/nhomViTri'
 import type { NhomViTri, NhomLoaiHinh } from '@/utils/nhomViTri'
 
 const { Title, Text } = Typography
@@ -35,17 +36,30 @@ const CAP_HOC = [
 
 export default function DashboardPage() {
   const { currentUser, scopeDonViId } = useAuth()
+  const { trongPhamVi, khoi } = usePhamVi()
+  // Khối cơ quan, ĐVSN: nhóm Lãnh đạo / Chuyên môn / Hỗ trợ; không có giáo viên, nhân viên nuôi dưỡng, HĐ trường
+  const dsNhom = nhomViTriTheoKhoi(khoi)
+  const dsLoaiHinh = nhomLoaiHinhTheoKhoi(khoi)
+  const laKhoiTruong = !khoi || khoi === 'TRUONG_HOC'
   const navigate = useNavigate()
   const [capHoc, setCapHoc] = useState('ALL')
+  // Lọc cấp học chỉ có nghĩa ở khối trường: chuyển sang khối khác thì trả về Tất cả
+  useEffect(() => { if (!laKhoiTruong) setCapHoc('ALL') }, [laKhoiTruong])
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && isDangCongTac(v) && trongPhamVi(v.donViId)), [allVienChucs, trongPhamVi])
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active && trongPhamVi(d.id)), [allDonVis, trongPhamVi])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
-  const deXuats = useMemo(() => allDeXuats.filter((d) => !scopeDonViId || d.donViId === scopeDonViId), [allDeXuats, scopeDonViId])
-  const salaryAlerts = useSalaryAlerts(scopeDonViId, 90)
-  const boNhiem = useBoNhiem(scopeDonViId)
+  const deXuats = useMemo(() => allDeXuats.filter((d) => trongPhamVi(d.donViId)), [allDeXuats, trongPhamVi])
+  const tatCaCanhBao = useSalaryAlerts(scopeDonViId, 90)
+  const salaryAlerts = useMemo(() => tatCaCanhBao.filter((a) => trongPhamVi(a.donViId)), [tatCaCanhBao, trongPhamVi])
+  const boNhiemTatCa = useBoNhiem(scopeDonViId)
+  const boNhiem = useMemo(() => ({
+    tatCa: boNhiemTatCa.tatCa.filter((t) => trongPhamVi(t.vc.donViId)),
+    canNhac: boNhiemTatCa.canNhac.filter((t) => trongPhamVi(t.vc.donViId)),
+    chuaNhap: boNhiemTatCa.chuaNhap.filter((t) => trongPhamVi(t.vc.donViId)),
+  }), [boNhiemTatCa, trongPhamVi])
   const [moNangLuong, setMoNangLuong] = useState(false)
   const [retireYears, setRetireYears] = useState(3)
 
@@ -64,8 +78,8 @@ export default function DashboardPage() {
     for (const x of nhanSu) dem[x.nhom][x.loaiHinh]++
     return dem
   }, [nhanSu])
-  const tongNhom = (n: NhomViTri) => NHOM_LOAI_HINH.reduce((s, l) => s + coCau[n][l.key], 0)
-  const tongLoaiHinh = (l: NhomLoaiHinh) => NHOM_VI_TRI.reduce((s, n) => s + coCau[n.key][l], 0)
+  const tongNhom = (n: NhomViTri) => dsLoaiHinh.reduce((s, l) => s + coCau[n][l.key], 0)
+  const tongLoaiHinh = (l: NhomLoaiHinh) => dsNhom.reduce((s, n) => s + coCau[n.key][l], 0)
 
   // Mở danh sách hồ sơ đúng ô vừa bấm
   const moDanhSach = (nhom?: NhomViTri, loaiHinh?: NhomLoaiHinh) => {
@@ -88,7 +102,7 @@ export default function DashboardPage() {
     return sorted.map((dv) => {
       const row: Record<string, string | number> = { name: dv.ten.replace('Trường ', '').replace('Trường THCS ', 'THCS ') }
       let total = 0
-      for (const n of NHOM_VI_TRI) {
+      for (const n of dsNhom) {
         const c = nhanSu.filter((x) => x.v.donViId === dv.id && x.nhom === n.key).length
         row[n.key] = c
         total += c
@@ -182,10 +196,10 @@ export default function DashboardPage() {
           Cơ cấu nhân sự{capHoc !== 'ALL' && !scopeDonViId ? ` - ${CAP_HOC.find((c) => c.value === capHoc)?.label}` : ''}
           <Text type="secondary" style={{ fontWeight: 400, fontSize: 14 }}> ({nhanSu.length} người)</Text>
         </Text>
-        {!scopeDonViId && <Segmented size="small" options={CAP_HOC} value={capHoc} onChange={(v) => setCapHoc(String(v))} />}
+        {!scopeDonViId && laKhoiTruong && <Segmented size="small" options={CAP_HOC} value={capHoc} onChange={(v) => setCapHoc(String(v))} />}
       </div>
       <Row gutter={[12, 12]}>
-        {NHOM_VI_TRI.map((n) => {
+        {dsNhom.map((n) => {
           const tong = tongNhom(n.key)
           const bienChe = coCau[n.key].BIEN_CHE
           return (
@@ -216,7 +230,7 @@ export default function DashboardPage() {
               bordered
               scroll={{ x: 'max-content' }}
               rowKey="key"
-              dataSource={[...NHOM_VI_TRI.map((n) => ({ key: n.key, ten: n.ten, mau: n.mau })), { key: 'TONG', ten: 'Tổng cộng', mau: '' }]}
+              dataSource={[...dsNhom.map((n) => ({ key: n.key, ten: n.ten, mau: n.mau })), { key: 'TONG', ten: 'Tổng cộng', mau: '' }]}
               rowClassName={(r) => (r.key === 'TONG' ? 'dash-tong-row' : '')}
               columns={[
                 {
@@ -225,7 +239,7 @@ export default function DashboardPage() {
                     ? <b>{v}</b>
                     : <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: r.mau, marginRight: 6 }} />{v}</span>,
                 },
-                ...NHOM_LOAI_HINH.map((l) => ({
+                ...dsLoaiHinh.map((l) => ({
                   title: <span title={l.ten} style={{ whiteSpace: 'nowrap' }}>{l.tenNgan}</span>, key: l.key, align: 'right' as const, width: 78,
                   render: (_: unknown, r: { key: string }) => {
                     const so = r.key === 'TONG' ? tongLoaiHinh(l.key) : coCau[r.key as NhomViTri][l.key]
@@ -259,14 +273,14 @@ export default function DashboardPage() {
                   cursor={{ fill: 'rgba(37,99,235,0.06)' }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} iconSize={9} />
-                {NHOM_VI_TRI.map((n, i) => (
+                {dsNhom.map((n, i) => (
                   <Bar
                     key={n.key}
                     dataKey={n.key}
                     name={n.ten}
                     stackId="nhom"
                     fill={n.mau}
-                    radius={i === NHOM_VI_TRI.length - 1 ? [0, 3, 3, 0] : undefined}
+                    radius={i === dsNhom.length - 1 ? [0, 3, 3, 0] : undefined}
                   />
                 ))}
                 {/* Tổng nhân sự của trường ghi ở cuối cột. Nhóm xếp cuối có thể bằng 0 (không vẽ ra, không có nhãn)

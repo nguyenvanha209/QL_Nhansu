@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Card, Form, Input, Select, Button, Table, Space, InputNumber, DatePicker, Typography, Divider, Tag, App, Alert, Tooltip, Result, Modal, Row, Col } from 'antd'
 import { DeleteOutlined, ArrowLeftOutlined, SendOutlined, WarningOutlined, EditOutlined, PlusOutlined, SyncOutlined, FileExcelOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import { ngayDenHanNangLuong } from '@/utils/nangLuong'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
@@ -64,6 +65,10 @@ export default function TaoDeXuatPage() {
   const loaiPctn = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN')
   const loaiTnvk = loaiPhuCaps.find((p) => p.ma === 'PC_THAM_NIEN_VK')
   const nguoiTaiLen = currentUser?.fullName ?? ''
+  // Bản PC thâm niên vượt khung đang hưởng (nếu có) - căn cứ % cũ và ngày đến hạn xét +1%
+  const banTnvk = (vcId: string) => (loaiTnvk
+    ? chonBanDangHuong(phuCapVienChucs.filter((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiTnvk.id))
+    : undefined)
 
   // ── Sửa phiếu: chỉ bản nháp hoặc phiếu bị yêu cầu bổ sung ──
   const duocSua = !editId || (!!dxSua && (dxSua.trangThai === 'NHAP' || dxSua.trangThai === 'YEU_CAU_BO_SUNG')
@@ -127,9 +132,10 @@ export default function TaoDeXuatPage() {
       return
     }
     const nextBac = LOAI_NANG_BAC.includes(loaiDeXuat) && !laVuotKhung ? bang.find((b) => b.bac === hsl.bac + 1) : bang.find((b) => b.bac === hsl.bac)
-    const tnvkHienTai = loaiTnvk
-      ? chonBanDangHuong(phuCapVienChucs.filter((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiTnvk.id))?.giaTri ?? 0
-      : 0
+    const tnvkRec = banTnvk(vcId)
+    const tnvkHienTai = tnvkRec?.giaTri ?? 0
+    // Ngày đến hạn thực tế: người đã hưởng vượt khung xét mỗi năm (mốc TNVK + 1 năm)
+    const denHan = ngayDenHanNangLuong(hsl, tnvkRec, bacLuongs)
     // PCTN đang hưởng (nếu có) để cán bộ đối chiếu khi nhập mức mới
     const pctnHienTai = loaiPctn
       ? chonBanDangHuong(phuCapVienChucs.filter((p) => p.vienChucId === vcId && p.isActive && p.loaiPhuCapId === loaiPctn.id))?.giaTri ?? 0
@@ -172,13 +178,13 @@ export default function TaoDeXuatPage() {
     const mocPctnMoi = vc.mocHuongPctn ? dayjs(vc.mocHuongPctn).add(1, 'year').format('YYYY-MM-DD') : undefined
     // Mốc hưởng mặc định: nâng thường xuyên = ngày đến hạn nâng bậc; loại khác = hôm nay
     // Điều chỉnh: giữ mốc hưởng hiện tại (chỉ sửa khi văn bản đổi mốc) để phiếu chỉ đổi phụ cấp không tạo bản lương mới
-    const mocMacDinh = laPctn ? mocPctnMoi : loaiDeXuat === 'NANG_BAC' ? hsl.ngayNangLuongTiepTheo : loaiDeXuat === 'DIEU_CHINH' ? hsl.ngayHieuLuc : undefined
+    const mocMacDinh = laPctn ? mocPctnMoi : loaiDeXuat === 'NANG_BAC' ? denHan : loaiDeXuat === 'DIEU_CHINH' ? hsl.ngayHieuLuc : undefined
     setChiTiet((prev) => [...prev, {
       vienChucId: vcId,
       chucDanhCuId: hsl.chucDanhId,
       bacCu: hsl.bac, heSoCu: hsl.heSo,
       ngayHieuLucCu: hsl.ngayHieuLuc,
-      ngayDenHanCu: hsl.ngayNangLuongTiepTheo,
+      ngayDenHanCu: denHan,
       chucDanhMoiId: hsl.chucDanhId,
       bacMoi: nextBac?.bac ?? hsl.bac,
       heSoMoi: nextBac?.heSo ?? hsl.heSo,
@@ -222,8 +228,12 @@ export default function TaoDeXuatPage() {
       .filter((v) => !chiTiet.some((c) => c.vienChucId === v.id))
       .map((v) => ({ vc: v, hsl: heSoLuongs.find((h) => h.vienChucId === v.id && h.isActive) }))
       .filter((x): x is { vc: typeof vienChucs[number]; hsl: NonNullable<typeof x.hsl> } => !!x.hsl)
-      .filter(({ hsl }) => hsl.ngayNangLuongTiepTheo >= dotRange.start && hsl.ngayNangLuongTiepTheo <= dotRange.end)
-      .map(({ vc, hsl }) => {
+      .map((x) => {
+        const tnvkRec = banTnvk(x.vc.id)
+        return { ...x, tnvk: tnvkRec?.giaTri ?? 0, denHan: ngayDenHanNangLuong(x.hsl, tnvkRec, bacLuongs) }
+      })
+      .filter(({ denHan }) => denHan >= dotRange.start && denHan <= dotRange.end)
+      .map(({ vc, hsl, tnvk, denHan }) => {
         const bang = bacLuongs.filter((b) => b.chucDanhId === hsl.chucDanhId)
         const bacCuoi = bang.length ? Math.max(...bang.map((b) => b.bac)) : undefined
         return {
@@ -231,12 +241,13 @@ export default function TaoDeXuatPage() {
           hoTen: `${vc.ho} ${vc.ten}`,
           bac: hsl.bac,
           heSo: hsl.heSo,
-          ngayNangLuongTiepTheo: hsl.ngayNangLuongTiepTheo,
+          ngayNangLuongTiepTheo: denHan,
           daBacCuoi: bacCuoi !== undefined && hsl.bac >= bacCuoi,
+          tnvk,
         }
       })
       .sort((a, b) => a.ngayNangLuongTiepTheo.localeCompare(b.ngayNangLuongTiepTheo))
-  }, [vienChucs, selectedDonVi, chiTiet, heSoLuongs, dotRange, bacLuongs])
+  }, [vienChucs, selectedDonVi, chiTiet, heSoLuongs, dotRange, bacLuongs, phuCapVienChucs, loaiTnvk])
 
   const themDaChon = () => {
     selectedGoiY.forEach((vcId) => {
@@ -556,7 +567,7 @@ export default function TaoDeXuatPage() {
           },
         },
         ...(loaiDeXuat === 'NANG_BAC' ? [{
-          title: <Tooltip title="Người ở bậc cuối: 5% lần đầu, mỗi năm sau +1% (TT 08/2013, TT 03/2021)">PC vượt khung</Tooltip>, key: 'tnvk', width: 130,
+          title: <Tooltip title="Người ở bậc cuối: 5% lần đầu, mỗi năm sau +1% (TT 04/2005/TT-BNV)">PC TNVK (%)</Tooltip>, key: 'tnvk', width: 130,
           render: (_: any, r: ChiTietDeXuat, idx: number) => laDongVuotKhung(r) ? (
             <Space size={4}>
               <Text type="secondary">{r.tnvkCu ?? 0}% →</Text>
@@ -699,6 +710,12 @@ export default function TaoDeXuatPage() {
             {
               title: 'Bậc/Hệ số hiện tại', key: 'bh', width: 200,
               render: (_: any, r: any) => <>Bậc {r.bac} - {r.heSo}{r.daBacCuoi && <Tag color="purple" style={{ marginLeft: 6 }}>Bậc cuối - phụ cấp vượt khung</Tag>}</>,
+            },
+            {
+              title: <Tooltip title="PC thâm niên vượt khung đang hưởng; đến hạn thì đề nghị +1% (chưa hưởng: 5%)">PC TNVK (%)</Tooltip>, key: 'tnvk', width: 130, align: 'center' as const,
+              render: (_: any, r: any) => (r.daBacCuoi
+                ? <Text>{r.tnvk ? `${r.tnvk}%` : 'Chưa hưởng'} → <b>{r.tnvk ? r.tnvk + 1 : 5}%</b></Text>
+                : <Text type="secondary">-</Text>),
             },
             { title: 'Ngày nâng lương tiếp theo', dataIndex: 'ngayNangLuongTiepTheo', key: 'nnt', width: 160, render: (v: string) => <Tag color="blue">{formatDate(v)}</Tag> },
           ]}

@@ -1,4 +1,5 @@
 import type { CongViecNhanVien, LoaiLaoDong, VienChuc } from '@/types/vienChuc'
+import { VTVL_KHONG_NHA_GIAO } from '@/types/vienChuc'
 import type { NhomChucDanh } from '@/types/danhMuc'
 
 // Chia nhân sự theo 2 chiều tách bạch để theo dõi cơ cấu:
@@ -19,11 +20,24 @@ export const NHOM_VI_TRI: { key: NhomViTri; ten: string; moTa: string; mau: stri
 ]
 
 export const NHOM_LOAI_HINH: { key: NhomLoaiHinh; ten: string; tenNgan: string; loai: LoaiLaoDong[] }[] = [
-  { key: 'BIEN_CHE', ten: 'Biên chế', tenNgan: 'Biên chế', loai: ['VIEN_CHUC', 'TAP_SU'] },
+  { key: 'BIEN_CHE', ten: 'Biên chế', tenNgan: 'Biên chế', loai: ['CONG_CHUC', 'VIEN_CHUC', 'TAP_SU'] },
   { key: 'HD_235', ten: 'HĐ NĐ 235', tenNgan: 'HĐ 235', loai: ['HOP_DONG_235', 'HOP_DONG_111'] },
   { key: 'HD_TRUONG', ten: 'HĐ trường tự ký', tenNgan: 'HĐ trường', loai: ['HOP_DONG_TRUONG'] },
   { key: 'HD_KHAC', ten: 'HĐ khác (XĐT, thỉnh giảng)', tenNgan: 'HĐ khác', loai: ['HOP_DONG_XDT', 'THINH_GIANG', 'KHAC'] },
 ]
+
+/** Nhóm vị trí của cơ quan, đơn vị sự nghiệp (dùng lại khoá của nhóm trường để đếm chung một bảng) */
+export const NHOM_VI_TRI_CO_QUAN: typeof NHOM_VI_TRI = [
+  { key: 'CBQL', ten: 'Lãnh đạo, quản lý', moTa: 'Trưởng, Phó phòng; Giám đốc, Phó Giám đốc', mau: '#6366f1' },
+  { key: 'NV_HO_TRO', ten: 'Chuyên môn, nghiệp vụ', moTa: 'Công chức, viên chức làm chuyên môn', mau: '#0891b2' },
+  { key: 'NV_PHUC_VU', ten: 'Hỗ trợ, phục vụ', moTa: 'Văn thư, thủ quỹ, lái xe, bảo vệ, phục vụ', mau: '#d97706' },
+]
+
+/** Nhóm vị trí hiển thị theo khối: khối trường (hoặc xem tất cả) dùng nhóm của trường */
+export const nhomViTriTheoKhoi = (khoi?: string | null) => (!khoi || khoi === 'TRUONG_HOC' ? NHOM_VI_TRI : NHOM_VI_TRI_CO_QUAN)
+/** Nhóm loại hình theo khối: cơ quan, ĐVSN không có hợp đồng trường tự ký */
+export const nhomLoaiHinhTheoKhoi = (khoi?: string | null) =>
+  (!khoi || khoi === 'TRUONG_HOC' ? NHOM_LOAI_HINH : NHOM_LOAI_HINH.filter((l) => l.key !== 'HD_TRUONG'))
 
 export const CONG_VIEC: { key: CongViecNhanVien; ten: string; nhom: NhomViTri }[] = [
   { key: 'KE_TOAN', ten: 'Kế toán', nhom: 'NV_HO_TRO' },
@@ -48,6 +62,8 @@ export const CONG_VIEC_LABELS = Object.fromEntries(CONG_VIEC.map((c) => [c.key, 
 const NHOM_CUA_CONG_VIEC = Object.fromEntries(CONG_VIEC.map((c) => [c.key, c.nhom])) as Record<CongViecNhanVien, NhomViTri>
 
 const VTVL_CHUAN = ['CBQL', 'GIAO_VIEN', 'NHAN_VIEN']
+/** Chức vụ cấp trưởng, cấp phó đơn vị: HT, PHT (trường); Trưởng, Phó phòng; Giám đốc, Phó Giám đốc (ĐVSN) */
+const CHUC_VU_LANH_DAO = new Set(['HT', 'P.HT', 'TRP', 'P.TRP', 'CVP', 'P.CVP', 'GD', 'P.GD'])
 
 /**
  * CBQL / giáo viên / nhân viên của một người. Hồ sơ nhập từ Excel có thể ghi ô VTVL bằng chữ
@@ -55,7 +71,10 @@ const VTVL_CHUAN = ['CBQL', 'GIAO_VIEN', 'NHAN_VIEN']
  * chức vụ HT/PHT, mã chuẩn, chữ trong ô, rồi nhóm ngạch.
  */
 export function nhomCoBan(vc: Pick<VienChuc, 'vtvl' | 'chucVu'>, nhomChucDanh?: NhomChucDanh): 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN' {
-  if (vc.chucVu === 'HT' || vc.chucVu === 'P.HT') return 'CBQL'
+  if (vc.chucVu && CHUC_VU_LANH_DAO.has(vc.chucVu)) return 'CBQL'
+  // VTVL của cơ quan, ĐVSN: lãnh đạo quản lý xếp nhóm CBQL, còn lại nhóm nhân viên (chuyên môn - hỗ trợ)
+  if (vc.vtvl === 'LANH_DAO_QL') return 'CBQL'
+  if (vc.vtvl === 'CHUYEN_MON_NV' || vc.vtvl === 'HO_TRO_PV') return 'NHAN_VIEN'
   if (vc.vtvl && VTVL_CHUAN.includes(vc.vtvl)) return vc.vtvl as 'CBQL' | 'GIAO_VIEN' | 'NHAN_VIEN'
   const t = (vc.vtvl ?? '').toLowerCase()
   if (t.includes('quản lý') || t.includes('quản lí')) return 'CBQL'
@@ -71,12 +90,17 @@ export function nhomCoBan(vc: Pick<VienChuc, 'vtvl' | 'chucVu'>, nhomChucDanh?: 
  * thư viện, y tế…) không hưởng. Xét cả VTVL ghi bằng chữ và nhóm ngạch, ngạch nhóm nhân viên thì loại.
  */
 export function laDienPhuCapThamNien(vc: Pick<VienChuc, 'vtvl' | 'chucVu'>, nhomChucDanh?: NhomChucDanh): boolean {
-  if (nhomChucDanh === 'NHAN_VIEN') return false
+  if (nhomChucDanh === 'NHAN_VIEN' || nhomChucDanh === 'CONG_CHUC') return false
+  // Lãnh đạo phòng, ĐVSN và VTVL của cơ quan không phải nhà giáo
+  if (vc.vtvl && VTVL_KHONG_NHA_GIAO.has(vc.vtvl)) return false
+  if (vc.chucVu && ['TRP', 'P.TRP', 'CVP', 'P.CVP', 'GD', 'P.GD'].includes(vc.chucVu)) return false
   const nhom = nhomCoBan(vc, nhomChucDanh)
   return nhom === 'CBQL' || nhom === 'GIAO_VIEN'
 }
 
 export function nhomViTri(vc: Pick<VienChuc, 'vtvl' | 'congViec' | 'chucVu'>, nhomChucDanh?: NhomChucDanh): NhomViTri {
+  if (vc.vtvl === 'HO_TRO_PV') return 'NV_PHUC_VU'
+  if (vc.vtvl === 'CHUYEN_MON_NV') return 'NV_HO_TRO'
   const nhom = nhomCoBan(vc, nhomChucDanh)
   if (nhom !== 'NHAN_VIEN') return nhom
   return vc.congViec ? NHOM_CUA_CONG_VIEC[vc.congViec] : 'NV_HO_TRO'

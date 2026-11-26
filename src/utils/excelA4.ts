@@ -2,6 +2,7 @@
 // co vừa chiều ngang một trang, lặp dòng tiêu đề bảng khi sang trang, đánh số trang.
 // Mọi nút "Xuất Excel" của hệ thống dùng chung hàm này.
 import type { Borders, Cell, Workbook, Worksheet } from 'exceljs'
+import { vietHoaDauTu } from './helpers'
 
 /**
  * Ô công thức Excel: `f` là công thức (không có dấu =, địa chỉ theo ô Excel như B5), `kq` là kết quả phần mềm đã
@@ -209,7 +210,29 @@ function dinhDangSo(cell: Cell, v: number, soLe?: number) {
   else cell.numFmt = Math.abs(v) >= 1000 ? '#,##0.##' : '0.0##'
 }
 
-function dungTrang(wb: Workbook, t: TrangA4): Worksheet {
+// ── Họ tên Viết Hoa Đầu Từ trên mọi biểu mẫu ──
+// Cột có tiêu đề "Họ và tên" / "Họ tên" / "Viên chức": ô chỉ gồm chữ viết IN HOA (họ tên lưu trong hồ sơ) đổi thành
+// Viết Hoa Đầu Từ như mẫu văn bản. Dòng cộng, tổng ("TỔNG CỘNG (5 người)", "Cộng: Trường…") giữ nguyên.
+const TIEU_DE_HO_TEN = /^(họ\s*(và|,)?\s*tên|viên chức|người lao động|họ tên)/i
+const LA_HO_TEN_IN_HOA = (v: O): v is string => typeof v === 'string' && /^[\p{L}\s.]+$/u.test(v.trim())
+  && v === v.toLocaleUpperCase('vi') && v !== v.toLocaleLowerCase('vi') && !/^(TỔNG|CỘNG)/.test(v.trim())
+function vietHoaCotHoTen(t: TrangA4): O[][] {
+  const dong = t.dong.map((r) => [...r])
+  for (const b of t.bang ?? []) {
+    const soTd = b.soDongTieuDe ?? 1
+    const cacCot = new Set<number>()
+    for (let r = b.tu; r < b.tu + soTd && r < dong.length; r++) {
+      dong[r]?.forEach((v, c) => { if (typeof v === 'string' && TIEU_DE_HO_TEN.test(v.trim())) cacCot.add(c) })
+    }
+    for (let r = b.tu + soTd; r <= b.den && r < dong.length; r++) {
+      for (const c of cacCot) { const v = dong[r]?.[c]; if (LA_HO_TEN_IN_HOA(v)) dong[r][c] = vietHoaDauTu(v) }
+    }
+  }
+  return dong
+}
+
+function dungTrang(wb: Workbook, t0: TrangA4): Worksheet {
+  const t: TrangA4 = { ...t0, dong: vietHoaCotHoTen(t0) }
   const coChu = t.coChu ?? 11
   const soCot = Math.max(1, ...t.dong.map((r) => r.length), ...(t.bang ?? []).map((b) => b.soCot ?? 0))
   const rong = t.rongCot ?? tinhRongCot(t.dong)

@@ -8,6 +8,7 @@ import LoginPage from '@/pages/LoginPage'
 
 // Mỗi trang là một gói mã riêng, chỉ tải khi mở trang đó (lần đầu vào phần mềm không phải tải mã của cả 22 trang)
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
+const TruyLinhPage = lazy(() => import('@/pages/truyLinh/TruyLinhPage'))
 const VienChucListPage = lazy(() => import('@/pages/vienChuc/VienChucListPage'))
 const VienChucFormPage = lazy(() => import('@/pages/vienChuc/VienChucFormPage'))
 const VienChucDetailPage = lazy(() => import('@/pages/vienChuc/VienChucDetailPage'))
@@ -71,6 +72,7 @@ export default function AppRouter() {
           <Route path="nang-truoc-han/new" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><HoSoTruocHanPage /></RoleGuard>} />
           <Route path="nang-truoc-han/:id" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><DeXuatDetailPage /></RoleGuard>} />
           <Route path="nang-truoc-han/:id/edit" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'write' }}><HoSoTruocHanPage /></RoleGuard>} />
+          <Route path="truy-linh" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><TruyLinhPage /></RoleGuard>} />
           <Route path="thong-bao-ket-qua" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'deXuat', action: 'read' }}><ThongBaoKetQuaPage /></RoleGuard>} />
           <Route path="bo-nhiem" element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'vienChuc', action: 'read' }}><TheoDoiBoNhiemPage /></RoleGuard>} />
           <Route path="du-bao"element={<RoleGuard allowedRoles={['ADMIN']} quyen={{ resource: 'duBao', action: 'read' }}><DuBaoNghiHuuPage /></RoleGuard>} />

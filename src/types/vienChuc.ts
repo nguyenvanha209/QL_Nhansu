@@ -1,4 +1,6 @@
+import type { KhoiDonVi } from './donVi'
 export type LoaiLaoDong =
+  | 'CONG_CHUC'
   | 'VIEN_CHUC'
   | 'TAP_SU'
   | 'HOP_DONG_XDT'
@@ -134,6 +136,7 @@ export interface VienChuc {
 }
 
 export const LOAI_LAO_DONG_LABELS: Record<LoaiLaoDong, string> = {
+  CONG_CHUC: 'Công chức',
   VIEN_CHUC: 'Viên chức biên chế',
   TAP_SU: 'Viên chức tập sự',
   HOP_DONG_XDT: 'Hợp đồng xác định thời hạn',
@@ -149,8 +152,16 @@ export const LOAI_LAO_DONG_LABELS: Record<LoaiLaoDong, string> = {
  * và tập sự (không khai riêng). Nhãn đầy đủ vẫn giữ trong LOAI_LAO_DONG_LABELS để hiển thị hồ sơ cũ.
  */
 export const LOAI_LAO_DONG_DANG_DUNG: LoaiLaoDong[] = [
-  'VIEN_CHUC', 'HOP_DONG_XDT', 'HOP_DONG_235', 'HOP_DONG_TRUONG', 'THINH_GIANG', 'KHAC',
+  'CONG_CHUC', 'VIEN_CHUC', 'HOP_DONG_XDT', 'HOP_DONG_235', 'HOP_DONG_TRUONG', 'THINH_GIANG', 'KHAC',
 ]
+
+/** Loại hình dùng được ở từng khối đơn vị: phòng chuyên môn có công chức và hợp đồng; trường, ĐVSN không có công chức */
+export function loaiLaoDongTheoKhoi(khoi?: KhoiDonVi): LoaiLaoDong[] {
+  if (!khoi) return LOAI_LAO_DONG_DANG_DUNG
+  if (khoi === 'CO_QUAN') return ['CONG_CHUC', 'HOP_DONG_235', 'KHAC']
+  if (khoi === 'DVSN') return ['VIEN_CHUC', 'HOP_DONG_XDT', 'HOP_DONG_235', 'KHAC']
+  return LOAI_LAO_DONG_DANG_DUNG.filter((l) => l !== 'CONG_CHUC')
+}
 export const LOAI_LAO_DONG_OPTIONS = LOAI_LAO_DONG_DANG_DUNG.map((k) => ({ value: k, label: LOAI_LAO_DONG_LABELS[k] }))
 
 export const CHUC_VU_LABELS: Record<string, string> = {
@@ -158,9 +169,16 @@ export const CHUC_VU_LABELS: Record<string, string> = {
   'P.HT': 'Phó Hiệu trưởng',
   TTCM: 'Tổ trưởng',
   TPCM: 'Tổ phó',
+  TRP: 'Trưởng phòng',
+  'P.TRP': 'Phó Trưởng phòng',
+  CVP: 'Chánh Văn phòng',
+  'P.CVP': 'Phó Chánh Văn phòng',
+  GD: 'Giám đốc',
+  'P.GD': 'Phó Giám đốc',
 }
 
 export const IS_BIEN_CHE: Record<LoaiLaoDong, boolean> = {
+  CONG_CHUC: true,
   VIEN_CHUC: true,
   TAP_SU: true,
   HOP_DONG_XDT: true,
@@ -175,7 +193,13 @@ export const VTVL_LABELS: Record<VTVL, string> = {
   CBQL: 'Cán bộ quản lý',
   GIAO_VIEN: 'Giáo viên',
   NHAN_VIEN: 'Nhân viên',
+  LANH_DAO_QL: 'Lãnh đạo, quản lý',
+  CHUYEN_MON_NV: 'Chuyên môn, nghiệp vụ',
+  HO_TRO_PV: 'Hỗ trợ, phục vụ',
 }
+
+/** VTVL không thuộc diện nhà giáo - không hưởng PC thâm niên nhà giáo (nhân viên trường; VTVL của cơ quan, ĐVSN) */
+export const VTVL_KHONG_NHA_GIAO = new Set<string>(['NHAN_VIEN', 'LANH_DAO_QL', 'CHUYEN_MON_NV', 'HO_TRO_PV'])
 
 export const TRANG_THAI_CONG_TAC_LABELS: Record<TrangThaiCongTac, string> = {
   DANG_LAM_VIEC: 'Đang làm việc',
@@ -189,8 +213,9 @@ export const TRANG_THAI_CONG_TAC_LABELS: Record<TrangThaiCongTac, string> = {
  * Chỉ cán bộ quản lý và giáo viên được hưởng phụ cấp thâm niên; nhân viên không có.
  * Hồ sơ cũ chưa gán VTVL thì suy từ nhóm ngạch/hạng đang xếp (nếu biết).
  */
-export function coPhuCapThamNien(vtvl?: VTVL, nhomChucDanh?: 'GIAO_VIEN' | 'NHAN_VIEN' | 'QUAN_LY'): boolean {
-  if (vtvl) return vtvl !== 'NHAN_VIEN'
+export function coPhuCapThamNien(vtvl?: VTVL, nhomChucDanh?: 'GIAO_VIEN' | 'NHAN_VIEN' | 'QUAN_LY' | 'CONG_CHUC'): boolean {
+  if (nhomChucDanh === 'CONG_CHUC') return false
+  if (vtvl) return !VTVL_KHONG_NHA_GIAO.has(vtvl)
   return !!nhomChucDanh && nhomChucDanh !== 'NHAN_VIEN'
 }
 
@@ -213,9 +238,9 @@ export const HINH_THUC_LUONG_LABELS: Record<HinhThucLuong, string> = {
   TIEN: 'Theo mức tiền (VNĐ/tháng)',
 }
 
-/** Viên chức biên chế (kể cả tập sự): lương luôn theo ngạch, bậc */
+/** Công chức, viên chức biên chế (kể cả tập sự): lương luôn theo ngạch, bậc */
 export function laVienChucBienChe(loai?: LoaiLaoDong): boolean {
-  return loai === 'VIEN_CHUC' || loai === 'TAP_SU'
+  return loai === 'VIEN_CHUC' || loai === 'TAP_SU' || loai === 'CONG_CHUC'
 }
 
 /** Mọi loại hình trừ viên chức biên chế đều được chọn nhận lương theo mức tiền thay vì bậc/hệ số */

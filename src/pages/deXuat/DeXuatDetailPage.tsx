@@ -192,7 +192,7 @@ export default function DeXuatDetailPage() {
           title: 'Hiện tại', key: 'cu', width: 200,
           render: (_: any, r: any) => {
             const cd = chucDanhs.find((c) => c.id === r.chucDanhCuId)
-            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten}>{cd?.ma ?? r.chucDanhCuId}</Text> <Text type="secondary">({cd?.bangLuong})</Text><br />Bậc {r.bacCu} - {Number(r.heSoCu).toFixed(2)}{r.ngayHieuLucCu && <><br /><Text type="secondary" style={{ fontSize: 13 }}>từ {formatDate(r.ngayHieuLucCu)}</Text></>}</div>
+            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten}>{cd?.ma ?? r.chucDanhCuId}</Text> <Text type="secondary">({cd?.bangLuong})</Text><br />Bậc {r.bacCu} - {Number(r.heSoCu).toFixed(2)}{r.tnvkCu ? <> + <b>VK {r.tnvkCu}%</b></> : null}{r.ngayHieuLucCu && <><br /><Text type="secondary" style={{ fontSize: 13 }}>từ {formatDate(r.ngayHieuLucCu)}</Text></>}</div>
           },
         },
         {
@@ -200,7 +200,7 @@ export default function DeXuatDetailPage() {
           render: (_: any, r: any) => {
             const cd = chucDanhs.find((c) => c.id === r.chucDanhMoiId)
             const doiNgach = r.chucDanhMoiId !== r.chucDanhCuId
-            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten} type={doiNgach ? 'warning' : undefined}>{cd?.ma ?? r.chucDanhMoiId}</Text> <Text type="secondary">({cd?.bangLuong})</Text>{doiNgach && <Tag color="orange" style={{ marginLeft: 4 }}>Chuyển ngạch</Tag>}<br /><b>Bậc {r.bacMoi} - {Number(r.heSoMoi).toFixed(2)}</b></div>
+            return <div style={{ lineHeight: 1.45 }}><Text strong title={cd?.ten} type={doiNgach ? 'warning' : undefined}>{cd?.ma ?? r.chucDanhMoiId}</Text> <Text type="secondary">({cd?.bangLuong})</Text>{doiNgach && <Tag color="orange" style={{ marginLeft: 4 }}>Chuyển ngạch</Tag>}<br /><b>Bậc {r.bacMoi} - {Number(r.heSoMoi).toFixed(2)}{r.tnvkMoi != null ? ` + VK ${r.tnvkMoi}%` : ''}</b></div>
           },
         },
         { title: 'Mốc hưởng mới', dataIndex: 'ngayHieuLuc', key: 'nhl', width: 120, render: (v: string) => formatDate(v) },

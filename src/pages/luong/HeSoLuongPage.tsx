@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Table, Card, Typography, Tag, Input, Select, Space, Tooltip, Badge } from 'antd'
 import { SearchOutlined, WarningOutlined } from '@ant-design/icons'
 import { useLuongStore } from '@/store/luongStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { getDaysUntilReview, getReviewUrgencyColor } from '@/utils/calculations'
@@ -16,13 +17,16 @@ const { Title, Text } = Typography
 
 export default function HeSoLuongPage() {
   const { scopeDonViId } = useAuth()
+  const { trongPhamVi } = usePhamVi()
   const [search, setSearch] = useState('')
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (filterDonVi && !trongPhamVi(filterDonVi)) setFilterDonVi(undefined) }, [filterDonVi, trongPhamVi])
 
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
   const vienChucs = useVienChucStore((s) => s.vienChucs)
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active && trongPhamVi(d.id)).sort(soSanhTruong), [allDonVis, trongPhamVi])
   const thuTuTen = useMemo(() => new Map(donVis.map((d, i) => [d.ten, i])), [donVis])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
 
@@ -46,13 +50,13 @@ export default function HeSoLuongPage() {
         }
       })
       .filter((r) => {
-        if (scopeDonViId && r.donViId !== scopeDonViId) return false
+        if (!trongPhamVi(r.donViId)) return false
         if (filterDonVi && r.donViId !== filterDonVi) return false
         if (search) return matchSearch(r.hoTen, search)
         return true
       })
       .sort(soSanhVienChuc((r) => r.nhom))
-  }, [heSoLuongs, vienChucs, donVis, chucDanhs, filterDonVi, search, scopeDonViId])
+  }, [heSoLuongs, vienChucs, donVis, chucDanhs, filterDonVi, search, trongPhamVi])
 
   const columns = [
     {

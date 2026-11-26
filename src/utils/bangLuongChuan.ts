@@ -1,13 +1,16 @@
 import type { BacLuong } from '@/types/danhMuc'
 
-// Bảng hệ số lương viên chức (NĐ 204/2004/NĐ-CP, bảng 3) - dùng sinh bảng bậc khi
-// thêm chức danh hoặc đổi bảng lương của chức danh ở trang Danh mục.
+// Bảng hệ số lương theo loại (NĐ 204/2004/NĐ-CP: bảng 2 - công chức, bảng 3 - viên chức; hai bảng cùng hệ số
+// theo từng loại A3 → C1) - dùng sinh bảng bậc khi thêm chức danh, ngạch hoặc đổi bảng lương ở trang Danh mục.
 export const BANG_LUONG_CHUAN: Record<string, { heSos: number[]; thoiGian: 2 | 3 }> = {
+  'A3.1': { heSos: [6.2, 6.56, 6.92, 7.28, 7.64, 8.0], thoiGian: 3 },
+  'A3.2': { heSos: [5.75, 6.11, 6.47, 6.83, 7.19, 7.55], thoiGian: 3 },
   'A2.1': { heSos: [4.4, 4.74, 5.08, 5.42, 5.76, 6.1, 6.44, 6.78], thoiGian: 3 },
   'A2.2': { heSos: [4.0, 4.34, 4.68, 5.02, 5.36, 5.7, 6.04, 6.38], thoiGian: 3 },
   A1: { heSos: [2.34, 2.67, 3.0, 3.33, 3.66, 3.99, 4.32, 4.65, 4.98], thoiGian: 3 },
   A0: { heSos: [2.1, 2.41, 2.72, 3.03, 3.34, 3.65, 3.96, 4.27, 4.58, 4.89], thoiGian: 3 },
   B: { heSos: [1.86, 2.06, 2.26, 2.46, 2.66, 2.86, 3.06, 3.26, 3.46, 3.66, 3.86, 4.06], thoiGian: 2 },
+  C1: { heSos: [1.65, 1.83, 2.01, 2.19, 2.37, 2.55, 2.73, 2.91, 3.09, 3.27, 3.45, 3.63], thoiGian: 2 },
 }
 
 const chuanHoa = (bangLuong?: string) => (bangLuong ?? '').toUpperCase().replace(/\s/g, '')

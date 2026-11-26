@@ -1,6 +1,7 @@
 // Danh sách Excel (A4 ngang) để kế toán in ra kiểm tra trước khi trình duyệt: phiếu nâng bậc lương thường xuyên,
 // nâng phụ cấp thâm niên, xếp phụ cấp thâm niên nhà giáo lần đầu. Xuất theo dữ liệu đang có trên màn hình (kể cả chưa lưu).
 import dayjs from 'dayjs'
+import { vietHoaDauTu } from '@/utils/helpers'
 import type { ChiTietDeXuat, LoaiDeXuat } from '@/types/deXuat'
 import { LOAI_DE_XUAT_LABELS, laDongVuotKhung } from '@/types/deXuat'
 import type { VienChuc } from '@/types/vienChuc'
@@ -140,7 +141,7 @@ export function xuatExcelKiemTraDeXuat(d: DauVao) {
     [...trong(p), `Gia Viên, ngày ${homNay.format('DD')} tháng ${homNay.format('MM')} năm ${homNay.year()}`, ...trong(n - p - 1)],
     ['NGƯỜI LẬP', ...trong(p - 1), 'HIỆU TRƯỞNG', ...trong(n - p - 1)],
     [], [], [],
-    [d.nguoiLap ?? '', ...trong(p - 1), d.hieuTruong ?? '', ...trong(n - p - 1)],
+    [vietHoaDauTu(d.nguoiLap), ...trong(p - 1), vietHoaDauTu(d.hieuTruong), ...trong(n - p - 1)],
   ]
   for (const k of [1, 2, 6]) {
     gop.push({ r1: rTong + k, c1: p, r2: rTong + k, c2: n - 1 })

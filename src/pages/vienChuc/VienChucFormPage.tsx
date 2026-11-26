@@ -10,10 +10,13 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_DANG_DUNG, LOAI_LAO_DONG_OPTIONS, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, laVienChucBienChe, nhanLuongTheoTien } from '@/types/vienChuc'
+import { usePhamVi } from '@/hooks/usePhamVi'
+import { LOAI_LAO_DONG_LABELS, loaiLaoDongTheoKhoi, TRANG_THAI_CONG_TAC_LABELS, NGUON_KINH_PHI_LABELS, HINH_THUC_LUONG_LABELS, coPhuCapThamNien, laVienChucBienChe, nhanLuongTheoTien } from '@/types/vienChuc'
 import { chucDanhHopLeVoiVtvl } from '@/utils/vtvlRules'
 import type { ChucVu, LoaiLaoDong, HinhThucLuong } from '@/types/vienChuc'
-import { getPhuCapChucVuHeSo, HANG_TRUONG_LABELS, hangTruongTheoNamHoc, moTaHang } from '@/utils/hangTruong'
+import { getPhuCapChucVuHeSo, HANG_TRUONG_LABELS, hangTruongTheoNamHoc, moTaHang, heSoPccvKhongHang } from '@/utils/hangTruong'
+import { khoiCuaLoai, laTruongHoc } from '@/types/donVi'
+import { apDungChoKhoi, khoiChucDanh, khoiChucVu, khoiVtvl, khoiPhuCap } from '@/utils/khoiDanhMuc'
 import { namHocHienHanh, soSanhTruong } from '@/utils/dinhMuc'
 import type { LoaiDonVi } from '@/types/donVi'
 import { splitHoTen, toUpperName, soSanhMaChucDanh } from '@/utils/helpers'
@@ -93,6 +96,8 @@ export default function VienChucFormPage() {
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const { currentUser, scopeDonViId, isCBTruong, hasPermission } = useAuth()
+  // Phòng VHXH đang xem một khối thì ô Đơn vị chỉ liệt kê đơn vị của khối đó
+  const { trongPhamVi } = usePhamVi()
   const { modal } = App.useApp()
   const { getById, addVienChuc, updateVienChuc } = useVienChucStore()
   const { donVis, chucDanhs, bacLuongs, loaiPhuCaps, vtvls, chucVus, getBacLuongsForChucDanh } = useDanhMucStore.getState()
@@ -164,9 +169,13 @@ export default function VienChucFormPage() {
   }
   const donViOptions = (scopeDonViId
     ? donVis.filter((d) => d.id === scopeDonViId)
-    : donVis.filter((d) => d.active).sort(soSanhTruong)
+    : donVis.filter((d) => (d.active && trongPhamVi(d.id)) || d.id === vc?.donViId).sort(soSanhTruong)
   ).map((d) => ({ value: d.id, label: d.ten }))
 
+  // Khối của đơn vị đang chọn: danh mục của trường không hiện ở phòng chuyên môn, ĐVSN và ngược lại.
+  // Giá trị đang gán của hồ sơ luôn được giữ trong ô chọn để không mất dữ liệu.
+  const watchDonViSom = Form.useWatch('donViId', form) as string | undefined
+  const khoiForm = khoiCuaLoai(donVis.find((d) => d.id === (watchDonViSom ?? scopeDonViId ?? vc?.donViId))?.loai)
   const watchVtvl = Form.useWatch('vtvl', form) as string | undefined
   const watchKhongBhxh = Form.useWatch('khongThamGiaBhxh', form) as boolean | undefined
   const watchChucDanhIdRaw = Form.useWatch('chucDanhId', form) as string | undefined
@@ -175,7 +184,7 @@ export default function VienChucFormPage() {
   // Ngạch/hạng lọc theo VTVL; ngạch đang gán của hồ sơ cũ luôn được giữ lại để không mất dữ liệu
   const chucDanhOptions = chucDanhs
     .filter((c) => c.active)
-    .filter((c) => chucDanhHopLeVoiVtvl(c.nhom, watchVtvl) || c.id === watchChucDanhIdRaw)
+    .filter((c) => (apDungChoKhoi(khoiChucDanh(c), khoiForm) && chucDanhHopLeVoiVtvl(c.nhom, watchVtvl)) || c.id === watchChucDanhIdRaw)
     .sort(soSanhMaChucDanh)
     .map((c) => ({
       value: c.id,
@@ -184,20 +193,30 @@ export default function VienChucFormPage() {
         : `${c.ma} - ${c.ten} (không thuộc VTVL đang chọn)`,
     }))
 
+  const pcDangChon = new Set((Form.useWatch('phuCaps', form) as { loaiPhuCapId?: string }[] | undefined ?? []).map((p) => p?.loaiPhuCapId))
   const phuCapOptions = sapXepLoaiPhuCap(loaiPhuCaps.filter((pc) => pc.active))
+    .filter((pc) => apDungChoKhoi(khoiPhuCap(pc), khoiForm) || pcDangChon.has(pc.id))
     .filter((pc) => duocHuongPctn || pc.ma !== 'PC_THAM_NIEN')
     .map((pc) => ({ value: pc.id, label: `${pc.ma} - ${tenHienThiLoaiPhuCap(pc)}` }))
 
   // Chỉ các loại hình đang dùng; hồ sơ cũ mang loại đã bỏ (HĐ 111, tập sự) vẫn hiện đúng khi sửa
-  const loaiLaoDongOptions = vc && !LOAI_LAO_DONG_DANG_DUNG.includes(vc.loaiLaoDong)
-    ? [...LOAI_LAO_DONG_OPTIONS, { value: vc.loaiLaoDong, label: LOAI_LAO_DONG_LABELS[vc.loaiLaoDong] }]
-    : LOAI_LAO_DONG_OPTIONS
+  const laTruongForm = khoiForm === 'TRUONG_HOC'
+  const loaiTheoKhoi = loaiLaoDongTheoKhoi(khoiForm)
+  // Hồ sơ mới: đổi sang đơn vị khác khối mà loại hình đang chọn không dùng ở khối đó → lấy loại hình đầu tiên của khối
+  useEffect(() => {
+    if (isEdit) return
+    const hienTai = form.getFieldValue('loaiLaoDong') as LoaiLaoDong | undefined
+    if (!hienTai || !loaiTheoKhoi.includes(hienTai)) form.setFieldValue('loaiLaoDong', loaiTheoKhoi[0])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [khoiForm, isEdit])
+  const loaiLaoDongOptions = [...loaiTheoKhoi, ...(vc && !loaiTheoKhoi.includes(vc.loaiLaoDong) ? [vc.loaiLaoDong] : [])]
+    .map((k) => ({ value: k, label: LOAI_LAO_DONG_LABELS[k] }))
 
-  const vtvlOptions = vtvls.filter((v) => v.active).map((v) => ({ value: v.ma, label: v.ten }))
+  const vtvlOptions = vtvls.filter((v) => v.active && (apDungChoKhoi(khoiVtvl(v), khoiForm) || v.ma === vc?.vtvl)).map((v) => ({ value: v.ma, label: v.ten }))
   // Có lựa chọn rõ ràng "Không giữ chức vụ" - trước đây chỉ bỏ được bằng nút ✕ nhỏ, khó thấy khi chuyển Phó HT về giáo viên
   const chucVuOptions = [
-    { value: KHONG_CHUC_VU, label: 'Không giữ chức vụ (giáo viên, nhân viên)' },
-    ...chucVus.filter((c) => c.active).map((c) => ({ value: c.ma, label: c.ten })),
+    { value: KHONG_CHUC_VU, label: laTruongForm ? 'Không giữ chức vụ (giáo viên, nhân viên)' : 'Không giữ chức vụ' },
+    ...chucVus.filter((c) => c.active && (apDungChoKhoi(khoiChucVu(c), khoiForm) || c.ma === vc?.chucVu)).map((c) => ({ value: c.ma, label: c.ten })),
   ]
 
   const watchChucDanhId = Form.useWatch('chucDanhId', form)
@@ -224,11 +243,16 @@ export default function VienChucFormPage() {
   const pccvInfo = useMemo(() => {
     if (!watchDonViId || !watchChucVu) return null
     const dv = donVis.find((d) => d.id === watchDonViId)
+    // Phòng chuyên môn: mức cố định theo chức vụ, không xếp hạng
+    if (dv && !laTruongHoc(dv.loai)) {
+      const hs = heSoPccvKhongHang(dv.loai, watchChucVu)
+      return hs === undefined ? null : { hang: undefined, heSo: hs, loai: dv.loai, moTa: 'phòng chuyên môn thuộc UBND phường, từ 10/01/2026', canCu: '' }
+    }
     // Hạng trường theo quy mô năm học hiện hành (trang Thông tin trường)
     const h = hangTruongTheoNamHoc(dv, useDanhMucStore.getState().quyMoTruongs, namHocHienHanh())
     if (!dv || !h) return null
     const heSo = toNuoiDuong ? 0 : getPhuCapChucVuHeSo(dv.loai as LoaiDonVi, h.hang, watchChucVu as ChucVu)
-    return { hang: h.hang, heSo, loai: dv.loai, moTa: moTaHang(h) }
+    return { hang: h.hang as number | undefined, heSo, loai: dv.loai, moTa: moTaHang(h), canCu: '; TT 33/2005' }
   }, [watchDonViId, watchChucVu, donVis, toNuoiDuong])
 
   // ── Bảo lưu phụ cấp chức vụ khi sắp xếp (NĐ 178/2024, NĐ 67/2025) ──
@@ -361,7 +385,7 @@ export default function VienChucFormPage() {
   const watchLoaiLaoDong = Form.useWatch('loaiLaoDong', form) as LoaiLaoDong | undefined
   // Viên chức biên chế: bắt buộc khai mã ngạch, nguồn kinh phí, ngày vào biên chế, bậc lương.
   // Các loại hình hợp đồng: mã ngạch, bậc lương không bắt buộc; không có nguồn kinh phí / ngày biên chế.
-  const laBienChe = watchLoaiLaoDong === 'VIEN_CHUC'
+  const laBienChe = watchLoaiLaoDong === 'VIEN_CHUC' || watchLoaiLaoDong === 'CONG_CHUC'
   const watchTrangThai = Form.useWatch('trangThai', form) as string | undefined
   const watchHinhThucLuong = Form.useWatch('hinhThucLuong', form) as HinhThucLuong | undefined
   // Hợp đồng nhận lương theo mức tiền → không khai bậc lương, hệ số
@@ -369,7 +393,7 @@ export default function VienChucFormPage() {
   const nhanBienChe = (text: string) => (
     <Space size={6}>
       {text}
-      {laBienChe && <Tag color="blue" style={{ marginInlineEnd: 0, fontSize: 12, lineHeight: '16px' }}>VC biên chế</Tag>}
+      {laBienChe && <Tag color="blue" style={{ marginInlineEnd: 0, fontSize: 12, lineHeight: '16px' }}>{watchLoaiLaoDong === 'CONG_CHUC' ? 'Công chức' : 'VC biên chế'}</Tag>}
     </Space>
   )
 
@@ -809,7 +833,7 @@ export default function VienChucFormPage() {
             >
               <Select
                 options={chucVuOptions}
-                placeholder="Không giữ chức vụ (giáo viên, nhân viên)"
+                placeholder={laTruongForm ? 'Không giữ chức vụ (giáo viên, nhân viên)' : 'Không giữ chức vụ'}
                 onChange={(v: string) => {
                   // Đồng bộ Vị trí việc làm với chức vụ quản lý
                   const vtvl = form.getFieldValue('vtvl')
@@ -1042,7 +1066,7 @@ export default function VienChucFormPage() {
           ) : pccvInfo && pccvInfo.heSo > 0 && (() => {
             const dongCv = (watchPhuCaps ?? []).find((pc) => pc?.loaiPhuCapId === pcChucVuId) as { giaTri?: number } | undefined
             const khop = dongCv?.giaTri === pccvInfo.heSo
-            const theoQd = `PC chức vụ theo chức vụ ${tenChucVu(watchChucVu)} (${pccvInfo.moTa}; TT 33/2005): hệ số ${String(pccvInfo.heSo).replace('.', ',')}`
+            const theoQd = `PC chức vụ theo chức vụ ${tenChucVu(watchChucVu)} (${pccvInfo.moTa}${pccvInfo.canCu}): hệ số ${String(pccvInfo.heSo).replace('.', ',')}`
             return (
               <Col xs={24}>
                 <Alert
@@ -1088,7 +1112,7 @@ export default function VienChucFormPage() {
           <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="batDauBhxhGd"
-              label="Bắt đầu đóng BHXH trong ngành giáo dục"
+              label={laTruongForm ? 'Bắt đầu đóng BHXH trong ngành giáo dục' : 'Tháng bắt đầu đóng BHXH'}
               tooltip="Tháng bắt đầu đóng BHXH bắt buộc trong ngành giáo dục (theo sổ / quá trình đóng BHXH) - mọi người đều khai (biên chế, hợp đồng). Với CBQL, giáo viên là căn cứ tính đủ 5 năm xếp phụ cấp thâm niên nhà giáo lần đầu."
             >
               <DatePicker picker="month" format="MM/YYYY" placeholder="Tháng/năm" disabled={!!watchKhongBhxh} style={{ width: '100%' }} />

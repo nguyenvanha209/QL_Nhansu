@@ -6,6 +6,7 @@ import {
   WarningOutlined, ClockCircleOutlined, AuditOutlined, FileTextOutlined, NotificationOutlined,
   SafetyCertificateOutlined, SolutionOutlined, CheckCircleOutlined,
 } from '@ant-design/icons'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { useSalaryAlerts } from '@/hooks/useSalaryAlerts'
 import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
@@ -15,6 +16,7 @@ import { useChuyenDoiKeToan } from '@/hooks/useChuyenDoiKeToan'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { isDangCongTac } from '@/types/vienChuc'
 import { LOAI_HO_SO_NANG_LUONG } from '@/types/deXuat'
+import { KHOI_DON_VI } from '@/types/donVi'
 
 interface Viec {
   key: string
@@ -35,12 +37,22 @@ const MAU_ICON: Record<Viec['mau'], string> = { red: '#dc2626', orange: '#d97706
 export default function ViecCanLam() {
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission } = useAuth()
-  const alerts = useSalaryAlerts(scopeDonViId, 90)
+  const { trongPhamVi, khoi } = usePhamVi()
+  const tatCaCanhBao = useSalaryAlerts(scopeDonViId, 90)
+  const alerts = useMemo(() => tatCaCanhBao.filter((a) => trongPhamVi(a.donViId)), [tatCaCanhBao, trongPhamVi])
   const soNangLuongCho = useDeXuatCanXuLy(LOAI_HO_SO_NANG_LUONG)
   const soDeXuatCho = useDeXuatCanXuLy()
   const soThongBaoMoi = useThongBaoMoi()
-  const boNhiem = useBoNhiem(scopeDonViId)
-  const keToan = useChuyenDoiKeToan(scopeDonViId)
+  const boNhiemTatCa = useBoNhiem(scopeDonViId)
+  const keToanTatCa = useChuyenDoiKeToan(scopeDonViId)
+  const boNhiem = useMemo(() => ({
+    canNhac: boNhiemTatCa.canNhac.filter((t) => trongPhamVi(t.vc.donViId)),
+    chuaNhap: boNhiemTatCa.chuaNhap.filter((t) => trongPhamVi(t.vc.donViId)),
+  }), [boNhiemTatCa, trongPhamVi])
+  const keToan = useMemo(() => ({
+    canNhac: keToanTatCa.canNhac.filter((t) => trongPhamVi(t.vc.donViId)),
+    chuaNhap: keToanTatCa.chuaNhap.filter((t) => trongPhamVi(t.vc.donViId)),
+  }), [keToanTatCa, trongPhamVi])
   const vienChucs = useVienChucStore((s) => s.vienChucs)
 
   const coXemHoSo = hasPermission('vienChuc', 'read')
@@ -48,9 +60,9 @@ export default function ViecCanLam() {
 
   const soChuaKhaiBhxh = useMemo(
     () => (coXemHoSo
-      ? vienChucs.filter((v) => v.active && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId) && !v.batDauBhxhGd && !v.khongThamGiaBhxh).length
+      ? vienChucs.filter((v) => v.active && isDangCongTac(v) && trongPhamVi(v.donViId) && !v.batDauBhxhGd && !v.khongThamGiaBhxh).length
       : 0),
-    [vienChucs, scopeDonViId, coXemHoSo],
+    [vienChucs, trongPhamVi, coXemHoSo],
   )
 
   const viecs = useMemo<Viec[]>(() => {
@@ -74,7 +86,7 @@ export default function ViecCanLam() {
   return (
     <Card
       title="Việc cần làm"
-      extra={<Typography.Text type="secondary" style={{ fontSize: 13 }}>{scopeDonViId ? 'Trong trường của bạn' : 'Toàn phường'}</Typography.Text>}
+      extra={<Typography.Text type="secondary" style={{ fontSize: 13 }}>{scopeDonViId ? 'Trong đơn vị của bạn' : khoi ? KHOI_DON_VI.find((k) => k.key === khoi)?.ten : 'Toàn phường'}</Typography.Text>}
       className="viec-can-lam"
       style={{ marginBottom: 16 }}
       styles={{ body: { padding: 0 } }}

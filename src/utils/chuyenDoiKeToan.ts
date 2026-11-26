@@ -3,10 +3,17 @@ import type { VienChuc } from '@/types/vienChuc'
 import { isDangCongTac } from '@/types/vienChuc'
 import { calcRetirementDate } from './retirement'
 
-// Định kỳ chuyển đổi vị trí công tác đối với kế toán các trường (phòng ngừa tham nhũng).
-// Căn cứ do người dùng cung cấp: Điều 24 Luật Phòng, chống tham nhũng; Chương V Nghị định 59/2019/NĐ-CP;
-// Điều 9 Nghị định 184/2026/NĐ-CP (sửa đổi NĐ 59/2019). Thời hạn từng văn bản có thể khác nhau (VD từ đủ 02 đến 05 năm,
-// lĩnh vực giáo dục 03 - 05 năm) nên số tháng dưới đây là THAM SỐ quản trị / Phòng VHXH chỉnh được theo văn bản áp dụng.
+// Định kỳ chuyển đổi vị trí công tác đối với kế toán (phòng ngừa tham nhũng).
+// Căn cứ: Điều 24 Luật Phòng, chống tham nhũng (sửa đổi bởi Luật 132/2025/QH15); Chương V Nghị định 59/2019/NĐ-CP
+// (sửa đổi bởi NĐ 134/2021, NĐ 184/2026); Thông tư 159/2026/TT-BTC ngày 28/10/2026 của Bộ Tài chính (hiệu lực 15/12/2026,
+// thay TT 27/2024/TT-BTC và TT 18/2022/TT-BKHĐT):
+//  - Phụ lục, mục 2: "Kế toán" thuộc danh mục vị trí phải định kỳ chuyển đổi (công chức, viên chức không giữ chức vụ
+//    lãnh đạo, quản lý - Điều 1 khoản 2);
+//  - Điều 4 khoản 1: thời hạn "từ đủ 02 năm đến 05 năm" → mặc định 24 - 60 tháng;
+//  - Điều 4 khoản 2: tính từ quyết định điều động, bố trí, phân công có hiệu lực; đổi vị trí mà bản chất công việc không
+//    đổi thì không tính là đã chuyển đổi (thời gian tính liên tục);
+//  - Điều 7: thời gian đã giữ vị trí trước 15/12/2026 được tính liên tục; kế hoạch đã duyệt tiếp tục thực hiện.
+// Số tháng vẫn là THAM SỐ - Phòng VHXH, quản trị chỉnh được nếu văn bản thay đổi.
 
 /** Tham số thời hạn - lưu ở danh mục, sửa được */
 export interface QuyDinhChuyenDoiKeToan {
@@ -18,7 +25,9 @@ export interface QuyDinhChuyenDoiKeToan {
   thangNhacTruoc: number
 }
 
-export const QUY_DINH_KE_TOAN_MAC_DINH: QuyDinhChuyenDoiKeToan = { thangToiThieu: 36, thangToiDa: 60, thangNhacTruoc: 6 }
+export const QUY_DINH_KE_TOAN_MAC_DINH: QuyDinhChuyenDoiKeToan = { thangToiThieu: 24, thangToiDa: 60, thangNhacTruoc: 6 }
+/** Mặc định cũ (03 - 05 năm) trước Thông tư 159/2026/TT-BTC - dùng để tự chuyển dữ liệu chưa sửa tay */
+export const QUY_DINH_KE_TOAN_CU = { thangToiThieu: 36, thangToiDa: 60 }
 
 export type MucChuyenDoiKeToan = 'QUA_TOI_DA' | 'DU_THOI_HAN' | 'SAP_DU' | 'CON_HAN' | 'NGHI_HUU_TRUOC' | 'CHUA_NHAP'
 
@@ -28,7 +37,7 @@ export const MUC_CHUYEN_DOI_KE_TOAN: Record<MucChuyenDoiKeToan, { ten: string; m
   SAP_DU: { ten: 'Sắp đủ thời hạn', mau: '#d48806', moTa: 'Sắp đủ thời hạn tối thiểu - chuẩn bị phương án chuyển đổi' },
   CON_HAN: { ten: 'Còn thời hạn', mau: 'green', moTa: 'Chưa đến mốc nhắc' },
   NGHI_HUU_TRUOC: { ten: 'Nghỉ hưu trước hạn chuyển đổi', mau: 'purple', moTa: 'Đến tuổi nghỉ hưu trước khi đủ thời hạn chuyển đổi' },
-  CHUA_NHAP: { ten: 'Chưa nhập mốc bổ nhiệm', mau: 'default', moTa: 'Trường cần nhập mốc bổ nhiệm, phân công kế toán gần nhất' },
+  CHUA_NHAP: { ten: 'Chưa nhập mốc bổ nhiệm', mau: 'default', moTa: 'Đơn vị cần nhập mốc quyết định điều động, bố trí, phân công kế toán gần nhất' },
 }
 
 /** Các mức cần nhắc việc (đếm ở menu, chuông) */

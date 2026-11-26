@@ -887,13 +887,22 @@ export function batNhanThayDoiTucThi(): () => void {
   }
 }
 
-/** Ghi nhận nội dung từng mảnh đang có trên máy chủ để lần ghi sau chỉ ghi mảnh thực sự đổi */
-export function ghiNhanManhDaCo(ten: string) {
+/**
+ * Ghi nhận nội dung từng mảnh đang có trên máy chủ để lần ghi sau chỉ ghi mảnh thực sự đổi.
+ * khoaCoTrenMayChu: chỉ đánh dấu những mảnh THỰC SỰ có trên máy chủ. Kho mới chuyển sang chia mảnh (dữ liệu còn
+ * nằm ở ô cũ chưa chia) mà đánh dấu cả các mảnh chưa tồn tại thì lần ghi đầu chỉ tạo mảnh vừa sửa, rồi ô cũ bị dọn
+ * → mất dữ liệu của các mảnh kia. Không đánh dấu thì lần ghi đầu tạo đủ mọi mảnh trước khi dọn ô cũ.
+ */
+export function ghiNhanManhDaCo(ten: string, khoaCoTrenMayChu?: Set<string>) {
   if (!laKhoChia(ten)) return
   try {
     const khoi = JSON.parse(khoCucBo.getItem(ten) ?? 'null') as KhoiTrangThai | null
     if (!khoi) return
-    for (const [manh, nd] of chiaTrangThai(ten, khoi)) manhDaGhi.set(khoaManh(ten, manh), JSON.stringify(nd))
+    for (const [manh, nd] of chiaTrangThai(ten, khoi)) {
+      const khoa = khoaManh(ten, manh)
+      if (khoaCoTrenMayChu && !khoaCoTrenMayChu.has(khoa)) continue
+      manhDaGhi.set(khoa, JSON.stringify(nd))
+    }
   } catch { /* bỏ qua */ }
 }
 

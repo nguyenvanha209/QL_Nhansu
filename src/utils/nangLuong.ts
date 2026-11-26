@@ -41,3 +41,41 @@ export function laBacCuoi(chucDanhId: string | undefined, bac: number | undefine
   const bang = bacLuongs.filter((b) => b.chucDanhId === chucDanhId)
   return !!bang.length && bac === Math.max(...bang.map((b) => b.bac))
 }
+
+// ───────────────────────────── Thâm niên vượt khung ─────────────────────────────
+// Người đã xếp bậc cuối: đủ 36 tháng (A0 trở lên) hoặc 24 tháng (B, C) ở bậc cuối thì hưởng PC TNVK 5%,
+// từ năm sau MỖI NĂM xét thêm 1% (TT 04/2005/TT-BNV). Trước đây ngày đến hạn của người đã hưởng vượt khung
+// vẫn tính theo chu kỳ bậc (+3 / +2 năm) nên họ chỉ lọt danh sách nâng lương thường xuyên 3 năm một lần.
+
+type BanPhuCap = { giaTri: number; ngayHieuLuc?: string; createdAt?: string }
+
+/**
+ * Mốc hưởng PC TNVK gần nhất. Bản phụ cấp ghi khi nhập Excel / thêm tay thường lấy ngày nhập làm ngày hiệu lực
+ * (trùng ngày tạo) - không phải mốc thật, khi đó dùng mốc hưởng của bản lương ("Thời điểm tính nâng bậc / TNVK").
+ */
+export function mocHuongTnvk(
+  hsl: { ngayHieuLuc?: string },
+  tnvk?: BanPhuCap,
+): string | undefined {
+  const moc: string[] = []
+  if (tnvk && ngayHopLe(tnvk.ngayHieuLuc) && tnvk.ngayHieuLuc !== tnvk.createdAt?.slice(0, 10)) moc.push(tnvk.ngayHieuLuc)
+  if (ngayHopLe(hsl.ngayHieuLuc)) moc.push(hsl.ngayHieuLuc)
+  return moc.sort().pop()
+}
+
+/**
+ * Ngày đến hạn xét nâng lương thường xuyên thực tế:
+ * - bậc cuối đã hưởng TNVK (> 0%): mốc hưởng TNVK gần nhất + 1 năm;
+ * - còn lại: ngày nâng lương tiếp theo đang ghi (mốc bậc + 3 / 2 năm; bậc cuối chưa hưởng TNVK = ngày đủ điều kiện 5%).
+ */
+export function ngayDenHanNangLuong(
+  hsl: { chucDanhId: string; bac: number; ngayHieuLuc?: string; ngayNangLuongTiepTheo: string },
+  tnvk: BanPhuCap | undefined,
+  bacLuongs: BacLuong[],
+): string {
+  if (tnvk && tnvk.giaTri > 0 && laBacCuoi(hsl.chucDanhId, hsl.bac, bacLuongs)) {
+    const moc = mocHuongTnvk(hsl, tnvk)
+    if (moc) return congNam(moc, 1)
+  }
+  return hsl.ngayNangLuongTiepTheo
+}

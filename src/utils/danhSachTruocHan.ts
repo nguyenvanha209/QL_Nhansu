@@ -1,6 +1,7 @@
 // Danh sách đề nghị nâng bậc lương trước thời hạn để in ra họp duyệt tại trường (trước khi trình chính thức)
 // theo mẫu của trường - một danh sách xếp theo thứ tự ưu tiên; người sau số suất tối đa ghi chú vượt tỷ lệ.
 import dayjs from 'dayjs'
+import { vietHoaDauTu } from '@/utils/helpers'
 import type { ChiTietDeXuat } from '@/types/deXuat'
 import type { VienChuc } from '@/types/vienChuc'
 import { CHUC_VU_LABELS } from '@/types/vienChuc'
@@ -68,7 +69,7 @@ export function xuatExcelDanhSachTruong(d: DauVao) {
     [...trong(10), `Gia Viên, ngày ${ngay.format('DD')} tháng ${ngay.format('MM')} năm ${ngay.year()}`, ...trong(4)],
     [...trong(10), 'HIỆU TRƯỞNG', ...trong(4)],
     [], [], [], [],
-    [...trong(10), d.hieuTruong ?? '', ...trong(4)],
+    [...trong(10), vietHoaDauTu(d.hieuTruong), ...trong(4)],
   ]
   const dong = [...dau, ...tieuDe, ...than, ...chuKy]
   const g = (r1: number, c1: number, r2: number, c2: number) => ({ r1, c1, r2, c2 })

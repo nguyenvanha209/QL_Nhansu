@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, Table, Select, Space, Tag, Typography, Statistic, Row, Col, Tabs, Button } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -6,6 +6,7 @@ import DaNghiHuu from './DaNghiHuu'
 import { ClockCircleOutlined, FileExcelOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { calcRetirementDate, calcPensionStartDate, getDaysUntilRetirement, getMonthsUntilRetirement, moTaTuoiNghiHuu } from '@/utils/retirement'
 import { formatDate } from '@/utils/helpers'
@@ -30,13 +31,16 @@ const mucDo = (days: number) =>
 export default function DuBaoNghiHuuPage() {
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission } = useAuth()
+  const { trongPhamVi } = usePhamVi()
   const [years, setYears] = useState(3)
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (filterDonVi && !trongPhamVi(filterDonVi)) setFilterDonVi(undefined) }, [filterDonVi, trongPhamVi])
 
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
-  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && laBienChe(v) && isDangCongTac(v) && (!scopeDonViId || v.donViId === scopeDonViId)), [allVienChucs, scopeDonViId])
+  const vienChucs = useMemo(() => allVienChucs.filter((v) => v.active && laBienChe(v) && isDangCongTac(v) && trongPhamVi(v.donViId)), [allVienChucs, trongPhamVi])
   const allDonVis = useDanhMucStore((s) => s.donVis)
-  const donVis = useMemo(() => allDonVis.filter((d) => d.active).sort(soSanhTruong), [allDonVis])
+  const donVis = useMemo(() => allDonVis.filter((d) => d.active && trongPhamVi(d.id)).sort(soSanhTruong), [allDonVis, trongPhamVi])
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
 
   const data = useMemo<Dong[]>(() => {

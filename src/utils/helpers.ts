@@ -42,6 +42,16 @@ export function toUpperName(s?: string): string {
   return s.trim().replace(/\s+/g, ' ').toLocaleUpperCase('vi')
 }
 
+/**
+ * Họ tên trong danh sách, biểu mẫu xuất ra (Excel, Word): Viết Hoa Đầu Từ - "TRẦN HẢI YẾN" → "Trần Hải Yến".
+ * Hồ sơ vẫn lưu IN HOA (quy định nhập liệu); chỉ đổi cách trình bày trên văn bản.
+ */
+export function vietHoaDauTu(s?: string): string {
+  if (!s) return ''
+  return s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi')
+    .split(' ').map((t) => (t ? t.charAt(0).toLocaleUpperCase('vi') + t.slice(1) : t)).join(' ')
+}
+
 // ── Thứ tự hiển thị danh sách viên chức: CBQL → Giáo viên → Nhân viên ──
 const VTVL_ORDER: Record<string, number> = { CBQL: 1, GIAO_VIEN: 2, NHAN_VIEN: 3 }
 const NHOM_ORDER: Record<string, number> = { QUAN_LY: 1, GIAO_VIEN: 2, NHAN_VIEN: 3 }

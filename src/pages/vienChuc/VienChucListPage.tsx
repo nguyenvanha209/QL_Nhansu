@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Table, Button, Input, Select, Space, Tag, Typography, Card, Tooltip, Popconfirm, App } from 'antd'
 import { PlusOutlined, SearchOutlined, EditOutlined, EyeOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useAuth } from '@/hooks/useAuth'
 import { matchSearch, formatDate, soSanhVienChuc } from '@/utils/helpers'
-import { LOAI_LAO_DONG_LABELS, LOAI_LAO_DONG_OPTIONS, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, isDangCongTac } from '@/types/vienChuc'
+import { LOAI_LAO_DONG_LABELS, loaiLaoDongTheoKhoi, VTVL_LABELS, TRANG_THAI_CONG_TAC_LABELS, isDangCongTac } from '@/types/vienChuc'
 import type { TrangThaiCongTac } from '@/types/vienChuc'
 import ImportVienChucModal, { ExportExcelButton } from './ImportVienChucModal'
 import { NHOM_VI_TRI, NHOM_LOAI_HINH, nhomViTri, nhomLoaiHinh } from '@/utils/nhomViTri'
@@ -28,18 +29,21 @@ export default function VienChucListPage() {
   const { message } = App.useApp()
   const navigate = useNavigate()
   const { scopeDonViId, hasPermission } = useAuth()
+  const { trongPhamVi, khoi } = usePhamVi()
   const allVienChucs = useVienChucStore((s) => s.vienChucs)
   const softDelete = useVienChucStore((s) => s.softDelete)
   const allDonVis = useDanhMucStore((s) => s.donVis)
   const donVis = useMemo(
-    () => allDonVis.filter((d) => d.active).sort(soSanhTruong),
-    [allDonVis]
+    () => allDonVis.filter((d) => d.active && trongPhamVi(d.id)).sort(soSanhTruong),
+    [allDonVis, trongPhamVi]
   )
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const vtvls = useDanhMucStore((s) => s.vtvls)
 
   const [search, setSearch] = useState('')
   const [filterDonVi, setFilterDonVi] = useState<string | undefined>(scopeDonViId ?? undefined)
+  // Đổi khối ở đầu trang mà đơn vị đang chọn không thuộc khối mới → bỏ chọn đơn vị ngoài khối
+  useEffect(() => { if (filterDonVi && !trongPhamVi(filterDonVi)) setFilterDonVi(undefined) }, [filterDonVi, trongPhamVi])
   const [filterLoai, setFilterLoai] = useState<string | undefined>()
   // Mặc định chỉ hiện người đang công tác; hồ sơ Chuyển đi / Nghỉ hưu / Thôi việc xem qua bộ lọc
   const [filterTrangThai, setFilterTrangThai] = useState<string>(LOC_DANG_CONG_TAC)
@@ -52,7 +56,7 @@ export default function VienChucListPage() {
   const loaiTruong = useMemo(() => new Map(allDonVis.map((d) => [d.id, d.loai])), [allDonVis])
 
   const data = useMemo(() => {
-    let list = allVienChucs.filter((v) => v.active && (!scopeDonViId || v.donViId === scopeDonViId))
+    let list = allVienChucs.filter((v) => v.active && trongPhamVi(v.donViId))
     if (filterDonVi) list = list.filter((v) => v.donViId === filterDonVi)
     if (filterLoai) list = list.filter((v) => v.loaiLaoDong === filterLoai)
     if (filterTrangThai === LOC_DANG_CONG_TAC) list = list.filter(isDangCongTac)
@@ -64,7 +68,7 @@ export default function VienChucListPage() {
     // Thứ tự chuẩn: CBQL → Giáo viên → Nhân viên
     const nhomCua = (v: (typeof list)[number]) => chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom
     return [...list].sort(soSanhVienChuc(nhomCua))
-  }, [allVienChucs, scopeDonViId, filterDonVi, filterLoai, filterTrangThai, search, chucDanhs, locNhom, locLoaiHinh, locCapHoc, loaiTruong])
+  }, [allVienChucs, trongPhamVi, filterDonVi, filterLoai, filterTrangThai, search, chucDanhs, locNhom, locLoaiHinh, locCapHoc, loaiTruong])
 
   const canWrite = hasPermission('vienChuc', 'write')
 
@@ -152,7 +156,7 @@ export default function VienChucListPage() {
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>Danh sách viên chức ({data.length})</Title>
+        <Title level={4} style={{ margin: 0 }}>Danh sách nhân sự ({data.length})</Title>
         <Space>
           <ExportExcelButton vienChucs={data} />
           {canWrite && (
@@ -188,7 +192,7 @@ export default function VienChucListPage() {
         />
         {!scopeDonViId && (
           <Select
-            placeholder="Chọn đơn vị trường"
+            placeholder="Chọn đơn vị"
             style={{ width: 200 }}
             value={filterDonVi}
             onChange={setFilterDonVi}
@@ -202,7 +206,7 @@ export default function VienChucListPage() {
           value={filterLoai}
           onChange={setFilterLoai}
           allowClear
-          options={LOAI_LAO_DONG_OPTIONS}
+          options={loaiLaoDongTheoKhoi(khoi ?? undefined).map((k) => ({ value: k, label: LOAI_LAO_DONG_LABELS[k] }))}
         />
         <Select
           placeholder="Trạng thái"

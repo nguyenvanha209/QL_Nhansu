@@ -46,7 +46,7 @@ export interface DeXuatChuyenCongTac {
 export const TRANG_THAI_CCT_LABELS: Record<TrangThaiChuyenCongTac, string> = {
   NHAP: 'Bản nháp',
   CHO_DUYET: 'Chờ Quản trị duyệt',
-  DA_DUYET: 'Chờ trường đến tiếp nhận',
+  DA_DUYET: 'Chờ đơn vị đến tiếp nhận',
   HOAN_TAT: 'Đã hoàn tất',
   TU_CHOI: 'Bị từ chối',
 }

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { LOAI_DE_XUAT_DIEU_CHINH } from '@/types/deXuat'
 import type { LoaiDeXuat } from '@/types/deXuat'
@@ -13,13 +14,15 @@ import type { LoaiDeXuat } from '@/types/deXuat'
 export function useDeXuatCanXuLy(loais: LoaiDeXuat[] = LOAI_DE_XUAT_DIEU_CHINH): number {
   const deXuats = useDeXuatStore((s) => s.deXuats)
   const { currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong } = useAuth()
+  // Tài khoản toàn phường đang xem một khối: chỉ đếm phiếu của đơn vị thuộc khối đó
+  const { trongPhamVi } = usePhamVi()
 
   return useMemo(() => {
     if (!currentUser || !hasPermission('deXuat', 'read')) return 0
     const coQuyenDuyet = hasPermission('deXuat', 'approve')
     const coQuyenLap = hasPermission('deXuat', 'write')
     return deXuats.filter((d) => {
-      if (!loais.includes(d.loai)) return false
+      if (!loais.includes(d.loai) || !trongPhamVi(d.donViId)) return false
       switch (d.trangThai) {
         case 'CHO_HIEU_TRUONG_DUYET':
           return laQuanTri || (isHieuTruong && coQuyenDuyet && d.donViId === scopeDonViId)
@@ -36,18 +39,19 @@ export function useDeXuatCanXuLy(loais: LoaiDeXuat[] = LOAI_DE_XUAT_DIEU_CHINH):
           return false
       }
     }).length
-  }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong, loais.join()])
+  }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong, loais.join(), trongPhamVi])
 }
 
 /**
- * Tổng số phiếu các trường đang trong quy trình (kế toán đã lập, chưa phê duyệt xong / chưa bị từ chối) - số nhỏ màu xanh
+ * Tổng số phiếu các đơn vị đang trong quy trình (kế toán đã lập, chưa phê duyệt xong / chưa bị từ chối) - số nhỏ màu xanh
  * trên menu cho Phòng VHXH, Lãnh đạo, quản trị nắm khối lượng, tránh quên. Tài khoản trường trả về 0.
  */
 export function useDeXuatDangXuLy(loais: LoaiDeXuat[] = LOAI_DE_XUAT_DIEU_CHINH): number {
   const deXuats = useDeXuatStore((s) => s.deXuats)
   const { currentUser, scopeDonViId, hasPermission } = useAuth()
+  const { trongPhamVi } = usePhamVi()
   return useMemo(() => {
     if (!currentUser || scopeDonViId || !hasPermission('deXuat', 'read')) return 0
-    return deXuats.filter((d) => loais.includes(d.loai) && d.trangThai !== 'DA_PHE_DUYET' && d.trangThai !== 'TU_CHOI').length
-  }, [deXuats, currentUser, scopeDonViId, hasPermission, loais.join()])
+    return deXuats.filter((d) => loais.includes(d.loai) && trongPhamVi(d.donViId) && d.trangThai !== 'DA_PHE_DUYET' && d.trangThai !== 'TU_CHOI').length
+  }, [deXuats, currentUser, scopeDonViId, hasPermission, loais.join(), trongPhamVi])
 }

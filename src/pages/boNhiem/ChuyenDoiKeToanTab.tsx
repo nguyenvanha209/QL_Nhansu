@@ -91,7 +91,7 @@ export default function ChuyenDoiKeToanTab() {
 
   const xuat = () => exportToExcel(ds.map((t, i) => ({
     'STT': i + 1,
-    'Trường': tenDv.get(t.vc.donViId) ?? '',
+    'Đơn vị': tenDv.get(t.vc.donViId) ?? '',
     'Họ và tên': `${t.vc.ho} ${t.vc.ten}`,
     'Mốc bổ nhiệm, phân công kế toán gần nhất': formatDate(t.moc),
     'Số quyết định': t.soQuyetDinh ?? '',
@@ -104,7 +104,7 @@ export default function ChuyenDoiKeToanTab() {
 
   const columns: ColumnsType<TinhTrangKeToan> = [
     cotSTT<TinhTrangKeToan>(),
-    ...(scopeDonViId ? [] : [{ title: 'Trường', key: 'dv', width: 200, render: (_: unknown, t: TinhTrangKeToan) => tenDv.get(t.vc.donViId) ?? '' }]),
+    ...(scopeDonViId ? [] : [{ title: 'Đơn vị', key: 'dv', width: 200, render: (_: unknown, t: TinhTrangKeToan) => tenDv.get(t.vc.donViId) ?? '' }]),
     {
       title: 'Họ và tên', key: 'ht', width: 200, fixed: 'left',
       render: (_, t) => <a onClick={() => navigate(`/vien-chuc/${t.vc.id}`)}>{t.vc.ho} {t.vc.ten}</a>,
@@ -167,7 +167,7 @@ export default function ChuyenDoiKeToanTab() {
 
       <Space wrap style={{ marginBottom: 8 }}>
         {!scopeDonViId && (
-          <Select allowClear placeholder="Tất cả trường" style={{ width: 260 }} value={donViId} onChange={setDonViId} showSearch optionFilterProp="label"
+          <Select allowClear placeholder="Tất cả đơn vị" style={{ width: 260 }} value={donViId} onChange={setDonViId} showSearch optionFilterProp="label"
             options={donVis.filter((d) => d.active).sort(soSanhTruong).map((d) => ({ value: d.id, label: d.ten }))} />
         )}
         {suaDuoc && <Button type="primary" icon={<SaveOutlined />} disabled={!soThayDoi} onClick={luu}>Lưu {soThayDoi ? `${soThayDoi} thay đổi` : ''}</Button>}

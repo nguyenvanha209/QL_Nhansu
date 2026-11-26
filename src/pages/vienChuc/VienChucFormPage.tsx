@@ -150,7 +150,7 @@ export default function VienChucFormPage() {
       content: (
         <div>
           <p>
-            Bậc lương, hệ số lương và mã ngạch của viên chức đang hưởng lương chỉ được thay đổi qua
+            Bậc lương, hệ số lương và mã ngạch của người đang hưởng lương chỉ được thay đổi qua
             <b> phiếu đề xuất</b> gửi Phòng Văn hóa - Xã hội duyệt. Khi phiếu được phê duyệt, hệ thống
             <b> tự cập nhật</b> vào hồ sơ và lịch sử lương.
           </p>
@@ -720,7 +720,7 @@ export default function VienChucFormPage() {
 
   // Tài khoản trường chỉ sửa hồ sơ trường mình (trước đây mở được hồ sơ trường khác bằng đường dẫn)
   if (vc && scopeDonViId && vc.donViId !== scopeDonViId) {
-    return <Result status="403" title="Không có quyền sửa hồ sơ này" subTitle="Hồ sơ thuộc trường khác." extra={<Button onClick={() => navigate('/vien-chuc')}>Về danh sách</Button>} />
+    return <Result status="403" title="Không có quyền sửa hồ sơ này" subTitle="Hồ sơ thuộc đơn vị khác." extra={<Button onClick={() => navigate('/vien-chuc')}>Về danh sách</Button>} />
   }
 
   return (
@@ -1128,7 +1128,7 @@ export default function VienChucFormPage() {
         {laBienChe ? (
           <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>
             Các ô gắn nhãn <Tag color="blue" style={{ fontSize: 12, lineHeight: '16px' }}>VC biên chế</Tag>
-            là thông tin bắt buộc theo quy định đối với viên chức biên chế.
+            là thông tin bắt buộc theo quy định đối với công chức, viên chức biên chế.
           </Text>
         ) : (
           <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>

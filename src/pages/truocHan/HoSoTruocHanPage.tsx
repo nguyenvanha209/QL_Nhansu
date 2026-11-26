@@ -193,7 +193,7 @@ export default function HoSoTruocHanPage() {
       ),
     },
     {
-      title: <Tooltip title={`Theo Quy chế của trường, tối đa ${SO_THANG_TOI_DA} tháng`}>Nâng trước (tháng)</Tooltip>, key: 'st', width: 95, align: 'center',
+      title: <Tooltip title={`Theo Quy chế của đơn vị, tối đa ${SO_THANG_TOI_DA} tháng`}>Nâng trước (tháng)</Tooltip>, key: 'st', width: 95, align: 'center',
       render: (_, c) => <InputNumber size="small" min={1} max={SO_THANG_TOI_DA} precision={0} value={c.soThangTruocHan} onChange={(v) => sua(c.vienChucId, { soThangTruocHan: v ?? undefined })} style={{ width: 70 }} />,
     },
     {
@@ -221,13 +221,13 @@ export default function HoSoTruocHanPage() {
   const trungHoSo = useMemo(() => deXuats.find((d) => d.loai === 'NANG_TRUOC_HAN' && d.id !== editId && d.donViId === donViId && d.namXet === nam && d.trangThai !== 'TU_CHOI'), [deXuats, editId, donViId, nam])
 
   const luu = async (trinh: boolean) => {
-    if (!currentUser || !donViId) { message.error('Chọn trường'); return }
+    if (!currentUser || !donViId) { message.error('Chọn đơn vị'); return }
     await lamMoiNgay()
     const loi: string[] = []
-    if (trungHoSo) loi.push(`Trường đã có hồ sơ nâng lương trước thời hạn năm ${nam} (${trungHoSo.ma}) - mỗi trường một hồ sơ mỗi năm`)
+    if (trungHoSo) loi.push(`Đơn vị đã có hồ sơ nâng lương trước thời hạn năm ${nam} (${trungHoSo.ma}) - mỗi đơn vị một hồ sơ mỗi năm`)
     if (!chiTiet.length) loi.push('Chưa có người đề nghị')
     if (trinh) {
-      if (!hoSo.toTrinh?.length) loi.push('Chưa đính kèm Tờ trình của trường')
+      if (!hoSo.toTrinh?.length) loi.push('Chưa đính kèm Tờ trình của đơn vị')
       if (!hoSo.bienBan?.length) loi.push('Chưa đính kèm Biên bản họp Hội đồng xét nâng lương trước thời hạn')
       for (const c of chiTiet) for (const l of kiemTra(c).loi) loi.push(`${tenNguoi(c)}: ${l}`)
     }
@@ -248,7 +248,7 @@ export default function HoSoTruocHanPage() {
         else id = addDeXuat({ ...noiDung, trangThai: 'NHAP', buocHienTai: 1, nguoiDeXuatId: currentUser.id, ngayDeXuat: dayjs().format('YYYY-MM-DD') }).id
         if (trinh) {
           submitDeXuat(id!, currentUser.id, currentUser.fullName)
-          message.success('Đã trình hồ sơ lên Hiệu trưởng')
+          message.success('Đã trình hồ sơ lên Thủ trưởng đơn vị')
         } else message.success('Đã lưu bản nháp')
         navigate(`/nang-truoc-han/${id}`)
       } finally { setDangLuu(false) }
@@ -285,11 +285,11 @@ export default function HoSoTruocHanPage() {
                 <Text>Năm xét:</Text>
                 <Select value={nam} onChange={setNam} style={{ width: 110 }} options={[-1, 0, 1].map((x) => dayjs().year() + x).map((n) => ({ value: n, label: n }))} />
                 {!scopeDonViId && (
-                  <Select placeholder="Chọn trường" value={donViId} onChange={(v) => { setDonViId(v); setChiTiet([]) }} style={{ width: 240 }} showSearch optionFilterProp="label" options={truongs.map((d) => ({ value: d.id, label: d.ten }))} />
+                  <Select placeholder="Chọn đơn vị" value={donViId} onChange={(v) => { setDonViId(v); setChiTiet([]) }} style={{ width: 240 }} showSearch optionFilterProp="label" options={truongs.map((d) => ({ value: d.id, label: d.ten }))} />
                 )}
                 {scopeDonViId && <Text strong>{donVi?.ten}</Text>}
               </Space>
-              {trungHoSo && <Alert type="error" showIcon title={`Trường đã có hồ sơ năm ${nam}: ${trungHoSo.ma}`} />}
+              {trungHoSo && <Alert type="error" showIcon title={`Đơn vị đã có hồ sơ năm ${nam}: ${trungHoSo.ma}`} />}
               <Alert
                 type={chiTiet.length > toiDa ? 'warning' : 'info'}
                 showIcon
@@ -303,9 +303,9 @@ export default function HoSoTruocHanPage() {
         <Col xs={24} lg={14}>
           <Card size="small" title="Hồ sơ chung" style={{ marginBottom: 16 }}>
             <Row gutter={[16, 12]}>
-              <Col xs={24} md={12}><Text strong>Tờ trình của trường <Text type="danger">*</Text></Text><MinhChungField taiLenBoi={nguoiTaiLen} value={hoSo.toTrinh} onChange={(v) => setHoSo({ ...hoSo, toTrinh: v })} /></Col>
-              <Col xs={24} md={12}><Text strong>Biên bản họp Hội đồng trường <Text type="danger">*</Text></Text><MinhChungField taiLenBoi={nguoiTaiLen} value={hoSo.bienBan} onChange={(v) => setHoSo({ ...hoSo, bienBan: v })} /></Col>
-              <Col xs={24} md={12}><Text strong>Quy chế nâng lương trước thời hạn của trường</Text><MinhChungField taiLenBoi={nguoiTaiLen} value={hoSo.quyChe} onChange={(v) => setHoSo({ ...hoSo, quyChe: v })} /></Col>
+              <Col xs={24} md={12}><Text strong>Tờ trình của đơn vị <Text type="danger">*</Text></Text><MinhChungField taiLenBoi={nguoiTaiLen} value={hoSo.toTrinh} onChange={(v) => setHoSo({ ...hoSo, toTrinh: v })} /></Col>
+              <Col xs={24} md={12}><Text strong>Biên bản họp xét của đơn vị <Text type="danger">*</Text></Text><MinhChungField taiLenBoi={nguoiTaiLen} value={hoSo.bienBan} onChange={(v) => setHoSo({ ...hoSo, bienBan: v })} /></Col>
+              <Col xs={24} md={12}><Text strong>Quy chế nâng lương trước thời hạn của đơn vị</Text><MinhChungField taiLenBoi={nguoiTaiLen} value={hoSo.quyChe} onChange={(v) => setHoSo({ ...hoSo, quyChe: v })} /></Col>
               <Col xs={24} md={12}><Text strong>Tài liệu khác</Text><MinhChungField taiLenBoi={nguoiTaiLen} value={khac} onChange={setKhac} /></Col>
             </Row>
           </Card>
@@ -353,11 +353,11 @@ export default function HoSoTruocHanPage() {
       )}
 
       <Space style={{ marginTop: 16 }} wrap>
-        <Button icon={<FileExcelOutlined />} onClick={inDanhSach}>Xuất danh sách duyệt tại trường (Excel)</Button>
+        <Button icon={<FileExcelOutlined />} onClick={inDanhSach}>Xuất danh sách duyệt tại đơn vị (Excel)</Button>
         <Button icon={<SaveOutlined />} loading={dangLuu} onClick={() => luu(false)}>Lưu bản nháp</Button>
         {dxSua && <NutXoaPhieuNhap dx={dxSua} sauKhiXoa={() => navigate('/ho-so-nang-luong?loai=NANG_TRUOC_HAN', { replace: true })} />}
         <Button type="primary" icon={<SendOutlined />} loading={dangLuu} onClick={() => luu(true)}>
-          {dxSua?.trangThai === 'YEU_CAU_BO_SUNG' ? 'Lưu và trình lại' : 'Lưu và trình Hiệu trưởng'}
+          {dxSua?.trangThai === 'YEU_CAU_BO_SUNG' ? 'Lưu và trình lại' : 'Lưu và trình Thủ trưởng đơn vị'}
         </Button>
       </Space>
     </Card>

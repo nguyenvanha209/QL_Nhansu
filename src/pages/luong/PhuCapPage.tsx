@@ -65,9 +65,9 @@ export default function PhuCapPage() {
 
   return (
     <Card>
-      <Title level={4} style={{ marginBottom: 16 }}>Quản lý phụ cấp viên chức</Title>
+      <Title level={4} style={{ marginBottom: 16 }}>Quản lý phụ cấp</Title>
       <Space wrap style={{ marginBottom: 16 }}>
-        <Input prefix={<SearchOutlined />} placeholder="Tìm viên chức..." style={{ width: 220 }} value={search} onChange={(e) => setSearch(e.target.value)} allowClear />
+        <Input prefix={<SearchOutlined />} placeholder="Tìm họ tên..." style={{ width: 220 }} value={search} onChange={(e) => setSearch(e.target.value)} allowClear />
         {!scopeDonViId && (
           <Select placeholder="Lọc theo đơn vị" style={{ width: 200 }} value={filterDonVi} onChange={setFilterDonVi} allowClear options={donVis.map((d) => ({ value: d.id, label: d.ten }))} />
         )}

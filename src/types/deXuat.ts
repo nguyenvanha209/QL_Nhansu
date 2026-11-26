@@ -188,7 +188,7 @@ export interface DeXuatLuong {
 
 export const TRANG_THAI_LABELS: Record<TrangThaiDeXuat, string> = {
   NHAP: 'Bản nháp',
-  CHO_HIEU_TRUONG_DUYET: 'Chờ Hiệu trưởng duyệt',
+  CHO_HIEU_TRUONG_DUYET: 'Chờ Thủ trưởng đơn vị duyệt',
   CHO_XET_DUYET: 'Chờ VH-XH thẩm định',
   CHO_PHE_DUYET: 'Chờ lãnh đạo phê duyệt',
   DA_PHE_DUYET: 'Đã phê duyệt',

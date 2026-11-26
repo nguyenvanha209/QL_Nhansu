@@ -70,7 +70,7 @@ export default function VienChucDetailPage() {
   const vtvls = useDanhMucStore((s) => s.vtvls)
   const monGiangDay = MON_GIANG_DAY[donVis.find((d) => d.id === vc?.donViId)?.loai as keyof typeof MON_GIANG_DAY] ?? []
 
-  if (!vc) return <Result status="404" title="Không tìm thấy viên chức" extra={<Button onClick={() => navigate('/vien-chuc')}>Quay lại</Button>} />
+  if (!vc) return <Result status="404" title="Không tìm thấy hồ sơ" extra={<Button onClick={() => navigate('/vien-chuc')}>Quay lại</Button>} />
   if (scopeDonViId && vc.donViId !== scopeDonViId) return <Result status="403" title="Không có quyền xem" />
 
   const donVi = donVis.find((d) => d.id === vc.donViId)

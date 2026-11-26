@@ -147,7 +147,7 @@ export default function BoNhiemTab({ vc }: { vc: VienChuc }) {
         />
       )}
       {!tt && ds.length > 0 && (
-        <Alert style={{ marginBottom: 12 }} type="info" showIcon title="Hiện không giữ chức vụ Hiệu trưởng / Phó Hiệu trưởng - không nhắc nhiệm kỳ. Danh sách dưới đây là lịch sử." />
+        <Alert style={{ marginBottom: 12 }} type="info" showIcon title="Hiện không giữ chức vụ lãnh đạo, quản lý - không nhắc nhiệm kỳ. Danh sách dưới đây là lịch sử." />
       )}
       {coQuyenSua && (
         <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 10 }} onClick={() => moForm('MOI')}>Thêm lần bổ nhiệm</Button>

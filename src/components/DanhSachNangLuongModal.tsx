@@ -92,7 +92,7 @@ export default function DanhSachNangLuongModal({ open, onClose, alerts }: {
             ]}
           />
           {!scopeDonViId && (
-            <Select allowClear placeholder="Tất cả trường" style={{ width: 210 }} value={donVi} onChange={setDonVi} options={dsDonVi} showSearch optionFilterProp="label" />
+            <Select allowClear placeholder="Tất cả đơn vị" style={{ width: 210 }} value={donVi} onChange={setDonVi} options={dsDonVi} showSearch optionFilterProp="label" />
           )}
           <Input allowClear prefix={<SearchOutlined />} placeholder="Tìm họ tên, chức danh" style={{ width: 210 }} value={tim} onChange={(e) => setTim(e.target.value)} />
         </Space>

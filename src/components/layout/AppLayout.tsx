@@ -75,12 +75,12 @@ function NhanMenu({ ten, soCho = 0, soTong = 0 }: { ten: string; soCho?: number;
     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{ten}</span>
       {soCho > 0 && so(soCho, '#ef4444', `${soCho} việc chờ bạn xử lý`)}
-      {soTong > 0 && so(soTong, '#0ea5e9', `${soTong} phiếu các trường đang trong quy trình (đã lập, chưa phê duyệt xong)`)}
+      {soTong > 0 && so(soTong, '#0ea5e9', `${soTong} phiếu các đơn vị đang trong quy trình (đã lập, chưa phê duyệt xong)`)}
     </span>
   )
 }
 const nhanTitle = (ten: string, soCho: number, soTong: number) =>
-  [ten, soCho ? `${soCho} chờ bạn xử lý` : '', soTong ? `${soTong} phiếu các trường đang trong quy trình` : ''].filter(Boolean).join(' - ')
+  [ten, soCho ? `${soCho} chờ bạn xử lý` : '', soTong ? `${soTong} phiếu các đơn vị đang trong quy trình` : ''].filter(Boolean).join(' - ')
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)

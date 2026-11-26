@@ -25,8 +25,8 @@ const O_LOC: { key: BoLoc; ten: string; mau: string; moTa: string }[] = [
   { key: 'DEN_HAN', ten: `Còn dưới ${MOC_DEN_HAN_NGAY} ngày`, mau: MUC_NHAC_BO_NHIEM.DEN_HAN.mau, moTa: 'Hạn hoàn thành quy trình' },
   { key: 'CHUAN_BI', ten: `Còn dưới ${MOC_CHUAN_BI_THANG} tháng`, mau: MUC_NHAC_BO_NHIEM.CHUAN_BI.mau, moTa: 'Bắt đầu chuẩn bị hồ sơ' },
   { key: 'KEO_DAI', ten: 'Xem xét kéo dài', mau: '#722ed1', moTa: `Dưới ${NAM_XET_KEO_DAI} năm đến tuổi nghỉ hưu` },
-  { key: 'CHUA_NHAP', ten: 'Chưa nhập QĐ', mau: '#64748b', moTa: 'Trường cần bổ sung' },
-  { key: 'TAT_CA', ten: 'Tất cả HT, P.HT', mau: '#2563eb', moTa: 'Toàn bộ cán bộ quản lý' },
+  { key: 'CHUA_NHAP', ten: 'Chưa nhập QĐ', mau: '#64748b', moTa: 'Đơn vị cần bổ sung' },
+  { key: 'TAT_CA', ten: 'Tất cả', mau: '#2563eb', moTa: 'Toàn bộ cán bộ quản lý' },
 ]
 
 /** Theo dõi bổ nhiệm: thẻ Hiệu trưởng, Phó Hiệu trưởng (nhiệm kỳ) và thẻ Kế toán (định kỳ chuyển đổi vị trí công tác) */
@@ -41,7 +41,7 @@ export default function TheoDoiBoNhiemPage() {
       activeKey={the}
       onChange={(k) => setParams(k === 'ke-toan' ? { the: 'ke-toan' } : {}, { replace: true })}
       items={[
-        { key: 'cbql', label: <Badge count={canNhacHt.length} size="small" offset={[10, -2]}><span>Hiệu trưởng, Phó Hiệu trưởng</span></Badge>, children: <TheoDoiCbql /> },
+        { key: 'cbql', label: <Badge count={canNhacHt.length} size="small" offset={[10, -2]}><span>Cán bộ quản lý</span></Badge>, children: <TheoDoiCbql /> },
         { key: 'ke-toan', label: <Badge count={canNhacKt.length} size="small" offset={[10, -2]}><span>Kế toán - chuyển đổi vị trí công tác</span></Badge>, children: <ChuyenDoiKeToanTab /> },
       ]}
     />
@@ -69,7 +69,7 @@ function TheoDoiCbql() {
 
   const xuatExcel = () => exportToExcel(ds.map((t, i) => ({
     'STT': i + 1,
-    'Trường': tenDv.get(t.vc.donViId) ?? '',
+    'Đơn vị': tenDv.get(t.vc.donViId) ?? '',
     'Họ và tên': `${t.vc.ho} ${t.vc.ten}`,
     'Chức vụ': CHUC_VU_LABELS[t.vc.chucVu ?? ''] ?? t.vc.chucVu ?? '',
     'Hình thức': t.bn ? HINH_THUC_BO_NHIEM_LABELS[t.bn.hinhThuc] : '',
@@ -90,13 +90,13 @@ function TheoDoiCbql() {
         <div>
           <Title level={4} style={{ margin: 0 }}>Theo dõi bổ nhiệm cán bộ quản lý</Title>
           <Text type="secondary">
-            Hiệu trưởng, Phó Hiệu trưởng - nhắc khi còn {MOC_CHUAN_BI_THANG} tháng (chuẩn bị hồ sơ) và {MOC_DEN_HAN_NGAY} ngày (hạn hoàn thành quy trình bổ nhiệm lại) trước khi hết nhiệm kỳ.
+            Cán bộ quản lý (Hiệu trưởng, Trưởng phòng, Giám đốc và cấp phó) - nhắc khi còn {MOC_CHUAN_BI_THANG} tháng (chuẩn bị hồ sơ) và {MOC_DEN_HAN_NGAY} ngày (hạn hoàn thành quy trình bổ nhiệm lại) trước khi hết nhiệm kỳ.
           </Text>
         </div>
         <Space wrap>
           {!scopeDonViId && (
             <Select
-              allowClear placeholder="Tất cả trường" style={{ width: 260 }} value={donViId} onChange={setDonViId}
+              allowClear placeholder="Tất cả đơn vị" style={{ width: 260 }} value={donViId} onChange={setDonViId}
               showSearch optionFilterProp="label"
               options={donVis.filter((d) => d.active).sort(soSanhTruong).map((d) => ({ value: d.id, label: d.ten }))}
             />
@@ -138,7 +138,7 @@ function TheoDoiCbql() {
           scroll={{ x: 1450 }}
           locale={{ emptyText: loc === 'CAN_NHAC' ? 'Không có trường hợp nào đến mốc nhắc' : 'Không có' }}
           columns={[
-            ...(scopeDonViId ? [] : [{ title: 'Trường', key: 'dv', width: 230, render: (_: unknown, t: TinhTrangBoNhiem) => tenDv.get(t.vc.donViId) ?? '' }]),
+            ...(scopeDonViId ? [] : [{ title: 'Đơn vị', key: 'dv', width: 230, render: (_: unknown, t: TinhTrangBoNhiem) => tenDv.get(t.vc.donViId) ?? '' }]),
             {
               title: 'Họ và tên', key: 'ht', width: 210,
               render: (_: unknown, t: TinhTrangBoNhiem) => <a onClick={() => navigate(`/vien-chuc/${t.vc.id}?tab=bo-nhiem`)}>{t.vc.ho} {t.vc.ten}</a>,

@@ -78,7 +78,7 @@ export default function VienChucListPage() {
 
   const columns = [
     {
-      title: 'Mã VC', dataIndex: 'ma', key: 'ma', width: 110,
+      title: 'Mã hồ sơ', dataIndex: 'ma', key: 'ma', width: 110,
       render: (v: string) => <Tag>{v}</Tag>,
       sorter: (a: any, b: any) => a.ma.localeCompare(b.ma),
     },
@@ -184,7 +184,7 @@ export default function VienChucListPage() {
       <Space wrap style={{ marginBottom: 16 }}>
         <Input
           prefix={<SearchOutlined />}
-          placeholder="Tìm kiếm họ tên, mã VC..."
+          placeholder="Tìm họ tên, mã hồ sơ..."
           style={{ width: 240 }}
           value={search}
           onChange={(e) => setSearch(e.target.value)}

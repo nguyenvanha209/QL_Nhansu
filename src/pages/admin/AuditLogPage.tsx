@@ -30,7 +30,7 @@ const NHAN_HANH_DONG: Record<string, { nhan: string; mau: string }> = {
 
 const NHAN_DOI_TUONG: Record<string, string> = {
   User: 'Tài khoản',
-  VienChuc: 'Hồ sơ viên chức',
+  VienChuc: 'Hồ sơ nhân sự',
   DeXuatLuong: 'Đề xuất lương',
   ChuyenCongTac: 'Chuyển công tác',
   HeSoLuong: 'Hệ số lương',

@@ -54,7 +54,7 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
   const coLap = (hasPermission('deXuat', 'write') && !!scopeDonViId) || laQuanTri
   const columns: ColumnsType<Dong> = [
     cotSTT<Dong>(),
-    cotChu<Dong>('Trường', (r) => r.ten, 200),
+    cotChu<Dong>('Đơn vị', (r) => r.ten, 200),
     cotGiua<Dong>('Danh sách trả lương', 'tl', 110, (r) => r.soTraLuong),
     cotGiua<Dong>('Tối đa (10%)', 'td', 95, (r) => r.toiDa),
     cotGiua<Dong>('Đề nghị', 'dn', 80, (r) => (r.dx ? <Text strong type={r.dx.chiTiet.length > r.toiDa ? 'danger' : undefined}>{r.dx.chiTiet.length}</Text> : '-')),
@@ -79,7 +79,7 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
       <Table<Dong> {...BANG_CHUAN} rowKey="key" dataSource={dongs} columns={columns} pagination={false} />
       {!scopeDonViId && <div style={{ marginTop: 16 }}><TongHopHoSoNangLuong loai="NANG_TRUOC_HAN" nam={nam} anBangTruong /></div>}
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Quy trình: Kế toán lập hồ sơ (tờ trình, biên bản Hội đồng trường, minh chứng từng người) → Hiệu trưởng trình → Phòng VHXH thẩm định từng người
+        Quy trình: Cán bộ đơn vị lập hồ sơ (tờ trình, biên bản họp xét, minh chứng từng người) → Thủ trưởng đơn vị trình → Phòng VHXH thẩm định từng người
         → Lãnh đạo phường phê duyệt (hồ sơ lương tự cập nhật) → Phòng VHXH lập thông báo ở trang Thông báo kết quả nâng lương.
       </Text>
     </>
@@ -96,7 +96,7 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
         onChange={setThe}
         size={nhung ? 'small' : undefined}
         items={[
-          { key: 'ho-so', label: 'Hồ sơ các trường', children: hoSo },
+          { key: 'ho-so', label: 'Hồ sơ các đơn vị', children: hoSo },
           { key: 'muc', label: 'Mức nâng theo thành tích', children: <BangMuc suaDuoc={laQuanTri || isVHXH} /> },
         ]}
       />

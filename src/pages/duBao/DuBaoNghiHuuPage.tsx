@@ -131,7 +131,7 @@ export default function DuBaoNghiHuuPage() {
         dataSource={data}
         columns={columns}
         rowKey="id"
-        pagination={phanTrang('viên chức dự kiến nghỉ hưu')}
+        pagination={phanTrang('người dự kiến nghỉ hưu')}
       />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
         Thời điểm nghỉ hưu theo tuổi nghỉ hưu tại Nghị định 135/2020/NĐ-CP (theo tháng, năm sinh); hưởng chế độ hưu trí từ ngày đầu tháng liền kề.
@@ -143,7 +143,7 @@ export default function DuBaoNghiHuuPage() {
   return (
     <Card>
       <Title level={4} style={{ marginBottom: 0 }}>Dự báo nghỉ hưu</Title>
-      <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Chỉ tính viên chức biên chế (viên chức, tập sự); không tính lao động hợp đồng.</Text>
+      <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Chỉ tính biên chế (công chức, viên chức, tập sự); không tính lao động hợp đồng.</Text>
       <Tabs
         activeKey={the}
         onChange={(k) => setParams(k === 'da-nghi' ? { tab: 'da-nghi' } : {}, { replace: true })}

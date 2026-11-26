@@ -150,7 +150,7 @@ export const useDeXuatStore = create<DeXuatState>()(
       submitDeXuat: (id, actorId, actorName) => {
         get().updateDeXuat(id, { trangThai: 'CHO_HIEU_TRUONG_DUYET', buocHienTai: 2, ngayDeXuat: now().slice(0, 10), nguoiDeXuatId: actorId })
         const { addNhatKy } = useLuongStore.getState()
-        addNhatKy({ userId: actorId, userFullName: actorName, action: 'UPDATE', entity: 'DeXuatLuong', entityId: id, moTa: `Trình đề xuất ${id} lên Hiệu trưởng`, thoiGian: now() })
+        addNhatKy({ userId: actorId, userFullName: actorName, action: 'UPDATE', entity: 'DeXuatLuong', entityId: id, moTa: `Trình đề xuất ${id} lên Thủ trưởng đơn vị`, thoiGian: now() })
       },
 
       // Lọc khỏi mảng: lớp đồng bộ nhận ra id bị xoá có chủ đích và không kéo lại từ máy chủ
@@ -180,7 +180,7 @@ export const useDeXuatStore = create<DeXuatState>()(
         }
         get().updateDeXuat(id, patch)
         const { addNhatKy } = useLuongStore.getState()
-        addNhatKy({ userId: actorId, userFullName: actorName, action: ketQua === 'DONG_Y' ? 'APPROVE' : 'REJECT', entity: 'DeXuatLuong', entityId: id, moTa: `Hiệu trưởng duyệt đề xuất ${id}: ${ketQua}`, thoiGian: now() })
+        addNhatKy({ userId: actorId, userFullName: actorName, action: ketQua === 'DONG_Y' ? 'APPROVE' : 'REJECT', entity: 'DeXuatLuong', entityId: id, moTa: `Thủ trưởng đơn vị duyệt đề xuất ${id}: ${ketQua}`, thoiGian: now() })
       },
 
       xetDuyetDeXuat: (id, ketQua, ghiChu, actorId, actorName) => {

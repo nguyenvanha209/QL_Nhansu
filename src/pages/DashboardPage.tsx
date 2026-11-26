@@ -263,7 +263,7 @@ export default function DashboardPage() {
         </Col>
 
         <Col xs={24} lg={12}>
-          <Card title="Nhân sự theo đơn vị trường" size="small" className="chart-card">
+          <Card title="Nhân sự theo đơn vị" size="small" className="chart-card">
             <ResponsiveContainer width="100%" height={Math.max(260, bySchoolData.length * 26 + 40)}>
               <BarChart data={bySchoolData} layout="vertical" margin={{ top: 0, right: 36, left: 0, bottom: 0 }}>
                 <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} />
@@ -346,7 +346,7 @@ export default function DashboardPage() {
         size="small" className="chart-card" style={{ marginTop: 12 }}
         title={(
           <Space size={8} wrap>
-            <span>Nhắc việc bổ nhiệm cán bộ quản lý (HT, P.HT)</span>
+            <span>Nhắc việc bổ nhiệm cán bộ quản lý</span>
             <Tag color={boNhiem.canNhac.length ? 'red' : 'green'} style={{ cursor: 'pointer' }} onClick={() => navigate('/bo-nhiem')}>{boNhiem.canNhac.length}</Tag>
             {boNhiem.chuaNhap.length > 0 && (
               <a style={{ fontWeight: 400, fontSize: 14 }} onClick={() => navigate('/bo-nhiem?loc=CHUA_NHAP')}>{boNhiem.chuaNhap.length} người chưa nhập QĐ bổ nhiệm</a>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
           locale={{ emptyText: 'Không có cán bộ quản lý nào sắp hết nhiệm kỳ trong 6 tháng tới' }}
           columns={[
             { title: 'Họ và tên', key: 'ht', render: (_: unknown, t) => <a onClick={() => navigate(`/vien-chuc/${t.vc.id}?tab=bo-nhiem`)}>{t.vc.ho} {t.vc.ten}</a> },
-            ...(scopeDonViId ? [] : [{ title: 'Trường', key: 'dv', render: (_: unknown, t: TinhTrangBoNhiem) => allDonVis.find((d) => d.id === t.vc.donViId)?.ten ?? '' }]),
+            ...(scopeDonViId ? [] : [{ title: 'Đơn vị', key: 'dv', render: (_: unknown, t: TinhTrangBoNhiem) => allDonVis.find((d) => d.id === t.vc.donViId)?.ten ?? '' }]),
             { title: 'Chức vụ', key: 'cv', render: (_: unknown, t) => CHUC_VU_LABELS[t.vc.chucVu ?? ''] ?? t.vc.chucVu },
             { title: 'Hết nhiệm kỳ', key: 'het', render: (_: unknown, t) => <span><b>{formatDate(t.bn?.ngayHetNhiemKy)}</b> <Text type="secondary">({moTaConLai(t.soNgayCon)})</Text></span> },
             { title: 'Tình trạng', key: 'muc', render: (_: unknown, t) => <Space size={4}><TagMucBoNhiem muc={t.muc} />{t.xemXetKeoDai && <TagKeoDai ngayNghiHuu={t.ngayNghiHuu} />}</Space> },

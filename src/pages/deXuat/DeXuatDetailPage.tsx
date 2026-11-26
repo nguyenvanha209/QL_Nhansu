@@ -49,7 +49,7 @@ export default function DeXuatDetailPage() {
 
   // Tài khoản trường chỉ xem phiếu của trường mình (trước đây mở được phiếu trường khác bằng đường dẫn)
   if (scopeDonViId && dx.donViId !== scopeDonViId) {
-    return <Result status="403" title="Không có quyền xem phiếu này" subTitle="Phiếu thuộc trường khác." extra={<Button onClick={() => navigate(veDanhSach)}>Quay lại</Button>} />
+    return <Result status="403" title="Không có quyền xem phiếu này" subTitle="Phiếu thuộc đơn vị khác." extra={<Button onClick={() => navigate(veDanhSach)}>Quay lại</Button>} />
   }
 
   const donVi = donVis.find((d) => d.id === dx.donViId)
@@ -61,8 +61,8 @@ export default function DeXuatDetailPage() {
   const ketQuaLabel = (kq?: string) => kq === 'DONG_Y' ? 'Đồng ý' : kq === 'PHE_DUYET' ? 'Phê duyệt' : kq === 'TU_CHOI' ? 'Từ chối' : kq === 'YEU_CAU_BO_SUNG' ? 'Yêu cầu bổ sung' : ''
 
   const stepItems = [
-    { title: 'Kế toán trường lập', content: dx.ngayDeXuat ? formatDate(dx.ngayDeXuat) : 'Chờ nộp' },
-    { title: 'Hiệu trưởng duyệt', content: dx.ngayDuyetHT ? `${formatDate(dx.ngayDuyetHT)} - ${ketQuaLabel(dx.ketQuaDuyetHT)}` : 'Chờ duyệt' },
+    { title: 'Đơn vị lập', content: dx.ngayDeXuat ? formatDate(dx.ngayDeXuat) : 'Chờ nộp' },
+    { title: 'Thủ trưởng đơn vị duyệt', content: dx.ngayDuyetHT ? `${formatDate(dx.ngayDuyetHT)} - ${ketQuaLabel(dx.ketQuaDuyetHT)}` : 'Chờ duyệt' },
     { title: 'VH-XH thẩm định', content: dx.ngayXetDuyet ? `${formatDate(dx.ngayXetDuyet)} - ${ketQuaLabel(dx.ketQuaXetDuyet)}` : 'Chờ xử lý' },
     { title: 'Lãnh đạo phê duyệt', content: dx.ngayPheDuyet ? `${formatDate(dx.ngayPheDuyet)} - ${ketQuaLabel(dx.ketQuaPheDuyet)}` : 'Chờ duyệt' },
   ]
@@ -230,10 +230,10 @@ export default function DeXuatDetailPage() {
       await lamMoiNgay()
       if (modalAction === 'submit') {
         submitDeXuat(id!, currentUser.id, currentUser.fullName)
-        message.success('Đã trình đề xuất lên Hiệu trưởng')
+        message.success('Đã trình Thủ trưởng đơn vị')
       } else if (modalAction === 'ht_approve') {
         duyetHieuTruong(id!, 'DONG_Y', ghiChu, currentUser.id, currentUser.fullName)
-        message.success('Hiệu trưởng đã duyệt - chuyển VH-XH thẩm định')
+        message.success('Thủ trưởng đơn vị đã duyệt - chuyển Phòng VHXH thẩm định')
       } else if (modalAction === 'ht_reject') {
         duyetHieuTruong(id!, 'TU_CHOI', ghiChu, currentUser.id, currentUser.fullName)
         message.warning('Đã từ chối đề xuất')
@@ -285,7 +285,7 @@ export default function DeXuatDetailPage() {
           <Descriptions.Item label="Ngày tạo">{formatDate(dx.createdAt)}</Descriptions.Item>
           <Descriptions.Item label={laTruocHan ? 'Loại hồ sơ' : 'Loại đề xuất'} span={2}>{laTruocHan ? 'Nâng bậc lương trước thời hạn do lập thành tích xuất sắc trong thực hiện nhiệm vụ' : LOAI_DE_XUAT_LABELS[dx.loai]}</Descriptions.Item>
           {dx.ghiChuDeXuat && <Descriptions.Item label="Ghi chú đề xuất" span={2}>{dx.ghiChuDeXuat}</Descriptions.Item>}
-          {dx.ghiChuDuyetHT && <Descriptions.Item label="Ý kiến Hiệu trưởng" span={2}>{dx.ghiChuDuyetHT}</Descriptions.Item>}
+          {dx.ghiChuDuyetHT && <Descriptions.Item label="Ý kiến Thủ trưởng đơn vị" span={2}>{dx.ghiChuDuyetHT}</Descriptions.Item>}
           {dx.ghiChuXetDuyet && <Descriptions.Item label="Ý kiến VH-XH" span={2}>{dx.ghiChuXetDuyet}</Descriptions.Item>}
           {dx.ghiChuPheDuyet && <Descriptions.Item label="Ý kiến lãnh đạo" span={2}>{dx.ghiChuPheDuyet}</Descriptions.Item>}
           {laTruocHan && <>
@@ -299,14 +299,14 @@ export default function DeXuatDetailPage() {
               })()}
             </Descriptions.Item>
             <Descriptions.Item label="Tờ trình"><DanhSachMinhChung value={dx.hoSoTruocHan?.toTrinh} /></Descriptions.Item>
-            <Descriptions.Item label="Biên bản Hội đồng trường"><DanhSachMinhChung value={dx.hoSoTruocHan?.bienBan} /></Descriptions.Item>
-            <Descriptions.Item label="Quy chế của trường"><DanhSachMinhChung value={dx.hoSoTruocHan?.quyChe} /></Descriptions.Item>
+            <Descriptions.Item label="Biên bản họp xét của đơn vị"><DanhSachMinhChung value={dx.hoSoTruocHan?.bienBan} /></Descriptions.Item>
+            <Descriptions.Item label="Quy chế của đơn vị"><DanhSachMinhChung value={dx.hoSoTruocHan?.quyChe} /></Descriptions.Item>
           </>}
           {coMinhChung && <Descriptions.Item label={laTruocHan ? 'Tài liệu khác' : 'Minh chứng của phiếu'} span={laTruocHan ? 1 : 2}><DanhSachMinhChung value={dx.minhChung} /></Descriptions.Item>}
         </Descriptions>
 
         <Title level={5}>
-          Chi tiết đề xuất ({dx.chiTiet.length} viên chức)
+          Chi tiết đề xuất ({dx.chiTiet.length} người)
           {dx.chiTiet.some((c) => c.thamDinh === 'KHONG_DONG_Y') && <Tag color="error" style={{ marginLeft: 8, fontWeight: 400 }}>VHXH không đồng ý {dx.chiTiet.filter((c) => c.thamDinh === 'KHONG_DONG_Y').length} người - không ghi hồ sơ, không đưa vào thông báo</Tag>}
         </Title>
         {canXetDuyet && !laTruocHan && laHoSoNangLuong(dx.loai) && (
@@ -320,7 +320,7 @@ export default function DeXuatDetailPage() {
         <Space wrap>
           {canSua && <Button icon={<EditOutlined />} onClick={() => navigate(`${goc}/${dx.id}/edit`)}>{dx.trangThai === 'YEU_CAU_BO_SUNG' ? 'Sửa & trình lại' : 'Sửa phiếu'}</Button>}
           <NutXoaPhieuNhap dx={dx} sauKhiXoa={() => navigate(veDanhSach, { replace: true })} />
-          {canSubmit && <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('submit')}>Trình Hiệu trưởng duyệt</Button>}
+          {canSubmit && <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('submit')}>Trình Thủ trưởng đơn vị duyệt</Button>}
           {canDuyetHT && <>
             <Button type="primary" icon={<CheckOutlined />} onClick={() => openModal('ht_approve')}>Duyệt - chuyển VH-XH</Button>
             <Button icon={<SyncOutlined />} onClick={() => openModal('ht_supplement')}>Yêu cầu bổ sung</Button>

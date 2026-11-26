@@ -508,7 +508,7 @@ export default function UserManagePage() {
           )}
 
           {(selectedRole === 'CB_TRUONG' || selectedRole === 'HIEU_TRUONG') && (
-            <Form.Item name="donViId" label="Đơn vị phụ trách" rules={[{ required: true, message: 'Chọn trường' }]} style={{ marginTop: 12 }}>
+            <Form.Item name="donViId" label="Đơn vị phụ trách" rules={[{ required: true, message: 'Chọn đơn vị' }]} style={{ marginTop: 12 }}>
               <Select options={donVis.map((d) => ({ value: d.id, label: d.ten }))} placeholder="Chọn đơn vị" />
             </Form.Item>
           )}

@@ -92,7 +92,7 @@ export default function ChuyenCongTacPage() {
     if (!currentUser) return
     const vc = allVienChucs.find((x) => x.id === v.vienChucId)
     if (!vc) return
-    if (v.donViDenId === vc.donViId) { message.error('Trường đến phải khác trường hiện tại'); return }
+    if (v.donViDenId === vc.donViId) { message.error('Đơn vị đến phải khác đơn vị hiện tại'); return }
 
     store.taoDeXuat({
       vienChucId: vc.id,
@@ -125,7 +125,7 @@ export default function ChuyenCongTacPage() {
           <Alert
             type="info" showIcon style={{ margin: '10px 0' }}
             title="Hồ sơ giữ nguyên ngạch, bậc, hệ số lương và các khoản phụ cấp"
-            description="Sau khi duyệt, hồ sơ chuyển sang trường đến ở trạng thái “Chuyển đến”. Trường đến sẽ phân công vị trí việc làm và ghi nhận ngày về đơn vị."
+            description="Sau khi duyệt, hồ sơ chuyển sang đơn vị đến ở trạng thái “Chuyển đến”. Đơn vị đến sẽ phân công vị trí việc làm và ghi nhận ngày về đơn vị."
           />
           <Input.TextArea rows={2} placeholder="Ý kiến của Quản trị (không bắt buộc)" onChange={(e) => { ghiChu = e.target.value }} />
         </div>
@@ -172,7 +172,7 @@ export default function ChuyenCongTacPage() {
     if (!nhanItem || !currentUser) return
     await lamMoiNgay()
     if (!(store.getById(nhanItem.id)?.vienChucMoiId ?? nhanItem.vienChucMoiId)) {
-      message.error('Phiếu chưa được duyệt đúng quy trình nên chưa có hồ sơ ở trường đến - liên hệ Quản trị')
+      message.error('Phiếu chưa được duyệt đúng quy trình nên chưa có hồ sơ ở đơn vị đến - liên hệ Quản trị')
       return
     }
     store.tiepNhan(nhanItem.id, {
@@ -200,11 +200,11 @@ export default function ChuyenCongTacPage() {
       sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => a.ma.localeCompare(b.ma) },
     { title: 'Viên chức', dataIndex: 'hoTenSnapshot', key: 'ht', minWidth: 160,
       sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => a.hoTenSnapshot.localeCompare(b.hoTenSnapshot, 'vi') },
-    { title: 'Trường đi', dataIndex: 'donViDiId', key: 'di', minWidth: 150,
+    { title: 'Đơn vị đi', dataIndex: 'donViDiId', key: 'di', minWidth: 150,
       render: (v: string) => dvMap.get(v) ?? v,
       sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => (thuTu.get(a.donViDiId) ?? 999) - (thuTu.get(b.donViDiId) ?? 999) },
     { title: '', key: 'arrow', width: 34, align: 'center' as const, render: () => <SwapOutlined style={{ color: '#1677ff' }} /> },
-    { title: 'Trường đến', dataIndex: 'donViDenId', key: 'den', minWidth: 150,
+    { title: 'Đơn vị đến', dataIndex: 'donViDenId', key: 'den', minWidth: 150,
       render: (v: string) => dvMap.get(v) ?? v,
       sorter: (a: DeXuatChuyenCongTac, b: DeXuatChuyenCongTac) => (thuTu.get(a.donViDenId) ?? 999) - (thuTu.get(b.donViDenId) ?? 999) },
     { title: 'Ngày chuyển', dataIndex: 'ngayChuyen', key: 'nc', width: 115,
@@ -259,7 +259,7 @@ export default function ChuyenCongTacPage() {
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <Title level={4} style={{ margin: 0 }}>
-          Chuyển công tác viên chức
+          Chuyển công tác
           {soChoDuyet > 0 && laQuanTri && <Tag color="processing" style={{ marginLeft: 8 }}>{soChoDuyet} chờ duyệt</Tag>}
           {soChoTiepNhan > 0 && <Tag color="warning" style={{ marginLeft: 4 }}>{soChoTiepNhan} chờ tiếp nhận</Tag>}
         </Title>
@@ -277,7 +277,7 @@ export default function ChuyenCongTacPage() {
 
       <Alert
         type="info" showIcon style={{ marginBottom: 16 }}
-        title="Quy trình: Trường đi lập đề nghị → Quản trị duyệt → Hồ sơ tự chuyển sang trường đến → Trường đến phân công vị trí và ghi ngày về đơn vị"
+        title="Quy trình: Đơn vị đi lập đề nghị → Quản trị duyệt → Hồ sơ tự chuyển sang đơn vị đến → Đơn vị đến phân công vị trí và ghi ngày về đơn vị"
         description="Ngạch, bậc, hệ số lương và các khoản phụ cấp được giữ nguyên trong suốt quá trình chuyển."
       />
 
@@ -293,7 +293,7 @@ export default function ChuyenCongTacPage() {
 
       {/* ── Tạo đề nghị ── */}
       <Modal
-        title="Đề nghị chuyển công tác viên chức"
+        title="Đề nghị chuyển công tác"
         open={openTao}
         onCancel={() => { setOpenTao(false); formTao.resetFields() }}
         width={620}
@@ -304,7 +304,7 @@ export default function ChuyenCongTacPage() {
         ]}
       >
         <Form form={formTao} layout="vertical" style={{ marginTop: 12 }}>
-          <Form.Item name="vienChucId" label="Viên chức chuyển đi" rules={[{ required: true, message: 'Chọn viên chức' }]}>
+          <Form.Item name="vienChucId" label="Người chuyển đi" rules={[{ required: true, message: 'Chọn người chuyển đi' }]}>
             <Select
               showSearch
               placeholder="Tìm theo họ tên..."
@@ -313,10 +313,10 @@ export default function ChuyenCongTacPage() {
                 value: v.id,
                 label: `${v.ho} ${v.ten}${scopeDonViId ? '' : ` - ${dvMap.get(v.donViId) ?? ''}`}`,
               }))}
-              notFoundContent={<Empty description="Không còn viên chức nào có thể lập phiếu" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+              notFoundContent={<Empty description="Không còn người nào có thể lập phiếu" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
             />
           </Form.Item>
-          <Form.Item name="donViDenId" label="Trường đến" rules={[{ required: true, message: 'Chọn trường đến' }]}>
+          <Form.Item name="donViDenId" label="Đơn vị đến" rules={[{ required: true, message: 'Chọn đơn vị đến' }]}>
             <Select showSearch optionFilterProp="label" placeholder="Chọn đơn vị tiếp nhận"
               options={donVis
                 .filter((d) => d.id !== scopeDonViId && d.id !== donViHienTai)
@@ -347,7 +347,7 @@ export default function ChuyenCongTacPage() {
         <Alert
           type="success" showIcon style={{ margin: '12px 0 16px' }}
           title="Ngạch, bậc, hệ số lương và phụ cấp đã được giữ nguyên"
-          description="Chỉ cần phân công vị trí công tác tại trường và xác nhận thời điểm về đơn vị."
+          description="Chỉ cần phân công vị trí công tác tại đơn vị và xác nhận thời điểm về đơn vị."
         />
         <Form form={formNhan} layout="vertical">
           <Form.Item name="vtvl" label="Vị trí việc làm" rules={[{ required: true, message: 'Chọn vị trí việc làm' }]}>
@@ -365,12 +365,12 @@ export default function ChuyenCongTacPage() {
                 : Object.entries(CHUC_VU_LABELS).map(([k, v]) => ({ value: k, label: v })))}
             />
           </Form.Item>
-          <Form.Item name="viTriViecLamId" label="Phân công vị trí cụ thể tại trường"
-            extra={vtvlOptionsCuaTruongDen.length === 0 ? 'Trường chưa khai báo danh mục vị trí việc làm - có thể bỏ qua' : undefined}>
+          <Form.Item name="viTriViecLamId" label="Phân công vị trí cụ thể tại đơn vị"
+            extra={vtvlOptionsCuaTruongDen.length === 0 ? 'Đơn vị chưa khai báo danh mục vị trí việc làm - có thể bỏ qua' : undefined}>
             <Select allowClear placeholder="Chọn vị trí" options={vtvlOptionsCuaTruongDen} />
           </Form.Item>
           <Form.Item name="ngayVaoDonVi" label="Thời điểm về đơn vị" rules={[{ required: true, message: 'Chọn ngày về đơn vị' }]}
-            extra="Ngày này được ghi vào hồ sơ viên chức làm mốc công tác tại trường">
+            extra="Ngày này được ghi vào hồ sơ làm mốc công tác tại đơn vị">
             <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>
         </Form>
@@ -405,7 +405,7 @@ export default function ChuyenCongTacPage() {
               </Descriptions.Item>
             )}
             {xemItem.nguoiTiepNhanId && (
-              <Descriptions.Item label="Trường đến tiếp nhận">
+              <Descriptions.Item label="Đơn vị đến tiếp nhận">
                 {userMap.get(xemItem.nguoiTiepNhanId) ?? '-'} · {formatDate(xemItem.ngayTiepNhan!)}
                 <div style={{ marginTop: 4 }}>
                   <Text type="secondary">

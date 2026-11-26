@@ -77,7 +77,7 @@ export default function TimNhanh({ mo, dong, chucNangs, scopeDonViId }: {
           size="large"
           variant="borderless"
           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-          placeholder="Gõ tên viên chức, mã viên chức hoặc tên chức năng"
+          placeholder="Gõ họ tên, mã hồ sơ hoặc tên chức năng"
           value={tu}
           onChange={(e) => setTu(e.target.value)}
           onKeyDown={(e) => {

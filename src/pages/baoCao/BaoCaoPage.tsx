@@ -56,7 +56,7 @@ export default function BaoCaoPage() {
   }), [filtered, donVis, chucDanhs, heSoLuongs])
 
   const vcCols = [
-    { title: 'Mã VC', dataIndex: 'ma', key: 'ma', width: 95 },
+    { title: 'Mã hồ sơ', dataIndex: 'ma', key: 'ma', width: 95 },
     { title: 'Họ và tên', key: 'ht', width: 175, render: (_: any, r: any) => `${r.ho} ${r.ten}` },
     { title: 'Ngày sinh', dataIndex: 'ngaySinh', key: 'ns', width: 115, render: (v: string) => formatDate(v) },
     { title: 'Giới tính', dataIndex: 'gioiTinh', key: 'gt', width: 75, render: (v: string) => v === 'NAM' ? 'Nam' : 'Nữ' },
@@ -80,7 +80,7 @@ export default function BaoCaoPage() {
   ]
 
   const exportVCExcel = () => {
-    const rows = enriched.map((r) => ({ 'Mã VC': r.ma, 'Họ tên': `${r.ho} ${r.ten}`, 'Ngày sinh': formatDate(r.ngaySinh), 'Giới tính': r.gioiTinh === 'NAM' ? 'Nam' : 'Nữ', 'Đơn vị': r.donViTen, 'Chức danh': r.chucDanhTen, 'Loại HĐ': LOAI_LAO_DONG_LABELS[r.loaiLaoDong as keyof typeof LOAI_LAO_DONG_LABELS] ?? r.loaiLaoDong, 'Bậc': r.bac, 'Hệ số': r.heSo, 'Lương theo mức tiền (đ)': r.luongTien || '', 'Ngày nâng tiếp': formatDate(r.ngayNangTiep) }))
+    const rows = enriched.map((r) => ({ 'Mã hồ sơ': r.ma, 'Họ tên': `${r.ho} ${r.ten}`, 'Ngày sinh': formatDate(r.ngaySinh), 'Giới tính': r.gioiTinh === 'NAM' ? 'Nam' : 'Nữ', 'Đơn vị': r.donViTen, 'Chức danh': r.chucDanhTen, 'Loại HĐ': LOAI_LAO_DONG_LABELS[r.loaiLaoDong as keyof typeof LOAI_LAO_DONG_LABELS] ?? r.loaiLaoDong, 'Bậc': r.bac, 'Hệ số': r.heSo, 'Lương theo mức tiền (đ)': r.luongTien || '', 'Ngày nâng tiếp': formatDate(r.ngayNangTiep) }))
     exportToExcel(rows, 'BaoCao_VienChuc', 'Viên chức')
   }
 
@@ -93,7 +93,7 @@ export default function BaoCaoPage() {
     try {
       await exportToPdf(
         'BÁO CÁO TỔNG HỢP NHÂN SỰ',
-        ['Mã VC', 'Họ và tên', 'Ngày sinh', 'Giới tính', 'Đơn vị', 'Chức danh', 'Bậc', 'Hệ số'],
+        ['Mã hồ sơ', 'Họ và tên', 'Ngày sinh', 'Giới tính', 'Đơn vị', 'Chức danh', 'Bậc', 'Hệ số'],
         enriched.map((r) => [
           r.ma, `${r.ho} ${r.ten}`, formatDate(r.ngaySinh), r.gioiTinh === 'NAM' ? 'Nam' : 'Nữ',
           r.donViTen, r.chucDanhTen, r.bac, r.heSo,

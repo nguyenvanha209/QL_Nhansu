@@ -21,7 +21,7 @@ const { Text } = Typography
 type Buoc = 'NHAP' | 'CHO_HT' | 'CHO_VHXH' | 'CHO_LD' | 'DA_DUYET' | 'TRA_LAI'
 const BUOC: { key: Buoc; ten: string; trangThai: TrangThaiDeXuat[] }[] = [
   { key: 'NHAP', ten: 'Trường đang lập', trangThai: ['NHAP'] },
-  { key: 'CHO_HT', ten: 'Chờ Hiệu trưởng', trangThai: ['CHO_HIEU_TRUONG_DUYET'] },
+  { key: 'CHO_HT', ten: 'Chờ Thủ trưởng', trangThai: ['CHO_HIEU_TRUONG_DUYET'] },
   { key: 'CHO_VHXH', ten: 'Chờ VHXH thẩm định', trangThai: ['CHO_XET_DUYET'] },
   { key: 'CHO_LD', ten: 'Chờ Lãnh đạo phê duyệt', trangThai: ['CHO_PHE_DUYET'] },
   { key: 'DA_DUYET', ten: 'Đã phê duyệt', trangThai: ['DA_PHE_DUYET'] },
@@ -103,7 +103,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
       'VHXH thẩm định': tenThamDinh(r), 'Ý kiến': r.ct.yKienThamDinh ?? '',
     })),
     'Tổng hợp',
-    { tieuDe: [`TỔNG HỢP ${LOAI_DE_XUAT_LABELS[loai].toUpperCase()} NĂM ${nam}`, `(${tenBuoc}${truong ? ` - ${tenTruong(truong)}` : ' - các trường'}; ${nguoi.length} người)`] },
+    { tieuDe: [`TỔNG HỢP ${LOAI_DE_XUAT_LABELS[loai].toUpperCase()} NĂM ${nam}`, `(${tenBuoc}${truong ? ` - ${tenTruong(truong)}` : ' - các đơn vị'}; ${nguoi.length} người)`] },
   )])
 
   const o = (b: Buoc, r: (typeof dongTruong)[number]) => {
@@ -142,7 +142,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
 
   return (
     <Card size="small" style={{ marginBottom: 16, background: '#f8fafc' }}
-      title={<Space wrap><span>Tổng hợp các trường - {LOAI_DE_XUAT_LABELS[loai].toLowerCase()}</span>
+      title={<Space wrap><span>Tổng hợp các đơn vị - {LOAI_DE_XUAT_LABELS[loai].toLowerCase()}</span>
         {namNgoai === undefined && <Select size="small" value={nam} onChange={setNamTrong} style={{ width: 90 }} options={[-2, -1, 0, 1].map((x) => dayjs().year() + x).map((n) => ({ value: n, label: n }))} />}
         <Tag color="red" style={{ marginInlineEnd: 0 }}>Chờ VHXH thẩm định: {tong('CHO_VHXH')} người</Tag>
         <Tag color="purple" style={{ marginInlineEnd: 0 }}>Chờ Lãnh đạo: {tong('CHO_LD')} người</Tag>
@@ -163,14 +163,14 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
             { value: 'DA_TRINH', label: 'Tất cả đã trình' },
           ]}
         />
-        <Select size="small" allowClear placeholder="Tất cả các trường" style={{ width: 220 }} value={truong} onChange={setTruong}
+        <Select size="small" allowClear placeholder="Tất cả các đơn vị" style={{ width: 220 }} value={truong} onChange={setTruong}
           showSearch optionFilterProp="label" options={truongs.map((t) => ({ value: t.id, label: t.ten }))} />
         <Button size="small" icon={<FileExcelOutlined />} disabled={!nguoi.length} onClick={xuat}>Xuất Excel</Button>
       </Space>
       <Table<DongNguoi> {...BANG_CHUAN} rowKey="key" dataSource={nguoi} columns={colsNguoi} pagination={phanTrang('người')}
         locale={{ emptyText: `Không có người ở bước "${tenBuoc}" năm ${nam}` }} />
       <Text type="secondary" style={{ display: 'block', marginTop: 6, fontSize: 12.5 }}>
-        Bấm mã phiếu để mở và thẩm định / phê duyệt. Quy trình chung: Kế toán lập → Hiệu trưởng duyệt → Phòng VHXH thẩm định từng người → Lãnh đạo phê duyệt (ghi hồ sơ) →
+        Bấm mã phiếu để mở và thẩm định / phê duyệt. Quy trình chung: Cán bộ đơn vị lập → Thủ trưởng đơn vị duyệt → Phòng VHXH thẩm định từng người → Lãnh đạo phê duyệt (ghi hồ sơ) →
         Phòng VHXH lập thông báo ở trang Thông báo kết quả nâng lương, phụ cấp thâm niên. Người VHXH không đồng ý không ghi hồ sơ, không vào thông báo.
       </Text>
     </Card>

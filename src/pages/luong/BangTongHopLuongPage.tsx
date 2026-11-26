@@ -555,7 +555,7 @@ export default function BangTongHopLuongPage() {
         bordered
         scroll={{ x: 1855, y: 'calc(100vh - 280px)' }}
         rowClassName={(r: DisplayRow) => r._type === 'subtotal' ? 'subtotal-row' : ''}
-        pagination={{ pageSize: 100, showSizeChanger: true, pageSizeOptions: [50, 100, 200], showTotal: (t) => `Tổng ${rows.length} viên chức` }}
+        pagination={{ pageSize: 100, showSizeChanger: true, pageSizeOptions: [50, 100, 200], showTotal: (t) => `Tổng ${rows.length} người` }}
         summary={() => {
           // Dựng theo danh sách thay vì viết cứng từng chỉ số cột. Trước đây các
           // chỉ số 0..19 cố định, nên chỉ cần thêm một cột là toàn bộ dòng tổng

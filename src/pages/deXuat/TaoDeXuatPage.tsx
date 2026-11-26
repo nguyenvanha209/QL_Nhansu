@@ -209,7 +209,7 @@ export default function TaoDeXuatPage() {
     addVC(vcTuHoSo)
   }, [loaiDeXuat, heSoLuongs])
 
-  // ── Gợi ý viên chức đến kỳ nâng lương thường xuyên (2 đợt/năm: 6 tháng đầu / 6 tháng cuối) ──
+  // ── Gợi ý người đến kỳ nâng lương thường xuyên (2 đợt/năm: 6 tháng đầu / 6 tháng cuối) ──
   const currentYear = dayjs().year()
   const [dotNam, setDotNam] = useState(currentYear)
   const [dotKy, setDotKy] = useState<'H1' | 'H2'>(dayjs().month() < 6 ? 'H1' : 'H2')
@@ -332,7 +332,7 @@ export default function TaoDeXuatPage() {
     if (!chiTiet.length) return ap()
     modal.confirm({
       title: 'Đổi loại đề xuất?',
-      content: `Danh sách ${chiTiet.length} viên chức hiện có sẽ bị xoá để lập lại theo loại mới.`,
+      content: `Danh sách ${chiTiet.length} người hiện có sẽ bị xoá để lập lại theo loại mới.`,
       okText: 'Đổi loại', cancelText: 'Giữ nguyên',
       onOk: ap,
       onCancel: () => form.setFieldValue('loai', loaiDeXuat),
@@ -342,7 +342,7 @@ export default function TaoDeXuatPage() {
   // ── Kiểm tra trước khi lưu / trình ──
   const kiemTra = (loai: LoaiDeXuat, trinh: boolean): string[] => {
     const loi: string[] = []
-    if (chiTiet.length === 0) loi.push('Thêm ít nhất một viên chức')
+    if (chiTiet.length === 0) loi.push('Thêm ít nhất một người')
     chiTiet.forEach((r) => {
       const vc = vienChucs.find((v) => v.id === r.vienChucId) ?? allVienChucs.find((v) => v.id === r.vienChucId)
       const ten = vc ? `${vc.ho} ${vc.ten}` : r.vienChucId
@@ -451,7 +451,7 @@ export default function TaoDeXuatPage() {
   // Ba loại theo niên hạn: xuất Excel để kế toán in ra soát lại trước khi trình (theo dữ liệu đang có trên màn hình)
   const coXuatKiemTra = loaiDeXuat === 'NANG_BAC' || loaiDeXuat === 'PHU_CAP_THAM_NIEN' || loaiDeXuat === 'PCTN_LAN_DAU'
   const xuatKiemTra = () => {
-    if (!chiTiet.length) { message.warning('Chưa có viên chức trong danh sách'); return }
+    if (!chiTiet.length) { message.warning('Chưa có người trong danh sách'); return }
     const dvId = selectedDonVi ?? form.getFieldValue('donViId')
     const ht = allVienChucs.find((v) => v.donViId === dvId && v.chucVu === 'HT' && duocTinhSoLieu(v))
     xuatExcelKiemTraDeXuat({
@@ -676,7 +676,7 @@ export default function TaoDeXuatPage() {
         )}
 
         {!laPctn && loaiDeXuat === 'NANG_BAC' && <>
-        <Divider plain>Gợi ý viên chức đến kỳ nâng lương thường xuyên</Divider>
+        <Divider plain>Gợi ý người đến kỳ nâng lương thường xuyên</Divider>
         <Space wrap style={{ marginBottom: 12 }}>
           <InputNumber value={dotNam} onChange={(v) => setDotNam(v ?? currentYear)} style={{ width: 100 }} />
           <Select
@@ -704,7 +704,7 @@ export default function TaoDeXuatPage() {
             onChange: (keys) => setSelectedGoiY(keys as string[]),
             // Người ở bậc cuối vẫn chọn được: thêm thành dòng phụ cấp thâm niên vượt khung
           }}
-          locale={{ emptyText: 'Không có viên chức nào đến kỳ nâng lương trong đợt này' }}
+          locale={{ emptyText: 'Không có người nào đến kỳ nâng lương trong đợt này' }}
           columns={[
             { title: 'Viên chức', dataIndex: 'hoTen', key: 'ht' },
             {
@@ -795,10 +795,10 @@ export default function TaoDeXuatPage() {
         />
         </>}
 
-        <Divider plain>Danh sách viên chức trong đề xuất</Divider>
+        <Divider plain>Danh sách người trong đề xuất</Divider>
         <Space style={{ marginBottom: 12 }} wrap>
-          <Select showSearch style={{ width: 260 }} placeholder="Chọn viên chức để thêm..." options={vcOptions} onSelect={(v: string | undefined) => addVC(v)} filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())} value={undefined} />
-          <span>{chiTiet.length} viên chức đã thêm</span>
+          <Select showSearch style={{ width: 260 }} placeholder="Chọn người để thêm..." options={vcOptions} onSelect={(v: string | undefined) => addVC(v)} filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())} value={undefined} />
+          <span>{chiTiet.length} người đã thêm</span>
           {(laPctn || laLanDau) && <Text type="secondary">Chỉ CBQL và giáo viên (nhân viên không hưởng PCTN)</Text>}
 
         </Space>

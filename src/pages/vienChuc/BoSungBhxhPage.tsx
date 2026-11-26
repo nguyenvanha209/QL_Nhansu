@@ -177,7 +177,7 @@ export default function BoSungBhxhPage() {
     const theoTruong = [...new Set(ds.map((d) => d.donViId))].sort((a, b) => (thuTu.get(a) ?? 999) - (thuTu.get(b) ?? 999))
     xuatExcelA4(`Chua-khai-BHXH-${homNay}`, [trangTuDanhSach(
       theoTruong.flatMap((t) => ds.filter((d) => d.donViId === t)).map((d, i) => ({
-        STT: i + 1, 'Trường': tenTruong(d.donViId), 'Họ và tên': `${d.ho} ${d.ten}`, 'Ngày sinh': formatDate(d.vc.ngaySinh),
+        STT: i + 1, 'Đơn vị': tenTruong(d.donViId), 'Họ và tên': `${d.ho} ${d.ten}`, 'Ngày sinh': formatDate(d.vc.ngaySinh),
         'Chức vụ, chức danh': d.chucDanh, 'Loại hình': LOAI_LAO_DONG_LABELS[d.vc.loaiLaoDong] ?? '', 'Ngày vào ngành': formatDate(d.vc.ngayVaoNganh),
         'Ghi chú': d.uuTien ? 'Ưu tiên - CBQL/GV chưa hưởng PCTN, cần rà soát xếp lần đầu' : '',
       })),
@@ -192,7 +192,7 @@ export default function BoSungBhxhPage() {
     const theoTruong = [...new Set(ds.map((d) => d.donViId))].sort((a, b) => (thuTu.get(a) ?? 999) - (thuTu.get(b) ?? 999))
     xuatExcelA4(`Khong-tham-gia-BHXH-qua-tuoi-${homNay}`, [trangTuDanhSach(
       theoTruong.flatMap((t) => ds.filter((d) => d.donViId === t)).map((d, i) => ({
-        STT: i + 1, 'Trường': tenTruong(d.donViId), 'Họ và tên': `${d.ho} ${d.ten}`, 'Ngày sinh': formatDate(d.vc.ngaySinh),
+        STT: i + 1, 'Đơn vị': tenTruong(d.donViId), 'Họ và tên': `${d.ho} ${d.ten}`, 'Ngày sinh': formatDate(d.vc.ngaySinh),
         'Giới tính': d.vc.gioiTinh === 'NAM' ? 'Nam' : 'Nữ', 'Tuổi': d.tuoi, 'Công việc': d.congViec,
         'Loại hình': LOAI_LAO_DONG_LABELS[d.vc.loaiLaoDong] ?? '',
       })),
@@ -223,7 +223,7 @@ export default function BoSungBhxhPage() {
   }
 
   const taiMau = () => {
-    if (!dsTruong.length) { message.info('Chọn trường có nhân sự'); return }
+    if (!dsTruong.length) { message.info('Chọn đơn vị có nhân sự'); return }
     // Đủ các cột như bảng trên màn hình (giữ dòng tiêu đề ở dòng 1 để nhập lại được); chỉ cột tháng BHXH được đọc khi nhập
     xuatExcelA4(`Mau-BHXH-${tenTruong(truongChon ?? dsTruong[0].donViId).replace(/\s+/g, '-')}`, [trangTuDanhSach(
       dsTruong.map((d, i) => ({
@@ -289,7 +289,7 @@ export default function BoSungBhxhPage() {
   const columns: ColumnsType<Dong> = [
     cotSTT<Dong>(),
     cotHoTen<Dong>((r) => navigate(`/vien-chuc/${r.id}`)),
-    ...(!scopeDonViId && !truongChon ? [{ title: 'Trường', key: 'tr', width: 190, render: (_: unknown, r: Dong) => tenTruong(r.donViId) }] : []),
+    ...(!scopeDonViId && !truongChon ? [{ title: 'Đơn vị', key: 'tr', width: 190, render: (_: unknown, r: Dong) => tenTruong(r.donViId) }] : []),
     cotNgay<Dong>('Ngày sinh', (r) => r.vc.ngaySinh),
     cotGiua<Dong>('Tuổi', 'tuoi', 80, (r) => (r.quaTuoi
       ? <Tooltip title="Đã tới tuổi nghỉ hưu (NĐ 135) - có thể không còn đóng BHXH bắt buộc"><Text type="danger" strong>{r.tuoi}</Text></Tooltip>
@@ -359,7 +359,7 @@ export default function BoSungBhxhPage() {
 
   const colsTongHop: ColumnsType<DongTruong> = [
     cotSTT<DongTruong>(),
-    { title: 'Trường', key: 'ten', width: 220, render: (_, r) => <a onClick={() => { setTruongChon(r.id); setLoc('TAT_CA'); setThe('cap-nhat') }}>{r.ten}</a> },
+    { title: 'Đơn vị', key: 'ten', width: 220, render: (_, r) => <a onClick={() => { setTruongChon(r.id); setLoc('TAT_CA'); setThe('cap-nhat') }}>{r.ten}</a> },
     cotGiua<DongTruong>('Tổng số người', 'tong', 90, (r) => r.tong),
     cotGiua<DongTruong>('Đã khai', 'dk', 80, (r) => r.daKhai),
     cotGiua<DongTruong>('Không tham gia BHXH (quá tuổi)', 'kb', 130, (r) => (r.khongBhxh ? <Text style={{ color: '#7c3aed' }} strong>{r.khongBhxh}</Text> : '-')),
@@ -389,7 +389,7 @@ export default function BoSungBhxhPage() {
       {tong.chuaKhai > 0 && (
         <Alert type="warning" showIcon style={{ marginBottom: 12 }}
           title={`${tong.chuaKhai} người chưa khai tháng bắt đầu đóng BHXH (chưa tính người không tham gia do quá tuổi; trong đó ${tong.uuTien} CBQL, giáo viên chưa hưởng PCTN - ưu tiên khai để rà soát xếp lần đầu)`}
-          description="Xuất danh sách gửi các trường để kế toán bổ sung (trang này hoặc từng hồ sơ). Bấm số ở cột Chưa khai để xem từng người, bấm tên trường để xem cả trường."
+          description="Xuất danh sách gửi các đơn vị để bổ sung (trang này hoặc từng hồ sơ). Bấm số ở cột Chưa khai để xem từng người, bấm tên trường để xem cả trường."
           action={<Button icon={<FileExcelOutlined />} onClick={xuatChuaKhai}>Xuất danh sách chưa khai</Button>} />
       )}
       <Table<DongTruong> {...BANG_CHUAN} rowKey="id" dataSource={tongHop} columns={colsTongHop} pagination={false} />
@@ -408,8 +408,8 @@ export default function BoSungBhxhPage() {
       </Text>
       {scopeDonViId ? capNhat : (
         <Tabs activeKey={the} onChange={(k) => setThe(k as typeof the)} items={[
-          { key: 'tong-hop', label: 'Kiểm tra các trường', children: tongHopNode },
-          { key: 'cap-nhat', label: 'Danh sách theo trường', children: capNhat },
+          { key: 'tong-hop', label: 'Kiểm tra các đơn vị', children: tongHopNode },
+          { key: 'cap-nhat', label: 'Danh sách theo đơn vị', children: capNhat },
         ]} />
       )}
     </Card>

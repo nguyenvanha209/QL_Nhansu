@@ -69,19 +69,19 @@ export default function ViecCanLam() {
     const quaHan = alerts.filter((a) => a.daysLeft < 0).length
     const sapDen = alerts.length - quaHan
     const ds: Viec[] = [
-      { key: 'cho-nang-luong', icon: <AuditOutlined />, mau: 'red', so: soNangLuongCho, noiDung: 'hồ sơ nâng lương, PCTN chờ bạn xử lý', den: '/ho-so-nang-luong', nut: 'Xử lý' },
+      { key: 'cho-nang-luong', icon: <AuditOutlined />, mau: 'red', so: soNangLuongCho, noiDung: khoi && khoi !== 'TRUONG_HOC' ? 'hồ sơ nâng lương chờ bạn xử lý' : 'hồ sơ nâng lương, PCTN chờ bạn xử lý', den: '/ho-so-nang-luong', nut: 'Xử lý' },
       { key: 'cho-dieu-chinh', icon: <FileTextOutlined />, mau: 'red', so: soDeXuatCho, noiDung: 'phiếu điều chỉnh lương chờ bạn xử lý', den: '/de-xuat', nut: 'Xử lý' },
       { key: 'qua-han', icon: <WarningOutlined />, mau: 'red', so: quaHan, noiDung: 'người đã quá hạn nâng bậc lương', den: '/ho-so-nang-luong?loai=NANG_BAC', nut: coLapPhieu ? 'Lập phiếu' : 'Xem' },
       { key: 'sap-den', icon: <ClockCircleOutlined />, mau: 'orange', so: sapDen, noiDung: 'người đến kỳ nâng bậc trong 90 ngày tới', den: '/ho-so-nang-luong?loai=NANG_BAC', nut: 'Xem' },
       { key: 'thong-bao', icon: <NotificationOutlined />, mau: 'blue', so: soThongBaoMoi, noiDung: 'thông báo kết quả nâng lương mới', den: '/thong-bao-ket-qua', nut: 'Xem' },
-      { key: 'bo-nhiem', icon: <SolutionOutlined />, mau: 'orange', so: coXemHoSo ? boNhiem.canNhac.length : 0, noiDung: 'HT, PHT sắp hoặc đã hết nhiệm kỳ', den: '/bo-nhiem', nut: 'Xem' },
+      { key: 'bo-nhiem', icon: <SolutionOutlined />, mau: 'orange', so: coXemHoSo ? boNhiem.canNhac.length : 0, noiDung: 'cán bộ quản lý sắp hoặc đã hết nhiệm kỳ', den: '/bo-nhiem', nut: 'Xem' },
       { key: 'ke-toan', icon: <SolutionOutlined />, mau: 'orange', so: coXemHoSo ? keToan.canNhac.length : 0, noiDung: 'kế toán đến hạn chuyển đổi vị trí', den: '/bo-nhiem?the=ke-toan', nut: 'Xem' },
       { key: 'bhxh', icon: <SafetyCertificateOutlined />, mau: 'blue', so: soChuaKhaiBhxh, noiDung: 'người chưa khai tháng bắt đầu đóng BHXH', den: '/vien-chuc/bhxh', nut: 'Khai bổ sung' },
       { key: 'qd-bo-nhiem', icon: <SolutionOutlined />, mau: 'blue', so: coXemHoSo ? boNhiem.chuaNhap.length : 0, noiDung: 'CBQL chưa nhập quyết định bổ nhiệm', den: '/bo-nhiem', nut: 'Nhập' },
       { key: 'moc-ke-toan', icon: <SolutionOutlined />, mau: 'blue', so: coXemHoSo ? keToan.chuaNhap.length : 0, noiDung: 'kế toán chưa nhập mốc bổ nhiệm', den: '/bo-nhiem?the=ke-toan', nut: 'Nhập mốc' },
     ]
     return ds.filter((v) => v.so > 0)
-  }, [alerts, soNangLuongCho, soDeXuatCho, soThongBaoMoi, boNhiem, keToan, soChuaKhaiBhxh, coXemHoSo, coLapPhieu])
+  }, [khoi, alerts, soNangLuongCho, soDeXuatCho, soThongBaoMoi, boNhiem, keToan, soChuaKhaiBhxh, coXemHoSo, coLapPhieu])
 
   return (
     <Card

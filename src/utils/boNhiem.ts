@@ -4,7 +4,8 @@ import { isDangCongTac } from '@/types/vienChuc'
 import { calcRetirementDate } from './retirement'
 
 /** Chức vụ do UBND phường bổ nhiệm theo nhiệm kỳ - phạm vi theo dõi */
-export const CHUC_VU_BO_NHIEM = ['HT', 'P.HT']
+// Lãnh đạo, quản lý theo dõi nhiệm kỳ: HT, PHT (trường); Trưởng, Phó phòng; Chánh, Phó Chánh VP; Giám đốc, Phó GĐ (ĐVSN)
+export const CHUC_VU_BO_NHIEM = ['HT', 'P.HT', 'TRP', 'P.TRP', 'CVP', 'P.CVP', 'GD', 'P.GD']
 export const NHIEM_KY_NAM = 5
 /** Mốc nhắc: bắt đầu chuẩn bị hồ sơ */
 export const MOC_CHUAN_BI_THANG = 6

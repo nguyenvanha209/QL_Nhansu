@@ -364,7 +364,7 @@ export default function DashboardPage() {
             { title: 'Họ và tên', key: 'ht', render: (_: unknown, t) => <a onClick={() => navigate(`/vien-chuc/${t.vc.id}?tab=bo-nhiem`)}>{t.vc.ho} {t.vc.ten}</a> },
             ...(scopeDonViId ? [] : [{ title: 'Đơn vị', key: 'dv', render: (_: unknown, t: TinhTrangBoNhiem) => allDonVis.find((d) => d.id === t.vc.donViId)?.ten ?? '' }]),
             { title: 'Chức vụ', key: 'cv', render: (_: unknown, t) => CHUC_VU_LABELS[t.vc.chucVu ?? ''] ?? t.vc.chucVu },
-            { title: 'Hết nhiệm kỳ', key: 'het', render: (_: unknown, t) => <span><b>{formatDate(t.bn?.ngayHetNhiemKy)}</b> <Text type="secondary">({moTaConLai(t.soNgayCon)})</Text></span> },
+            { title: 'Hết nhiệm kỳ', key: 'het', render: (_: unknown, t) => <span><b>{formatDate(t.ngayHet)}</b> <Text type="secondary">({moTaConLai(t.soNgayCon)})</Text></span> },
             { title: 'Tình trạng', key: 'muc', render: (_: unknown, t) => <Space size={4}><TagMucBoNhiem muc={t.muc} />{t.xemXetKeoDai && <TagKeoDai ngayNghiHuu={t.ngayNghiHuu} />}</Space> },
           ]}
         />

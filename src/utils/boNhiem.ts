@@ -54,23 +54,31 @@ export interface TinhTrangBoNhiem {
   ngayNghiHuu?: string
   /** Còn dưới 2 năm đến tuổi nghỉ hưu tại ngày hết nhiệm kỳ */
   xemXetKeoDai: boolean
+  /** Ngày hết nhiệm kỳ dùng để tính (bổ nhiệm lần đầu / lại: không quá 5 năm từ ngày bắt đầu) */
+  ngayHet?: string
+  /** Ngày hết nhiệm kỳ đã nhập vượt quá 5 năm - cần kiểm tra lại quyết định */
+  nhapQua5Nam?: boolean
 }
 
 export function tinhTrangBoNhiem(vc: VienChuc, homNay = dayjs().startOf('day')): TinhTrangBoNhiem {
   const bn = nhiemKyHienTai(vc)
   const nghiHuu = ngayNghiHuu(vc)
   if (!bn?.ngayHetNhiemKy) return { vc, bn, muc: 'CHUA_NHAP', ngayNghiHuu: nghiHuu, xemXetKeoDai: false }
-  const het = dayjs(bn.ngayHetNhiemKy)
+  // Bổ nhiệm lần đầu / bổ nhiệm lại có thời hạn 5 năm; kéo dài thì theo quyết định (thường đến nghỉ hưu)
+  const toiDa = bn.hinhThuc !== 'KEO_DAI' && bn.ngayBatDau ? ngayHetNhiemKyMacDinh(bn.ngayBatDau) : undefined
+  const nhapQua5Nam = !!toiDa && bn.ngayHetNhiemKy > toiDa
+  const ngayHet = nhapQua5Nam ? toiDa! : bn.ngayHetNhiemKy
+  const het = dayjs(ngayHet)
   const soNgayCon = het.diff(homNay, 'day')
-  if (nghiHuu && nghiHuu <= bn.ngayHetNhiemKy) {
-    return { vc, bn, muc: 'NGHI_HUU_TRUOC', soNgayCon, ngayNghiHuu: nghiHuu, xemXetKeoDai: false }
+  if (nghiHuu && nghiHuu <= ngayHet) {
+    return { vc, bn, muc: 'NGHI_HUU_TRUOC', soNgayCon, ngayNghiHuu: nghiHuu, xemXetKeoDai: false, ngayHet, nhapQua5Nam }
   }
   const xemXetKeoDai = !!nghiHuu && het.add(NAM_XET_KEO_DAI, 'year').format('YYYY-MM-DD') > nghiHuu
   const muc: MucNhacBoNhiem = soNgayCon < 0 ? 'QUA_HAN'
     : soNgayCon <= MOC_DEN_HAN_NGAY ? 'DEN_HAN'
     : !het.subtract(MOC_CHUAN_BI_THANG, 'month').isAfter(homNay) ? 'CHUAN_BI'
     : 'CON_HAN'
-  return { vc, bn, muc, soNgayCon, ngayNghiHuu: nghiHuu, xemXetKeoDai }
+  return { vc, bn, muc, soNgayCon, ngayNghiHuu: nghiHuu, xemXetKeoDai, ngayHet, nhapQua5Nam }
 }
 
 /** HT/P.HT đang công tác trong phạm vi, kèm tình trạng nhiệm kỳ, sắp theo ngày hết nhiệm kỳ */
@@ -78,7 +86,7 @@ export function danhSachBoNhiem(vienChucs: VienChuc[], scopeDonViId?: string | n
   return vienChucs
     .filter((v) => v.active && isDangCongTac(v) && laChucVuBoNhiem(v.chucVu) && (!scopeDonViId || v.donViId === scopeDonViId))
     .map((v) => tinhTrangBoNhiem(v))
-    .sort((a, b) => (a.bn?.ngayHetNhiemKy ?? '9999').localeCompare(b.bn?.ngayHetNhiemKy ?? '9999'))
+    .sort((a, b) => (a.ngayHet ?? '9999').localeCompare(b.ngayHet ?? '9999'))
 }
 
 /** "còn 85 ngày" / "quá 12 ngày" */

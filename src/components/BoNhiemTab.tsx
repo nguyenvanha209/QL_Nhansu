@@ -11,10 +11,10 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { formatDate } from '@/utils/helpers'
 import {
-  CHUC_VU_BO_NHIEM, MOC_CHUAN_BI_THANG, MOC_DEN_HAN_NGAY, laChucVuBoNhiem, moTaConLai,
+  CHUC_VU_BO_NHIEM, MOC_CHUAN_BI_THANG, MOC_DEN_HAN_NGAY, NHIEM_KY_NAM, laChucVuBoNhiem, moTaConLai,
   ngayHetNhiemKyMacDinh, nhiemKyHienTai, tinhTrangBoNhiem,
 } from '@/utils/boNhiem'
-import { TagKeoDai, TagMucBoNhiem } from './BoNhiemTags'
+import { TagKeoDai, TagMucBoNhiem, TagNhapQua5Nam } from './BoNhiemTags'
 
 const { Text } = Typography
 const COQUAN_MAC_DINH = 'UBND phường Gia Viên'
@@ -117,7 +117,12 @@ export default function BoNhiemTab({ vc }: { vc: VienChuc }) {
   }
   const doiHinhThuc = (h: HinhThucBoNhiem) => {
     // Kéo dài: thường đến thời điểm nghỉ hưu
-    if (h === 'KEO_DAI' && tt?.ngayNghiHuu) { form.setFieldValue('ngayHetNhiemKy', dayjs(tt.ngayNghiHuu)); setTuSuaNgayHet(true) }
+    if (h === 'KEO_DAI' && tt?.ngayNghiHuu) { form.setFieldValue('ngayHetNhiemKy', dayjs(tt.ngayNghiHuu)); setTuSuaNgayHet(true); return }
+    // Đổi về bổ nhiệm lần đầu / lại: tính lại 5 năm từ ngày bắt đầu (không giữ ngày nghỉ hưu của hình thức kéo dài)
+    const bd: Dayjs | undefined = form.getFieldValue('ngayBatDau')
+    form.setFieldValue('ngayHetNhiemKy', bd ? dayjs(ngayHetNhiemKyMacDinh(bd.format('YYYY-MM-DD'))) : undefined)
+    setTuSuaNgayHet(false)
+    form.validateFields(['ngayHetNhiemKy']).catch(() => undefined)
   }
 
   return (
@@ -131,17 +136,17 @@ export default function BoNhiemTab({ vc }: { vc: VienChuc }) {
             <Space wrap size={8}>
               <span>
                 {tt.bn
-                  ? <>Nhiệm kỳ hiện tại đến <b>{formatDate(tt.bn.ngayHetNhiemKy)}</b> ({moTaConLai(tt.soNgayCon)})</>
+                  ? <>Nhiệm kỳ hiện tại đến <b>{formatDate(tt.ngayHet)}</b> ({moTaConLai(tt.soNgayCon)})</>
                   : 'Chưa nhập quyết định bổ nhiệm'}
               </span>
               <TagMucBoNhiem muc={tt.muc} />
               {tt.xemXetKeoDai && <TagKeoDai ngayNghiHuu={tt.ngayNghiHuu} />}
+              {tt.nhapQua5Nam && <TagNhapQua5Nam ngayDaNhap={tt.bn?.ngayHetNhiemKy} />}
             </Space>
           }
           description={
             <span>
-              Nghỉ hưu: {formatDate(tt.ngayNghiHuu) || '-'}. Hệ thống nhắc Phòng VHXH khi còn {MOC_CHUAN_BI_THANG} tháng (chuẩn bị hồ sơ) và
-              {' '}{MOC_DEN_HAN_NGAY} ngày (hạn hoàn thành quy trình bổ nhiệm lại). Nhập quyết định bổ nhiệm lại thì tự sang nhiệm kỳ mới.
+              Nghỉ hưu: {formatDate(tt.ngayNghiHuu) || '-'}. Nhắc khi còn {MOC_CHUAN_BI_THANG} tháng và {MOC_DEN_HAN_NGAY} ngày.
             </span>
           }
         />
@@ -210,7 +215,20 @@ export default function BoNhiemTab({ vc }: { vc: VienChuc }) {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="ngayQuyetDinh" label="Ngày quyết định" rules={[{ required: true, message: 'Chọn ngày quyết định' }]}>
+              <Form.Item
+                name="ngayQuyetDinh" label="Ngày quyết định" dependencies={['ngayBatDau']}
+                rules={[
+                  { required: true, message: 'Chọn ngày quyết định' },
+                  ({ getFieldValue }) => ({
+                    validator: (_, v: Dayjs | undefined) => {
+                      const bd: Dayjs | undefined = getFieldValue('ngayBatDau')
+                      return !v || !bd || !v.isBefore(bd.subtract(1, 'year'))
+                        ? Promise.resolve()
+                        : Promise.reject(new Error('Ngày quyết định cách ngày bắt đầu quá 1 năm - kiểm tra lại'))
+                    },
+                  }),
+                ]}
+              >
                 <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
               </Form.Item>
             </Col>
@@ -229,13 +247,18 @@ export default function BoNhiemTab({ vc }: { vc: VienChuc }) {
                 name="ngayHetNhiemKy"
                 label="Đến ngày (hết nhiệm kỳ)"
                 extra="Tự tính 5 năm từ ngày bắt đầu; sửa nếu quyết định ghi khác"
-                dependencies={['ngayBatDau']}
+                dependencies={['ngayBatDau', 'hinhThuc']}
                 rules={[
                   { required: true, message: 'Chọn ngày hết nhiệm kỳ' },
                   ({ getFieldValue }) => ({
                     validator: (_, v: Dayjs | undefined) => {
                       const bd: Dayjs | undefined = getFieldValue('ngayBatDau')
-                      return !v || !bd || v.isAfter(bd) ? Promise.resolve() : Promise.reject(new Error('Phải sau ngày bắt đầu'))
+                      if (!v || !bd) return Promise.resolve()
+                      if (!v.isAfter(bd)) return Promise.reject(new Error('Phải sau ngày bắt đầu'))
+                      if (getFieldValue('hinhThuc') !== 'KEO_DAI' && v.format('YYYY-MM-DD') > ngayHetNhiemKyMacDinh(bd.format('YYYY-MM-DD'))) {
+                        return Promise.reject(new Error(`Nhiệm kỳ không quá ${NHIEM_KY_NAM} năm`))
+                      }
+                      return Promise.resolve()
                     },
                   }),
                 ]}

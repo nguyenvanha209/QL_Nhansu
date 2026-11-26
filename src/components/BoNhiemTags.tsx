@@ -14,6 +14,14 @@ export function TagMucBoNhiem({ muc, kemTen = true }: { muc: MucNhacBoNhiem; kem
   )
 }
 
+export function TagNhapQua5Nam({ ngayDaNhap }: { ngayDaNhap?: string }) {
+  return (
+    <Tooltip title={`Đã nhập hết nhiệm kỳ ${formatDate(ngayDaNhap)}, quá 5 năm; đang tính theo 5 năm. Kiểm tra lại quyết định.`}>
+      <Tag color="error" style={{ marginInlineEnd: 0 }}>Nhiệm kỳ nhập quá 5 năm</Tag>
+    </Tooltip>
+  )
+}
+
 export function TagKeoDai({ ngayNghiHuu }: { ngayNghiHuu?: string }) {
   return (
     <Tooltip title={`Nghỉ hưu ngày ${formatDate(ngayNghiHuu)}, còn dưới ${NAM_XET_KEO_DAI} năm đến ngày hết nhiệm kỳ`}>

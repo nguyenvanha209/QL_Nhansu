@@ -12,7 +12,7 @@ import { formatDate } from '@/utils/helpers'
 import { exportToExcel } from '@/utils/exportExcel'
 import { MOC_CHUAN_BI_THANG, MOC_DEN_HAN_NGAY, MUC_NHAC_BO_NHIEM, NAM_XET_KEO_DAI, moTaConLai } from '@/utils/boNhiem'
 import type { MucNhacBoNhiem, TinhTrangBoNhiem } from '@/utils/boNhiem'
-import { TagKeoDai, TagMucBoNhiem } from '@/components/BoNhiemTags'
+import { TagKeoDai, TagMucBoNhiem, TagNhapQua5Nam } from '@/components/BoNhiemTags'
 import { soSanhTruong, thuTuTruong } from '@/utils/dinhMuc'
 
 const { Title, Text } = Typography
@@ -77,7 +77,7 @@ function TheoDoiCbql() {
     'Ngày QĐ': formatDate(t.bn?.ngayQuyetDinh),
     'Cơ quan ra QĐ': t.bn?.coQuanQuyetDinh ?? '',
     'Nhiệm kỳ từ': formatDate(t.bn?.ngayBatDau),
-    'Hết nhiệm kỳ': formatDate(t.bn?.ngayHetNhiemKy),
+    'Hết nhiệm kỳ': formatDate(t.ngayHet),
     'Còn lại': moTaConLai(t.soNgayCon),
     'Tình trạng': MUC_NHAC_BO_NHIEM[t.muc].ten,
     'Ngày nghỉ hưu': formatDate(t.ngayNghiHuu),
@@ -156,8 +156,8 @@ function TheoDoiCbql() {
             { title: 'Nhiệm kỳ từ', key: 'bd', width: 115, render: (_: unknown, t: TinhTrangBoNhiem) => formatDate(t.bn?.ngayBatDau) },
             {
               title: 'Hết nhiệm kỳ', key: 'het', width: 125,
-              sorter: (a: TinhTrangBoNhiem, b: TinhTrangBoNhiem) => (a.bn?.ngayHetNhiemKy ?? '9').localeCompare(b.bn?.ngayHetNhiemKy ?? '9'),
-              render: (_: unknown, t: TinhTrangBoNhiem) => <b>{formatDate(t.bn?.ngayHetNhiemKy)}</b>,
+              sorter: (a: TinhTrangBoNhiem, b: TinhTrangBoNhiem) => (a.ngayHet ?? '9').localeCompare(b.ngayHet ?? '9'),
+              render: (_: unknown, t: TinhTrangBoNhiem) => <b>{formatDate(t.ngayHet)}</b>,
             },
             {
               title: 'Còn lại', key: 'con', width: 115,
@@ -169,6 +169,7 @@ function TheoDoiCbql() {
                 <Space size={4} wrap>
                   <TagMucBoNhiem muc={t.muc} />
                   {t.xemXetKeoDai && <TagKeoDai ngayNghiHuu={t.ngayNghiHuu} />}
+                  {t.nhapQua5Nam && <TagNhapQua5Nam ngayDaNhap={t.bn?.ngayHetNhiemKy} />}
                 </Space>
               ),
             },

@@ -3,7 +3,7 @@ import type { KhaiPctnLanDau, DongQuaTrinhPctn } from '@/types/deXuat'
 
 // Xếp phụ cấp thâm niên nhà giáo lần đầu (NĐ 77/2021/NĐ-CP; Công văn hướng dẫn của Phòng VH-XH):
 // đủ 5 năm (60 tháng) giảng dạy, giáo dục có đóng BHXH bắt buộc thì hưởng 5%, từ năm thứ sáu mỗi năm (đủ 12 tháng) +1%.
-// Không tính: thời gian tập sự, nghỉ việc riêng không lương liên tục từ 01 tháng, ốm đau thai sản vượt quy định,
+// Không tính: thời gian tập sự (MN tối đa 9 tháng, TH/THCS tối đa 12 tháng), nghỉ việc riêng không lương liên tục từ 01 tháng, ốm đau thai sản vượt quy định,
 // đi học / công tác quá hạn, bị tạm đình chỉ, tạm giữ, tạm giam.
 // Đối chiếu 17 trường hợp trong danh sách TB423/2026: mốc đủ 5 năm = ngày 01 của
 // (tháng bắt đầu đóng BHXH giảng dạy + 60 tháng + số tháng không tính).
@@ -15,13 +15,18 @@ export function ngayDu5Nam(k: Pick<KhaiPctnLanDau, 'batDauBhxh' | 'thangTapSu' |
   return dayjs(`${k.batDauBhxh}-01`).add(60 + khongTinh, 'month').format('YYYY-MM-DD')
 }
 
-/** Số tháng không tính mặc định khi chưa khai chi tiết: 0 - đủ 5 năm = đủ 60 tháng đóng BHXH.
- *  Thời gian tập sự, nghỉ không lương… (nếu có) khai theo hồ sơ ở phiếu Xếp PCTN lần đầu. */
-export const THANG_TAP_SU_MAC_DINH = 0
+/** Thời gian tập sự tối đa theo cấp học: mầm non 9 tháng; tiểu học, THCS (và đơn vị khác) 12 tháng */
+export const tapSuToiDa = (loaiDonVi?: string) => (loaiDonVi === 'MAM_NON' ? 9 : 12)
 
-/** Ngày dự kiến đủ 5 năm từ tháng bắt đầu đóng BHXH trong ngành ghi ở hồ sơ (đủ 60 tháng đóng BHXH) */
-export const du5NamTuHoSo = (batDauBhxhGd?: string) =>
-  ngayDu5Nam({ batDauBhxh: batDauBhxhGd, thangTapSu: THANG_TAP_SU_MAC_DINH, thangKhongTinhKhac: 0 })
+/** Số tháng tập sự của một người: theo hồ sơ (khai riêng, kể cả 0); chưa khai thì lấy tối đa theo cấp học */
+export const thangTapSuCua = (vc: { thangTapSu?: number } | undefined, loaiDonVi?: string) =>
+  vc?.thangTapSu ?? tapSuToiDa(loaiDonVi)
+
+export const GHI_CHU_DU_5_NAM = 'Đủ 5 năm = tháng bắt đầu đóng BHXH + thời gian tập sự + 60 tháng (tập sự không tính vào thời gian hưởng; mầm non tối đa 9 tháng, tiểu học, THCS tối đa 12 tháng; khai riêng từng người, người không tập sự ghi 0)'
+
+/** Ngày dự kiến đủ 5 năm từ tháng bắt đầu đóng BHXH trong ngành ghi ở hồ sơ + thời gian tập sự */
+export const du5NamTuHoSo = (batDauBhxhGd: string | undefined, thangTapSu: number) =>
+  ngayDu5Nam({ batDauBhxh: batDauBhxhGd, thangTapSu, thangKhongTinhKhac: 0 })
 
 export type TinhTrangLanDau = 'DANG_HUONG' | 'CHUA_KHAI' | 'DU_5_NAM' | 'SAP_DU' | 'CHUA_DU'
 
@@ -29,9 +34,9 @@ export type TinhTrangLanDau = 'DANG_HUONG' | 'CHUA_KHAI' | 'DU_5_NAM' | 'SAP_DU'
  * Tình trạng xếp PCTN lần đầu của CBQL, giáo viên: đang hưởng / chưa khai BHXH / đã đủ 5 năm (thuộc diện rà soát,
  * lập phiếu) / sắp đủ (trong `soThangSapDu` tháng tới) / chưa đủ.
  */
-export function tinhTrangLanDau(pctnDangHuong: number, batDauBhxhGd: string | undefined, homNay: string, soThangSapDu = 6): { tt: TinhTrangLanDau; du5Nam?: string } {
+export function tinhTrangLanDau(pctnDangHuong: number, batDauBhxhGd: string | undefined, homNay: string, thangTapSu: number, soThangSapDu = 6): { tt: TinhTrangLanDau; du5Nam?: string } {
   if (pctnDangHuong > 0) return { tt: 'DANG_HUONG' }
-  const du5Nam = du5NamTuHoSo(batDauBhxhGd)
+  const du5Nam = du5NamTuHoSo(batDauBhxhGd, thangTapSu)
   if (!du5Nam) return { tt: 'CHUA_KHAI' }
   if (du5Nam <= homNay) return { tt: 'DU_5_NAM', du5Nam }
   if (du5Nam <= dayjs(homNay).add(soThangSapDu, 'month').format('YYYY-MM-DD')) return { tt: 'SAP_DU', du5Nam }

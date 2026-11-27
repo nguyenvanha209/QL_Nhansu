@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Alert, App, Button, Card, Checkbox, DatePicker, Modal, Segmented, Select, Space, Statistic, Table, Tabs, Tag, Tooltip, Typography, Upload } from 'antd'
+import { Alert, App, Button, Card, Checkbox, DatePicker, InputNumber, Modal, Segmented, Select, Space, Statistic, Table, Tabs, Tag, Tooltip, Typography, Upload } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined, FileExcelOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -14,7 +14,7 @@ import type { VienChuc } from '@/types/vienChuc'
 import { CHUC_VU_LABELS, LOAI_LAO_DONG_LABELS, duocTinhSoLieu } from '@/types/vienChuc'
 import { tuoiNghiHuuThang } from '@/utils/retirement'
 import { CONG_VIEC_LABELS, laDienPhuCapThamNien, nhomCoBan, nhomViTri } from '@/utils/nhomViTri'
-import { TINH_TRANG_LAN_DAU, tinhTrangLanDau } from '@/utils/pctnLanDau'
+import { GHI_CHU_DU_5_NAM, TINH_TRANG_LAN_DAU, tapSuToiDa, tinhTrangLanDau } from '@/utils/pctnLanDau'
 import type { TinhTrangLanDau } from '@/utils/pctnLanDau'
 import { BANG_CHUAN, cotGiua, cotHoTen, cotNgay, cotSTT, phanTrang } from '@/utils/cotBang'
 import { xuatExcelA4, trangTuDanhSach } from '@/utils/excelA4'
@@ -47,6 +47,9 @@ interface Dong {
   ten: string
   donViId: string
   chucDanh: string
+  /** Số tháng tập sự khai riêng (undefined = chưa khai, dùng tối đa theo cấp học) */
+  tapSu?: number
+  tapSuToiDa: number
   pctn: number
   /** Giá trị đang hiện (đã sửa trên màn hình nếu có) */
   thang?: string
@@ -104,10 +107,12 @@ export default function BoSungBhxhPage() {
   const [loc, setLoc] = useState<'TAT_CA' | TrangThaiDong>('TAT_CA')
   const [nhap, setNhap] = useState<Record<string, string | undefined>>({})
   const [nhapKhong, setNhapKhong] = useState<Record<string, boolean>>({})
+  const [nhapTapSu, setNhapTapSu] = useState<Record<string, number | undefined>>({})
   const [xemTruong, setXemTruong] = useState<string | null>(null)
 
   const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER' && trongPhamVi(d.id)).sort(soSanhTruong), [donVis, trongPhamVi])
   const thuTu = useMemo(() => thuTuTruong(donVis), [donVis])
+  const loaiDv = useMemo(() => new Map(donVis.map((d) => [d.id, d.loai as string])), [donVis])
   const cdTheoId = useMemo(() => new Map(chucDanhs.map((c) => [c.id, c])), [chucDanhs])
   const idPctn = loaiPhuCaps.find((l) => l.ma === 'PC_THAM_NIEN')?.id
   const pctnTheoNguoi = useMemo(() => {
@@ -123,29 +128,32 @@ export default function BoSungBhxhPage() {
     .map((v) => {
       const suaThang = Object.prototype.hasOwnProperty.call(nhap, v.id)
       const suaKhong = Object.prototype.hasOwnProperty.call(nhapKhong, v.id)
-      const daSua = suaThang || suaKhong
+      const suaTapSu = Object.prototype.hasOwnProperty.call(nhapTapSu, v.id)
+      const daSua = suaThang || suaKhong || suaTapSu
+      const tapSu = suaTapSu ? nhapTapSu[v.id] : v.thangTapSu
+      const toiDa = tapSuToiDa(loaiDv.get(v.donViId))
       const thang = suaThang ? nhap[v.id] : v.batDauBhxhGd
       const khong = suaKhong ? nhapKhong[v.id] : !!v.khongThamGiaBhxh
       const pctn = pctnTheoNguoi.get(v.id) ?? 0
       const cd = cdTheoId.get(v.chucDanhId)
       const dienPctn = laDienPhuCapThamNien(v, cd?.nhom)
-      const xet = dienPctn ? tinhTrangLanDau(pctn, thang, homNay) : undefined
+      const xet = dienPctn ? tinhTrangLanDau(pctn, thang, homNay, tapSu ?? toiDa) : undefined
       const nhom = nhomCoBan(v, cd?.nhom)
       const coTheTick = nhom === 'NHAN_VIEN'
       const tt: TrangThaiDong = coTheTick && khong ? 'KHONG_BHXH' : !thang ? 'CHUA_KHAI' : xet ? xet.tt : 'KHONG_DIEN'
       const tuoiThang = dayjs(homNay).diff(dayjs(v.ngaySinh), 'month')
       const nv = nhomViTri(v, cd?.nhom)
       return {
-        vc: v, id: v.id, ho: v.ho, ten: v.ten, donViId: v.donViId,
+        vc: v, id: v.id, ho: v.ho, ten: v.ten, donViId: v.donViId, tapSu, tapSuToiDa: toiDa,
         chucDanh: (v.chucVu && CHUC_VU_LABELS[v.chucVu]) || (nhom === 'CBQL' ? 'Cán bộ quản lý' : nhom === 'GIAO_VIEN' ? 'Giáo viên' : 'Nhân viên'),
         pctn, thang, khong: coTheTick && khong, coTheTick, daSua, dienPctn, uuTien: dienPctn && !pctn && !thang,
         tuoi: Math.floor(tuoiThang / 12), quaTuoi: tuoiThang >= tuoiNghiHuuThang(v.ngaySinh, v.gioiTinh),
         congViec: v.congViec ? (CONG_VIEC_LABELS[v.congViec] ?? v.congViec) : nv === 'NV_PHUC_VU' ? 'Nhân viên phục vụ' : 'Nhân viên khác',
         tt, du5Nam: xet?.du5Nam,
       }
-    }), [vienChucs, cdTheoId, trongPhamVi, nhap, nhapKhong, pctnTheoNguoi, homNay, thuTu])
+    }), [vienChucs, cdTheoId, trongPhamVi, nhap, nhapKhong, nhapTapSu, pctnTheoNguoi, homNay, thuTu, loaiDv])
 
-  const doiCuaDong = (d: Dong) => (d.thang ?? '') !== (d.vc.batDauBhxhGd ?? '') || d.khong !== !!d.vc.khongThamGiaBhxh
+  const doiCuaDong = (d: Dong) => (d.thang ?? '') !== (d.vc.batDauBhxhGd ?? '') || d.khong !== !!d.vc.khongThamGiaBhxh || (d.tapSu ?? null) !== (d.vc.thangTapSu ?? null)
   const soDaSua = tatCa.filter((d) => d.daSua && doiCuaDong(d)).length
 
   // ── Tổng hợp theo trường (VHXH, quản trị) ──
@@ -214,13 +222,14 @@ export default function BoSungBhxhPage() {
     if (!thay.length) { message.info('Chưa có thay đổi'); return }
     useVienChucStore.getState().capNhatNhieu(
       // Tick không tham gia BHXH thì không giữ tháng đóng BHXH
-      thay.map((d) => ({ id: d.id, patch: { batDauBhxhGd: d.khong ? undefined : d.thang, khongThamGiaBhxh: d.khong ? true : undefined } })),
+      thay.map((d) => ({ id: d.id, patch: { batDauBhxhGd: d.khong ? undefined : d.thang, khongThamGiaBhxh: d.khong ? true : undefined, thangTapSu: d.dienPctn ? d.tapSu : undefined } })),
       currentUser.id, currentUser.fullName,
-      `Bổ sung thông tin đóng BHXH (tháng bắt đầu, không tham gia do quá tuổi) cho ${thay.length} người`,
+      `Bổ sung thông tin đóng BHXH (tháng bắt đầu, thời gian tập sự, không tham gia do quá tuổi) cho ${thay.length} người`,
       truongChon,
     )
     setNhap({})
     setNhapKhong({})
+    setNhapTapSu({})
     message.success(`Đã lưu ${thay.length} người`)
   }
 
@@ -236,11 +245,12 @@ export default function BoSungBhxhPage() {
         'Tuổi': d.tuoi,
         'Tháng bắt đầu đóng BHXH (MM/YYYY)': hienThang(d.thang),
         'Không tham gia BHXH do quá tuổi (x)': !d.coTheTick ? '' : d.khong ? 'x' : '',
+        'Tập sự (tháng)': !d.dienPctn ? '' : d.tapSu ?? '',
         'Dự kiến đủ 5 năm': formatDate(d.du5Nam ?? ''),
         'Tình trạng': d.uuTien ? 'Chưa khai - cần rà soát PCTN' : NHAN_TRANG_THAI[d.tt].nhan,
       })),
       'BHXH',
-      { rongCot: [5, 12, 26, 12, 16, 22, 12, 11, 7, 16, 16, 12, 28], cotGiua: [0, 1, 3, 6, 7, 8, 9, 10, 11] },
+      { rongCot: [5, 12, 26, 12, 16, 22, 12, 11, 7, 16, 16, 10, 12, 28], cotGiua: [0, 1, 3, 6, 7, 8, 9, 10, 11, 12] },
     )])
   }
 
@@ -252,6 +262,8 @@ export default function BoSungBhxhPage() {
       const cacCot = Object.keys(rows[0] ?? {})
       const cotThang = cacCot.find((k) => /bhxh/i.test(k) && !/không tham gia/i.test(k))
       const cotKhong = cacCot.find((k) => /không tham gia/i.test(k))
+      const cotTapSu = cacCot.find((k) => /tập sự/i.test(k))
+      const moiTapSu: Record<string, number | undefined> = {}
       if (!cotThang) { message.error('Không thấy cột "Tháng bắt đầu đóng BHXH" - dùng file mẫu tải từ trang này'); return false }
       const theoMa = new Map(dsTruong.map((d) => [d.vc.ma, d]))
       const theoTen = new Map(dsTruong.map((d) => [`${d.ho} ${d.ten}`.toLowerCase().trim() + '|' + formatDate(d.vc.ngaySinh), d]))
@@ -261,7 +273,8 @@ export default function BoSungBhxhPage() {
       for (const r of rows) {
         const giaTri = r[cotThang]
         const dongTick = cotKhong ? String(r[cotKhong] ?? '').trim().toLowerCase() : ''
-        if ((giaTri === '' || giaTri == null) && !dongTick) continue
+        const tsRaw = cotTapSu ? String(r[cotTapSu] ?? '').trim() : ''
+        if ((giaTri === '' || giaTri == null) && !dongTick && tsRaw === '') continue
         const d = theoMa.get(String(r['Mã hồ sơ'] ?? '').trim())
           ?? theoTen.get(`${String(r['Họ và tên'] ?? '').toLowerCase().trim()}|${String(r['Ngày sinh'] ?? '').trim()}`)
         if (!d) { loi.push(`Không khớp hồ sơ: ${r['Họ và tên'] ?? ''}`); continue }
@@ -269,6 +282,11 @@ export default function BoSungBhxhPage() {
           if (!d.coTheTick) loi.push(`${d.ho} ${d.ten}: chỉ nhân viên được ghi không tham gia BHXH do quá tuổi`)
           else { moiKhong[d.id] = true; moi[d.id] = undefined }
           continue
+        }
+        if (tsRaw !== '' && d.dienPctn) {
+          const ts = Number(tsRaw)
+          if (!Number.isInteger(ts) || ts < 0 || ts > d.tapSuToiDa) loi.push(`${d.ho} ${d.ten}: tập sự "${tsRaw}" không hợp lệ (0 - ${d.tapSuToiDa} tháng)`)
+          else moiTapSu[d.id] = ts
         }
         if (giaTri === '' || giaTri == null) continue
         const thang = docThang(giaTri)
@@ -278,7 +296,8 @@ export default function BoSungBhxhPage() {
       }
       setNhap((cu) => ({ ...cu, ...moi }))
       setNhapKhong((cu) => ({ ...cu, ...moiKhong }))
-      const n = Object.keys(moi).length
+      setNhapTapSu((cu) => ({ ...cu, ...moiTapSu }))
+      const n = new Set([...Object.keys(moi), ...Object.keys(moiTapSu)]).size
       if (loi.length) {
         modal.warning({ title: `Đã đọc ${n} người, ${loi.length} dòng không nhận`, content: <ul style={{ paddingLeft: 18, margin: 0 }}>{loi.slice(0, 12).map((l) => <li key={l}>{l}</li>)}{loi.length > 12 && <li>và {loi.length - 12} dòng khác</li>}</ul> })
       } else message.success(`Đã đọc ${n} người - kiểm tra trên bảng rồi bấm Lưu`)
@@ -317,6 +336,15 @@ export default function BoSungBhxhPage() {
           }} />
         : r.khong ? <Tag color="purple" style={{ marginInlineEnd: 0 }}>Có</Tag> : '-'),
     },
+    {
+      title: <Tooltip title="Không tính vào thời gian hưởng PCTN. Để trống = tối đa theo cấp học (mầm non 9, tiểu học, THCS 12 tháng); không tập sự ghi 0">Tập sự (tháng)</Tooltip>,
+      key: 'tapSu', width: 100, align: 'center',
+      render: (_, r) => (!r.dienPctn ? <Text type="secondary">-</Text> : suaDuoc
+        ? <InputNumber size="small" min={0} max={r.tapSuToiDa} value={r.tapSu ?? null} placeholder={String(r.tapSuToiDa)} style={{ width: 70 }}
+            status={(r.tapSu ?? null) !== (r.vc.thangTapSu ?? null) ? 'warning' : undefined}
+            onChange={(v) => setNhapTapSu((cu) => ({ ...cu, [r.id]: v == null ? undefined : Number(v) }))} />
+        : r.tapSu ?? <Text type="secondary">{r.tapSuToiDa}</Text>),
+    },
     cotNgay<Dong>('Dự kiến đủ 5 năm', (r) => r.du5Nam),
     cotGiua<Dong>('Tình trạng', 'tt', 240, (r) => <Tag color={r.uuTien ? 'error' : NHAN_TRANG_THAI[r.tt].mau} style={{ marginInlineEnd: 0 }}>{r.uuTien ? 'Chưa khai - cần rà soát PCTN' : NHAN_TRANG_THAI[r.tt].nhan}</Tag>),
   ]
@@ -344,14 +372,14 @@ export default function BoSungBhxhPage() {
           <Button icon={<DownloadOutlined />} onClick={taiMau}>Tải danh sách mẫu (Excel)</Button>
           <Upload accept=".xlsx,.xls" showUploadList={false} beforeUpload={nhapExcel}><Button icon={<UploadOutlined />}>Nhập từ Excel</Button></Upload>
           <Button type="primary" icon={<SaveOutlined />} disabled={!soDaSua} onClick={luu}>Lưu {soDaSua ? `${soDaSua} thay đổi` : ''}</Button>
-          {soDaSua > 0 && <Button onClick={() => setNhap({})}>Bỏ thay đổi</Button>}
+          {soDaSua > 0 && <Button onClick={() => { setNhap({}); setNhapKhong({}); setNhapTapSu({}) }}>Bỏ thay đổi</Button>}
         </Space>
       )}
       <Table<Dong> {...BANG_CHUAN} rowKey="id" dataSource={dsHien} columns={columns} pagination={phanTrang('người', 50)} />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Khai theo sổ BHXH. Đủ 5 năm = tháng bắt đầu đóng + 60 tháng (VD bắt đầu 03/2021 → đủ 5 năm 01/03/2026).
+        Khai theo sổ BHXH. {GHI_CHU_DU_5_NAM}. VD mầm non bắt đầu đóng 03/2021, tập sự 9 tháng → đủ 5 năm 01/12/2026.
         Nhân viên quá tuổi nghỉ hưu không đóng BHXH: đánh dấu <b>Không tham gia BHXH (quá tuổi)</b>.
-        Nhập từ Excel: tải mẫu, điền tháng (MM/YYYY) hoặc x ở cột Không tham gia BHXH, nhập lại, kiểm tra ô viền vàng rồi Lưu.
+        Nhập từ Excel: tải mẫu, điền tháng (MM/YYYY), số tháng tập sự, hoặc x ở cột Không tham gia BHXH, nhập lại, kiểm tra ô viền vàng rồi Lưu.
       </Text>
     </>
   )

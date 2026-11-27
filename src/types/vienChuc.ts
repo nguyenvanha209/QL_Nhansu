@@ -101,6 +101,11 @@ export interface VienChuc {
    */
   batDauBhxhGd?: string
   /**
+   * Số tháng tập sự (không tính vào thời gian hưởng PCTN lần đầu). Để trống = tối đa theo cấp học
+   * (mầm non 9 tháng, tiểu học, THCS 12 tháng); người không tập sự ghi 0.
+   */
+  thangTapSu?: number
+  /**
    * Không tham gia BHXH do quá tuổi (nhân viên phục vụ: lao công, bảo vệ... đã quá tuổi nghỉ hưu nên không còn thuộc
    * đối tượng đóng BHXH bắt buộc) - không phải khai tháng đóng BHXH, được thống kê riêng.
    */

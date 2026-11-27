@@ -424,6 +424,7 @@ export default function VienChucFormPage() {
       ngayVaoBienChe: vc.ngayVaoBienChe ? dayjs(vc.ngayVaoBienChe) : undefined,
       mocHuongPctn: vc.mocHuongPctn ? dayjs(vc.mocHuongPctn) : undefined,
       batDauBhxhGd: vc.batDauBhxhGd ? dayjs(`${vc.batDauBhxhGd}-01`) : undefined,
+      thangTapSu: vc.thangTapSu,
       ngayBoNhiemKeToan: vc.boNhiemKeToan?.ngay ? dayjs(vc.boNhiemKeToan.ngay) : undefined,
       soQdKeToan: vc.boNhiemKeToan?.soQuyetDinh,
       ngayChuyenDi: vc.ngayChuyenDi ? dayjs(vc.ngayChuyenDi) : undefined,
@@ -568,6 +569,7 @@ export default function VienChucFormPage() {
       mocHuongPctn: values.mocHuongPctn?.format('YYYY-MM-DD'),
       batDauBhxhGd: values.khongThamGiaBhxh ? undefined : values.batDauBhxhGd ? values.batDauBhxhGd.format('YYYY-MM') : undefined,
       khongThamGiaBhxh: values.khongThamGiaBhxh ? true : undefined,
+      thangTapSu: values.thangTapSu == null || values.thangTapSu === '' ? undefined : Number(values.thangTapSu),
       boNhiemKeToan: values.congViec === 'KE_TOAN' && values.vtvl === 'NHAN_VIEN' && values.ngayBoNhiemKeToan
         ? { ...(vc?.boNhiemKeToan ?? {}), ngay: values.ngayBoNhiemKeToan.format('YYYY-MM-DD'), soQuyetDinh: values.soQdKeToan?.trim() || undefined }
         : undefined,
@@ -1113,6 +1115,12 @@ export default function VienChucFormPage() {
             >
               <DatePicker picker="month" format="MM/YYYY" placeholder="Tháng/năm" disabled={!!watchKhongBhxh} style={{ width: '100%' }} />
             </Form.Item>
+            {laTruongForm && watchVtvl !== 'NHAN_VIEN' && (
+              <Form.Item name="thangTapSu" label="Thời gian tập sự (tháng)"
+                tooltip="Không tính vào thời gian hưởng PCTN lần đầu. Để trống = tối đa theo cấp học (mầm non 9 tháng, tiểu học, THCS 12 tháng); không tập sự ghi 0.">
+                <InputNumber min={0} max={12} placeholder="Trống = tối đa theo cấp" style={{ width: '100%' }} />
+              </Form.Item>
+            )}
             {watchVtvl === 'NHAN_VIEN' && (
               <Form.Item name="khongThamGiaBhxh" valuePropName="checked" style={{ marginTop: -12 }}
                 tooltip="Nhân viên quá tuổi nghỉ hưu, không đóng BHXH bắt buộc.">

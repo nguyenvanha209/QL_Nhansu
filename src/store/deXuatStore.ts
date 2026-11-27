@@ -245,6 +245,7 @@ export const useDeXuatStore = create<DeXuatState>()(
               ...(vc && !vc.ngayVaoBienChe && ct.lanDau?.ngayTuyenDung ? { ngayVaoBienChe: ct.lanDau.ngayTuyenDung } : {}),
               // Tháng bắt đầu đóng BHXH đã khai trong phiếu → ghi vào hồ sơ nếu hồ sơ chưa có
               ...(vc && !vc.batDauBhxhGd && ct.lanDau?.batDauBhxh ? { batDauBhxhGd: ct.lanDau.batDauBhxh } : {}),
+              ...(vc && vc.thangTapSu == null && ct.lanDau ? { thangTapSu: ct.lanDau.thangTapSu } : {}),
             })
             addPhuCap({
               vienChucId: ct.vienChucId,

@@ -294,6 +294,7 @@ export default function VienChucDetailPage() {
                   </Descriptions.Item>
                 )}
                 <Descriptions.Item label="Bắt đầu đóng BHXH trong ngành GD">{vc.khongThamGiaBhxh ? <Tag color="purple">Không tham gia BHXH do quá tuổi</Tag> : vc.batDauBhxhGd ? `${vc.batDauBhxhGd.slice(5, 7)}/${vc.batDauBhxhGd.slice(0, 4)}` : <Typography.Text type="warning">Chưa khai</Typography.Text>}</Descriptions.Item>
+                {vc.thangTapSu != null && <Descriptions.Item label="Thời gian tập sự (không tính PCTN)">{vc.thangTapSu} tháng</Descriptions.Item>}
                 {nhanLuongTheoTien(vc) && <>
                   <Descriptions.Item label="Hình thức nhận lương">{HINH_THUC_LUONG_LABELS.TIEN}</Descriptions.Item>
                   <Descriptions.Item label="Mức lương">{vc.mucLuongTien != null ? `${vc.mucLuongTien.toLocaleString('vi-VN')} đ/tháng` : '-'}</Descriptions.Item>

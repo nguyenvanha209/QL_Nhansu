@@ -23,10 +23,11 @@ export default function DoiChieuGoiY({ dx, moHoSo }: { dx: DeXuatLuong; moHoSo: 
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const bacLuongs = useDanhMucStore((s) => s.bacLuongs)
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
+  const donVis = useDanhMucStore((s) => s.donVis)
 
   const kq = useMemo(
-    () => doiChieuPhieu(dx, deXuats, { vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, bacLuongs, chucDanhs }),
-    [dx, deXuats, vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, bacLuongs, chucDanhs],
+    () => doiChieuPhieu(dx, deXuats, { vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, bacLuongs, chucDanhs, donVis }),
+    [dx, deXuats, vienChucs, heSoLuongs, phuCaps, loaiPhuCaps, bacLuongs, chucDanhs, donVis],
   )
   const khop = !kq.thieu.length && !kq.thua.length
   const tenNguoi = (n: NguoiGoiY) => (

@@ -245,10 +245,10 @@ export const NGHIEP_VU_LOAI: Record<LoaiDeXuat, { chonNguoi: string; dieuChinh: 
     tomTat: 'Chọn theo ngày kỷ niệm mốc PCTN; +1%/năm',
   },
   PCTN_LAN_DAU: {
-    chonNguoi: 'CBQL, giáo viên chưa hưởng phụ cấp thâm niên; bảng gợi ý liệt kê người dự kiến đủ 5 năm (60 tháng) giảng dạy có đóng BHXH bắt buộc đến hết kỳ.',
-    dieuChinh: 'Khai tháng bắt đầu giảng dạy có đóng BHXH và thời gian không tính (tập sự, nghỉ không lương…); hệ thống tính ngày đủ 5 năm và gợi ý quá trình hưởng 5%, mỗi năm sau +1% (sửa được từng dòng). Phê duyệt xong ghi phụ cấp thâm niên và mốc xét nâng lần sau vào hồ sơ.',
+    chonNguoi: 'CBQL, giáo viên chưa hưởng phụ cấp thâm niên; bảng gợi ý liệt kê người dự kiến đủ 5 năm (60 tháng, không tính thời gian tập sự) giảng dạy có đóng BHXH bắt buộc đến hết kỳ.',
+    dieuChinh: 'Khai tháng bắt đầu giảng dạy có đóng BHXH và thời gian không tính (tập sự: mầm non tối đa 9 tháng, tiểu học, THCS tối đa 12 tháng; nghỉ không lương…); hệ thống tính ngày đủ 5 năm và gợi ý quá trình hưởng 5%, mỗi năm sau +1% (sửa được từng dòng). Phê duyệt xong ghi phụ cấp thâm niên và mốc xét nâng lần sau vào hồ sơ.',
     minhChung: 'Bản sao bằng cấp chuyên môn; quyết định tuyển dụng / hợp đồng lao động; quyết định lương đang hưởng; quá trình đóng BHXH và minh chứng (đính kèm riêng từng người).',
-    tomTat: 'Khai BHXH, thời gian không tính; tính 5% khi đủ 60 tháng',
+    tomTat: 'Khai BHXH, thời gian không tính; tính 5% khi đủ 60 tháng (không tính tập sự)',
     minhChungNgan: 'Bằng, QĐ tuyển dụng, QĐ lương, quá trình BHXH',
   },
   NANG_TRUOC_HAN: {

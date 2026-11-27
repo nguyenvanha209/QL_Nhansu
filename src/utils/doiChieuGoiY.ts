@@ -10,7 +10,7 @@ import type { HeSoLuong, PhuCapVienChuc } from '@/types/luong'
 import { ngayDenHanNangLuong } from '@/utils/nangLuong'
 import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
 import { laDienPhuCapThamNien } from '@/utils/nhomViTri'
-import { ngayDu5Nam, THANG_TAP_SU_MAC_DINH } from '@/utils/pctnLanDau'
+import { ngayDu5Nam, thangTapSuCua } from '@/utils/pctnLanDau'
 import { formatDate, vietHoaDauTu } from '@/utils/helpers'
 
 export const LOAI_DOI_CHIEU: LoaiDeXuat[] = ['NANG_BAC', 'PHU_CAP_THAM_NIEN', 'PCTN_LAN_DAU']
@@ -42,6 +42,8 @@ export interface DuLieuGoiY {
   loaiPhuCaps: LoaiPhuCap[]
   bacLuongs: BacLuong[]
   chucDanhs: ChucDanhNgheNghiep[]
+  /** Để lấy cấp học (tập sự tối đa MN 9 / TH, THCS 12 tháng) */
+  donVis?: { id: string; loai: string }[]
 }
 
 export interface NguoiGoiY {
@@ -81,7 +83,7 @@ function xetNguoi(loai: LoaiDeXuat, v: VienChuc, k: KyPhieu, d: DuLieuGoiY): { t
   if (!dienPctn) return { trongKy: false, lyDo: 'Nhân viên - không hưởng phụ cấp thâm niên' }
   if ((ban('PC_THAM_NIEN')?.giaTri ?? 0) > 0) return { trongKy: false, lyDo: 'Đang hưởng PCTN' }
   if (!v.batDauBhxhGd) return { trongKy: false, lyDo: 'Chưa khai tháng đóng BHXH - chưa xác định được' }
-  const du = ngayDu5Nam({ batDauBhxh: v.batDauBhxhGd, thangTapSu: THANG_TAP_SU_MAC_DINH, thangKhongTinhKhac: 0 })
+  const du = ngayDu5Nam({ batDauBhxh: v.batDauBhxhGd, thangTapSu: thangTapSuCua(v, d.donVis?.find((x) => x.id === v.donViId)?.loai), thangKhongTinhKhac: 0 })
   const trongKy = !!du && du <= den
   return { trongKy, moc: du, lyDo: trongKy ? `Đủ 5 năm ${formatDate(du)} ` : `Đủ 5 năm ${du ? formatDate(du) : '?'} - sau kỳ` }
 }

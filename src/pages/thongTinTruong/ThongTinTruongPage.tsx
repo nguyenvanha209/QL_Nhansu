@@ -270,7 +270,7 @@ function ThongTinChung({ donVi }: { donVi: DonVi }) {
   const { currentUser, hasPermission, scopeDonViId } = useAuth()
   const updateDonVi = useDanhMucStore((s) => s.updateDonVi)
   const hieuTruong = useHieuTruong().get(donVi.id)
-  const coTheSua = hasPermission('quyMo', 'write') && (!scopeDonViId || scopeDonViId === donVi.id)
+  const coTheSua = hasPermission('thongTinTruong', 'write') && (!scopeDonViId || scopeDonViId === donVi.id)
 
   const [sua, setSua] = useState(false)
   const [nhap, setNhap] = useState({ diaChi: '', soDienThoai: '', email: '' })
@@ -340,7 +340,7 @@ function QuyMoNamHoc({ donVi, namHoc }: { donVi: DonVi; namHoc: string }) {
   const quyMoTruongs = useDanhMucStore((s) => s.quyMoTruongs)
   const quyMoDaLuu = useMemo(() => quyMoTruongs.find((q) => q.id === id), [quyMoTruongs, id])
   const luuQuyMo = useDanhMucStore((s) => s.luuQuyMo)
-  const coTheSua = hasPermission('quyMo', 'write') && (!scopeDonViId || scopeDonViId === donVi.id)
+  const coTheSua = hasPermission('thongTinTruong', 'write') && (!scopeDonViId || scopeDonViId === donVi.id)
 
   const tatCaLichSu = useDanhMucStore((s) => s.quyMoLichSu)
   const lichSu = useMemo(

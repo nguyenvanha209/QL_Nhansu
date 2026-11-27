@@ -94,7 +94,7 @@ export default function BoSungBhxhPage() {
   const chucDanhs = useDanhMucStore((s) => s.chucDanhs)
   const loaiPhuCaps = useDanhMucStore((s) => s.loaiPhuCaps)
   const phuCapVienChucs = useLuongStore((s) => s.phuCapVienChucs)
-  const suaDuoc = hasPermission('vienChuc', 'write')
+  const suaDuoc = hasPermission('bhxh', 'write')
   const homNay = dayjs().format('YYYY-MM-DD')
 
   const [the, setThe] = useState<'tong-hop' | 'cap-nhat'>(scopeDonViId ? 'cap-nhat' : 'tong-hop')

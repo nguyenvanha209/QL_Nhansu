@@ -26,7 +26,7 @@ export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
   const cacLoai = useMemo(() => (loai ? [loai] : LOAI_DE_XUAT_DIEU_CHINH), [loai])
   const soCho = useDeXuatCanXuLy(cacLoai)
   const navigate = useNavigate()
-  const { scopeDonViId, hasPermission, isCBTruong, isLanhDao } = useAuth()
+  const { scopeDonViId, hasPermission, isCBTruong } = useAuth()
   const { trongPhamVi } = usePhamVi()
   const allDeXuats = useDeXuatStore((s) => s.deXuats)
   const deXuats = useMemo(() => allDeXuats.filter((d) => cacLoai.includes(d.loai) && trongPhamVi(d.donViId)), [allDeXuats, trongPhamVi, cacLoai])
@@ -43,7 +43,7 @@ export default function DeXuatListPage({ loai }: { loai?: LoaiDeXuat } = {}) {
     return [...list].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }, [deXuats, filterStatus, filterDonVi, scopeDonViId])
 
-  const canCreate = hasPermission('deXuat', 'write') && !isLanhDao
+  const canCreate = hasPermission('deXuat', 'write')
 
   const counts = useMemo(() => Object.fromEntries(ALL_STATUSES.map((s) => [s, deXuats.filter((d) => d.trangThai === s).length])), [deXuats])
 

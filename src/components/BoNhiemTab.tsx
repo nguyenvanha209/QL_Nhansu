@@ -43,7 +43,7 @@ export default function BoNhiemTab({ vc }: { vc: VienChuc }) {
   // Người dùng đã tự sửa ngày hết nhiệm kỳ thì thôi tự tính lại theo ngày bắt đầu
   const [tuSuaNgayHet, setTuSuaNgayHet] = useState(false)
 
-  const coQuyenSua = hasPermission('vienChuc', 'write') && (!scopeDonViId || vc.donViId === scopeDonViId)
+  const coQuyenSua = hasPermission('boNhiem', 'write') && (!scopeDonViId || vc.donViId === scopeDonViId)
   const ds = [...(vc.boNhiems ?? [])].sort((a, b) => b.ngayBatDau.localeCompare(a.ngayBatDau))
   const hienTai = nhiemKyHienTai(vc)
   const tt = laChucVuBoNhiem(vc.chucVu) ? tinhTrangBoNhiem(vc) : undefined

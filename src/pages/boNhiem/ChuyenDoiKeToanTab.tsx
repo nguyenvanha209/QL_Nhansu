@@ -36,14 +36,14 @@ const O_LOC: { key: BoLoc; ten: string; mau: string }[] = [
 export default function ChuyenDoiKeToanTab() {
   const { message } = App.useApp()
   const navigate = useNavigate()
-  const { currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH } = useAuth()
+  const { currentUser, scopeDonViId, hasPermission } = useAuth()
   const { tatCa, quyDinh } = useChuyenDoiKeToan(scopeDonViId)
   const donVis = useDanhMucStore((s) => s.donVis)
   const setQuyDinh = useDanhMucStore((s) => s.setQuyDinhKeToan)
   const tenDv = useMemo(() => new Map(donVis.map((d) => [d.id, d.ten])), [donVis])
   const thuTu = useMemo(() => thuTuTruong(donVis), [donVis])
-  const suaDuoc = hasPermission('vienChuc', 'write')
-  const suaQuyDinh = laQuanTri || isVHXH
+  const suaDuoc = hasPermission('boNhiem', 'write')
+  const suaQuyDinh = hasPermission('quyDinh', 'write')
   const [loc, setLoc] = useState<BoLoc>('CAN_NHAC')
   const [donViId, setDonViId] = useState<string>()
   const [nhap, setNhap] = useState<Record<string, Nhap>>({})

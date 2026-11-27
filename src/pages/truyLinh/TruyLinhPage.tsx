@@ -38,7 +38,7 @@ export default function TruyLinhPage() {
   const { message } = App.useApp()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const { currentUser, scopeDonViId, hasPermission, isVHXH, laQuanTri, isHieuTruong } = useAuth()
+  const { currentUser, scopeDonViId, hasPermission } = useAuth()
   const { trongPhamVi, donVisPhamVi } = usePhamVi()
   const bangs = useTruyLinhStore((s) => s.bangs)
   const luuBang = useTruyLinhStore((s) => s.luuBang)
@@ -54,9 +54,10 @@ export default function TruyLinhPage() {
   const phuCaps = useLuongStore((s) => s.phuCapVienChucs)
   const heSoLuongs = useLuongStore((s) => s.heSoLuongs)
 
-  const coLap = hasPermission('deXuat', 'write')
-  const coTrinh = coLap || isHieuTruong
-  const coDuyet = isVHXH || laQuanTri
+  // Lập, trình: quyền truyLinh write (cán bộ, thủ trưởng đơn vị). Duyệt: truyLinh approve (Lãnh đạo Phòng VHXH)
+  const coLap = hasPermission('truyLinh', 'write')
+  const coTrinh = coLap
+  const coDuyet = hasPermission('truyLinh', 'approve')
 
   const homNay = dayjs()
   const [nam, setNam] = useState(homNay.year())
@@ -104,10 +105,10 @@ export default function TruyLinhPage() {
         tenDonVi={tenDonVi(bangMo.donViId)}
         thuTruong={thuTruongDonVi(bangMo.donViId)}
         truongPhong={truongPhongVhxh}
-        datTruongPhong={coDuyet ? setTruongPhongVhxh : undefined}
+        datTruongPhong={coDuyet || hasPermission('quyDinh', 'write') ? setTruongPhongVhxh : undefined}
         coLap={coLap && (!scopeDonViId || scopeDonViId === bangMo.donViId)}
         coTrinh={coTrinh && (!scopeDonViId || scopeDonViId === bangMo.donViId)}
-        coDuyet={coDuyet}
+        coDuyet={coDuyet && trongPhamVi(bangMo.donViId)}
         lapLai={(tinhDen) => lapDong(bangMo.donViId, bangMo.nam, bangMo.ky, tinhDen)}
         luu={(b, hd, gc) => luuBang(b, hd, gc)}
         xoa={() => { xoaBang(bangMo.id); setParams({}) }}

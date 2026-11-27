@@ -30,7 +30,7 @@ const LOAI_TRUOC_HAN: LoaiDeXuat[] = ['NANG_TRUOC_HAN']
 export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const { scopeDonViId, hasPermission, laQuanTri, isVHXH } = useAuth()
+  const { scopeDonViId, hasPermission, laQuanTri } = useAuth()
   const soCho = useDeXuatCanXuLy(LOAI_TRUOC_HAN)
   const deXuats = useDeXuatStore((s) => s.deXuats)
   const donVis = useDanhMucStore((s) => s.donVis)
@@ -97,7 +97,7 @@ export default function NangTruocHanPage({ nhung }: { nhung?: boolean } = {}) {
         size={nhung ? 'small' : undefined}
         items={[
           { key: 'ho-so', label: 'Hồ sơ các đơn vị', children: hoSo },
-          { key: 'muc', label: 'Mức nâng theo thành tích', children: <BangMuc suaDuoc={laQuanTri || isVHXH} /> },
+          { key: 'muc', label: 'Mức nâng theo thành tích', children: <BangMuc suaDuoc={hasPermission('quyDinh', 'write')} /> },
         ]}
       />
     </>

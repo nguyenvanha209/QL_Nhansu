@@ -10,6 +10,7 @@ import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { ngayDu5Nam } from '@/utils/pctnLanDau'
 import { formatDate, vietHoaDauTu } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, trangDanhSachCuaLoai, laHoSoNangLuong, coDoiLuong } from '@/types/deXuat'
@@ -26,7 +27,8 @@ export default function DeXuatDetailPage() {
   const { message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { currentUser, isVHXH, isLanhDao, laQuanTri, isHieuTruong, scopeDonViId, hasPermission } = useAuth()
+  const { currentUser, laQuanTri, scopeDonViId, hasPermission } = useAuth()
+  const { trongPhamVi } = usePhamVi()
   const getById = useDeXuatStore((s) => s.getById)
   useDeXuatStore((s) => s.deXuats) // vẽ lại khi phiếu đổi (VD thẩm định từng người)
   const { submitDeXuat, duyetHieuTruong, xetDuyetDeXuat, pheDuyetDeXuat, thamDinhNguoi } = useDeXuatStore.getState()
@@ -256,12 +258,12 @@ export default function DeXuatDetailPage() {
   const canSua = (dx.trangThai === 'NHAP' || dx.trangThai === 'YEU_CAU_BO_SUNG')
     && (dx.nguoiDeXuatId === currentUser?.id || laQuanTri || (!!scopeDonViId && dx.donViId === scopeDonViId))
   // Quy trình: Kế toán lập → Hiệu trưởng duyệt → Phòng VH-XH thẩm định → Lãnh đạo Phòng VHXH (hoặc Admin) phê duyệt cuối.
-  // Mỗi bước cần đúng vai trò VÀ còn quyền "Duyệt đề xuất" - quyền bị thu hồi riêng thì không duyệt được.
-  const coQuyenDuyet = hasPermission('deXuat', 'approve')
+  // Mỗi bước theo quyền riêng của bước đó (cấp / thu hồi được ở trang Tài khoản): approve = Thủ trưởng đơn vị duyệt
+  // phiếu của đơn vị mình; thamDinh, pheDuyet = cấp phường, chỉ trong khối phụ trách.
   const canDuyetHT = dx.trangThai === 'CHO_HIEU_TRUONG_DUYET'
-    && (laQuanTri || (isHieuTruong && coQuyenDuyet && dx.donViId === scopeDonViId))
-  const canXetDuyet = dx.trangThai === 'CHO_XET_DUYET' && (laQuanTri || (isVHXH && coQuyenDuyet))
-  const canPheDuyet = dx.trangThai === 'CHO_PHE_DUYET' && (laQuanTri || (isLanhDao && coQuyenDuyet))
+    && (laQuanTri || (hasPermission('deXuat', 'approve') && !!scopeDonViId && dx.donViId === scopeDonViId))
+  const canXetDuyet = dx.trangThai === 'CHO_XET_DUYET' && (laQuanTri || (hasPermission('deXuat', 'thamDinh') && !scopeDonViId && trongPhamVi(dx.donViId)))
+  const canPheDuyet = dx.trangThai === 'CHO_PHE_DUYET' && (laQuanTri || (hasPermission('deXuat', 'pheDuyet') && !scopeDonViId && trongPhamVi(dx.donViId)))
 
   const handleAction = async () => {
     if (!currentUser) return

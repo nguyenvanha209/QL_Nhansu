@@ -11,8 +11,10 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { ROLE_LABELS } from '@/types/auth'
 import type { User, UserRole } from '@/types/auth'
 import {
-  RESOURCES, ACTIONS, ROLE_DESC, khoaQuyen, quyenTheoVaiTro, tinhQuyenRieng, demQuyenRieng, can,
+  RESOURCES, ROLE_DESC, khoaQuyen, quyenTheoVaiTro, tinhQuyenRieng, demQuyenRieng, can, tenQuyen,
 } from '@/utils/rbac'
+import { KHOI_DON_VI } from '@/types/donVi'
+import type { KhoiDonVi } from '@/types/donVi'
 import { formatDate } from '@/utils/helpers'
 import { useAuth } from '@/hooks/useAuth'
 import { adminDatMatKhau, adminXoaMatKhau } from '@/lib/auth'
@@ -41,41 +43,38 @@ function BangQuyen({
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
           <tr style={{ background: '#fafafa' }}>
-            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #f0f0f0' }}>Chức năng</th>
-            {ACTIONS.map((a) => (
-              <th key={a.key} style={{ textAlign: 'center', padding: '4px 8px', borderBottom: '1px solid #f0f0f0', width: 62 }}>{a.label}</th>
-            ))}
+            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #f0f0f0', width: 190 }}>Chức năng</th>
+            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #f0f0f0' }}>Quyền</th>
           </tr>
         </thead>
         <tbody>
           {RESOURCES.map((r) => (
             <tr key={r.key} style={{ borderBottom: '1px solid #f5f5f5' }}>
-              <td style={{ padding: '3px 8px' }}>{r.label}</td>
-              {ACTIONS.map((a) => {
-                const k = khoaQuyen(r.key, a.key)
-                const macDinh = quyenTheoVaiTro(role, r.key, a.key)
-                const co = chon[k] ?? macDinh
-                const khac = co !== macDinh
-                return (
-                  <td
-                    key={a.key}
-                    style={{
-                      textAlign: 'center', padding: '3px 8px',
-                      background: khac ? (co ? '#f6ffed' : '#fff2f0') : undefined,
-                    }}
-                  >
-                    {choSua ? (
-                      <Tooltip title={khac ? (co ? 'Cấp thêm ngoài vai trò' : 'Đã thu hồi so với vai trò') : undefined}>
-                        <Checkbox checked={co} onChange={(e: { target: { checked: boolean } }) => onDoi(k, e.target.checked)} />
+              <td style={{ padding: '4px 8px', verticalAlign: 'top' }}>{r.label}</td>
+              <td style={{ padding: '2px 8px' }}>
+                <Space size={[4, 2]} wrap>
+                  {r.actions.map((a) => {
+                    const k = khoaQuyen(r.key, a.key)
+                    const macDinh = quyenTheoVaiTro(role, r.key, a.key)
+                    const co = chon[k] ?? macDinh
+                    const khac = co !== macDinh
+                    const nen = khac ? (co ? '#f6ffed' : '#fff2f0') : undefined
+                    return choSua ? (
+                      <Tooltip key={a.key} title={khac ? (co ? 'Cấp thêm ngoài vai trò' : 'Đã thu hồi so với vai trò') : undefined}>
+                        <Checkbox checked={co} style={{ background: nen, padding: '0 4px', borderRadius: 4 }}
+                          onChange={(e: { target: { checked: boolean } }) => onDoi(k, e.target.checked)}>
+                          {a.label}
+                        </Checkbox>
                       </Tooltip>
-                    ) : co ? (
-                      <CheckOutlined style={{ color: '#52c41a' }} />
                     ) : (
-                      <CloseOutlined style={{ color: '#d9d9d9' }} />
-                    )}
-                  </td>
-                )
-              })}
+                      <span key={a.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginRight: 8, color: co ? undefined : '#bfbfbf' }}>
+                        {co ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CloseOutlined style={{ color: '#d9d9d9' }} />}
+                        {a.label}
+                      </span>
+                    )
+                  })}
+                </Space>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -119,7 +118,7 @@ export default function UserManagePage() {
     const out: Record<string, boolean> = {}
     if (!role) return out
     for (const r of RESOURCES) {
-      for (const a of ACTIONS) {
+      for (const a of r.actions) {
         const k = khoaQuyen(r.key, a.key)
         out[k] = quyenTheoVaiTro(role, r.key, a.key)
       }
@@ -191,9 +190,14 @@ export default function UserManagePage() {
       })
     }
 
+    // Khối phụ trách chỉ dùng cho tài khoản cấp phường (không phải quản trị, không gắn đơn vị); chọn đủ 3 khối = bỏ trống
+    const capPhuong = values.role === 'CB_VH_XH' || values.role === 'LANH_DAO'
+    const khoiChon: KhoiDonVi[] = capPhuong ? (values.khoiPhuTrach ?? []) : []
+    const khoiPhuTrach = khoiChon.length && khoiChon.length < KHOI_DON_VI.length ? khoiChon : undefined
+
     if (editing) {
       updateUser(editing.id, {
-        role: values.role, donViId: values.donViId ?? null, fullName: values.fullName, quyenRieng,
+        role: values.role, donViId: values.donViId ?? null, fullName: values.fullName, quyenRieng, khoiPhuTrach,
       })
       message.success(
         (values.password ? 'Đã cập nhật tài khoản và đặt lại mật khẩu' : 'Đã cập nhật tài khoản')
@@ -202,7 +206,7 @@ export default function UserManagePage() {
     } else {
       addUser({
         username, fullName: values.fullName, role: values.role,
-        donViId: values.donViId ?? null, active: true, quyenRieng,
+        donViId: values.donViId ?? null, active: true, quyenRieng, khoiPhuTrach,
       })
       message.success('Đã tạo tài khoản' + (soRieng ? ` - ${soRieng} quyền tùy chỉnh` : ''))
     }
@@ -268,8 +272,8 @@ export default function UserManagePage() {
             {so > 0 && (
               <Tooltip
                 title={[
-                  r.quyenRieng?.them?.length ? `Cấp thêm: ${r.quyenRieng.them.join(', ')}` : '',
-                  r.quyenRieng?.bot?.length ? `Thu hồi: ${r.quyenRieng.bot.join(', ')}` : '',
+                  r.quyenRieng?.them?.length ? `Cấp thêm: ${r.quyenRieng.them.map(tenQuyen).join(', ')}` : '',
+                  r.quyenRieng?.bot?.length ? `Thu hồi: ${r.quyenRieng.bot.map(tenQuyen).join(', ')}` : '',
                 ].filter(Boolean).join(' - ')}
               >
                 <Tag color="orange">Quyền riêng ({so})</Tag>
@@ -280,10 +284,12 @@ export default function UserManagePage() {
       },
     },
     {
-      title: 'Đơn vị phụ trách', dataIndex: 'donViId', key: 'dv',
-      render: (id: string | null) => id
+      title: 'Phạm vi', dataIndex: 'donViId', key: 'dv',
+      render: (id: string | null, r: User) => id
         ? (donVis.find((d) => d.id === id)?.ten ?? id)
-        : <Text type="secondary">Toàn phường</Text>,
+        : r.khoiPhuTrach?.length && r.role !== 'ADMIN'
+          ? <Space size={4} wrap>{r.khoiPhuTrach.map((k) => <Tag key={k} style={{ marginInlineEnd: 0 }}>{KHOI_DON_VI.find((x) => x.key === k)?.ten ?? k}</Tag>)}</Space>
+          : <Text type="secondary">Toàn phường</Text>,
     },
     {
       title: 'Trạng thái', dataIndex: 'active', key: 'ac', width: 110,
@@ -429,7 +435,7 @@ export default function UserManagePage() {
         onCancel={closeModal}
         onOk={() => form.submit()}
         confirmLoading={saving}
-        width={560}
+        width={640}
         destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={onSave}>
@@ -505,6 +511,12 @@ export default function UserManagePage() {
                 />
               )}
             </>
+          )}
+
+          {(selectedRole === 'CB_VH_XH' || selectedRole === 'LANH_DAO') && (
+            <Form.Item name="khoiPhuTrach" label="Khối phụ trách" extra="Bỏ trống: cả ba khối" style={{ marginTop: 12 }}>
+              <Checkbox.Group options={KHOI_DON_VI.map((k) => ({ value: k.key, label: k.ten }))} />
+            </Form.Item>
           )}
 
           {(selectedRole === 'CB_TRUONG' || selectedRole === 'HIEU_TRUONG') && (

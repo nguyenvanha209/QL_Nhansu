@@ -29,5 +29,7 @@ export function useAuth() {
     isHieuTruong: currentUser?.role === 'HIEU_TRUONG',
     scopeDonViId,
     isScopedToDonVi,
+    /** Khối được giao (tài khoản cấp phường); rỗng = cả ba khối. Tài khoản đơn vị và quản trị: rỗng */
+    khoiPhuTrach: !isScopedToDonVi && currentUser?.role !== 'ADMIN' ? (currentUser?.khoiPhuTrach ?? []) : [],
   }
 }

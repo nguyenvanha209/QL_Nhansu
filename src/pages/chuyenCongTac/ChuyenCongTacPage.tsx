@@ -10,6 +10,7 @@ import { useVienChucStore } from '@/store/vienChucStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useUserStore } from '@/store/userStore'
 import { useAuth } from '@/hooks/useAuth'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { formatDate, soSanhVienChuc } from '@/utils/helpers'
 import { isDangCongTac, VTVL_LABELS, CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { DeXuatChuyenCongTac } from '@/types/chuyenCongTac'
@@ -21,7 +22,12 @@ const { Title, Text } = Typography
 
 export default function ChuyenCongTacPage() {
   const { message, modal } = App.useApp()
-  const { currentUser, scopeDonViId, laQuanTri } = useAuth()
+  const { currentUser, scopeDonViId, laQuanTri, hasPermission } = useAuth()
+  const { trongPhamVi } = usePhamVi()
+  // Duyệt: Cán bộ VHXH, Quản trị (chuyenCongTac approve), trong khối phụ trách (đơn vị đi hoặc đến)
+  const coDuyet = (r: DeXuatChuyenCongTac) => laQuanTri
+    || (hasPermission('chuyenCongTac', 'approve') && !scopeDonViId && (trongPhamVi(r.donViDiId) || trongPhamVi(r.donViDenId)))
+  const coLapDeNghi = hasPermission('chuyenCongTac', 'write')
   const [formTao] = Form.useForm()
   const [formNhan] = Form.useForm()
 
@@ -237,7 +243,7 @@ export default function ChuyenCongTacPage() {
               </>
             )}
 
-            {r.trangThai === 'CHO_DUYET' && laQuanTri && (
+            {r.trangThai === 'CHO_DUYET' && coDuyet(r) && (
               <>
                 <Button size="small" type="primary" icon={<CheckOutlined />} onClick={() => onDuyet(r)}>Duyệt</Button>
                 <Button size="small" danger icon={<CloseOutlined />} onClick={() => onTuChoi(r)}>Từ chối</Button>
@@ -260,7 +266,7 @@ export default function ChuyenCongTacPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <Title level={4} style={{ margin: 0 }}>
           Chuyển công tác
-          {soChoDuyet > 0 && laQuanTri && <Tag color="processing" style={{ marginLeft: 8 }}>{soChoDuyet} chờ duyệt</Tag>}
+          {soChoDuyet > 0 && (laQuanTri || (hasPermission('chuyenCongTac', 'approve') && !scopeDonViId)) && <Tag color="processing" style={{ marginLeft: 8 }}>{soChoDuyet} chờ duyệt</Tag>}
           {soChoTiepNhan > 0 && <Tag color="warning" style={{ marginLeft: 4 }}>{soChoTiepNhan} chờ tiếp nhận</Tag>}
         </Title>
         <Space>
@@ -269,9 +275,9 @@ export default function ChuyenCongTacPage() {
             onChange={(v) => setLoc(v as any)}
             options={[{ label: 'Đang xử lý', value: 'DANG_XU_LY' }, { label: 'Tất cả', value: 'TAT_CA' }]}
           />
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpenTao(true)}>
+          {coLapDeNghi && <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpenTao(true)}>
             Đề nghị chuyển đi
-          </Button>
+          </Button>}
         </Space>
       </div>
 

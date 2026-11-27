@@ -1,3 +1,5 @@
+import type { KhoiDonVi } from '@/types/donVi'
+
 export type UserRole = 'ADMIN' | 'CB_VH_XH' | 'LANH_DAO' | 'HIEU_TRUONG' | 'CB_TRUONG'
 
 // Mật khẩu KHÔNG nằm ở đây. Hồ sơ tài khoản được đồng bộ công khai qua app_state,
@@ -18,6 +20,11 @@ export interface User {
   fullName: string
   role: UserRole
   donViId: string | null
+  /**
+   * Khối đơn vị được giao phụ trách - chỉ dùng cho tài khoản cấp phường (Cán bộ VHXH, Lãnh đạo Phòng).
+   * Bỏ trống = cả ba khối. Máy chủ chặn đọc, ghi hồ sơ ngoài khối (tools/sql/11).
+   */
+  khoiPhuTrach?: KhoiDonVi[]
   active: boolean
   createdAt: string
   quyenRieng?: QuyenRieng

@@ -13,33 +13,35 @@ import type { LoaiDeXuat } from '@/types/deXuat'
  */
 export function useDeXuatCanXuLy(loais: LoaiDeXuat[] = LOAI_DE_XUAT_DIEU_CHINH): number {
   const deXuats = useDeXuatStore((s) => s.deXuats)
-  const { currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong } = useAuth()
+  const { currentUser, scopeDonViId, hasPermission, laQuanTri } = useAuth()
   // Tài khoản toàn phường đang xem một khối: chỉ đếm phiếu của đơn vị thuộc khối đó
   const { trongPhamVi } = usePhamVi()
 
   return useMemo(() => {
     if (!currentUser || !hasPermission('deXuat', 'read')) return 0
-    const coQuyenDuyet = hasPermission('deXuat', 'approve')
+    const coDuyetHT = hasPermission('deXuat', 'approve') && !!scopeDonViId
+    const coThamDinh = hasPermission('deXuat', 'thamDinh') && !scopeDonViId
+    const coPheDuyet = hasPermission('deXuat', 'pheDuyet') && !scopeDonViId
     const coQuyenLap = hasPermission('deXuat', 'write')
     return deXuats.filter((d) => {
       if (!loais.includes(d.loai) || !trongPhamVi(d.donViId)) return false
       switch (d.trangThai) {
         case 'CHO_HIEU_TRUONG_DUYET':
-          return laQuanTri || (isHieuTruong && coQuyenDuyet && d.donViId === scopeDonViId)
+          return laQuanTri || (coDuyetHT && d.donViId === scopeDonViId)
         case 'CHO_XET_DUYET':
-          return laQuanTri || (isVHXH && coQuyenDuyet)
+          return laQuanTri || coThamDinh
         case 'CHO_PHE_DUYET':
-          return laQuanTri || (isLanhDao && coQuyenDuyet)
+          return laQuanTri || coPheDuyet
         case 'NHAP':
           return d.nguoiDeXuatId === currentUser.id
         case 'YEU_CAU_BO_SUNG':
           // Trường lập phiếu sửa lại rồi trình lại (Admin không tính để số trên menu chỉ gồm việc chờ duyệt)
-          return !!scopeDonViId && d.donViId === scopeDonViId && (coQuyenLap || isHieuTruong)
+          return !!scopeDonViId && d.donViId === scopeDonViId && (coQuyenLap || coDuyetHT)
         default:
           return false
       }
     }).length
-  }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, isVHXH, isLanhDao, isHieuTruong, loais.join(), trongPhamVi])
+  }, [deXuats, currentUser, scopeDonViId, hasPermission, laQuanTri, loais.join(), trongPhamVi])
 }
 
 /**

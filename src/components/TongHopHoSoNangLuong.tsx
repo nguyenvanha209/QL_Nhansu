@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import type { ChiTietDeXuat, DeXuatLuong, LoaiDeXuat, TrangThaiDeXuat } from '@/types/deXuat'
 import { LOAI_DE_XUAT_LABELS, TRANG_THAI_COLORS, TRANG_THAI_LABELS, laDongVuotKhung } from '@/types/deXuat'
 import { BANG_CHUAN, cotGiua, cotNgay, cotSTT, phanTrang } from '@/utils/cotBang'
@@ -20,7 +21,7 @@ const { Text } = Typography
 /** Nhóm bước xử lý để tổng hợp */
 type Buoc = 'NHAP' | 'CHO_HT' | 'CHO_VHXH' | 'CHO_LD' | 'DA_DUYET' | 'TRA_LAI'
 const BUOC: { key: Buoc; ten: string; trangThai: TrangThaiDeXuat[] }[] = [
-  { key: 'NHAP', ten: 'Trường đang lập', trangThai: ['NHAP'] },
+  { key: 'NHAP', ten: 'Đơn vị đang lập', trangThai: ['NHAP'] },
   { key: 'CHO_HT', ten: 'Chờ Thủ trưởng', trangThai: ['CHO_HIEU_TRUONG_DUYET'] },
   { key: 'CHO_VHXH', ten: 'Chờ VHXH thẩm định', trangThai: ['CHO_XET_DUYET'] },
   { key: 'CHO_LD', ten: 'Chờ Lãnh đạo Phòng phê duyệt', trangThai: ['CHO_PHE_DUYET'] },
@@ -63,10 +64,12 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
   const [buoc, setBuoc] = useState<Buoc | 'DA_TRINH'>('CHO_VHXH')
   const [truong, setTruong] = useState<string | undefined>()
 
-  const truongs = useMemo(() => donVis.filter((d) => d.active && d.loai !== 'OTHER').sort(soSanhTruong), [donVis])
+  // Chỉ đơn vị thuộc khối đang xem / khối phụ trách
+  const { donVisPhamVi, trongPhamVi } = usePhamVi()
+  const truongs = useMemo(() => donVisPhamVi.filter((d) => d.loai !== 'OTHER').sort(soSanhTruong), [donVisPhamVi])
   const thuTuTruong = useMemo(() => new Map(truongs.map((t, i) => [t.id, i])), [truongs])
   const tenTruong = (id: string) => donVis.find((d) => d.id === id)?.ten ?? id
-  const phieu = useMemo(() => deXuats.filter((d) => d.loai === loai && namCuaPhieu(d) === nam), [deXuats, loai, nam])
+  const phieu = useMemo(() => deXuats.filter((d) => d.loai === loai && namCuaPhieu(d) === nam && trongPhamVi(d.donViId)), [deXuats, loai, nam, trongPhamVi])
   const duPhieu = (bs: Buoc[]) => phieu.filter((d) => bs.includes(buocCua(d.trangThai)))
 
   // Bảng theo trường: mỗi ô "số phiếu / số người"
@@ -98,7 +101,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
 
   const xuat = () => xuatExcelA4(`Tong-hop-${LOAI_DE_XUAT_LABELS[loai].replace(/\s+/g, '-')}-${nam}`, [trangTuDanhSach(
     nguoi.map((r, i) => ({
-      STT: i + 1, 'Trường': r.truong, 'Họ và tên': r.ten, 'Nội dung đề nghị': noiDung(loai, r.ct),
+      STT: i + 1, 'Đơn vị': r.truong, 'Họ và tên': r.ten, 'Nội dung đề nghị': noiDung(loai, r.ct),
       'Mốc hưởng': formatDate(r.ct.ngayHieuLuc), 'Phiếu': r.dx.ma, 'Trạng thái phiếu': TRANG_THAI_LABELS[r.dx.trangThai],
       'VHXH thẩm định': tenThamDinh(r), 'Ý kiến': r.ct.yKienThamDinh ?? '',
     })),
@@ -119,7 +122,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
   }
   const colsTruong: ColumnsType<(typeof dongTruong)[number]> = [
     cotSTT(),
-    { title: 'Trường', key: 'ten', width: 200, render: (_, r) => r.ten },
+    { title: 'Đơn vị', key: 'ten', width: 200, render: (_, r) => r.ten },
     ...BUOC.map((b) => cotGiua<(typeof dongTruong)[number]>(b.ten, b.key, 120, (r) => o(b.key, r))),
   ]
   const tong = (b: Buoc) => dongTruong.reduce((s, r) => s + r.o[b].nguoi, 0)
@@ -127,7 +130,7 @@ export default function TongHopHoSoNangLuong({ loai, nam: namNgoai, anBangTruong
   const colsNguoi: ColumnsType<DongNguoi> = [
     cotSTT<DongNguoi>(),
     { title: 'Họ và tên', key: 'ten', width: 190, fixed: 'left', render: (_, r) => r.ten },
-    { title: 'Trường', key: 'tr', width: 180, render: (_, r) => r.truong },
+    { title: 'Đơn vị', key: 'tr', width: 180, render: (_, r) => r.truong },
     { title: 'Nội dung đề nghị', key: 'nd', width: 320, render: (_, r) => noiDung(loai, r.ct) },
     cotNgay<DongNguoi>('Mốc hưởng', (r) => r.ct.ngayHieuLuc),
     {

@@ -3,6 +3,7 @@ import { Badge, Card, Tabs, Typography } from 'antd'
 import DeXuatListPage from '@/pages/deXuat/DeXuatListPage'
 import NangTruocHanPage from '@/pages/truocHan/NangTruocHanPage'
 import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
+import { usePhamVi } from '@/hooks/usePhamVi'
 import { LOAI_DE_XUAT_LABELS, LOAI_HO_SO_NANG_LUONG, TEN_CHUC_NANG_NANG_LUONG } from '@/types/deXuat'
 import type { LoaiDeXuat } from '@/types/deXuat'
 
@@ -19,16 +20,19 @@ function NhanThe({ loai }: { loai: LoaiDeXuat }) {
 /** Lập hồ sơ nâng lương - phụ cấp thâm niên: 4 loại hồ sơ theo niên hạn / thành tích, mỗi loại một thẻ */
 export default function HoSoNangLuongPage() {
   const [params, setParams] = useSearchParams()
+  // Phụ cấp thâm niên nhà giáo chỉ có ở trường học: khối cơ quan, ĐVSN chỉ còn nâng lương thường xuyên, trước thời hạn
+  const { laTruongHocKhoi } = usePhamVi()
+  const cacLoai = laTruongHocKhoi ? LOAI_HO_SO_NANG_LUONG : LOAI_HO_SO_NANG_LUONG.filter((l) => l !== 'PHU_CAP_THAM_NIEN' && l !== 'PCTN_LAN_DAU')
   const q = params.get('loai') as LoaiDeXuat | null
-  const loai: LoaiDeXuat = q && LOAI_HO_SO_NANG_LUONG.includes(q) ? q : 'NANG_BAC'
+  const loai: LoaiDeXuat = q && cacLoai.includes(q) ? q : 'NANG_BAC'
   return (
     <Card>
-      <Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>{TEN_CHUC_NANG_NANG_LUONG}</Title>
+      <Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>{laTruongHocKhoi ? TEN_CHUC_NANG_NANG_LUONG : 'Lập hồ sơ nâng lương'}</Title>
       <Tabs
         activeKey={loai}
         onChange={(k) => setParams({ loai: k }, { replace: true })}
         destroyOnHidden
-        items={LOAI_HO_SO_NANG_LUONG.map((l) => ({
+        items={cacLoai.map((l) => ({
           key: l,
           label: <NhanThe loai={l} />,
           children: l === 'NANG_TRUOC_HAN' ? <NangTruocHanPage nhung /> : <DeXuatListPage loai={l} />,

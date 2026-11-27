@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, Suspense } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   Layout, Menu, Avatar, Dropdown, Badge, Space, Typography, Button, theme, Tooltip,
-  Breadcrumb, Spin, Select,
+  Breadcrumb, Spin, Select, Tag,
 } from 'antd'
 import {
   DashboardOutlined, TeamOutlined, FileTextOutlined,
@@ -85,15 +85,16 @@ const nhanTitle = (ten: string, soCho: number, soTong: number) =>
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { currentUser, logout, scopeDonViId, hasPermission } = useAuth()
-  const { khoi } = usePhamVi()
+  const { khoi, cacKhoiDuocXem, trongPhamVi } = usePhamVi()
   const datKhoi = useKhoiStore((s) => s.datKhoi)
-  // Tài khoản của phòng chuyên môn, ĐVSN: ẩn các chức năng riêng của trường (quy mô, định mức, thông tin trường)
-  const laDonViTruong = !scopeDonViId || khoi === 'TRUONG_HOC'
-  // Truy lĩnh: Phòng VHXH thấy số bảng chờ duyệt; đơn vị thấy số bảng bị trả lại
+  // Tài khoản / khối không có trường học: ẩn các chức năng riêng của trường (quy mô, định mức, thông tin trường)
+  const laDonViTruong = khoi ? khoi === 'TRUONG_HOC' : (!cacKhoiDuocXem.length || cacKhoiDuocXem.includes('TRUONG_HOC'))
+  // Truy lĩnh: người có quyền duyệt thấy số bảng chờ duyệt; đơn vị thấy số bảng bị trả lại
   const bangTruyLinh = useTruyLinhStore((s) => s.bangs)
+  const coDuyetTruyLinh = hasPermission('truyLinh', 'approve')
   const soTruyLinhCho = bangTruyLinh.filter((b) => (scopeDonViId
     ? b.donViId === scopeDonViId && b.trangThai === 'TRA_LAI'
-    : b.trangThai === 'CHO_DUYET' && (currentUser?.role === 'CB_VH_XH' || currentUser?.role === 'ADMIN'))).length
+    : b.trangThai === 'CHO_DUYET' && coDuyetTruyLinh && trongPhamVi(b.donViId))).length
   const coChucNangTruong = (q: boolean) => q && laDonViTruong
   const soThongBaoMoi = useThongBaoMoi()
   const soDeXuatCho = useDeXuatCanXuLy()
@@ -106,7 +107,7 @@ export default function AppLayout() {
   const alerts = useSalaryAlerts(scopeDonViId, 90)
   const boNhiem = useBoNhiem(scopeDonViId)
   const keToan = useChuyenDoiKeToan(scopeDonViId)
-  const coXemBoNhiem = hasPermission('vienChuc', 'read')
+  const coXemBoNhiem = hasPermission('boNhiem', 'read')
   const soKeToan = coXemBoNhiem ? keToan.canNhac.length : 0
   const soBoNhiem = coXemBoNhiem ? boNhiem.canNhac.length + soKeToan : 0
 
@@ -119,12 +120,12 @@ export default function AppLayout() {
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     nhom('Nhân sự', [
       hasPermission('vienChuc', 'read') && { key: '/vien-chuc', icon: <TeamOutlined />, label: 'Hồ sơ nhân sự' },
-      hasPermission('vienChuc', 'read') && { key: '/vien-chuc/bhxh', icon: <SafetyCertificateOutlined />, label: 'Thông tin BHXH', title: 'Bổ sung thông tin đóng BHXH' },
-      hasPermission('vienChuc', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
+      hasPermission('bhxh', 'read') && { key: '/vien-chuc/bhxh', icon: <SafetyCertificateOutlined />, label: 'Thông tin BHXH', title: 'Bổ sung thông tin đóng BHXH' },
+      hasPermission('chuyenCongTac', 'read') && { key: '/chuyen-cong-tac', icon: <SwapOutlined />, label: 'Chuyển công tác' },
     ]),
     nhom('Lương và chế độ', [
       hasPermission('luong', 'read') && { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
-      hasPermission('vienChuc', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
+      hasPermission('luong', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
       coChucNangTruong(hasPermission('quyMo', 'read')) && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL, định mức', title: 'Cơ cấu vị trí việc làm và định mức viên chức' },
     ]),
     nhom('Hồ sơ trình duyệt', [
@@ -138,19 +139,19 @@ export default function AppLayout() {
         label: <NhanMenu ten="Điều chỉnh lương" soCho={soDeXuatCho} soTong={soDeXuatTong} />,
         title: nhanTitle(TEN_CHUC_NANG_DE_XUAT, soDeXuatCho, soDeXuatTong),
       },
-      hasPermission('deXuat', 'read') && {
+      hasPermission('thongBao', 'read') && {
         key: '/thong-bao-ket-qua', icon: <NotificationOutlined />,
         label: <NhanMenu ten="Thông báo kết quả" soCho={soThongBaoMoi} />,
         title: 'Thông báo kết quả nâng lương, phụ cấp thâm niên',
       },
-      hasPermission('deXuat', 'read') && {
+      hasPermission('truyLinh', 'read') && {
         key: '/truy-linh', icon: <CalculatorOutlined />,
         label: <NhanMenu ten="Truy lĩnh" soCho={soTruyLinhCho} />,
         title: 'Truy lĩnh nâng lương, phụ cấp thâm niên theo kỳ 6 tháng',
       },
     ]),
     nhom('Theo dõi', [
-      hasPermission('vienChuc', 'read') && {
+      coXemBoNhiem && {
         key: '/bo-nhiem', icon: <SolutionOutlined />,
         label: <NhanMenu ten={laDonViTruong ? 'Bổ nhiệm, kế toán' : 'Bổ nhiệm, chuyển đổi VT'} soCho={boNhiem.canNhac.length + soKeToan} />,
         title: 'Theo dõi bổ nhiệm cán bộ quản lý và định kỳ chuyển đổi vị trí kế toán',
@@ -172,7 +173,7 @@ export default function AppLayout() {
       const con = m.type === 'group' ? m.children : [m]
       for (const c of con) ds.push({ den: c.key, ten: BREADCRUMB_MAP[c.key] ?? c.title ?? String(c.label), nhom: m.type === 'group' ? m.label : undefined, icon: c.icon })
     }
-    if (coChucNangTruong(hasPermission('quyMo', 'read'))) ds.push({ den: '/thong-tin-truong', ten: 'Thông tin trường', icon: <BankOutlined /> })
+    if (coChucNangTruong(hasPermission('thongTinTruong', 'read'))) ds.push({ den: '/thong-tin-truong', ten: 'Thông tin trường', icon: <BankOutlined /> })
     ds.push({ den: '/huong-dan', ten: 'Hướng dẫn sử dụng', icon: <ReadOutlined /> }, { den: '/tai-khoan', ten: 'Thông tin tài khoản, đổi mật khẩu', icon: <IdcardOutlined /> })
     return ds
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,12 +205,12 @@ export default function AppLayout() {
   const breadcrumbTitle = useMemo(() => {
     const path = location.pathname
     const chon = getSelectedKey()
-    if (chon === '/ho-so-nang-luong') return BREADCRUMB_MAP[chon]
+    if (chon === '/ho-so-nang-luong') return laDonViTruong ? BREADCRUMB_MAP[chon] : 'Lập hồ sơ nâng lương'
     for (const [key, label] of Object.entries(BREADCRUMB_MAP)) {
       if (path.startsWith(key)) return label
     }
     return 'Tổng quan'
-  }, [location.pathname, location.search])
+  }, [location.pathname, location.search, laDonViTruong])
 
   const userMenu = {
     items: [
@@ -312,18 +313,24 @@ export default function AppLayout() {
           </div>
           <Space size={8} style={{ flexShrink: 0 }}>
             {/* Khối đang xem - chỉ tài khoản toàn phường; tài khoản đơn vị luôn ở đơn vị mình */}
-            {!scopeDonViId && (
+            {!scopeDonViId && cacKhoiDuocXem.length !== 1 && (
               <Tooltip title="Chọn khối đơn vị để xem: danh sách, số liệu và danh mục chỉ hiện của khối đã chọn">
                 <Select
                   value={khoi ?? 'ALL'}
                   onChange={(v: string) => datKhoi(v === 'ALL' ? null : (v as KhoiDonVi))}
-                  options={[{ value: 'ALL', label: 'Tất cả các khối' }, ...KHOI_DON_VI.map((k) => ({ value: k.key, label: k.ten }))]}
+                  options={[
+                    { value: 'ALL', label: cacKhoiDuocXem.length ? 'Các khối phụ trách' : 'Tất cả các khối' },
+                    ...KHOI_DON_VI.filter((k) => !cacKhoiDuocXem.length || cacKhoiDuocXem.includes(k.key)).map((k) => ({ value: k.key, label: k.ten })),
+                  ]}
                   style={{ width: 186 }}
                   className="hd-chon-khoi"
                   aria-label="Khối đơn vị đang xem"
                   popupMatchSelectWidth={false}
                 />
               </Tooltip>
+            )}
+            {!scopeDonViId && cacKhoiDuocXem.length === 1 && (
+              <Tag color="blue" style={{ marginInlineEnd: 0 }}>{KHOI_DON_VI.find((k) => k.key === cacKhoiDuocXem[0])?.ten}</Tag>
             )}
             <Button
               onClick={() => setMoTim(true)}
@@ -335,7 +342,7 @@ export default function AppLayout() {
               <span className="hd-btn-label hd-phim-tat" style={{ fontSize: 11, border: '1px solid #e2e8f0', borderRadius: 4, padding: '0 5px', marginLeft: 10, color: '#94a3b8' }}>Ctrl K</span>
             </Button>
             <ChiBaoDongBo />
-            {coChucNangTruong(hasPermission('quyMo', 'read')) && (
+            {coChucNangTruong(hasPermission('thongTinTruong', 'read')) && (
               <Tooltip title="Quy mô trường lớp từng năm học">
                 <Button
                   type={location.pathname === '/thong-tin-truong' ? 'primary' : 'text'}

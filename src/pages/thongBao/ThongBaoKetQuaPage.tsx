@@ -35,10 +35,10 @@ const kyHienHanh = (): { nam: number; ky: KyXet } => {
 }
 
 export default function ThongBaoKetQuaPage() {
-  const { isVHXH, laQuanTri, hasPermission, scopeDonViId } = useAuth()
-  // Phòng VH-XH (còn quyền duyệt đề xuất) và Admin lập, ban hành; các tài khoản khác chỉ xem bản đã ban hành
-  const coTheLap = laQuanTri || (isVHXH && hasPermission('deXuat', 'approve') && !scopeDonViId)
-  return coTheLap ? <QuanLyThongBao /> : <XemThongBao />
+  const { hasPermission, scopeDonViId } = useAuth()
+  // Cán bộ VHXH tổng hợp, soạn (thongBao write); Lãnh đạo Phòng VHXH ban hành (thongBao approve); đơn vị chỉ xem bản đã ban hành
+  const coQuanLy = !scopeDonViId && (hasPermission('thongBao', 'write') || hasPermission('thongBao', 'approve'))
+  return coQuanLy ? <QuanLyThongBao /> : <XemThongBao />
 }
 
 // ───────────────────────────── Phòng VH-XH: lập và ban hành ─────────────────────────────
@@ -58,7 +58,10 @@ function QuanLyThongBao() {
       && d.chiTiet.some((c) => c.ngayHieuLuc >= tu && c.ngayHieuLuc <= den))
   }, [deXuats, nam, ky])
 
-  const namOptions = [nam - 1, nam, nam + 1].map((n) => ({ value: n, label: `Năm ${n}` }))
+  // Danh sách năm cố định (2024 → năm sau), không trượt theo năm đang chọn
+  const namNay = dayjs().year()
+  const namOptions = Array.from({ length: Math.max(namNay + 1, nam) - 2024 + 1 }, (_, i) => 2024 + i)
+    .reverse().map((n) => ({ value: n, label: `Năm ${n}` }))
 
   return (
     <Card>
@@ -70,7 +73,7 @@ function QuanLyThongBao() {
           </Text>
         </div>
         <Space wrap>
-          <Select value={nam} options={namOptions} onChange={(v) => setKy({ nam: v, ky })} style={{ width: 120 }} />
+          <Select value={nam} options={namOptions} onChange={(v) => setKy({ nam: v, ky })} style={{ minWidth: 150 }} popupMatchSelectWidth={false} aria-label="Năm" />
           <Segmented<KyXet>
             value={ky}
             onChange={(v) => setKy({ nam, ky: v })}
@@ -112,7 +115,9 @@ function QuanLyThongBao() {
 
 function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky: KyXet }) {
   const { message, modal } = App.useApp()
-  const { currentUser } = useAuth()
+  const { currentUser, hasPermission } = useAuth()
+  const coSoan = hasPermission('thongBao', 'write')
+  const coBanHanh = hasPermission('thongBao', 'approve')
   const id = idThongBao(loai, nam, ky)
   const thongBaos = useThongBaoStore((s) => s.thongBaos)
   const luuThongBao = useThongBaoStore((s) => s.luuThongBao)
@@ -195,7 +200,9 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
             </span>
           )}
         >
-          <Button type="primary" icon={<SyncOutlined />} onClick={taoBan} disabled={!ungVien.length}>Lập thông báo từ phiếu đã phê duyệt</Button>
+          {coSoan
+            ? <Button type="primary" icon={<SyncOutlined />} onClick={taoBan} disabled={!ungVien.length}>Lập thông báo từ phiếu đã phê duyệt</Button>
+            : <Typography.Text type="secondary">Chờ Phòng VHXH lập thông báo</Typography.Text>}
         </Empty>
       </div>
     )
@@ -242,7 +249,7 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
             <Tag color="success" icon={<CheckCircleOutlined />} style={{ padding: '4px 10px' }}>
               Đã ban hành {ban.banHanhLuc ? formatDatetime(ban.banHanhLuc) : ''}{ban.nguoiBanHanh ? ` - ${ban.nguoiBanHanh}` : ''}
             </Tag>
-            <Button
+            {coBanHanh && <Button
               icon={<RollbackOutlined />}
               onClick={() => modal.confirm({
                 title: 'Chuyển thông báo về bản nháp?',
@@ -252,14 +259,14 @@ function LapThongBao({ loai, nam, ky }: { loai: LoaiThongBaoKQ; nam: number; ky:
               })}
             >
               Chuyển về nháp
-            </Button>
+            </Button>}
           </>
         ) : (
           <>
-            <Button icon={<SyncOutlined />} onClick={tongHopLai}>Tổng hợp lại</Button>
+            {coSoan && <Button icon={<SyncOutlined />} onClick={tongHopLai}>Tổng hợp lại</Button>}
             <Button icon={<SaveOutlined />} disabled={!coThayDoi} onClick={() => { luu('NHAP'); message.success('Đã lưu nháp') }}>Lưu nháp</Button>
-            <Button type="primary" icon={<SendOutlined />} onClick={banHanh}>Ban hành</Button>
-            {daLuu && (
+            {coBanHanh && <Button type="primary" icon={<SendOutlined />} onClick={banHanh}>Ban hành</Button>}
+            {daLuu && coSoan && (
               <Button danger icon={<DeleteOutlined />} onClick={() => modal.confirm({ title: 'Xoá bản nháp thông báo này?', okText: 'Xoá', okButtonProps: { danger: true }, onOk: () => { xoaThongBao(id); setBan(undefined) } })}>
                 Xoá nháp
               </Button>

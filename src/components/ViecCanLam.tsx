@@ -55,14 +55,15 @@ export default function ViecCanLam() {
   }), [keToanTatCa, trongPhamVi])
   const vienChucs = useVienChucStore((s) => s.vienChucs)
 
-  const coXemHoSo = hasPermission('vienChuc', 'read')
+  const coXemHoSo = hasPermission('boNhiem', 'read')
+  const coXemBhxh = hasPermission('bhxh', 'read')
   const coLapPhieu = hasPermission('deXuat', 'write')
 
   const soChuaKhaiBhxh = useMemo(
-    () => (coXemHoSo
+    () => (coXemBhxh
       ? vienChucs.filter((v) => v.active && isDangCongTac(v) && trongPhamVi(v.donViId) && !v.batDauBhxhGd && !v.khongThamGiaBhxh).length
       : 0),
-    [vienChucs, trongPhamVi, coXemHoSo],
+    [vienChucs, trongPhamVi, coXemBhxh],
   )
 
   const viecs = useMemo<Viec[]>(() => {

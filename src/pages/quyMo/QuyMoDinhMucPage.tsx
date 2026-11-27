@@ -28,7 +28,7 @@ import LichSuQuyMoDrawer from '@/pages/thongTinTruong/LichSuQuyMoDrawer'
 import { HANG_TRUONG_LABELS, getHangTruong } from '@/utils/hangTruong'
 import { logAction } from '@/utils/auditLogger'
 import { exportToExcel } from '@/utils/exportExcel'
-import { formatDatetime } from '@/utils/helpers'
+import { formatDatetime, tenDonViIn } from '@/utils/helpers'
 import {
   type CapHoc, type ChucDanhTra, type DongDinhMuc, type KetQuaDinhMuc, type DongPhanBoKiem, type TongNhom,
   laCapHoc, TEN_CAP, THU_TU_CAP, KHOI, NHOM_DINH_MUC, MON_GIANG_DAY, CO_HAI_BUOI, KHOI_TIN_TU_CHON,
@@ -1130,7 +1130,7 @@ function xuatExcelTruong(donVi: DonVi, namHoc: string, cap: CapHoc, nhap: QuyMoT
   const cacNhom: { dong: number; apDung: boolean; viTri: number[]; tatCa: number[] }[] = []
   const aoa: O[][] = [
     ['UBND PHƯỜNG GIA VIÊN'],
-    [donVi.ten.toUpperCase()],
+    [tenDonViIn(donVi.ten)],
     [],
     [`ĐỊNH MỨC VIÊN CHỨC VÀ CƠ CẤU VỊ TRÍ VIỆC LÀM NĂM HỌC ${namHoc}`],
     [cap === 'MAM_NON' ? 'Căn cứ Thông tư 19/2023/TT-BGDĐT' : 'Căn cứ Thông tư 20/2023/TT-BGDĐT'],

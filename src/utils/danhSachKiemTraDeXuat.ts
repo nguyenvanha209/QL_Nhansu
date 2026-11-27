@@ -8,7 +8,7 @@ import type { VienChuc } from '@/types/vienChuc'
 import { CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { ChucDanhNgheNghiep } from '@/types/danhMuc'
 import { formatDate } from '@/utils/helpers'
-import { tenDonViDayDu } from '@/utils/danhSachTruocHan'
+import { tenDonViIn } from '@/utils/helpers'
 import { ngayDu5Nam } from '@/utils/pctnLanDau'
 import { xuatExcelA4 } from '@/utils/excelA4'
 import type { O, VungGop } from '@/utils/excelA4'
@@ -102,7 +102,7 @@ export function xuatExcelKiemTraDeXuat(d: DauVao) {
   const tenLoai = LOAI_DE_XUAT_LABELS[d.loai]
   const dau: O[][] = [
     ['UBND PHƯỜNG GIA VIÊN', ...trong(p - 1), 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', ...trong(n - p - 1)],
-    [tenDonViDayDu(d.tenTruong).toUpperCase(), ...trong(p - 1), 'Độc lập - Tự do - Hạnh phúc', ...trong(n - p - 1)],
+    [tenDonViIn(d.tenTruong), ...trong(p - 1), 'Độc lập - Tự do - Hạnh phúc', ...trong(n - p - 1)],
     [],
     ['DANH SÁCH', ...trong(n - 1)],
     [`Đề nghị ${tenLoai.charAt(0).toLowerCase()}${tenLoai.slice(1)}`, ...trong(n - 1)],

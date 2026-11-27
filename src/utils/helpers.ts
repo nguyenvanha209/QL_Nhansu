@@ -105,3 +105,13 @@ export function ago(iso: string): string {
 /** Sắp mã chức danh nghề nghiệp theo mã, so phần số tự nhiên (V.07.02.24 → V.07.02.25 → V.07.03.27; 02.006 → 02.007) */
 export const soSanhMaChucDanh = (a: { ma: string }, b: { ma: string }) =>
   (a.ma ?? '').localeCompare(b.ma ?? '', 'vi', { numeric: true, sensitivity: 'base' })
+
+/**
+ * Tên đơn vị in ở góc trái biểu mẫu (dưới "UBND PHƯỜNG GIA VIÊN"): trường học ghi đủ "Trường ..."
+ * (VD "Tiểu học Lê Hồng Phong" → "TRƯỜNG TIỂU HỌC LÊ HỒNG PHONG"); cơ quan, đơn vị sự nghiệp giữ nguyên tên. In hoa.
+ */
+export function tenDonViIn(ten?: string): string {
+  const t = (ten ?? '').trim()
+  const laTruong = /^(mầm non|mẫu giáo|nhà trẻ|tiểu học|trung học|thcs|thpt|th |mn |liên cấp|phổ thông)/i.test(t)
+  return (laTruong && !/^trường(\s|$)/i.test(t) ? `Trường ${t}` : t).toLocaleUpperCase('vi')
+}

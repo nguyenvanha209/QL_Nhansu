@@ -149,7 +149,7 @@ export default function BoSungBhxhPage() {
   const soDaSua = tatCa.filter((d) => d.daSua && doiCuaDong(d)).length
 
   // ── Tổng hợp theo trường (VHXH, quản trị) ──
-  type DongTruong = { id: string; ten: string; tong: number; daKhai: number; khongBhxh: number; chuaKhai: number; uuTien: number; du5Nam: number; sapDu: number }
+  type DongTruong = { id: string; ten: string; tong: number; daKhai: number; khongBhxh: number; chuaKhai: number; chuaPctn: number; uuTien: number; du5Nam: number; sapDu: number }
   const tongHop = useMemo<DongTruong[]>(() => truongs.map((t) => {
     const ds = tatCa.filter((d) => d.donViId === t.id)
     return {
@@ -157,12 +157,14 @@ export default function BoSungBhxhPage() {
       daKhai: ds.filter((d) => d.thang && !d.khong).length,
       khongBhxh: ds.filter((d) => d.khong).length,
       chuaKhai: ds.filter((d) => !daXuLy(d)).length,
+      // CBQL, giáo viên (diện PCTN) chưa có phụ cấp thâm niên - dù đã khai BHXH hay chưa
+      chuaPctn: ds.filter((d) => d.dienPctn && !d.pctn).length,
       uuTien: ds.filter((d) => d.dienPctn && !d.pctn && !d.thang).length,
       du5Nam: ds.filter((d) => d.tt === 'DU_5_NAM').length,
       sapDu: ds.filter((d) => d.tt === 'SAP_DU').length,
     }
   }), [truongs, tatCa])
-  const tong = tongHop.reduce((s, r) => ({ tong: s.tong + r.tong, daKhai: s.daKhai + r.daKhai, khongBhxh: s.khongBhxh + r.khongBhxh, chuaKhai: s.chuaKhai + r.chuaKhai, uuTien: s.uuTien + r.uuTien, du5Nam: s.du5Nam + r.du5Nam, sapDu: s.sapDu + r.sapDu }), { tong: 0, daKhai: 0, khongBhxh: 0, chuaKhai: 0, uuTien: 0, du5Nam: 0, sapDu: 0 })
+  const tong = tongHop.reduce((s, r) => ({ tong: s.tong + r.tong, daKhai: s.daKhai + r.daKhai, khongBhxh: s.khongBhxh + r.khongBhxh, chuaKhai: s.chuaKhai + r.chuaKhai, chuaPctn: s.chuaPctn + r.chuaPctn, uuTien: s.uuTien + r.uuTien, du5Nam: s.du5Nam + r.du5Nam, sapDu: s.sapDu + r.sapDu }), { tong: 0, daKhai: 0, khongBhxh: 0, chuaKhai: 0, chuaPctn: 0, uuTien: 0, du5Nam: 0, sapDu: 0 })
   // Người không tham gia BHXH do quá tuổi theo công việc (bảo vệ, lao công...) để thống kê loại đối tượng này
   const khongTheoViec = useMemo(() => {
     const m = new Map<string, number>()
@@ -361,7 +363,8 @@ export default function BoSungBhxhPage() {
     cotGiua<DongTruong>('Đã khai', 'dk', 80, (r) => r.daKhai),
     cotGiua<DongTruong>('Không tham gia BHXH (quá tuổi)', 'kb', 130, (r) => (r.khongBhxh ? <Text style={{ color: '#7c3aed' }} strong>{r.khongBhxh}</Text> : '-')),
     cotGiua<DongTruong>('Chưa khai', 'ck', 90, (r) => (r.chuaKhai ? <a onClick={() => setXemTruong(r.id)}><Text type="warning" strong>{r.chuaKhai}</Text></a> : <Text type="success">0</Text>)),
-    cotGiua<DongTruong>('Trong đó CBQL, GV chưa hưởng PCTN', 'ut', 140, (r) => (r.uuTien ? <Text type="danger" strong>{r.uuTien}</Text> : '-')),
+    // CBQL, giáo viên chưa có phụ cấp thâm niên - không phụ thuộc đã khai BHXH hay chưa
+    cotGiua<DongTruong>('Trong đó CBQL, GV chưa hưởng PCTN', 'cp', 140, (r) => (r.chuaPctn ? <Text type="danger" strong>{r.chuaPctn}</Text> : '-')),
     cotGiua<DongTruong>('Đủ 5 năm chưa xếp', 'du', 110, (r) => (r.du5Nam ? <Text type="danger" strong>{r.du5Nam}</Text> : '-')),
     cotGiua<DongTruong>('Sắp đủ (6 tháng)', 'sd', 100, (r) => r.sapDu || '-'),
   ]
@@ -374,7 +377,7 @@ export default function BoSungBhxhPage() {
         <Statistic title="Đã khai BHXH" value={tong.daKhai} />
         <Statistic title="Không tham gia BHXH (quá tuổi)" value={tong.khongBhxh} styles={{ content: { color: '#7c3aed' } }} />
         <Statistic title="Chưa khai" value={tong.chuaKhai} styles={{ content: { color: tong.chuaKhai ? '#d97706' : undefined } }} />
-        <Statistic title="CBQL, GV chưa hưởng PCTN chưa khai" value={tong.uuTien} styles={{ content: { color: tong.uuTien ? '#cf1322' : undefined } }} />
+        <Statistic title="CBQL, GV chưa hưởng PCTN" value={tong.chuaPctn} styles={{ content: { color: tong.chuaPctn ? '#cf1322' : undefined } }} />
         <Statistic title="Đủ 5 năm chưa xếp PCTN" value={tong.du5Nam} styles={{ content: { color: tong.du5Nam ? '#cf1322' : undefined } }} />
       </Space>
       {tong.khongBhxh > 0 && (
@@ -385,7 +388,7 @@ export default function BoSungBhxhPage() {
       )}
       {tong.chuaKhai > 0 && (
         <Alert type="warning" showIcon style={{ marginBottom: 12 }}
-          title={`${tong.chuaKhai} người chưa khai tháng bắt đầu đóng BHXH (${tong.uuTien} CBQL, giáo viên chưa hưởng PCTN)`}
+          title={`${tong.chuaKhai} người chưa khai tháng bắt đầu đóng BHXH`}
           action={<Button icon={<FileExcelOutlined />} onClick={xuatChuaKhai}>Xuất danh sách chưa khai</Button>} />
       )}
       <Table<DongTruong> {...BANG_CHUAN} rowKey="id" dataSource={tongHop} columns={colsTongHop} pagination={false} />

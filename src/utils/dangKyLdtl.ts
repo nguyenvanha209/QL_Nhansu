@@ -6,7 +6,7 @@ import type { ChiTieuDangKy, DangKyLdtl, DongDangKy, KyDangKy } from '@/types/da
 import { CHI_TIEU_RONG, TEN_KY_DANG_KY, khoangKyDangKy } from '@/types/dangKyLdtl'
 import { buildRow } from '@/utils/dongLuongNguoi'
 import { calcPensionStartDate } from '@/utils/retirement'
-import { soSanhVienChuc, vietHoaDauTu } from '@/utils/helpers'
+import { soSanhVienChuc, tenDonViIn, vietHoaDauTu } from '@/utils/helpers'
 import { docHeSo } from '@/utils/truyLinh'
 import { lamTronExcel, ganCotTinh, ganDongTong, xuatExcelA4 } from '@/utils/excelA4'
 import type { O, TrangA4 } from '@/utils/excelA4'
@@ -193,8 +193,8 @@ export function xuatExcelDangKy(b: DangKyLdtl, ky: ThongTinKyDangKy) {
     const N = 8
     const hang = (vals: Record<number, O>): O[] => { const r: O[] = Array(N).fill(null); for (const [c, v] of Object.entries(vals)) r[Number(c)] = v; return r }
     const dau: O[][] = [
-      hang({ 0: 'UBND PHƯỜNG GIA VIÊN', 4: 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM' }),
-      hang({ 0: ky.tenDonVi.toUpperCase(), 4: 'Độc lập - Tự do - Hạnh phúc' }),
+      hang({ 0: 'UBND PHƯỜNG GIA VIÊN', 3: 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM' }),
+      hang({ 0: tenDonViIn(ky.tenDonVi), 3: 'Độc lập - Tự do - Hạnh phúc' }),
       [],
       [`ĐĂNG KÝ LAO ĐỘNG TIỀN LƯƠNG ${tenKy}`],
       [],
@@ -226,7 +226,7 @@ export function xuatExcelDangKy(b: DangKyLdtl, ky: ThongTinKyDangKy) {
       dong,
       dinhDangO,
       gop: [
-        g(0, 0, 0, 3), g(1, 0, 1, 3), g(0, 4, 0, 7), g(1, 4, 1, 7), g(3, 0, 3, 7),
+        g(0, 0, 0, 2), g(1, 0, 1, 2), g(0, 3, 0, 7), g(1, 3, 1, 7), g(3, 0, 3, 7),
         g(bdTd, 0, bdTd + 1, 0), g(bdTd, 1, bdTd + 1, 1), g(bdTd, 2, bdTd, 5), g(bdTd, 6, bdTd + 1, 6), g(bdTd, 7, bdTd + 1, 7),
         g(rCuoi + 1, 0, rCuoi + 1, 7), g(rCuoi + 2, 0, rCuoi + 2, 7),
         ...[3, 4, 5, 9].map((k) => g(rCuoi + k, 1, rCuoi + k, 3)),
@@ -259,7 +259,7 @@ export function xuatExcelDangKy(b: DangKyLdtl, ky: ThongTinKyDangKy) {
     const hang = (vals: Record<number, O>): O[] => { const r: O[] = Array(N).fill(null); for (const [c, v] of Object.entries(vals)) if (Number(c) >= 0) r[Number(c)] = v; return r }
     const dau: O[][] = [
       hang({ 0: 'UBND PHƯỜNG GIA VIÊN', 7: 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM' }),
-      hang({ 0: ky.tenDonVi.toUpperCase(), 7: 'Độc lập - Tự do - Hạnh phúc' }),
+      hang({ 0: tenDonViIn(ky.tenDonVi), 7: 'Độc lập - Tự do - Hạnh phúc' }),
       [],
       [`DANH SÁCH ĐĂNG KÝ LAO ĐỘNG TIỀN LƯƠNG ${tenKy}`],
       [`(Tính từ ngày ${ngayVn(tu)} đến hết ngày ${ngayVn(den)})`],

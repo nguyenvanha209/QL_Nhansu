@@ -8,7 +8,7 @@ import { khoangKy, TEN_KY_TRUY_LINH } from '@/types/truyLinh'
 import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
 import { pccvThucHuong } from '@/utils/baoLuuPccv'
 import { congNam, thoiGianNangBac, ngayHopLe } from '@/utils/nangLuong'
-import { vietHoaDauTu } from '@/utils/helpers'
+import { tenDonViIn, vietHoaDauTu } from '@/utils/helpers'
 import { lamTronExcel, ganCotTinh, ganDongTong, xuatExcelA4 } from '@/utils/excelA4'
 import type { O, TrangA4 } from '@/utils/excelA4'
 
@@ -283,7 +283,7 @@ export function xuatExcelTruyLinh(b: BangTruyLinh, ky: ThongTinKy) {
     const hang = (trai: O, phai: O) => { const r: O[] = Array(soCot).fill(null); r[0] = trai; r[cotPhai] = phai; return r }
     return [
       hang('UBND PHƯỜNG GIA VIÊN', 'CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM'),
-      hang(ky.tenDonVi.toUpperCase(), 'Độc lập - Tự do - Hạnh phúc'),
+      hang(tenDonViIn(ky.tenDonVi), 'Độc lập - Tự do - Hạnh phúc'),
       [],
       [tieuDe],
       [tinhDen],
@@ -373,7 +373,7 @@ export function xuatExcelTruyLinh(b: BangTruyLinh, ky: ThongTinKy) {
   {
     const dau: O[][] = [
       ['UBND PHƯỜNG GIA VIÊN', ...Array(8).fill(null), 'Mẫu 1b-PCTNNG'],
-      [ky.tenDonVi.toUpperCase()],
+      [tenDonViIn(ky.tenDonVi)],
       [],
       [`DANH SÁCH TRUY LĨNH NÂNG PHỤ CẤP THÂM NIÊN NHÀ GIÁO ${tenKy}`],
       [tinhDen],

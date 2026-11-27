@@ -176,8 +176,6 @@ export interface TrangA4 {
   /** Định dạng số riêng cho từng ô 'dòng:cột' (VD '0%' cho tỷ lệ lưu dạng 0,05) */
   dinhDangO?: Record<string, string>
   huong?: 'doc' | 'ngang'
-  /** Co cả chiều cao để vừa đúng một trang (báo cáo tổng hợp) */
-  motTrang?: boolean
   coChu?: number
 }
 
@@ -244,7 +242,8 @@ function dungTrang(wb: Workbook, t0: TrangA4): Worksheet {
     pageSetup: {
       paperSize: 9, // A4
       orientation: ngang ? 'landscape' : 'portrait',
-      fitToPage: true, fitToWidth: 1, fitToHeight: t.motTrang ? 1 : 0,
+      // Mọi biểu: vừa 1 trang theo chiều ngang, chiều dọc tự động sang trang (dòng tiêu đề cột lặp lại)
+      fitToPage: true, fitToWidth: 1, fitToHeight: 0,
       margins: LE,
       horizontalCentered: true,
       printTitlesRow: bang0?.soDongTieuDe ? `${bang0.tu + 1}:${bang0.tu + bang0.soDongTieuDe}` : undefined,

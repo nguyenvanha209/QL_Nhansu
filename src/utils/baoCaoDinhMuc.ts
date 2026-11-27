@@ -330,7 +330,6 @@ export function trangExcelBaoCao(
     cotGiua: [0, ...Array.from({ length: soCot - 2 }, (_, i) => i + 2)],
     cotDauNhom: nhom.map((_, i) => 2 + i * k),
     huong: 'ngang',
-    motTrang: true,
     coChu: 10,
     soLe: 1,
   }

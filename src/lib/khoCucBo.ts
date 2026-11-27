@@ -15,7 +15,7 @@
 
 /** Các kho dữ liệu (tên persist của store) - cất IndexedDB */
 const KHO_DU_LIEU = new Set([
-  'ql-users', 'ql-danh-muc', 'ql-vien-chuc', 'ql-luong', 'ql-de-xuat', 'ql-chuyen-cong-tac', 'ql-nhat-ky', 'ql-thong-bao', 'ql-truy-linh',
+  'ql-users', 'ql-danh-muc', 'ql-vien-chuc', 'ql-luong', 'ql-de-xuat', 'ql-chuyen-cong-tac', 'ql-nhat-ky', 'ql-thong-bao', 'ql-truy-linh', 'ql-dang-ky-ldtl',
 ])
 export const laKhoDuLieu = (k: string) => KHO_DU_LIEU.has(k)
 

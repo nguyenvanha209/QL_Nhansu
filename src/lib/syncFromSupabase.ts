@@ -13,6 +13,7 @@ import { useChuyenCongTacStore } from '@/store/chuyenCongTacStore'
 import { useNhatKyStore } from '@/store/nhatKyStore'
 import { useThongBaoStore } from '@/store/thongBaoStore'
 import { useTruyLinhStore } from '@/store/truyLinhStore'
+import { useDangKyLdtlStore } from '@/store/dangKyLdtlStore'
 
 // Không đồng bộ useAuthStore: phiên đăng nhập là của riêng từng máy.
 const STORES = [
@@ -25,6 +26,7 @@ const STORES = [
   useNhatKyStore,
   useThongBaoStore,
   useTruyLinhStore,
+  useDangKyLdtlStore,
 ]
 
 // Sau khi tầng đồng bộ hợp nhất dữ liệu, store tương ứng phải nạp lại để bộ nhớ
@@ -40,6 +42,7 @@ const KHO_THEO_KHOA: Record<string, { persist: { rehydrate: () => void | Promise
   'ql-nhat-ky': useNhatKyStore,
   'ql-thong-bao': useThongBaoStore,
   'ql-truy-linh': useTruyLinhStore,
+  'ql-dang-ky-ldtl': useDangKyLdtlStore,
 }
 
 // Khai báo chia kho theo đơn vị trường.
@@ -50,6 +53,7 @@ const KHO_THEO_KHOA: Record<string, { persist: { rehydrate: () => void | Promise
 dangKyChiaKho('ql-vien-chuc', (bg) => String(bg.donViId ?? KHOA_GOC))
 dangKyChiaKho('ql-de-xuat', (bg) => String(bg.donViId ?? KHOA_GOC))
 dangKyChiaKho('ql-truy-linh', (bg) => String(bg.donViId ?? KHOA_GOC))
+dangKyChiaKho('ql-dang-ky-ldtl', (bg) => String(bg.donViId ?? KHOA_GOC))
 dangKyChiaKho('ql-luong', (bg) => {
   const vcId = bg.vienChucId
   if (typeof vcId !== 'string') return KHOA_GOC

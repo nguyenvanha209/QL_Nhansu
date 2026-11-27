@@ -32,6 +32,13 @@ export const RESOURCES: TaiNguyen[] = [
     ],
   },
   { key: 'truyLinh', label: 'Truy lĩnh', actions: [XEM, { key: 'write', label: 'Lập, trình' }, { key: 'approve', label: 'Duyệt' }] },
+  {
+    key: 'dangKyLdtl', label: 'Đăng ký lao động tiền lương',
+    actions: [
+      XEM, { key: 'write', label: 'Lập, trình' }, { key: 'approve', label: 'Thủ trưởng duyệt' },
+      { key: 'thamDinh', label: 'Thẩm định' }, { key: 'pheDuyet', label: 'Phê duyệt' },
+    ],
+  },
   { key: 'thongBao', label: 'Thông báo kết quả', actions: [XEM, { key: 'write', label: 'Tổng hợp, soạn' }, { key: 'approve', label: 'Ban hành' }] },
   { key: 'baoCao', label: 'Báo cáo', actions: [XEM] },
   { key: 'duBao', label: 'Dự báo nghỉ hưu', actions: [XEM] },
@@ -57,6 +64,7 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
     thongTinTruong: R('read', 'write'),
     deXuat: R('read', 'write', 'thamDinh'),
     truyLinh: R('read'),
+    dangKyLdtl: R('read', 'thamDinh'),
     thongBao: R('read', 'write'),
     baoCao: R('read'),
     duBao: R('read'),
@@ -72,6 +80,7 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
     thongTinTruong: R('read'),
     deXuat: R('read', 'pheDuyet'),
     truyLinh: R('read', 'approve'),
+    dangKyLdtl: R('read', 'pheDuyet'),
     thongBao: R('read', 'approve'),
     baoCao: R('read'),
     duBao: R('read'),
@@ -86,6 +95,7 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
     thongTinTruong: R('read', 'write'),
     deXuat: R('read', 'approve'),
     truyLinh: R('read', 'write'),
+    dangKyLdtl: R('read', 'approve'),
     thongBao: R('read'),
     baoCao: R('read'),
     duBao: R('read'),
@@ -100,6 +110,7 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
     thongTinTruong: R('read', 'write'),
     deXuat: R('read', 'write'),
     truyLinh: R('read', 'write'),
+    dangKyLdtl: R('read', 'write'),
     thongBao: R('read'),
     baoCao: R('read'),
     duBao: R('read'),
@@ -108,10 +119,10 @@ const PERMISSIONS: Record<UserRole, Record<string, Action[]>> = {
 
 export const ROLE_DESC: Record<UserRole, string> = {
   ADMIN: 'Toàn quyền: quản trị danh mục, tài khoản, nhật ký; làm thay mọi bước. Không giới hạn đơn vị.',
-  CB_VH_XH: 'Cán bộ Phòng VHXH: sửa hồ sơ, lương các đơn vị thuộc khối phụ trách; thẩm định phiếu (bước 3); tổng hợp thông báo kết quả; duyệt chuyển công tác.',
-  LANH_DAO: 'Lãnh đạo Phòng VHXH (Trưởng phòng được ủy quyền): phê duyệt phiếu (bước 4), duyệt truy lĩnh, ban hành thông báo kết quả; xem dữ liệu khối phụ trách.',
-  HIEU_TRUONG: 'Thủ trưởng đơn vị (Hiệu trưởng, Trưởng phòng, Giám đốc): sửa hồ sơ đơn vị mình; duyệt phiếu của đơn vị (bước 2); trình bảng truy lĩnh.',
-  CB_TRUONG: 'Cán bộ đơn vị (kế toán, tổ chức): sửa hồ sơ đơn vị mình; lập phiếu đề xuất (bước 1), bảng truy lĩnh, đề nghị chuyển công tác.',
+  CB_VH_XH: 'Cán bộ Phòng VHXH: sửa hồ sơ, lương các đơn vị thuộc khối phụ trách; thẩm định phiếu, đăng ký lao động tiền lương (bước 3); tổng hợp thông báo kết quả; duyệt chuyển công tác.',
+  LANH_DAO: 'Lãnh đạo Phòng VHXH (Trưởng phòng được ủy quyền): phê duyệt phiếu, đăng ký lao động tiền lương (bước 4), duyệt truy lĩnh, ban hành thông báo kết quả; xem dữ liệu khối phụ trách.',
+  HIEU_TRUONG: 'Thủ trưởng đơn vị (Hiệu trưởng, Trưởng phòng, Giám đốc): sửa hồ sơ đơn vị mình; duyệt phiếu, đăng ký lao động tiền lương của đơn vị (bước 2); trình bảng truy lĩnh.',
+  CB_TRUONG: 'Cán bộ đơn vị (kế toán, tổ chức): sửa hồ sơ đơn vị mình; lập phiếu đề xuất (bước 1), bảng truy lĩnh, đăng ký lao động tiền lương, đề nghị chuyển công tác.',
 }
 
 export const khoaQuyen = (resource: string, action: Action) => `${resource}:${action}`

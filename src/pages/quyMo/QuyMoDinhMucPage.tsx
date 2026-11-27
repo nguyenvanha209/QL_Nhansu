@@ -296,7 +296,7 @@ function TongHopPhuong({ truongs, namHoc, onChon, onXemCapHoc }: { truongs: DonV
       dam, nen, mauChu, cotGiua: Array.from({ length: soCot }, (_, c) => c).filter((c) => c !== 1),
       nenCot: Object.fromEntries(NHOM_TH.flatMap(({ key }, j) => [0, 1, 2, 3, 4].map((x) => [4 + j * 5 + x, MAU_NHOM_VTVL[key].argbNen]))),
       cotDauNhom: [4, 9, 14, 19],
-      huong: 'ngang', motTrang: true, coChu: 10, soLe: 1,
+      huong: 'ngang', coChu: 10, soLe: 1,
     }]).catch(() => undefined)
   }
 

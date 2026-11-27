@@ -83,18 +83,25 @@ export default function HuongDanPage() {
         <>Được duyệt: bấm <N>Xuất Excel theo mẫu</N> để in, ký.</>,
       ]} luuY={<>Bảng hiện cảnh báo vàng "chưa có trong bảng" thì bấm <N>Cập nhật từ phiếu đã phê duyệt</N> rồi <N>Lưu</N>.</>} />
 
-      <Viec ten="6. Chuyển công tác trong phường" buoc={[
+      <Viec ten="6. Đăng ký lao động tiền lương" buoc={[
+        <><M>Đăng ký LĐTL</M> → chọn năm, kỳ → <N>Lập đăng ký</N>: phần mềm lập danh sách hệ số lương và biểu tổng hợp từ hồ sơ.</>,
+        <>Thẻ <b>Biểu tổng hợp</b>: nhập kế hoạch được duyệt kỳ trước theo văn bản đã xác nhận (kỳ trước duyệt trên phần mềm thì bấm <N>Lấy kế hoạch kỳ trước</N>), kiểm tra cột Thực hiện.</>,
+        <>Thẻ <b>Danh sách hệ số lương</b>: kiểm tra từng người, ghi chú tăng, giảm → <N>Lưu</N> → <N>Trình Thủ trưởng duyệt</N>.</>,
+        <>Lãnh đạo Phòng phê duyệt xong: <N>Xuất Excel theo mẫu</N>, Hiệu trưởng ký, gửi Phòng Văn hóa - Xã hội qua hệ thống quản lý văn bản.</>,
+      ]} luuY={<>Hồ sơ lương thay đổi sau khi lập (nâng lương, người mới) thì bấm <N>Cập nhật từ hồ sơ</N>.</>} />
+
+      <Viec ten="7. Chuyển công tác trong phường" buoc={[
         <><M>Chuyển công tác</M> → <N>Đề nghị chuyển đi</N>: chọn người, đơn vị đến, ngày chuyển, số quyết định → <N>Lưu &amp; Trình duyệt</N>.</>,
         <>Đơn vị đến: khi phiếu được duyệt, bấm <N>Tiếp nhận</N>, chọn vị trí, ngày về đơn vị.</>,
       ]} />
 
-      <Viec ten="7. Bổ nhiệm và kế toán" buoc={[
+      <Viec ten="8. Bổ nhiệm và kế toán" buoc={[
         <><M>Bổ nhiệm, {laTruong ? 'kế toán' : 'chuyển đổi VT'}</M>: nhập quyết định bổ nhiệm của cán bộ quản lý (ngày, số quyết định) để phần mềm nhắc hết nhiệm kỳ.</>,
         <>Thẻ <b>Kế toán - chuyển đổi vị trí công tác</b>: nhập mốc quyết định phân công kế toán gần nhất.</>,
       ]} />
 
       {laTruong && (
-        <Viec ten="8. Riêng trường học" buoc={[
+        <Viec ten="9. Riêng trường học" buoc={[
           <>Nút <M>Thông tin trường</M> (đầu trang): khai số lớp, học sinh từng năm học - căn cứ hạng trường, phụ cấp chức vụ, định mức.</>,
           <><M>Cơ cấu VTVL, định mức</M>: xem thừa, thiếu so với định mức; phân công giáo viên.</>,
         ]} />
@@ -110,6 +117,7 @@ export default function HuongDanPage() {
         <>Mở phiếu → xem từng người (bậc, hệ số, mốc hưởng, minh chứng).</>,
         <>Đúng: <N>Duyệt - chuyển VH-XH</N>. Cần sửa: <N>Yêu cầu bổ sung</N> (ghi rõ nội dung). Không đủ điều kiện: <N>Từ chối</N>.</>,
         <>Duyệt xong mới ký công văn đề nghị gửi Phòng Văn hóa - Xã hội qua hệ thống quản lý văn bản.</>,
+        <><M>Đăng ký LĐTL</M>: mở bản chờ duyệt → kiểm tra biểu tổng hợp, danh sách → <N>Duyệt - chuyển VH-XH</N> hoặc <N>Trả lại</N>.</>,
       ]} />
       <Viec ten="Theo dõi đơn vị mình" buoc={[
         <><M>Tổng quan</M>: số người, người sắp nâng lương, sắp nghỉ hưu, việc cần làm.</>,
@@ -136,6 +144,7 @@ export default function HuongDanPage() {
       <Viec ten="Duyệt bảng truy lĩnh" buoc={[
         <><M>Truy lĩnh</M>: số đỏ là bảng chờ duyệt → mở bảng → <N>Duyệt</N> hoặc <N>Trả lại</N> (ghi lý do).</>,
         <>Tên Trưởng phòng ký trên biểu sửa ngay trong trang bảng truy lĩnh.</>,
+        <><M>Đăng ký LĐTL</M>: số đỏ là bản chờ thẩm định → đối chiếu biên chế với chỉ tiêu được giao, hệ số với kết quả nâng lương → <N>Đồng ý - trình Lãnh đạo Phòng</N> hoặc <N>Trả lại</N>.</>,
       ]} />
       <Viec ten="Theo dõi chung" buoc={[
         <><M>Rà soát ngạch - bậc</M>, <M>Thông tin BHXH</M>: nhắc đơn vị còn sai, còn thiếu.</>,
@@ -152,6 +161,10 @@ export default function HuongDanPage() {
         <>Số đỏ ở <M>Nâng lương</M>, <M>Điều chỉnh lương</M> là phiếu chờ phê duyệt.</>,
         <>Mở phiếu → xem ý kiến thẩm định của chuyên viên → <N>Phê duyệt</N> hoặc <N>Từ chối</N>.</>,
         <>Phê duyệt xong, phần mềm tự cập nhật lương, phụ cấp vào hồ sơ từng người.</>,
+      ]} />
+      <Viec ten="Duyệt truy lĩnh, phê duyệt đăng ký lao động tiền lương" buoc={[
+        <>Số đỏ ở <M>Truy lĩnh</M> là bảng chờ duyệt → mở → <N>Duyệt</N> hoặc <N>Trả lại</N> (ghi lý do).</>,
+        <>Số đỏ ở <M>Đăng ký LĐTL</M> là bản Phòng đã thẩm định → <N>Phê duyệt</N> hoặc <N>Trả lại</N>.</>,
       ]} />
       <Viec ten="Nắm tình hình" buoc={[
         <><M>Tổng quan</M>: cơ cấu nhân sự, việc tồn đọng toàn phường; chọn khối ở đầu trang để xem riêng trường học, cơ quan, đơn vị sự nghiệp.</>,

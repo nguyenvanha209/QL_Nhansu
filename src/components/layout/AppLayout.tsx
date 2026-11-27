@@ -10,7 +10,7 @@ import {
   UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ClockCircleOutlined,
   AuditOutlined, TableOutlined, IdcardOutlined, ReadOutlined, SwapOutlined, FileSearchOutlined, CalculatorOutlined, NotificationOutlined,
   SolutionOutlined, WarningOutlined, BankOutlined, RiseOutlined, SafetyCertificateOutlined,
-  SearchOutlined, AppstoreOutlined,
+  SearchOutlined, AppstoreOutlined, ScheduleOutlined,
 } from '@ant-design/icons'
 import TimNhanh from './TimNhanh'
 import type { MucTimNhanh } from './TimNhanh'
@@ -28,6 +28,8 @@ import { useThongBaoMoi } from '@/hooks/useThongBaoMoi'
 import { useDeXuatCanXuLy, useDeXuatDangXuLy } from '@/hooks/useDeXuatCanXuLy'
 import { useDeXuatStore } from '@/store/deXuatStore'
 import { useTruyLinhStore } from '@/store/truyLinhStore'
+import { useDangKyLdtlStore } from '@/store/dangKyLdtlStore'
+import { choToiXuLy } from '@/utils/dangKyLdtlQuyTrinh'
 import { LOAI_HO_SO_NANG_LUONG, TEN_CHUC_NANG_NANG_LUONG, TEN_CHUC_NANG_DE_XUAT, laHoSoNangLuong } from '@/types/deXuat'
 import type { LoaiDeXuat } from '@/types/deXuat'
 
@@ -49,6 +51,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/chuyen-cong-tac': 'Chuyển công tác',
   '/thong-bao-ket-qua': 'Thông báo kết quả nâng lương, phụ cấp thâm niên',
   '/truy-linh': 'Truy lĩnh nâng lương, phụ cấp thâm niên',
+  '/dang-ky-ldtl': 'Đăng ký lao động tiền lương',
   '/bo-nhiem': 'Theo dõi bổ nhiệm',
   '/du-bao': 'Dự báo nghỉ hưu',
   '/bao-cao': 'Báo cáo',
@@ -95,6 +98,14 @@ export default function AppLayout() {
   const soTruyLinhCho = bangTruyLinh.filter((b) => (scopeDonViId
     ? b.donViId === scopeDonViId && b.trangThai === 'TRA_LAI'
     : b.trangThai === 'CHO_DUYET' && coDuyetTruyLinh && trongPhamVi(b.donViId))).length
+  // Đăng ký lao động tiền lương (4 bước): số bản đang chờ chính tài khoản này xử lý
+  const dangKys = useDangKyLdtlStore((s) => s.dangKys)
+  const quyenDangKy = {
+    scopeDonViId, trongPhamVi,
+    coLap: hasPermission('dangKyLdtl', 'write'), coThuTruong: hasPermission('dangKyLdtl', 'approve'),
+    coThamDinh: hasPermission('dangKyLdtl', 'thamDinh'), coPheDuyet: hasPermission('dangKyLdtl', 'pheDuyet'),
+  }
+  const soDangKyCho = dangKys.filter((b) => choToiXuLy(b, quyenDangKy)).length
   const coChucNangTruong = (q: boolean) => q && laDonViTruong
   const soThongBaoMoi = useThongBaoMoi()
   const soDeXuatCho = useDeXuatCanXuLy()
@@ -148,6 +159,11 @@ export default function AppLayout() {
         key: '/truy-linh', icon: <CalculatorOutlined />,
         label: <NhanMenu ten="Truy lĩnh" soCho={soTruyLinhCho} />,
         title: 'Truy lĩnh nâng lương, phụ cấp thâm niên theo kỳ 6 tháng',
+      },
+      hasPermission('dangKyLdtl', 'read') && {
+        key: '/dang-ky-ldtl', icon: <ScheduleOutlined />,
+        label: <NhanMenu ten="Đăng ký LĐTL" soCho={soDangKyCho} />,
+        title: 'Đăng ký lao động tiền lương theo kỳ 6 tháng',
       },
     ]),
     nhom('Theo dõi', [

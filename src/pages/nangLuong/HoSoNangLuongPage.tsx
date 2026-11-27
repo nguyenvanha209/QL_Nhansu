@@ -20,7 +20,7 @@ const MOT_LOAI = Object.fromEntries(LOAI_HO_SO_NANG_LUONG.map((l) => [l, [l]])) 
 
 // Các giai đoạn của hồ sơ, hiện số phiếu dưới tên thẻ (chỉ giai đoạn có phiếu)
 const GIAI_DOAN: { ten: string; tenDu: string; mau: string; tt: TrangThaiDeXuat[] }[] = [
-  { ten: 'Đang lập', tenDu: 'Đơn vị đang lập', mau: '#8c8c8c', tt: ['NHAP'] },
+  { ten: 'Đang lập', tenDu: 'Đơn vị đang lập', mau: '#434343', tt: ['NHAP'] },
   { ten: 'Chờ TT', tenDu: 'Chờ Thủ trưởng đơn vị duyệt', mau: '#1677ff', tt: ['CHO_HIEU_TRUONG_DUYET'] },
   { ten: 'Chờ VHXH', tenDu: 'Chờ Phòng VHXH thẩm định', mau: '#d46b08', tt: ['CHO_XET_DUYET'] },
   { ten: 'Chờ LĐ', tenDu: 'Chờ Lãnh đạo Phòng phê duyệt', mau: '#722ed1', tt: ['CHO_PHE_DUYET'] },
@@ -41,15 +41,15 @@ function NhanThe({ loai }: { loai: LoaiDeXuat }) {
   }, [deXuats, loai, nam, scopeDonViId, trongPhamVi])
   const coSo = dem.filter((g) => g.so)
   return (
-    <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.25 }}>
+    <span className="nhan-the-giai-doan">
       <Badge count={soCho} size="small" offset={[8, -2]} title={soCho ? `${soCho} hồ sơ chờ bạn xử lý` : undefined}>
-        <span style={{ color: 'inherit' }}>{LOAI_DE_XUAT_LABELS[loai]}</span>
+        <span className="ten-the">{LOAI_DE_XUAT_LABELS[loai]}</span>
       </Badge>
       <Tooltip title={coSo.length ? `Năm ${nam}: ${coSo.map((g) => `${g.tenDu} ${g.so}`).join('; ')}` : `Năm ${nam}: chưa có hồ sơ`}>
-        <span style={{ fontSize: 11.5, marginTop: 2, whiteSpace: 'nowrap' }}>
+        <span className="cac-giai-doan">
           {coSo.length
-            ? coSo.map((g, i) => <span key={g.ten} style={{ color: g.mau, fontWeight: 600 }}>{i ? ' · ' : ''}{g.ten} {g.so}</span>)
-            : <span style={{ color: '#bfbfbf' }}>Chưa có hồ sơ {nam}</span>}
+            ? coSo.map((g) => <span key={g.ten} className="giai-doan" style={{ color: g.mau }}>{g.ten} <b>{g.so}</b></span>)
+            : <span className="giai-doan" style={{ color: '#595959' }}>Chưa có hồ sơ {nam}</span>}
         </span>
       </Tooltip>
     </span>
@@ -68,6 +68,7 @@ export default function HoSoNangLuongPage() {
     <Card>
       <Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>{laTruongHocKhoi ? TEN_CHUC_NANG_NANG_LUONG : 'Lập hồ sơ nâng lương'}</Title>
       <Tabs
+        className="tabs-giai-doan"
         activeKey={loai}
         onChange={(k) => setParams({ loai: k }, { replace: true })}
         destroyOnHidden

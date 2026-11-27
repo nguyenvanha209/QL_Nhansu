@@ -10,6 +10,7 @@ import DeXuatListPage from '@/pages/deXuat/DeXuatListPage'
 import NangTruocHanPage from '@/pages/truocHan/NangTruocHanPage'
 import { useDeXuatCanXuLy } from '@/hooks/useDeXuatCanXuLy'
 import { usePhamVi } from '@/hooks/usePhamVi'
+import NutDoiMaPhieuCu from '@/components/NutDoiMaPhieuCu'
 import { LOAI_DE_XUAT_LABELS, LOAI_HO_SO_NANG_LUONG, TEN_CHUC_NANG_NANG_LUONG } from '@/types/deXuat'
 import type { LoaiDeXuat } from '@/types/deXuat'
 
@@ -66,7 +67,10 @@ export default function HoSoNangLuongPage() {
   const loai: LoaiDeXuat = q && cacLoai.includes(q) ? q : 'NANG_BAC'
   return (
     <Card>
-      <Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>{laTruongHocKhoi ? TEN_CHUC_NANG_NANG_LUONG : 'Lập hồ sơ nâng lương'}</Title>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
+        <Title level={4} style={{ margin: 0 }}>{laTruongHocKhoi ? TEN_CHUC_NANG_NANG_LUONG : 'Lập hồ sơ nâng lương'}</Title>
+        <NutDoiMaPhieuCu />
+      </div>
       <Tabs
         className="tabs-giai-doan"
         activeKey={loai}

@@ -80,7 +80,7 @@ export const TIEN_TO_MA: Record<LoaiDeXuat, string> = {
   DIEU_CHINH: 'DCHS', // điều chỉnh hệ số lương - phụ cấp
 }
 /** Mã ngắn của đơn vị ghép vào mã phiếu: mã đơn vị (chữ, số) nếu gọn, không thì 6 ký tự cuối của id */
-const maNganDonVi = (donViId: string) => {
+export const maNganDonVi = (donViId: string) => {
   const ma = (useDanhMucStore.getState().donVis.find((d) => d.id === donViId)?.ma ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
   return ma && ma.length <= 10 ? ma : donViId.replace(/[^A-Za-z0-9]/g, '').slice(-6).toUpperCase()
 }

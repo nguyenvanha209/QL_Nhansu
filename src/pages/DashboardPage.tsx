@@ -100,7 +100,10 @@ export default function DashboardPage() {
         return a.ten.localeCompare(b.ten, 'vi')
       })
     return sorted.map((dv) => {
-      const row: Record<string, string | number> = { name: dv.ten.replace('Trường ', '').replace('Trường THCS ', 'THCS ') }
+      // Tên ngắn trên trục (MN / TH / THCS) để mỗi trường một dòng; tên đầy đủ hiện khi rê chuột
+      const tenDu = dv.ten.replace(/^Trường\s+/i, '')
+      const name = tenDu.replace(/^Mầm non\s+/i, 'MN ').replace(/^Tiểu học\s+/i, 'TH ').replace(/^Trung học cơ sở\s+/i, 'THCS ')
+      const row: Record<string, string | number> = { name, tenDu }
       let total = 0
       for (const n of dsNhom) {
         const c = nhanSu.filter((x) => x.v.donViId === dv.id && x.nhom === n.key).length
@@ -112,6 +115,9 @@ export default function DashboardPage() {
       return row
     }).filter((d) => (d.total as number) > 0)
   }, [donVis, nhanSu, capHoc])
+
+  // Độ rộng trục tên trường theo tên dài nhất (~7px/ký tự ở cỡ 12.5), để tên không xuống dòng
+  const doRongTruc = useMemo(() => Math.min(190, Math.max(90, 12 + 7 * Math.max(0, ...bySchoolData.map((d) => String(d.name).length)))), [bySchoolData])
 
   const statusCounts = useMemo(() => {
     const statuses = ['CHO_HIEU_TRUONG_DUYET', 'CHO_XET_DUYET', 'CHO_PHE_DUYET', 'DA_PHE_DUYET', 'TU_CHOI'] as const
@@ -228,19 +234,19 @@ export default function DashboardPage() {
               size="small"
               pagination={false}
               bordered
-              scroll={{ x: 'max-content' }}
+              scroll={{ x: 600 }}
               rowKey="key"
               dataSource={[...dsNhom.map((n) => ({ key: n.key, ten: n.ten, mau: n.mau })), { key: 'TONG', ten: 'Tổng cộng', mau: '' }]}
               rowClassName={(r) => (r.key === 'TONG' ? 'dash-tong-row' : '')}
               columns={[
                 {
-                  title: 'Nhóm vị trí', dataIndex: 'ten', key: 'ten', onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+                  title: 'Nhóm vị trí', dataIndex: 'ten', key: 'ten', width: 210, onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
                   render: (v: string, r) => r.key === 'TONG'
                     ? <b>{v}</b>
                     : <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: r.mau, marginRight: 6 }} />{v}</span>,
                 },
                 ...dsLoaiHinh.map((l) => ({
-                  title: <span title={l.ten} style={{ whiteSpace: 'nowrap' }}>{l.tenNgan}</span>, key: l.key, align: 'right' as const, width: 78,
+                  title: <span title={l.ten} style={{ whiteSpace: 'nowrap' }}>{l.tenNgan}</span>, key: l.key, align: 'right' as const,
                   render: (_: unknown, r: { key: string }) => {
                     const so = r.key === 'TONG' ? tongLoaiHinh(l.key) : coCau[r.key as NhomViTri][l.key]
                     if (!so) return <Text type="secondary">-</Text>
@@ -248,7 +254,7 @@ export default function DashboardPage() {
                   },
                 })),
                 {
-                  title: 'Tổng', key: 'tong', align: 'right' as const, width: 70,
+                  title: 'Tổng', key: 'tong', align: 'right' as const,
                   render: (_: unknown, r: { key: string }) => {
                     const so = r.key === 'TONG' ? nhanSu.length : tongNhom(r.key as NhomViTri)
                     return <a onClick={() => moDanhSach(r.key === 'TONG' ? undefined : (r.key as NhomViTri))}><b>{so}</b></a>
@@ -264,11 +270,12 @@ export default function DashboardPage() {
 
         <Col xs={24} lg={12}>
           <Card title="Nhân sự theo đơn vị" size="small" className="chart-card">
-            <ResponsiveContainer width="100%" height={Math.max(260, bySchoolData.length * 26 + 40)}>
+            <ResponsiveContainer width="100%" height={Math.max(260, bySchoolData.length * 30 + 60)}>
               <BarChart data={bySchoolData} layout="vertical" margin={{ top: 0, right: 36, left: 0, bottom: 0 }}>
                 <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} />
-                <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12, fill: '#475569' }} />
+                <YAxis type="category" dataKey="name" width={doRongTruc} interval={0} tick={{ fontSize: 12.5, fill: '#334155' }} tickLine={false} />
                 <Tooltip
+                  labelFormatter={(_, p) => (p?.[0]?.payload?.tenDu as string) ?? ''}
                   contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
                   cursor={{ fill: 'rgba(37,99,235,0.06)' }}
                 />

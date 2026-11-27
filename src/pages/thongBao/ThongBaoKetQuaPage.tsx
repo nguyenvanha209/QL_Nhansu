@@ -91,6 +91,7 @@ function QuanLyThongBao() {
           : undefined}
       />
       <Tabs
+        className="tabs-xuong-dong"
         activeKey={loai}
         onChange={(k) => setLoai(k as LoaiThongBaoKQ)}
         items={CAC_LOAI.map((l) => {

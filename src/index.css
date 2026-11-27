@@ -201,3 +201,13 @@ body {
   background: #fff;
   border-top: 1px solid #f0f0f0;
 }
+
+/* Thanh thẻ xuống dòng khi hẹp thay vì giấu thẻ vào nút "..." (VD loại thông báo kết quả) */
+.ant-tabs-top.tabs-xuong-dong > .ant-tabs-nav .ant-tabs-nav-wrap,
+.ant-card .ant-tabs-top > .ant-tabs-nav .ant-tabs-nav-wrap { overflow: visible; }
+.ant-tabs-top.tabs-xuong-dong > .ant-tabs-nav .ant-tabs-nav-list,
+.ant-card .ant-tabs-top > .ant-tabs-nav .ant-tabs-nav-list { flex-wrap: wrap; row-gap: 6px; transform: none !important; }
+.ant-tabs-top.tabs-xuong-dong > .ant-tabs-nav .ant-tabs-nav-operations,
+.ant-card .ant-tabs-top > .ant-tabs-nav .ant-tabs-nav-operations { display: none !important; }
+.ant-tabs-top.tabs-xuong-dong > .ant-tabs-nav .ant-tabs-ink-bar,
+.ant-card .ant-tabs-top > .ant-tabs-nav .ant-tabs-ink-bar { display: none; }

@@ -349,7 +349,7 @@ export default function BoSungBhxhPage() {
       )}
       <Table<Dong> {...BANG_CHUAN} rowKey="id" dataSource={dsHien} columns={columns} pagination={phanTrang('người', 50)} />
       <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 13 }}>
-        Khai theo sổ BHXH. Dự kiến đủ 5 năm (tạm tính) = tháng bắt đầu đóng + 60 tháng + 12 tháng tập sự.
+        Khai theo sổ BHXH. Đủ 5 năm = tháng bắt đầu đóng + 60 tháng (VD bắt đầu 03/2021 → đủ 5 năm 01/03/2026).
         Nhân viên quá tuổi nghỉ hưu không đóng BHXH: đánh dấu <b>Không tham gia BHXH (quá tuổi)</b>.
         Nhập từ Excel: tải mẫu, điền tháng (MM/YYYY) hoặc x ở cột Không tham gia BHXH, nhập lại, kiểm tra ô viền vàng rồi Lưu.
       </Text>

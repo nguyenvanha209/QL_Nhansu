@@ -15,10 +15,11 @@ export function ngayDu5Nam(k: Pick<KhaiPctnLanDau, 'batDauBhxh' | 'thangTapSu' |
   return dayjs(`${k.batDauBhxh}-01`).add(60 + khongTinh, 'month').format('YYYY-MM-DD')
 }
 
-/** Số tháng tập sự tạm tính khi chưa khai chi tiết (khai đúng theo hồ sơ ở phiếu Xếp PCTN lần đầu) */
-export const THANG_TAP_SU_MAC_DINH = 12
+/** Số tháng không tính mặc định khi chưa khai chi tiết: 0 - đủ 5 năm = đủ 60 tháng đóng BHXH.
+ *  Thời gian tập sự, nghỉ không lương… (nếu có) khai theo hồ sơ ở phiếu Xếp PCTN lần đầu. */
+export const THANG_TAP_SU_MAC_DINH = 0
 
-/** Ngày dự kiến đủ 5 năm từ tháng bắt đầu đóng BHXH trong ngành ghi ở hồ sơ (tạm tính 12 tháng tập sự) */
+/** Ngày dự kiến đủ 5 năm từ tháng bắt đầu đóng BHXH trong ngành ghi ở hồ sơ (đủ 60 tháng đóng BHXH) */
 export const du5NamTuHoSo = (batDauBhxhGd?: string) =>
   ngayDu5Nam({ batDauBhxh: batDauBhxhGd, thangTapSu: THANG_TAP_SU_MAC_DINH, thangKhongTinhKhac: 0 })
 

@@ -23,7 +23,7 @@ import MinhChungField from '@/components/MinhChungField'
 import { lamMoiNgay } from '@/lib/supabase'
 import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
 import type { MinhChung } from '@/lib/minhChung'
-import { goiYQuaTrinh, huongTuMacDinh, ngayDu5Nam, dongCuoi, ghiChuMacDinh } from '@/utils/pctnLanDau'
+import { goiYQuaTrinh, huongTuMacDinh, ngayDu5Nam, dongCuoi, ghiChuMacDinh, THANG_TAP_SU_MAC_DINH } from '@/utils/pctnLanDau'
 
 const { Title, Text } = Typography
 
@@ -155,7 +155,7 @@ export default function TaoDeXuatPage() {
         trinhDo: vc.trinhDoChuyenMon,
         // Ưu tiên tháng bắt đầu đóng BHXH trong ngành ghi ở hồ sơ; chưa khai thì tạm theo ngày vào ngành
         batDauBhxh: vc.batDauBhxhGd ?? (vc.ngayVaoNganh ? vc.ngayVaoNganh.slice(0, 7) : undefined),
-        thangTapSu: 12,
+        thangTapSu: THANG_TAP_SU_MAC_DINH,
         thangKhongTinhKhac: 0,
         huongTu: huongTuMacDinh(vc.ngayVaoBienChe),
         quaTrinh: [],
@@ -294,7 +294,7 @@ export default function TaoDeXuatPage() {
       .map((v) => {
         // Căn cứ: tháng bắt đầu đóng BHXH trong ngành ở hồ sơ; chưa khai thì tạm theo ngày vào ngành (cần bổ sung)
         const coBhxh = !!v.batDauBhxhGd
-        const duKien = ngayDu5Nam({ batDauBhxh: v.batDauBhxhGd ?? v.ngayVaoNganh?.slice(0, 7), thangTapSu: 12, thangKhongTinhKhac: 0 })
+        const duKien = ngayDu5Nam({ batDauBhxh: v.batDauBhxhGd ?? v.ngayVaoNganh?.slice(0, 7), thangTapSu: THANG_TAP_SU_MAC_DINH, thangKhongTinhKhac: 0 })
         const laCbql = nhomCoBan(v, chucDanhs.find((c) => c.id === v.chucDanhId)?.nhom) === 'CBQL'
         return { id: v.id, hoTen: `${v.ho} ${v.ten}`, viTri: laCbql ? 'Cán bộ quản lý' : 'Giáo viên', ngayVaoNganh: v.ngayVaoNganh, ngayTuyenDung: v.ngayVaoBienChe, batDauBhxh: v.batDauBhxhGd, coBhxh, duKien }
       })
@@ -730,7 +730,7 @@ export default function TaoDeXuatPage() {
           <Button type="primary" ghost disabled={selectedGoiYLanDau.length === 0} onClick={themDaChonLanDau}>
             Thêm {selectedGoiYLanDau.length > 0 ? selectedGoiYLanDau.length : ''} đã chọn vào đề xuất
           </Button>
-          <Text type="secondary" style={{ fontSize: 13 }}>Dự kiến = tháng bắt đầu đóng BHXH trong ngành (hồ sơ) + 60 tháng + 12 tháng tập sự; người chưa khai BHXH tạm tính theo ngày vào ngành - bổ sung ở trang <a onClick={() => navigate('/vien-chuc/bhxh')}>Bổ sung thông tin đóng BHXH</a>. Khai chi tiết ở nút "Khai báo".</Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>Dự kiến = tháng bắt đầu đóng BHXH trong ngành (hồ sơ) + 60 tháng (thời gian tập sự, nghỉ không lương… nếu có thì khai thêm); người chưa khai BHXH tạm tính theo ngày vào ngành - bổ sung ở trang <a onClick={() => navigate('/vien-chuc/bhxh')}>Bổ sung thông tin đóng BHXH</a>. Khai chi tiết ở nút "Khai báo".</Text>
         </Space>
         <Table
           dataSource={goiYLanDauData}

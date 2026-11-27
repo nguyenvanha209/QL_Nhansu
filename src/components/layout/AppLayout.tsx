@@ -137,7 +137,6 @@ export default function AppLayout() {
     nhom('Lương và chế độ', [
       hasPermission('luong', 'read') && { key: '/bang-tong-hop-luong', icon: <TableOutlined />, label: 'Bảng tổng hợp lương' },
       hasPermission('luong', 'read') && { key: '/luong/ra-soat', icon: <FileSearchOutlined />, label: 'Rà soát ngạch - bậc' },
-      coChucNangTruong(hasPermission('quyMo', 'read')) && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL, định mức', title: 'Cơ cấu vị trí việc làm và định mức viên chức' },
     ]),
     nhom('Hồ sơ trình duyệt', [
       hasPermission('deXuat', 'read') && {
@@ -167,6 +166,7 @@ export default function AppLayout() {
       },
     ]),
     nhom('Theo dõi', [
+      coChucNangTruong(hasPermission('quyMo', 'read')) && { key: '/quy-mo', icon: <CalculatorOutlined />, label: 'Cơ cấu VTVL, định mức', title: 'Cơ cấu vị trí việc làm và định mức viên chức' },
       coXemBoNhiem && {
         key: '/bo-nhiem', icon: <SolutionOutlined />,
         label: <NhanMenu ten={laDonViTruong ? 'Bổ nhiệm, kế toán' : 'Bổ nhiệm, chuyển đổi VT'} soCho={boNhiem.canNhac.length + soKeToan} />,

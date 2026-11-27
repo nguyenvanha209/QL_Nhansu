@@ -19,6 +19,8 @@ import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import NutXoaPhieuNhap from '@/components/NutXoaPhieuNhap'
 import { lamMoiNgay } from '@/lib/supabase'
 import { DanhSachMinhChung } from '@/components/MinhChungField'
+import DoiChieuGoiY from '@/components/DoiChieuGoiY'
+import { LOAI_DOI_CHIEU } from '@/utils/doiChieuGoiY'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -356,6 +358,10 @@ export default function DeXuatDetailPage() {
           <Text type="secondary" style={{ display: 'block', marginBottom: 8, fontSize: 13 }}>
             Cột <b>Phòng VHXH thẩm định</b>: mặc định Đồng ý; người không đủ điều kiện chọn <b>Không đồng ý</b> kèm ý kiến.
           </Text>
+        )}
+        {/* Gợi ý soát cho Phòng VHXH: danh sách đơn vị lập thừa / thiếu so với người đến hạn theo hồ sơ (phiếu chưa phê duyệt) */}
+        {!scopeDonViId && LOAI_DOI_CHIEU.includes(dx.loai) && !['DA_PHE_DUYET', 'TU_CHOI'].includes(dx.trangThai) && (
+          <DoiChieuGoiY dx={dx} moHoSo={(vcId) => navigate(`/vien-chuc/${vcId}`)} />
         )}
         {lyDoChung && <div style={{ marginBottom: 8 }}><Text type="secondary">Lý do: </Text>{lyDoChung}</div>}
         <Table dataSource={dx.chiTiet} columns={detailCols} rowKey="vienChucId" size="small" pagination={false} bordered

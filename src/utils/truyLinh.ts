@@ -275,7 +275,7 @@ function khoiKy(soCot: number, cotPhai: number, ky: ThongTinKy, nam: number): O[
   ]
 }
 
-/** Hai trang tính như mẫu: "Nâng lương" và "Nâng thâm niên" */
+/** Hai trang tính: "Truy lĩnh nâng lương" và "Truy lĩnh PC thâm niên" */
 export function xuatExcelTruyLinh(b: BangTruyLinh, ky: ThongTinKy) {
   const tenKy = `${TEN_KY_TRUY_LINH[b.ky].toUpperCase()} ${b.nam}`
   const tinhDen = `(Tính đến ngày ${ngayVn(b.tinhDen)})`
@@ -343,7 +343,7 @@ export function xuatExcelTruyLinh(b: BangTruyLinh, ky: ThongTinKy) {
     const dinhDangO: Record<string, string> = {}
     for (const r of rThan) for (const c of [7, 9, 19, 21]) if (typeof dong[r][c] === 'number') dinhDangO[`${r}:${c}`] = '0%'
     trangs.push({
-      ten: 'Nâng lương',
+      ten: 'Truy lĩnh nâng lương',
       dong,
       dinhDangO,
       gop: [
@@ -418,7 +418,7 @@ export function xuatExcelTruyLinh(b: BangTruyLinh, ky: ThongTinKy) {
     const dinhDangO: Record<string, string> = {}
     for (const r of rThan) for (const c of [8, 11, 17, 20]) if (typeof dong[r][c] === 'number') dinhDangO[`${r}:${c}`] = '0%'
     trangs.push({
-      ten: 'Nâng thâm niên',
+      ten: 'Truy lĩnh PC thâm niên',
       dong,
       dinhDangO,
       gop: [

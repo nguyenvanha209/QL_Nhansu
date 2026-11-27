@@ -9,7 +9,7 @@ import { CHUC_VU_LABELS } from '@/types/vienChuc'
 import type { ChucDanhNgheNghiep } from '@/types/danhMuc'
 import { formatDate } from '@/utils/helpers'
 import { tenDonViIn } from '@/utils/helpers'
-import { ngayDu5Nam } from '@/utils/pctnLanDau'
+import { ngayDu5Nam, cacGiaiDoan, dienGiaiGiaiDoan } from '@/utils/pctnLanDau'
 import { xuatExcelA4 } from '@/utils/excelA4'
 import type { O, VungGop } from '@/utils/excelA4'
 
@@ -59,7 +59,7 @@ function cacCot(loai: LoaiDeXuat): Cot[] {
   if (loai === 'PCTN_LAN_DAU') {
     return [...dau,
       { ten: 'Ngày tuyển dụng', rong: 12, giua: true, lay: (c) => ngay(c.lanDau?.ngayTuyenDung) },
-      { ten: 'Bắt đầu giảng dạy có đóng BHXH', rong: 13, giua: true, lay: (c) => thangNam(c.lanDau?.batDauBhxh) },
+      { ten: 'Thời gian giảng dạy có đóng BHXH', rong: 16, giua: true, lay: (c) => (c.lanDau && cacGiaiDoan(c.lanDau).length > 1 ? dienGiaiGiaiDoan(c.lanDau).replace(/; /g, '\n') : thangNam(c.lanDau?.batDauBhxh)) },
       {
         ten: 'Thời gian không tính (tháng)', rong: 12, giua: true,
         lay: (c) => (c.lanDau ? ghep(String((c.lanDau.thangTapSu || 0) + (c.lanDau.thangKhongTinhKhac || 0)), c.lanDau.thangTapSu ? `(tập sự ${c.lanDau.thangTapSu})` : undefined) : ''),

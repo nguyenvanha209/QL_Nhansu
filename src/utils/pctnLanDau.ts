@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { KhaiPctnLanDau, DongQuaTrinhPctn } from '@/types/deXuat'
+import type { KhaiPctnLanDau, DongQuaTrinhPctn, GiaiDoanBhxh } from '@/types/deXuat'
 
 // Xếp phụ cấp thâm niên nhà giáo lần đầu (NĐ 77/2021/NĐ-CP; Công văn hướng dẫn của Phòng VH-XH):
 // đủ 5 năm (60 tháng) giảng dạy, giáo dục có đóng BHXH bắt buộc thì hưởng 5%, từ năm thứ sáu mỗi năm (đủ 12 tháng) +1%.
@@ -8,11 +8,61 @@ import type { KhaiPctnLanDau, DongQuaTrinhPctn } from '@/types/deXuat'
 // Đối chiếu 17 trường hợp trong danh sách TB423/2026: mốc đủ 5 năm = ngày 01 của
 // (tháng bắt đầu đóng BHXH giảng dạy + 60 tháng + số tháng không tính).
 
-/** Ngày đủ 5 năm (60 tháng) thời gian tính hưởng - undefined khi chưa khai tháng bắt đầu */
-export function ngayDu5Nam(k: Pick<KhaiPctnLanDau, 'batDauBhxh' | 'thangTapSu' | 'thangKhongTinhKhac'>): string | undefined {
-  if (!k.batDauBhxh || !/^\d{4}-\d{2}$/.test(k.batDauBhxh)) return undefined
-  const khongTinh = Math.max(0, (k.thangTapSu || 0) + (k.thangKhongTinhKhac || 0))
-  return dayjs(`${k.batDauBhxh}-01`).add(60 + khongTinh, 'month').format('YYYY-MM-DD')
+type KhaiDu5Nam = Pick<KhaiPctnLanDau, 'batDauBhxh' | 'giaiDoanBhxh' | 'thangTapSu' | 'thangKhongTinhKhac'>
+const laThang = (s?: string) => !!s && /^\d{4}-\d{2}$/.test(s)
+
+/** Các giai đoạn đóng BHXH tính hưởng (đã sắp theo thời gian); chưa khai giai đoạn thì là 1 giai đoạn từ `batDauBhxh` đến nay */
+export function cacGiaiDoan(k: Pick<KhaiPctnLanDau, 'batDauBhxh' | 'giaiDoanBhxh'>): GiaiDoanBhxh[] {
+  const gd = (k.giaiDoanBhxh ?? []).filter((g) => laThang(g.tu)).map((g) => ({ ...g, den: laThang(g.den) ? g.den : undefined }))
+  if (gd.length) return gd.sort((a, b) => a.tu.localeCompare(b.tu))
+  return laThang(k.batDauBhxh) ? [{ tu: k.batDauBhxh! }] : []
+}
+
+/** Số tháng của một giai đoạn tính đến tháng `denThang` ('YYYY-MM'; giai đoạn chưa kết thúc tính đến đó) */
+export function soThangGiaiDoan(g: GiaiDoanBhxh, denThang: string): number {
+  const cuoi = g.den && g.den < denThang ? g.den : denThang
+  const n = dayjs(`${cuoi}-01`).diff(dayjs(`${g.tu}-01`), 'month') + 1
+  return Math.max(0, n)
+}
+
+/** Khoảng gián đoạn giữa các giai đoạn (không tính) và giai đoạn chồng lấn (khai sai) */
+export function kiemTraGiaiDoan(gd: GiaiDoanBhxh[]): { gianDoan: { tu: string; den: string; soThang: number }[]; chongLan: boolean; moGiua: boolean } {
+  const gianDoan: { tu: string; den: string; soThang: number }[] = []
+  let chongLan = false
+  let moGiua = false
+  for (let i = 1; i < gd.length; i++) {
+    const truoc = gd[i - 1]
+    if (!truoc.den) { moGiua = true; continue }
+    const batDauKhoang = dayjs(`${truoc.den}-01`).add(1, 'month')
+    const n = dayjs(`${gd[i].tu}-01`).diff(batDauKhoang, 'month')
+    if (n < 0) chongLan = true
+    else if (n > 0) gianDoan.push({ tu: batDauKhoang.format('YYYY-MM'), den: dayjs(`${gd[i].tu}-01`).subtract(1, 'month').format('YYYY-MM'), soThang: n })
+  }
+  return { gianDoan, chongLan, moGiua }
+}
+
+/**
+ * Ngày đủ 5 năm (60 tháng) thời gian tính hưởng: cộng dồn số tháng các giai đoạn đóng BHXH đến khi đủ
+ * 60 tháng + thời gian tập sự + thời gian không tính khác; ngày đủ là ngày 01 của tháng kế tiếp.
+ * undefined khi chưa khai tháng bắt đầu hoặc các giai đoạn đã kết thúc mà chưa đủ.
+ */
+export function ngayDu5Nam(k: KhaiDu5Nam): string | undefined {
+  const gd = cacGiaiDoan(k)
+  if (!gd.length) return undefined
+  let conThieu = 60 + Math.max(0, (k.thangTapSu || 0) + (k.thangKhongTinhKhac || 0))
+  for (const g of gd) {
+    const soThang = g.den ? dayjs(`${g.den}-01`).diff(dayjs(`${g.tu}-01`), 'month') + 1 : Infinity
+    if (soThang <= 0) continue
+    if (soThang >= conThieu) return dayjs(`${g.tu}-01`).add(conThieu, 'month').format('YYYY-MM-DD')
+    conThieu -= soThang
+  }
+  return undefined
+}
+
+/** Diễn giải các giai đoạn ngắn gọn: "03/2015-08/2018; 01/2019-nay" */
+export function dienGiaiGiaiDoan(k: Pick<KhaiPctnLanDau, 'batDauBhxh' | 'giaiDoanBhxh'>): string {
+  const t = (ym: string) => `${ym.slice(5, 7)}/${ym.slice(0, 4)}`
+  return cacGiaiDoan(k).map((g) => `${t(g.tu)}-${g.den ? t(g.den) : 'nay'}${g.noiDung ? ` (${g.noiDung})` : ''}`).join('; ')
 }
 
 /** Thời gian tập sự tối đa theo cấp học: mầm non 9 tháng; tiểu học, THCS (và đơn vị khác) 12 tháng */

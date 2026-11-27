@@ -9,7 +9,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useLuongStore } from '@/store/luongStore'
 import { useAuth } from '@/hooks/useAuth'
-import type { ChiTietDeXuat, LoaiDeXuat, KhaiPctnLanDau, DongQuaTrinhPctn } from '@/types/deXuat'
+import type { ChiTietDeXuat, LoaiDeXuat, KhaiPctnLanDau, DongQuaTrinhPctn, GiaiDoanBhxh } from '@/types/deXuat'
 import { LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, NGHIEP_VU_LOAI, TEN_CHUC_NANG_DE_XUAT, laDongVuotKhung, coDoiLuong, coDoiPhuCap, laHoSoNangLuong, LOAI_HO_SO_NANG_LUONG, LOAI_DE_XUAT_DIEU_CHINH, trangDanhSachCuaLoai } from '@/types/deXuat'
 import NoiDungDieuChinh from '@/components/NoiDungDieuChinh'
 import PhuCapDieuChinhField from '@/components/PhuCapDieuChinhField'
@@ -23,7 +23,7 @@ import MinhChungField from '@/components/MinhChungField'
 import { lamMoiNgay } from '@/lib/supabase'
 import { chonBanDangHuong } from '@/utils/phuCapDangHuong'
 import type { MinhChung } from '@/lib/minhChung'
-import { goiYQuaTrinh, huongTuMacDinh, ngayDu5Nam, dongCuoi, ghiChuMacDinh, thangTapSuCua, tapSuToiDa, GHI_CHU_DU_5_NAM } from '@/utils/pctnLanDau'
+import { goiYQuaTrinh, huongTuMacDinh, ngayDu5Nam, dongCuoi, ghiChuMacDinh, thangTapSuCua, tapSuToiDa, GHI_CHU_DU_5_NAM, cacGiaiDoan, kiemTraGiaiDoan, soThangGiaiDoan } from '@/utils/pctnLanDau'
 
 const { Title, Text } = Typography
 
@@ -841,9 +841,19 @@ export default function TaoDeXuatPage() {
 function KhaiLanDauModal({ ten, khai, denNgay, loaiDonVi, onHuy, onLuu }: {
   ten: string; khai: KhaiPctnLanDau; denNgay: string; loaiDonVi?: string; onHuy: () => void; onLuu: (k: KhaiPctnLanDau) => void
 }) {
-  const [k, setK] = useState<KhaiPctnLanDau>(khai)
+  // Mở khai báo: chưa có giai đoạn thì dựng 1 giai đoạn từ tháng bắt đầu đóng BHXH đến nay
+  const [k, setK] = useState<KhaiPctnLanDau>(() => ({ ...khai, giaiDoanBhxh: khai.giaiDoanBhxh?.length ? khai.giaiDoanBhxh : cacGiaiDoan(khai) }))
   const doi = (patch: Partial<KhaiPctnLanDau>) => setK((x) => ({ ...x, ...patch }))
   const du = ngayDu5Nam(k)
+  const gd = k.giaiDoanBhxh ?? []
+  // Đổi giai đoạn → tháng bắt đầu (giai đoạn sớm nhất) cập nhật theo để các nơi khác dùng
+  const doiGiaiDoan = (moi: GiaiDoanBhxh[]) => doi({ giaiDoanBhxh: moi, batDauBhxh: cacGiaiDoan({ giaiDoanBhxh: moi }).at(0)?.tu })
+  const doiGd = (i: number, patch: Partial<GiaiDoanBhxh>) => doiGiaiDoan(gd.map((g, j) => (j === i ? { ...g, ...patch } : g)))
+  const denThang = denNgay.slice(0, 7)
+  const kt = kiemTraGiaiDoan(cacGiaiDoan(k))
+  const tongThang = cacGiaiDoan(k).reduce((s, g) => s + soThangGiaiDoan(g, denThang), 0)
+  const khongTinh = (k.thangTapSu || 0) + (k.thangKhongTinhKhac || 0)
+  const tv = (ym: string) => `${ym.slice(5, 7)}/${ym.slice(0, 4)}`
   const goiY = goiYQuaTrinh(k, denNgay)
   const lechGoiY = JSON.stringify(goiY) !== JSON.stringify(k.quaTrinh)
   const doiDong = (i: number, patch: Partial<DongQuaTrinhPctn>) => doi({ quaTrinh: k.quaTrinh.map((q, j) => (j === i ? { ...q, ...patch } : q)) })
@@ -856,16 +866,40 @@ function KhaiLanDauModal({ ten, khai, denNgay, loaiDonVi, onHuy, onLuu }: {
         showIcon
         style={{ marginBottom: 12 }}
         title="Đủ 5 năm có đóng BHXH bắt buộc: 5%; từ năm thứ sáu mỗi năm +1% (NĐ 77/2021/NĐ-CP)."
-        description="Mốc đủ 5 năm = tháng bắt đầu đóng BHXH + thời gian tập sự + 60 tháng. Không tính: tập sự (mầm non tối đa 9 tháng, tiểu học, THCS tối đa 12 tháng - ai không tập sự ghi 0); nghỉ không lương liên tục từ 01 tháng; ốm đau, thai sản vượt quy định; đi học, công tác quá hạn; bị tạm đình chỉ, tạm giữ, tạm giam."
+        description="Mốc đủ 5 năm: cộng dồn các giai đoạn đóng BHXH đủ 60 tháng + thời gian tập sự + thời gian không tính khác. Không tính: tập sự (mầm non tối đa 9 tháng, tiểu học, THCS tối đa 12 tháng - ai không tập sự ghi 0); nghỉ không lương liên tục từ 01 tháng; ốm đau, thai sản vượt quy định; đi học, công tác quá hạn; bị tạm đình chỉ, tạm giữ, tạm giam."
       />
       <Row gutter={[12, 8]}>
         <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Ngày tuyển dụng viên chức</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTuyenDung)} onChange={(v) => doi({ ngayTuyenDung: v?.format('YYYY-MM-DD'), huongTu: huongTuMacDinh(v?.format('YYYY-MM-DD')) })} /></Col>
         <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Trình độ chuyên môn</Text><Input value={k.trinhDo} onChange={(e) => doi({ trinhDo: e.target.value })} placeholder="VD Đại học SPMN" /></Col>
         <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Ngày tốt nghiệp</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.ngayTotNghiep)} onChange={(v) => doi({ ngayTotNghiep: v?.format('YYYY-MM-DD') })} /></Col>
-        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Bắt đầu giảng dạy có đóng BHXH bắt buộc</Text><DatePicker picker="month" format="MM/YYYY" style={{ width: '100%' }} value={k.batDauBhxh ? dayjs(`${k.batDauBhxh}-01`) : null} onChange={(v) => doi({ batDauBhxh: v?.format('YYYY-MM') })} /></Col>
+        <Col span={24}>
+          <Text strong style={{ fontSize: 13.5 }}>Quá trình giảng dạy, giáo dục có đóng BHXH bắt buộc</Text>
+          <Text type="secondary" style={{ fontSize: 12.5 }}> - theo sổ BHXH; đóng không liên tục (không tham gia BHXH, nghỉ không lương, thời gian làm nhân viên…) thì khai từng giai đoạn, khoảng giữa không được tính</Text>
+          <Table<GiaiDoanBhxh>
+            size="small" bordered pagination={false} style={{ marginTop: 6 }}
+            rowKey={(_, i) => String(i)}
+            dataSource={gd}
+            locale={{ emptyText: 'Chưa khai - bấm Thêm giai đoạn' }}
+            columns={[
+              { title: 'TT', key: 'tt', width: 44, align: 'center', render: (_, __, i) => i + 1 },
+              { title: 'Từ tháng', key: 'tu', width: 130, render: (_, g, i) => <DatePicker size="small" picker="month" format="MM/YYYY" value={g.tu ? dayjs(`${g.tu}-01`) : null} onChange={(v) => doiGd(i, { tu: v?.format('YYYY-MM') ?? '' })} style={{ width: 110 }} /> },
+              { title: 'Đến tháng', key: 'den', width: 130, render: (_, g, i) => <DatePicker size="small" picker="month" format="MM/YYYY" placeholder="Đến nay" value={g.den ? dayjs(`${g.den}-01`) : null} onChange={(v) => doiGd(i, { den: v?.format('YYYY-MM') })} style={{ width: 110 }} /> },
+              { title: 'Số tháng', key: 'so', width: 80, align: 'center', render: (_, g) => (g.tu ? soThangGiaiDoan(g, denThang) : '') },
+              { title: 'Nội dung (chức danh, đơn vị)', key: 'nd', render: (_, g, i) => <Input size="small" value={g.noiDung} onChange={(e) => doiGd(i, { noiDung: e.target.value })} placeholder="VD Giáo viên hợp đồng Trường MN A" /> },
+              { title: '', key: 'x', width: 40, render: (_, __, i) => <Button size="small" type="text" danger icon={<DeleteOutlined />} onClick={() => doiGiaiDoan(gd.filter((_, j) => j !== i))} /> },
+            ]}
+          />
+          <Space wrap size={[12, 4]} style={{ marginTop: 6 }}>
+            <Button size="small" icon={<PlusOutlined />} onClick={() => doiGiaiDoan([...gd, { tu: '' }])}>Thêm giai đoạn</Button>
+            <Text style={{ fontSize: 13 }}>Cộng dồn đến {tv(denThang)}: <b>{tongThang}</b> tháng{khongTinh ? `, trừ ${khongTinh} tháng không tính còn ${Math.max(0, tongThang - khongTinh)} tháng` : ''}</Text>
+            {kt.gianDoan.map((g) => <Tag key={g.tu} color="orange">Gián đoạn {tv(g.tu)} - {tv(g.den)} ({g.soThang} tháng, không tính)</Tag>)}
+            {kt.chongLan && <Tag color="red">Các giai đoạn bị chồng thời gian - kiểm tra lại</Tag>}
+            {kt.moGiua && <Tag color="red">Giai đoạn chưa ghi tháng kết thúc nhưng vẫn còn giai đoạn sau</Tag>}
+          </Space>
+        </Col>
         <Col xs={12} sm={4}><Text type="secondary" style={{ fontSize: 13 }}>Tập sự (tháng)</Text><InputNumber min={0} max={tapSuToiDa(loaiDonVi)} style={{ width: '100%' }} value={k.thangTapSu} onChange={(v) => doi({ thangTapSu: v ?? 0 })} /></Col>
         <Col xs={12} sm={4}><Text type="secondary" style={{ fontSize: 13 }}>Không tính khác (tháng)</Text><InputNumber min={0} max={240} style={{ width: '100%' }} value={k.thangKhongTinhKhac} onChange={(v) => doi({ thangKhongTinhKhac: v ?? 0 })} /></Col>
-        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Lý do không tính khác</Text><Input value={k.lyDoKhongTinh} onChange={(e) => doi({ lyDoKhongTinh: e.target.value })} placeholder="VD Nghỉ không lương 03/2021-08/2021" disabled={!k.thangKhongTinhKhac} /></Col>
+        <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Lý do không tính khác</Text><Input value={k.lyDoKhongTinh} onChange={(e) => doi({ lyDoKhongTinh: e.target.value })} placeholder="VD Đi học quá hạn 6 tháng (vẫn đóng BHXH)" disabled={!k.thangKhongTinhKhac} /></Col>
         <Col xs={24} sm={8}><Text type="secondary" style={{ fontSize: 13 }}>Được hưởng từ ngày</Text><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} value={d(k.huongTu)} onChange={(v) => doi({ huongTu: v?.format('YYYY-MM-DD') })} /></Col>
         <Col xs={24} sm={16} style={{ display: 'flex', alignItems: 'flex-end' }}>
           <Text>Đủ 5 năm tính hưởng: <b>{du ? formatDate(du) : '-'}</b>{du && du > denNgay && <Text type="danger"> - sau kỳ xét (hết {formatDate(denNgay)})</Text>}</Text>

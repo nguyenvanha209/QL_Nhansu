@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { nanoid } from 'nanoid'
-import type { DeXuatLuong, TrangThaiDeXuat, ChiTietDeXuat } from '@/types/deXuat'
+import type { DeXuatLuong, TrangThaiDeXuat, ChiTietDeXuat, LoaiDeXuat } from '@/types/deXuat'
 import { laDongVuotKhung, coDoiLuong } from '@/types/deXuat'
 import { hoPhuCap, hienMucPhuCap, ngayKetThucKhiThay } from '@/utils/phuCapDangHuong'
 import type { LyDoNangLuong } from '@/types/luong'
@@ -70,12 +70,32 @@ interface DeXuatState {
 }
 
 const now = () => new Date().toISOString()
-/** Mã phiếu nối tiếp số lớn nhất đã có trong năm (bộ đếm cũ khởi động lại mỗi lần tải trang nên sinh mã trùng) */
-const genMa = (ds: { ma?: string }[]) => {
+/** Tiền tố mã phiếu theo loại - 4 loại hồ sơ nâng lương (và 2 loại điều chỉnh) không trùng mã nhau */
+export const TIEN_TO_MA: Record<LoaiDeXuat, string> = {
+  NANG_BAC: 'NLTX', // nâng bậc lương thường xuyên
+  NANG_TRUOC_HAN: 'NLTH', // nâng lương trước thời hạn
+  PHU_CAP_THAM_NIEN: 'PCTN', // nâng phụ cấp thâm niên
+  PCTN_LAN_DAU: 'TNLD', // xếp phụ cấp thâm niên lần đầu
+  CHUYEN_NGACH: 'CDCD', // chuyển chức danh, ngạch
+  DIEU_CHINH: 'DCHS', // điều chỉnh hệ số lương - phụ cấp
+}
+/** Mã ngắn của đơn vị ghép vào mã phiếu: mã đơn vị (chữ, số) nếu gọn, không thì 6 ký tự cuối của id */
+const maNganDonVi = (donViId: string) => {
+  const ma = (useDanhMucStore.getState().donVis.find((d) => d.id === donViId)?.ma ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+  return ma && ma.length <= 10 ? ma : donViId.replace(/[^A-Za-z0-9]/g, '').slice(-6).toUpperCase()
+}
+/**
+ * Mã phiếu: <tiền tố loại>-<mã đơn vị>-<năm>-<số> (VD NLTX-MNSB-2026-001, PCTN-MNSB-2026-001). Số nối tiếp số lớn
+ * nhất đã có của loại đó, đơn vị đó trong năm - đơn vị luôn thấy đủ phiếu của mình nên không trùng; 4 loại hồ sơ
+ * có tiền tố khác nhau, các đơn vị khác mã đơn vị. Phiếu cũ giữ mã DX-...; mã đã có không cấp lại.
+ */
+const genMa = (ds: { ma?: string }[], loai: LoaiDeXuat, donViId: string) => {
   const nam = new Date().getFullYear()
-  const dau = `DX-${nam}-`
-  const max = ds.reduce((m, d) => (d.ma?.startsWith(dau) ? Math.max(m, parseInt(d.ma.slice(dau.length), 10) || 0) : m), 0)
-  return `${dau}${String(max + 1).padStart(3, '0')}`
+  const dau = `${TIEN_TO_MA[loai] ?? 'DX'}-${maNganDonVi(donViId)}-${nam}-`
+  const daCo = new Set(ds.map((d) => d.ma))
+  let so = ds.reduce((m, d) => (d.ma?.startsWith(dau) ? Math.max(m, parseInt(d.ma.slice(dau.length), 10) || 0) : m), 0) + 1
+  while (daCo.has(`${dau}${String(so).padStart(3, '0')}`)) so++
+  return `${dau}${String(so).padStart(3, '0')}`
 }
 
 export const useDeXuatStore = create<DeXuatState>()(
@@ -88,7 +108,7 @@ export const useDeXuatStore = create<DeXuatState>()(
         const item: DeXuatLuong = {
           ...data,
           id: nanoid(),
-          ma: genMa(get().deXuats),
+          ma: genMa(get().deXuats, data.loai, data.donViId),
           createdAt: now(),
           updatedAt: now(),
         }

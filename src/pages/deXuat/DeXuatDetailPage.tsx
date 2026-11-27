@@ -11,7 +11,7 @@ import { useDanhMucStore } from '@/store/danhMucStore'
 import { useVienChucStore } from '@/store/vienChucStore'
 import { useAuth } from '@/hooks/useAuth'
 import { usePhamVi } from '@/hooks/usePhamVi'
-import { ngayDu5Nam } from '@/utils/pctnLanDau'
+import { ngayDu5Nam, cacGiaiDoan, kiemTraGiaiDoan } from '@/utils/pctnLanDau'
 import { formatDate, vietHoaDauTu } from '@/utils/helpers'
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_DE_XUAT_LABELS, LOAI_CAN_MINH_CHUNG, trangDanhSachCuaLoai, laHoSoNangLuong, coDoiLuong } from '@/types/deXuat'
 import { CHUC_VU_LABELS } from '@/types/vienChuc'
@@ -93,7 +93,10 @@ export default function DeXuatDetailPage() {
         return (
           <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>
             <div>Tuyển dụng: <b>{k.ngayTuyenDung ? formatDate(k.ngayTuyenDung) : '-'}</b> · {k.trinhDo || 'chưa ghi trình độ'}{k.ngayTotNghiep ? ` (TN ${formatDate(k.ngayTotNghiep)})` : ''}</div>
-            <div>Đóng BHXH giảng dạy từ: <b>{thangVN(k.batDauBhxh)}</b></div>
+            {cacGiaiDoan(k).length > 1
+              ? <div>Đóng BHXH giảng dạy: {cacGiaiDoan(k).map((g, i) => <div key={i} style={{ paddingLeft: 10 }}>- <b>{thangVN(g.tu)} - {g.den ? thangVN(g.den) : 'nay'}</b>{g.noiDung ? ` (${g.noiDung})` : ''}</div>)}
+                  {kiemTraGiaiDoan(cacGiaiDoan(k)).gianDoan.map((g) => <div key={g.tu} style={{ paddingLeft: 10, color: '#d46b08' }}>Gián đoạn {thangVN(g.tu)} - {thangVN(g.den)} ({g.soThang} tháng, không tính)</div>)}</div>
+              : <div>Đóng BHXH giảng dạy từ: <b>{thangVN(k.batDauBhxh)}</b>{cacGiaiDoan(k)[0]?.den ? <> đến <b>{thangVN(cacGiaiDoan(k)[0].den)}</b></> : null}</div>}
             <div>Không tính: tập sự {k.thangTapSu} tháng{k.thangKhongTinhKhac ? `, ${k.lyDoKhongTinh || 'khác'} ${k.thangKhongTinhKhac} tháng` : ''}</div>
             <div>Đủ 5 năm: <b>{ngayDu5Nam(k) ? formatDate(ngayDu5Nam(k)!) : '-'}</b></div>
           </div>

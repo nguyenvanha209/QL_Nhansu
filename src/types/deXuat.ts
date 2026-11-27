@@ -20,6 +20,14 @@ export interface DongQuaTrinhPctn {
   thoiGianHuong: string
 }
 
+/** Một giai đoạn giảng dạy, giáo dục có đóng BHXH bắt buộc (tính hưởng PCTN) - tháng 'YYYY-MM', `den` trống = đến nay */
+export interface GiaiDoanBhxh {
+  tu: string
+  den?: string
+  /** VD Giáo viên hợp đồng Trường MN A; Giáo viên biên chế Trường MN B */
+  noiDung?: string
+}
+
 /** Kế toán khai báo để xếp phụ cấp thâm niên nhà giáo lần đầu (theo hồ sơ: bằng cấp, QĐ tuyển dụng, quá trình BHXH) */
 export interface KhaiPctnLanDau {
   ngayTuyenDung?: string
@@ -27,6 +35,11 @@ export interface KhaiPctnLanDau {
   ngayTotNghiep?: string
   /** Tháng năm bắt đầu tham gia giảng dạy, giáo dục có đóng BHXH bắt buộc - 'YYYY-MM' */
   batDauBhxh?: string
+  /**
+   * Quá trình đóng BHXH tính hưởng theo nhiều giai đoạn (khi gián đoạn: không tham gia BHXH, nghỉ không lương,
+   * thời gian làm nhân viên…). Có thì thay cho `batDauBhxh`; khoảng giữa các giai đoạn không được tính.
+   */
+  giaiDoanBhxh?: GiaiDoanBhxh[]
   thangTapSu: number
   /** Thời gian không tính khác (nghỉ không lương, ốm đau quá hạn, đi học quá hạn…) - số tháng */
   thangKhongTinhKhac: number

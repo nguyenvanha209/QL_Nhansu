@@ -222,7 +222,7 @@ export function xuatExcelDangKy(b: DangKyLdtl, ky: ThongTinKyDangKy) {
     const dinhDangO: Record<string, string> = {}
     bt.dong.forEach((d, i) => { if (d.laNguoi || d.laTien) for (let c = 2; c <= 6; c++) dinhDangO[`${bdTd + td.length + i}:${c}`] = '#,##0' })
     trangs.push({
-      ten: 'TH',
+      ten: 'TỔNG HỢP ĐK LĐTL',
       dong,
       dinhDangO,
       gop: [
@@ -329,7 +329,7 @@ export function xuatExcelDangKy(b: DangKyLdtl, ky: ThongTinKyDangKy) {
     const bdTd = dau.length
     const giuaTd = [C.tt, C.ten, C.cv, C.lc, C.moc, C.pccv, C.pctn, C.ud, cCvu, cT1].filter((c) => c >= 0)
     trangs.push({
-      ten: 'DS HSL',
+      ten: 'Danh sách hệ số lương',
       dong,
       gop: [
         g(0, 0, 0, 5), g(1, 0, 1, 5), g(0, 7, 0, N - 1), g(1, 7, 1, N - 1), g(3, 0, 3, N - 1), g(4, 0, 4, N - 1),
